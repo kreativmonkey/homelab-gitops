@@ -15,8 +15,6 @@ metadata:
 spec:
   interval: 1h
   targetNamespace: longhorn-system
-  install:
-    createNamespace: true
   chart:
     spec:
       chart: longhorn

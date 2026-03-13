@@ -15,8 +15,6 @@ metadata:
 spec:
   interval: 1h
   targetNamespace: ingress-nginx
-  install:
-    createNamespace: true
   chart:
     spec:
       chart: ingress-nginx
