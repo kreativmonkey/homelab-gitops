@@ -17,8 +17,6 @@ spec:
   targetNamespace: longhorn-system
   install:
     createNamespace: true
-  upgrade:
-    createNamespace: true
   chart:
     spec:
       chart: longhorn
