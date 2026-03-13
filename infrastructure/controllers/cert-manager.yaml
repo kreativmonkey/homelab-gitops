@@ -15,7 +15,10 @@ metadata:
 spec:
   interval: 1h
   targetNamespace: cert-manager
-  createNamespace: true
+  install:
+    createNamespace: true
+  upgrade:
+    createNamespace: true
   chart:
     spec:
       chart: cert-manager
