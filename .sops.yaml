@@ -1,0 +1,6 @@
+creation_rules:
+  # Regel: Alle Dateien, die auf .secret.yaml oder .secret.yml enden, werden verschlüsselt
+  - path_regex: .*\.secret\.ya?ml$
+    # Der LOKALE Age Public Key (Beginnt meist mit age1...)
+    # Der zugehörige Private Key wurde über Terraform ins Cluster deployt
+    age: "age1u5lcvuuwd4lk7f3xewjk70j75yuh68myr89qkd0e8d44zgyjleeqw03vqs"
