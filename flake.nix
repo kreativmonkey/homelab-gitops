@@ -16,6 +16,8 @@
         # Required packages
         buildInputs = [
           pkgs.age
+          pkgs.sops
+          pkgs.fluxcd
         ];
 
         # Shell hook replicates Dockerfile steps

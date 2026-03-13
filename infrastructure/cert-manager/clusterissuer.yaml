@@ -10,7 +10,12 @@ spec:
       name: letsencrypt-production-account-key
     solvers:
       - dns01:
-          hetzner:
-             apiTokenSecretRef:
-              name: hetzner-api-token-secret
-              key: api-token
+          webhook:
+            groupName: certmanager.k8s.io
+            solverName: hetzner
+             # Optional: Timeout für Webhook-Operationen (Standard: 30s)
+            timeout: 60s
+            config:
+              tokenSecretKeyRef:
+                name: hetzner-api-token-secret
+                key: api-token
