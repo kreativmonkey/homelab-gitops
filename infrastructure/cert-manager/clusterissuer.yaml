@@ -11,10 +11,8 @@ spec:
     solvers:
       - dns01:
           webhook:
-            groupName: certmanager.k8s.io
+            groupName: acme.hetzner.cloud
             solverName: hetzner
-             # Optional: Timeout für Webhook-Operationen (Standard: 30s)
-            timeout: 60s
             config:
               tokenSecretKeyRef:
                 name: hetzner-api-token-secret
