@@ -4,7 +4,7 @@ metadata:
   name: letsencrypt-production
 spec:
   acme:
-    email: kreativmonkey@calyrium.org # Zwingend anpassen für Ablaufwarnungen
+    email: kreativmonkey@calyrium.org
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: letsencrypt-production-account-key

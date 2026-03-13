@@ -1,0 +1,48 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: longhorn-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://charts.longhorn.io
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: longhorn
+  namespace: longhorn-system
+spec:
+  interval: 1h
+  targetNamespace: longhorn-system
+  createNamespace: true
+  chart:
+    spec:
+      chart: longhorn
+      version: "1.6.1" # Zielversion für Renovate Bot
+      sourceRef:
+        kind: HelmRepository
+        name: longhorn-repo
+        namespace: flux-system
+  values:
+    # Priorisierung zum Schutz vor OOM-Kills durch Applikationen
+    global:
+      priorityClassName: "homelab-infrastructure"
+    
+    persistence:
+      defaultClass: false # Standardklasse wird explizit in Phase 2 deklariert
+      defaultDataPath: /var/lib/longhorn
+    
+    defaultSettings:
+      createDefaultDiskLabeledNodes: true
+      replicaCount: 3 # Ausfallsicherheit über 3 Nodes
+      
+    # CPU-Limits für die Kernkomponente (Manager)
+    longhornManager:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
