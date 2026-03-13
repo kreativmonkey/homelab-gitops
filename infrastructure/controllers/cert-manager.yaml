@@ -17,8 +17,6 @@ spec:
   targetNamespace: cert-manager
   install:
     createNamespace: true
-  upgrade:
-    createNamespace: true
   chart:
     spec:
       chart: cert-manager
