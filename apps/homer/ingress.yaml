@@ -9,10 +9,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - homer.homelab.local
+    - home.f4mily.net
     secretName: homer-tls
   rules:
-  - host: homer.homelab.local
+  - host: home.f4mily.net
     http:
       paths:
       - path: /
