@@ -46,10 +46,9 @@ spec:
         cert-manager.io/cluster-issuer: letsencrypt-production
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
       hosts:
-        - path: /
-          pathType: ImplementationSpecific
+        - name: sterling-pdf.f4mily.net
+          path: /
           tls: true
-          tlsSecret: sterling-pdf-tls
       tls:
         - secretName: sterling-pdf-tls
           hosts:
