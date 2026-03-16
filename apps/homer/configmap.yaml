@@ -57,6 +57,11 @@ data:
       - name: "Infrastructure"
         icon: "fas fa-server"
         items:
+          - name: "Kite"
+            logo: "https://raw.githubusercontent.com/kite-org/kite/main/docs/logo.svg"
+            subtitle: "Kubernetes Dashboard"
+            tag: "k8s"
+            url: "https://kite.f4mily.net"
           - name: "Longhorn"
             logo: "https://longhorn.io/img/logos/longhorn-icon-color.png"
             subtitle: "Distributed storage"
