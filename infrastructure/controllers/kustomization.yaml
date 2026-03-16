@@ -6,4 +6,3 @@ resources:
   - cert-manager.yaml
   - ingress-nginx.yaml
   - longhorn.yaml
-  - external-dns.yaml
