@@ -46,6 +46,14 @@ data:
         link-hover: "#ffdd57"
 
     services:
+      - name: "Werkzeuge"
+        icon: "fas fa-tools"
+        items:
+          - name: "Sterling PDF"
+            logo: "https://cdn-icons-png.flaticon.com/512/33/33736.png"
+            subtitle: "PDF Werkzeuge"
+            tag: "pdf"
+            url: "https://sterling-pdf.f4mily.net"
       - name: "Infrastructure"
         icon: "fas fa-server"
         items:
