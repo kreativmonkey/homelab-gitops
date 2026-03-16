@@ -25,6 +25,9 @@ spec:
         namespace: flux-system
   values:
     replicaCount: 1
+    # Recreate strategy required for RWO volumes
+    strategy:
+      type: Recreate
     image:
       repository: ghcr.io/kite-org/kite
       tag: "v0.8.1"
