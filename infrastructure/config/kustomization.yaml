@@ -5,5 +5,4 @@ resources:
   - clusterissuer.yaml
   - hetzner.secret.yaml
   - wildcard-certificate.yaml
-  # TODO: Add after SOPS encryption:
-  # - hetzner-external-dns.secret.yaml
+  - external-dns.yaml
