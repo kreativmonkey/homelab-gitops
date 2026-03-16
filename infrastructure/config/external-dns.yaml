@@ -40,9 +40,6 @@ spec:
     sources:
       - ingress
       - service
-    # Set all records to point to reverse proxy
-    extraArgs:
-      - --hetzner-default-ttl=300
     resources:
       requests:
         cpu: 50m
