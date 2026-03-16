@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: homer
-  namespace: homer
+  name: sterling-pdf
+  namespace: sterling-pdf
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-production"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -10,27 +10,16 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - homer.f4mily.net
-    - f4mily.net
-    secretName: homer-tls
+    - sterling-pdf.f4mily.net
+    secretName: sterling-pdf-tls
   rules:
-  - host: homer.f4mily.net
+  - host: sterling-pdf.f4mily.net
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: homer
-            port:
-              number: 80
-  - host: f4mily.net
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: homer
+            name: sterling-pdf
             port:
               number: 80
