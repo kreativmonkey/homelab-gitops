@@ -4,3 +4,5 @@ resources:
   - ingressclass.yaml
   - clusterissuer.yaml
   - hetzner.secret.yaml
+  - dockerhub.secret.yaml
+  - patch-default-sa.yaml
