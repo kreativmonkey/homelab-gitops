@@ -43,6 +43,16 @@ spec:
     securityContext:
       enabled: true
       fsGroup: 1000
+    livenessProbe:
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 5
+    readinessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
     resources:
       requests:
         memory: "512Mi"
