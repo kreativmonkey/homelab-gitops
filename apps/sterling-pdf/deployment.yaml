@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sterling-pdf
+  namespace: sterling-pdf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sterling-pdf
+  template:
+    metadata:
+      labels:
+        app: sterling-pdf
+    spec:
+      containers:
+      - name: sterling-pdf
+        image: stirlingtools/stirling-pdf:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: DOCKER_ENABLE_SECURITY
+          value: "false"
+        volumeMounts:
+        - name: data
+          mountPath: /configs
+      volumes:
+      - name: data
+        emptyDir: {}
