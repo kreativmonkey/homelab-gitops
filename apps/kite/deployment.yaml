@@ -40,6 +40,7 @@ spec:
         - host: kite.f4mily.net
           paths:
             - path: /
+              pathType: Prefix
     db:
       type: sqlite
       sqlite:
