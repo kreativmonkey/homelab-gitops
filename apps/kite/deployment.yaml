@@ -1,0 +1,57 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: kite-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://kite-org.github.io/kite/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kite
+  namespace: kite
+spec:
+  interval: 1h
+  targetNamespace: kite
+  chart:
+    spec:
+      chart: kite
+      version: "0.8.1"
+      sourceRef:
+        kind: HelmRepository
+        name: kite-repo
+        namespace: flux-system
+  values:
+    replicaCount: 1
+    image:
+      repository: ghcr.io/kite-org/kite
+      tag: "v0.8.1"
+    service:
+      type: ClusterIP
+      port: 80
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      hosts:
+        - host: kite.f4mily.net
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: kite-tls
+          hosts:
+            - kite.f4mily.net
+    db:
+      type: sqlite
+      sqlite:
+        persistence:
+          pvc:
+            enabled: true
+            storageClass: longhorn
+            accessMode: ReadWriteOnce
+            size: 1Gi
