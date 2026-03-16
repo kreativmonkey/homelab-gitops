@@ -3,6 +3,6 @@ kind: Kustomization
 resources:
   - ingressclass.yaml
   - clusterissuer.yaml
-  - hetzner.secret.yaml
   - wildcard-certificate.yaml
   - external-dns.yaml
+  - hetzner.secret.yaml
