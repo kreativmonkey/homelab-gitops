@@ -1,30 +1,56 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: stirling-pdf-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://stirling-tools.github.io/Stirling-PDF-chart
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
 metadata:
   name: sterling-pdf
   namespace: sterling-pdf
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: sterling-pdf
-  template:
-    metadata:
-      labels:
-        app: sterling-pdf
+  interval: 1h
+  targetNamespace: sterling-pdf
+  chart:
     spec:
-      containers:
-      - name: sterling-pdf
-        image: stirlingtools/stirling-pdf:2.7.2
-        ports:
-        - containerPort: 8080
-          name: http
-        env:
-        - name: DOCKER_ENABLE_SECURITY
-          value: "false"
-        volumeMounts:
-        - name: data
-          mountPath: /configs
-      volumes:
-      - name: data
-        emptyDir: {}
+      chart: stirling-pdf-chart
+      version: "3.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: stirling-pdf-repo
+        namespace: flux-system
+  values:
+    replicaCount: 1
+    image:
+      repository: stirlingtools/stirling-pdf
+      tag: "2.7.2"
+    envs:
+      - name: DOCKER_ENABLE_SECURITY
+        value: "false"
+    service:
+      type: ClusterIP
+      externalPort: 8080
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      accessMode: ReadWriteOnce
+      size: 8Gi
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      hosts:
+        - path: /
+          pathType: ImplementationSpecific
+          tls: true
+          tlsSecret: sterling-pdf-tls
+      tls:
+        - secretName: sterling-pdf-tls
+          hosts:
+            - sterling-pdf.f4mily.net
