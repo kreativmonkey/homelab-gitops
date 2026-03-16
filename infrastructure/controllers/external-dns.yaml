@@ -1,0 +1,52 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: external-dns-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://kubernetes-sigs.github.io/external-dns/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-dns
+  namespace: external-dns
+spec:
+  interval: 1h
+  targetNamespace: external-dns
+  chart:
+    spec:
+      chart: external-dns
+      version: "1.14.3"
+      sourceRef:
+        kind: HelmRepository
+        name: external-dns-repo
+        namespace: flux-system
+  values:
+    provider: hetzner
+    env:
+      - name: HETZNER_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: hetzner-api-token
+            key: api-token
+    domainFilters:
+      - f4mily.net
+    policy: sync
+    registry: txt
+    txtOwnerId: homelab-k8s
+    txtPrefix: externaldns-
+    sources:
+      - ingress
+      - service
+    # Set all records to point to reverse proxy
+    extraArgs:
+      - --hetzner-default-ttl=300
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
