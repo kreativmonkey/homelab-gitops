@@ -11,37 +11,63 @@
     "automerge": true
   },
   "kubernetes": {
+    "enabled": true,
     "managerFilePatterns": [
-      "/\\.yaml$/",
-      "/\\.yml$/"
+      "/apps/.*\\.yaml$/",
+      "/apps/.*\\.yml$/"
+    ],
+    "matchPackagePatterns": [
+      "*"
     ]
   },
   "flux": {
     "enabled": true
   },
   "helm-values": {
+    "enabled": true
+  },
+  "regex": {
     "enabled": true,
     "managerFilePatterns": [
-      "/\\.yaml$/",
-      "/\\.yml$/",
-      "/(^|/)values-.+\\.yaml$/",
-      "/deployment\\.yaml$/"
+      "/Dockerfile$/"
+    ],
+    "matchStrings": [
+      "image:(?<depName>.*?):(?<currentValue>.*?)(?:#|$)"
     ]
   },
   "packageRules": [
     {
       "matchManagers": [
-        "kubernetes",
         "flux"
       ],
-      "groupName": "kubernetes dependencies",
+      "groupName": "flux helm releases",
+      "groupSlug": "flux-helm-releases",
+      "stabilityDays": 7,
       "automerge": false
     },
     {
       "matchManagers": [
         "helm-values"
       ],
-      "groupName": "helm dependencies",
+      "groupName": "helm chart versions",
+      "groupSlug": "helm-chart-versions",
+      "stabilityDays": 7,
+      "automerge": false
+    },
+    {
+      "matchManagers": [
+        "kubernetes"
+      ],
+      "groupName": "app container images",
+      "groupSlug": "app-container-images",
+      "stabilityDays": 3,
+      "automerge": false
+    },
+    {
+      "matchManagers": [
+        "regex"
+      ],
+      "groupName": "dockerfiles",
       "automerge": false
     },
     {
@@ -52,6 +78,17 @@
       "matchPackageNames": [
         "*"
       ]
+    },
+    {
+      "matchPackagePrefixes": [
+        "b4bz/homer",
+        "kiteproxy/kite",
+        "docspa/sterling-pdf"
+      ],
+      "groupName": "app images",
+      "stabilityDays": 3
     }
-  ]
+  ],
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 10
 }
