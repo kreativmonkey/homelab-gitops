@@ -4,5 +4,5 @@ resources:
   - ingressclass.yaml
   - clusterissuer.yaml
   - wildcard-certificate.yaml
-  - external-dns.yaml
   - hetzner.secret.yaml
+  - external-dns.yaml
