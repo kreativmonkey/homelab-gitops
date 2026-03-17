@@ -30,19 +30,6 @@ spec:
         limits:
           cpu: 250m
           memory: 512Mi
-    
-    vmagent:
-      enabled: true
-      resources:
-        requests:
-          cpu: 10m
-          memory: 64Mi
-        limits:
-          cpu: 100m
-          memory: 128Mi
-
-    vmselect:
-      enabled: true
       ingress:
         enabled: true
         className: nginx
@@ -58,21 +45,14 @@ spec:
           - secretName: wildcard-f4mily-net-tls
             hosts:
               - monitoring.cluster.f4mily.net
-
-    grafana:
+    
+    vmagent:
       enabled: true
-      ingress:
-        enabled: true
-        className: nginx
-        annotations:
-          cert-manager.io/cluster-issuer: letsencrypt-production
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
-        hosts:
-          - host: grafana.cluster.f4mily.net
-            paths:
-              - path: /
-                pathType: Prefix
-        tls:
-          - secretName: wildcard-f4mily-net-tls
-            hosts:
-              - grafana.cluster.f4mily.net
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+
