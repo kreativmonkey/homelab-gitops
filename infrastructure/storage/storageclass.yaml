@@ -9,7 +9,7 @@ allowVolumeExpansion: true
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
 parameters:
-  numberOfReplicas: "3" # Bei zu hoher CPU-Last auf 2 reduzierbar
+  numberOfReplicas: "3"
   staleReplicaTimeout: "2880"
   fromBackup: ""
   fsType: "ext4"
