@@ -11,30 +11,47 @@
     "automerge": true
   },
   "kubernetes": {
-    "fileMatch": ["\\.yaml$", "\\.yml$"]
+    "managerFilePatterns": [
+      "/\\.yaml$/",
+      "/\\.yml$/"
+    ]
   },
   "flux": {
     "enabled": true
   },
   "helm-values": {
     "enabled": true,
-    "fileMatch": ["\\.yaml$", "\\.yml$", "(^|/)values-.+\\.yaml$", "deployment\\.yaml$"]
+    "managerFilePatterns": [
+      "/\\.yaml$/",
+      "/\\.yml$/",
+      "/(^|/)values-.+\\.yaml$/",
+      "/deployment\\.yaml$/"
+    ]
   },
   "packageRules": [
     {
-      "matchManagers": ["kubernetes", "flux"],
+      "matchManagers": [
+        "kubernetes",
+        "flux"
+      ],
       "groupName": "kubernetes dependencies",
       "automerge": false
     },
     {
-      "matchManagers": ["helm-values"],
+      "matchManagers": [
+        "helm-values"
+      ],
       "groupName": "helm dependencies",
       "automerge": false
     },
     {
-      "matchPackagePatterns": ["*"],
-      "matchManagers": ["nix"],
-      "groupName": "nix dependencies"
+      "matchManagers": [
+        "nix"
+      ],
+      "groupName": "nix dependencies",
+      "matchPackageNames": [
+        "*"
+      ]
     }
   ]
 }
