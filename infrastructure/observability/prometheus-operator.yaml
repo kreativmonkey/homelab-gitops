@@ -18,7 +18,23 @@ spec:
     global:
       priorityClassName: "homelab-infrastructure"
     prometheus:
-      enabled: false
+      enabled: true
+      prometheusSpec:
+        serviceMonitorSelector:
+          matchLabels:
+            release: victoriametrics
+        serviceMonitorNamespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: monitoring
+        remoteWrite:
+          - url: http://vm-vm-metrics-server.monitoring:8428/api/v1/write
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
     alertmanager:
       enabled: false
     grafana:
