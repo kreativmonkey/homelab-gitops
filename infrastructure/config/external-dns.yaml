@@ -24,20 +24,18 @@ spec:
         name: external-dns-repo
         namespace: flux-system
   values:
-    provider: webhook
-    sidecar:
-      enabled: true
-      image:
-        repository: mconfalonieri/external-dns-hetzner-webhook
-        tag: latest
-      env:
-        - name: HETZNER_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: hetzner-api-token
-              key: api-token
-    webhookProvider:
-      url: http://localhost:8888
+    provider:
+      name: webhook
+      webhook:
+        image:
+          repository: mconfalonieri/external-dns-hetzner-webhook
+          tag: latest
+        env:
+          - name: HETZNER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: hetzner-api-token
+                key: api-token
     domainFilters:
       - cluster.f4mily.net
     policy: sync
