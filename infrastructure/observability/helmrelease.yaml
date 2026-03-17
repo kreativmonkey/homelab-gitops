@@ -20,9 +20,8 @@ spec:
     global:
       priorityClassName: "homelab-infrastructure"
     
-    vmsingle:
-      enabled: true
-      persistence:
+    server:
+      persistentVolume:
         enabled: true
         storageClass: longhorn
         size: 10Gi
