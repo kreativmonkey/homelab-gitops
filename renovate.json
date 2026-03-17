@@ -16,10 +16,19 @@
   "flux": {
     "enabled": true
   },
+  "helm-values": {
+    "enabled": true,
+    "fileMatch": ["(^|/)values\\.yaml$", "(^|/)values-.+\\.yaml$", "deployment\\.yaml$"]
+  },
   "packageRules": [
     {
       "matchManagers": ["kubernetes", "flux"],
       "groupName": "kubernetes dependencies",
+      "automerge": false
+    },
+    {
+      "matchManagers": ["helm-values"],
+      "groupName": "helm dependencies",
       "automerge": false
     },
     {
