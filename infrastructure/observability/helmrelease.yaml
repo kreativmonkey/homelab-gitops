@@ -35,28 +35,10 @@ spec:
             memory: 512Mi
     
     alertmanager:
-      enabled: true
-      alertmanagerSpec:
-        resources:
-          requests:
-            cpu: 50m
-            memory: 128Mi
-          limits:
-            cpu: 200m
-            memory: 256Mi
+      enabled: false
     
     grafana:
-      enabled: true
-      admin:
-        existingSecret: grafana-credentials
-        passwordKey: admin-password
-      resources:
-        requests:
-          cpu: 50m
-          memory: 128Mi
-        limits:
-          cpu: 200m
-          memory: 256Mi
+      enabled: false
     
     vmsingle:
       enabled: true
@@ -69,11 +51,4 @@ spec:
           memory: 512Mi
     
     vmagent:
-      enabled: true
-      resources:
-        requests:
-          cpu: 50m
-          memory: 128Mi
-        limits:
-          cpu: 200m
-          memory: 256Mi
+      enabled: false
