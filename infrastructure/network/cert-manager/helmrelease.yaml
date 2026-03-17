@@ -1,12 +1,3 @@
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: jetstack-repo
-  namespace: flux-system
-spec:
-  interval: 24h
-  url: https://charts.jetstack.io
----
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -34,15 +25,6 @@ spec:
       limits:
         cpu: 200m
         memory: 256Mi
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: hetzner-webhook-repo
-  namespace: flux-system
-spec:
-  interval: 24h
-  url: https://charts.hetzner.cloud
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
