@@ -12,6 +12,8 @@ kind: HelmRelease
 metadata:
   name: sterling-pdf
   namespace: sterling-pdf
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: cert-manager.io/Certificate/cert-manager/wildcard-f4mily-net
 spec:
   interval: 1h
   targetNamespace: sterling-pdf
@@ -68,12 +70,13 @@ spec:
       ingressClassName: nginx
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-production
+        cert-manager.io/uses-release-name: "true"
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
       hosts:
         - name: sterling-pdf.f4mily.net
           path: /
           tls: true
       tls:
-        - secretName: sterling-pdf-tls
+        - secretName: wildcard-f4mily-net-tls
           hosts:
             - sterling-pdf.f4mily.net
