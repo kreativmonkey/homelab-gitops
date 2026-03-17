@@ -17,10 +17,6 @@ This repository is the **Single Source of Truth** for my Kubernetes homelab. It 
 | **Automation** | [Renovate Bot](https://github.com/mend/renovate-ce-ee/tree/main) | Automated dependency and image updates |
 | **Data Policy** | [Velero](https://velero.io/) | Volume snapshots and offsite backups |
 
-Understood. I have refined the repository structure to match your specific layout. This structure perfectly balances **dependency management** (Infrastructure must be ready before Apps start) and **logical separation** of concerns.
-
-Here is the updated **README.md** in English, reflecting your exact directory schema.
-
 ## 🏗 Infrastructure Principles
 
 ### 1. Dependency Management
@@ -82,10 +78,6 @@ The repository follows a Kustomize-friendly structure to separate base definitio
     * **NFS:** Used for bulk data (Media, Backups).
 4.  **Observability:** Every service must export metrics via a `ServiceMonitor`.
 5.  **Automated Maintenance:** Renovate handles version bumps; Talos handles node-level immutability.
-
-Excellent addition. In a GitOps workflow, managing secrets securely is non-negotiable. Using **SOPS** (Secrets Operations) with **age** is the industry standard for FluxCD because it allows you to commit encrypted secrets directly to Git, which Flux can then decrypt on-the-fly using a private key stored in the cluster.
-
-I will update the **Infrastructure Overview**, **Infrastructure Principles**, and provide a new **Secret Management** section for the README.
 
 ---
 
