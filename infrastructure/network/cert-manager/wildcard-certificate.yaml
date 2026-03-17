@@ -3,6 +3,8 @@ kind: Certificate
 metadata:
   name: wildcard-f4mily-net
   namespace: cert-manager
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/cert-manager/cert-manager
 spec:
   secretName: wildcard-f4mily-net-tls
   issuerRef:
