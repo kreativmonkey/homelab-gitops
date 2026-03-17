@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: victoria-metrics-k8s-stack
-      version: "0.9.1"
+      version: "0.45.0"
       sourceRef:
         kind: HelmRepository
         name: victoriametrics-repo
@@ -19,29 +19,17 @@ spec:
       priorityClassName: "homelab-infrastructure"
     
     victoria-metrics-operator:
-      enabled: true
-    
-    prometheus:
-      enabled: true
-      prometheusSpec:
-        retention: 7d
-        retentionSize: 10GB
-        resources:
-          requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-    
-    alertmanager:
       enabled: false
     
-    grafana:
+    prometheus:
       enabled: false
     
     vmsingle:
       enabled: true
+      persistence:
+        enabled: true
+        storageClass: longhorn
+        size: 10Gi
       resources:
         requests:
           cpu: 50m
@@ -49,6 +37,3 @@ spec:
         limits:
           cpu: 250m
           memory: 512Mi
-    
-    vmagent:
-      enabled: false
