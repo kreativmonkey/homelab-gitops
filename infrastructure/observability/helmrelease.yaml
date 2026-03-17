@@ -3,13 +3,15 @@ kind: HelmRelease
 metadata:
   name: vm
   namespace: monitoring
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: cert-manager.io/Certificate/cert-manager/wildcard-f4mily-net
 spec:
   interval: 1h
   targetNamespace: monitoring
   chart:
     spec:
       chart: victoria-metrics-single
-      version: "1.106.0"
+      version: "0.33.0"
       sourceRef:
         kind: HelmRepository
         name: victoriametrics-repo
@@ -41,3 +43,39 @@ spec:
         limits:
           cpu: 100m
           memory: 128Mi
+
+    vmselect:
+      enabled: true
+      ingress:
+        enabled: true
+        className: nginx
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        hosts:
+          - host: monitoring.cluster.f4mily.net
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: wildcard-f4mily-net-tls
+            hosts:
+              - monitoring.cluster.f4mily.net
+
+    grafana:
+      enabled: true
+      ingress:
+        enabled: true
+        className: nginx
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        hosts:
+          - host: grafana.cluster.f4mily.net
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: wildcard-f4mily-net-tls
+            hosts:
+              - grafana.cluster.f4mily.net
