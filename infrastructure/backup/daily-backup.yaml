@@ -1,0 +1,41 @@
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: daily-backup
+  namespace: velero
+spec:
+  schedule: "0 2 * * *"
+  template:
+    includedNamespaces:
+      - default
+      - monitoring
+      - longhorn-system
+      - external-dns
+      - ingress-nginx
+    excludedResources:
+      - events
+      - events.events.k8s.io
+    storageLocation: default
+    volumeSnapshotLocations:
+      - default
+    ttl: 168h
+    includeClusterResources: true
+    snapshotVolumes: false
+    defaultVolumesToRestic: true
+    hooks:
+      resources:
+        - name: longhorn-backup
+          includedNamespaces:
+            - longhorn-system
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: longhorn
+          pre:
+            - exec:
+                container: longhorn-manager
+                command:
+                  - /bin/sh
+                  - -c
+                  - echo "Pre-hook: Longhorn backup triggered"
+                onError: Fail
+                timeout: 300s
