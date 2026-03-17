@@ -58,4 +58,10 @@ spec:
       limits:
         cpu: 500m
         memory: 512Mi
+    metrics:
+      enabled: true
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8085"
 
