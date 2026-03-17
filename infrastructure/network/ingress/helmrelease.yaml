@@ -30,4 +30,9 @@ spec:
           cpu: 500m
           memory: 256Mi
       metrics:
-        enabled: false
+        enabled: true
+        service:
+          annotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "10254"
+            prometheus.io/path: "/metrics"
