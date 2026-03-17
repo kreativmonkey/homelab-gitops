@@ -12,6 +12,8 @@ kind: HelmRelease
 metadata:
   name: kite
   namespace: kite
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: cert-manager.io/Certificate/cert-manager/wildcard-f4mily-net
 spec:
   interval: 1h
   targetNamespace: kite
@@ -38,12 +40,17 @@ spec:
       className: nginx
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-production
+        cert-manager.io/uses-release-name: "true"
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
       hosts:
         - host: kite.f4mily.net
           paths:
             - path: /
               pathType: Prefix
+      tls:
+        - secretName: wildcard-f4mily-net-tls
+          hosts:
+            - kite.f4mily.net
     db:
       type: sqlite
       sqlite:
