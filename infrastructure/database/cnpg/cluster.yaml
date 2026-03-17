@@ -1,0 +1,43 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: homelab-postgres
+  namespace: cnpg-system
+  labels:
+    app.kubernetes.io/name: homelab-postgres
+    app.kubernetes.io/managed-by: cnpg
+spec:
+  description: "Homelab PostgreSQL cluster"
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  
+  instances: 1
+  
+  postgresql:
+    parameters:
+      max_connections: "50"
+      shared_buffers: 64MB
+      effective_cache_size: 256MB
+  
+  storage:
+    storageClassName: longhorn
+    size: 10Gi
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  monitoring:
+    enabled: true
+
+  services:
+    primary:
+      type: ClusterIP
+    replicas:
+      type: ClusterIP
+  
+  affinity:
+    podAntiAffinityType: preferredDuringSchedulingIgnoredDuringExecution
