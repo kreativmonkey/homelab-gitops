@@ -22,9 +22,7 @@ spec:
     
     server:
       persistentVolume:
-        enabled: true
-        storageClass: longhorn
-        size: 10Gi
+        enabled: false
       resources:
         requests:
           cpu: 50m
