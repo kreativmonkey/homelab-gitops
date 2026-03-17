@@ -12,6 +12,7 @@ spec:
       - longhorn-system
       - external-dns
       - ingress-nginx
+      - cnpg-system
     excludedResources:
       - events
       - events.events.k8s.io
