@@ -18,7 +18,7 @@ spec:
   chart:
     spec:
       chart: external-dns
-      version: "1.14.3"
+      version: "1.20.0"
       sourceRef:
         kind: HelmRepository
         name: external-dns-repo
@@ -50,6 +50,10 @@ spec:
             port: http-webhook
           initialDelaySeconds: 10
           timeoutSeconds: 5
+        service:
+          port: 8888
+    extraArgs:
+      - --webhook-provider-url=http://localhost:8888
     domainFilters:
       - cluster.f4mily.net
     policy: sync
