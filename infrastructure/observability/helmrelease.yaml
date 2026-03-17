@@ -1,0 +1,79 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoriametrics
+  namespace: monitoring
+spec:
+  interval: 1h
+  targetNamespace: monitoring
+  chart:
+    spec:
+      chart: victoria-metrics-k8s-stack
+      version: "0.9.1"
+      sourceRef:
+        kind: HelmRepository
+        name: victoriametrics-repo
+        namespace: flux-system
+  values:
+    global:
+      priorityClassName: "homelab-infrastructure"
+    
+    victoria-metrics-operator:
+      enabled: true
+    
+    prometheus:
+      enabled: true
+      prometheusSpec:
+        retention: 7d
+        retentionSize: 10GB
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+    
+    alertmanager:
+      enabled: true
+      alertmanagerSpec:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+    
+    grafana:
+      enabled: true
+      admin:
+        existingSecret: grafana-credentials
+        passwordKey: admin-password
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+    
+    vmsingle:
+      enabled: true
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          cpu: 250m
+          memory: 512Mi
+    
+    vmagent:
+      enabled: true
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
