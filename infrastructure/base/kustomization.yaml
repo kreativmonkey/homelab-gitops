@@ -3,6 +3,5 @@ kind: Kustomization
 resources:
   - namespaces.yaml
   - priorityclass.yaml
-  - cert-manager.yaml
-  - ingress-nginx.yaml
-  - longhorn.yaml
+  - ingressclass.yaml
+  - hetzner.secret.yaml
