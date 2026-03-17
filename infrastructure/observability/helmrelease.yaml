@@ -1,15 +1,15 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: victoriametrics
+  name: vm
   namespace: monitoring
 spec:
   interval: 1h
   targetNamespace: monitoring
   chart:
     spec:
-      chart: victoria-metrics-k8s-stack
-      version: "0.45.0"
+      chart: victoria-metrics-single
+      version: "1.106.0"
       sourceRef:
         kind: HelmRepository
         name: victoriametrics-repo
@@ -17,12 +17,6 @@ spec:
   values:
     global:
       priorityClassName: "homelab-infrastructure"
-    
-    victoria-metrics-operator:
-      enabled: false
-    
-    prometheus:
-      enabled: false
     
     vmsingle:
       enabled: true
@@ -37,3 +31,13 @@ spec:
         limits:
           cpu: 250m
           memory: 512Mi
+    
+    vmagent:
+      enabled: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
