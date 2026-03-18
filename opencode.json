@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "architect": {
+      "description": "Entwirft K8s-Infrastruktur-Blueprints",
+      "mode": "subagent",
+      "model": "opencode/minimax-m2.5-free",
+      "prompt": "Du bist Cloud-Architekt. Fokus auf Skalierbarkeit, Resource-Quotas und High Availability im Homelab-Kontext.",
+      "tools": { "read": true, "write": false }
+    },
+    "k8s-specialist": {
+      "description": "Erstellt K8s Manifeste und Helm Charts",
+      "mode": "subagent",
+      "model": "opencode/big-pickle",
+      "prompt": "Du bist Experte für Kubernetes-Ressourcen. Nutze Best Practices für Labels, Selectors und SecurityContexts.",
+      "tools": { "read": true, "write": true, "edit": true }
+    },
+    "security-audit": {
+      "description": "Prüft auf Sicherheitsrisiken und Fehlkonfigurationen",
+      "mode": "subagent",
+      "model": "opencode/big-pickle",
+      "prompt": "Du bist Security Auditor. Suche nach Privileged Escalation, fehlenden NetworkPolicies und Klartext-Secrets.",
+      "tools": { "read": true, "write": false, "edit": false }
+    },
+    "integration-test": {
+      "description": "Führt Kustomize-Builds und K8s Server-Side Dry-Runs durch",
+      "mode": "subagent",
+      "model": "opencode/big-pickle",
+      "prompt": "Du bist QA-Engineer für GitOps. Dein Ziel ist es, API-Rejections und Kustomize-Fehler vor dem Git-Commit abzufangen.",
+      "tools": { "read": true, "write": false, "edit": false, "execute": true }
+    }
+  }
+}
