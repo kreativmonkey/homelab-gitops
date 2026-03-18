@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config
+  namespace: homepage
+data:
+  config.yaml: |
+    # Homepage Configuration
+    # Documentation: https://gethomepage.dev/latest/configs/
+
+    language: "de"
+    title: "Homelab Dashboard"
+
+    # Header configuration
+    header:
+      # Left side
+      left:
+        - search:
+            provider: duckduckgo
+            focus: true
+      # Right side
+      right:
+        - clock:
+            format: "HH:mm"
+            dateFormat: "DD.MM.YYYY"
+        - kubernetes:
+            clusterName: homelab
+            showCluster: true
+
+    # Kubernetes Widget Configuration
+    kubernetes:
+      mode: cluster
+      refreshInterval: 30000
+
+    # Service Definitions
+    services:
+      # Infrastructure Section
+      - name: Infrastructure
+        icon: mdi:server-network
+        items:
+          - name: Monitoring
+            description: VictoriaMetrics Dashboard
+            icon: mdi:chart-line
+            href: "https://monitoring.cluster.f4mily.net"
+            external: true
+            provider: kubernetes
+            namespace: monitoring
+            service: monitoring-vm-victoria-metrics-single-server
+            port: 8428
+
+          - name: Kite
+            description: Kubernetes Dashboard
+            icon: mdi:kubernetes
+            href: "https://kite.f4mily.net"
+            external: true
+            provider: kubernetes
+            namespace: kite
+            service: kite
+            port: 8080
+
+          - name: Sterling PDF
+            description: PDF Tools
+            icon: mdi:file-document-outline
+            href: "https://sterling-pdf.f4mily.net"
+            external: true
+            provider: kubernetes
+            namespace: sterling-pdf
+            service: sterling-pdf
+            port: 8080
+
+          - name: Longhorn
+            description: Distributed Storage
+            icon: mdi:database
+            href: "https://longhorn.cluster.f4mily.net"
+            external: true
+            provider: kubernetes
+            namespace: longhorn-system
+            service: longhorn-frontend
+            port: 80
+
+    # Widgets (right side panels)
+    widgets:
+      # Resource usage
+      - resources:
+          expanded: true
+          cpuColor: "green"
+          memoryColor: "blue"
+          diskColor: "yellow"
+
+      # Kubernetes cluster status
+      - kubernetes:
+          showCluster: true
+          showContainers: true
+          showNodes: true
+          showPods: true
+          showVolumes: false
+
+      # Service status (auto-discovery)
+      - services:
+          filter:
+            - namespace: monitoring
+            - namespace: kite
+            - namespace: sterling-pdf
+            - namespace: longhorn-system
+          showStatus: true
