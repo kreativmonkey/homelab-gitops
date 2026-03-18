@@ -3,5 +3,6 @@ kind: Kustomization
 resources:
   - clusterissuer.yaml
   - wildcard-certificate.yaml
+  - cluster-certificate.yaml
 
 

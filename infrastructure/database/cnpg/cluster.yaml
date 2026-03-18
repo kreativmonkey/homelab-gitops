@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/managed-by: cnpg
 spec:
   description: "Homelab PostgreSQL cluster"
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.2
   
   instances: 1
   
