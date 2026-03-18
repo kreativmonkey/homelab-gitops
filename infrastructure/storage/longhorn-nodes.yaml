@@ -1,0 +1,53 @@
+apiVersion: longhorn.io/v1beta2
+kind: Node
+metadata:
+  name: talos-cp-0
+  namespace: longhorn-system
+  labels:
+    longhorn.io/node-name: talos-cp-0
+spec:
+  allowScheduling: true
+  name: talos-cp-0
+  disks:
+    default:
+      allowScheduling: true
+      diskType: filesystem
+      path: /var/lib/longhorn
+      storageReserved: 0
+      tags: []
+---
+apiVersion: longhorn.io/v1beta2
+kind: Node
+metadata:
+  name: talos-cp-1
+  namespace: longhorn-system
+  labels:
+    longhorn.io/node-name: talos-cp-1
+spec:
+  allowScheduling: true
+  name: talos-cp-1
+  disks:
+    default:
+      allowScheduling: true
+      diskType: filesystem
+      path: /var/lib/longhorn
+      storageReserved: 0
+      tags: []
+---
+apiVersion: longhorn.io/v1beta2
+kind: Node
+metadata:
+  name: talos-cp-2
+  namespace: longhorn-system
+  labels:
+    longhorn.io/node-name: talos-cp-2
+spec:
+  allowScheduling: true
+  name: talos-cp-2
+  disks:
+    default:
+      allowScheduling: true
+      diskType: filesystem
+      path: /var/lib/longhorn
+      storageReserved: 0
+      tags: []
