@@ -31,13 +31,7 @@ spec:
       memory: 1Gi
   
   monitoring:
-    enabled: true
+    enablePodMonitor: true
 
-  services:
-    primary:
-      type: ClusterIP
-    replicas:
-      type: ClusterIP
-  
   affinity:
     podAntiAffinityType: preferredDuringSchedulingIgnoredDuringExecution
