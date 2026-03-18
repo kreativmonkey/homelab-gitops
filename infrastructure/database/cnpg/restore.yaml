@@ -33,5 +33,4 @@ spec:
                   done
                   echo "PostgreSQL is ready"
               onError: Continue
-              timeout: 300s
               waitTimeout: 300s
