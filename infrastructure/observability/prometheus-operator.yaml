@@ -30,11 +30,11 @@ spec:
           - url: http://monitoring-vm-victoria-metrics-single-server.monitoring:8428/api/v1/write
         resources:
           requests:
-            cpu: 50m
-            memory: 256Mi
+            cpu: 20m
+            memory: 128Mi
           limits:
-            cpu: 200m
-            memory: 512Mi
+            cpu: 100m
+            memory: 256Mi
     alertmanager:
       enabled: false
     grafana:
@@ -44,11 +44,11 @@ spec:
       createPrometheusResource: false
       resources:
         requests:
-          cpu: 50m
-          memory: 128Mi
+          cpu: 20m
+          memory: 64Mi
         limits:
-          cpu: 200m
-          memory: 256Mi
+          cpu: 100m
+          memory: 128Mi
     kubeStateMetrics:
       enabled: false
     nodeExporter:
