@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: audiobookshelf
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    external-dns.alpha.kubernetes.io/hostname: "audiobooks.deinedomain.tld"
+    nginx.ingress.kubernetes.io/proxy-body-size: "1000m" # Erlaubt große Hörbuch-Uploads via Web-UI
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - audiobooks.deinedomain.tld
+      secretName: audiobookshelf-tls
+  rules:
+    - host: audiobooks.deinedomain.tld
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: audiobookshelf
+                port:
+                  number: 80
