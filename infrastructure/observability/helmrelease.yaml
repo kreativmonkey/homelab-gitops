@@ -23,7 +23,7 @@ spec:
     server:
       persistentVolume:
         enabled: true
-        storageClass: "longhorn"
+        storageClassName: "longhorn"
         size: 10Gi
       resources:
         requests:
