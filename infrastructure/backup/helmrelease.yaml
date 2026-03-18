@@ -26,7 +26,7 @@ spec:
         bucket: velero
         config:
           region: us-east-1
-          s3Url: http://192.168.10.94:9000
+          s3Url: http://192.168.10.94:30186
           insecureSkipTLSVerify: "true"
           s3ForcePathStyle: "true"
       volumeSnapshotLocation:
