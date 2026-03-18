@@ -34,4 +34,4 @@ spec:
     enablePodMonitor: true
 
   affinity:
-    podAntiAffinityType: preferredDuringSchedulingIgnoredDuringExecution
+    podAntiAffinityType: preferred
