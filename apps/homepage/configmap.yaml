@@ -4,6 +4,10 @@ metadata:
   name: homepage-config
   namespace: homepage
 data:
+  settings.yaml: |
+    ---
+    # Homepage Settings
+    # Leave empty to use defaults
   config.yaml: |
     # Homepage Configuration
     # Documentation: https://gethomepage.dev/latest/configs/
