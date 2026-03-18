@@ -27,7 +27,7 @@ spec:
           matchLabels:
             kubernetes.io/metadata.name: monitoring
         remoteWrite:
-          - url: http://vm-vm-metrics-server.monitoring:8428/api/v1/write
+          - url: http://monitoring-vm-victoria-metrics-single-server.monitoring:8428/api/v1/write
         resources:
           requests:
             cpu: 50m
