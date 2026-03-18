@@ -4,5 +4,6 @@ resources:
   - clusterissuer.yaml
   - wildcard-certificate.yaml
   - cluster-certificate.yaml
+  - media-certificate.yaml
 
 
