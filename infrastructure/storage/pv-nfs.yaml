@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-audiobooks
+  labels:
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 1Ti # K8s benötigt einen Wert, das NAS ignoriert das Limit de facto
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  nfs:
+    path: /mnt/storagepool/Media
+    server: 192.168.10.94
