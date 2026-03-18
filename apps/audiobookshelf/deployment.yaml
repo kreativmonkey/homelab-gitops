@@ -1,84 +1,124 @@
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: audiobookshelf-repo
-  namespace: flux-system
+  name: audiobookshelf
+  namespace: audiobookshelf
 spec:
-  interval: 24h
-  url: https://charts.christianhuth.de
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: audiobookshelf
+  template:
+    metadata:
+      labels:
+        app: audiobookshelf
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: audiobookshelf
+          image: ghcr.io/audiobookshelf/audiobookshelf:2.32.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: TZ
+              value: "Europe/Berlin"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: metadata
+              mountPath: /metadata
+            - name: media
+              mountPath: /audiobooks
+      volumes:
+        - name: config
+          emptyDir: {}
+        - name: metadata
+          emptyDir: {}
+        - name: media
+          persistentVolumeClaim:
+            claimName: audiobookshelf-media
 ---
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: audiobookshelf-media
+  namespace: audiobookshelf
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-media-static
+  resources:
+    requests:
+      storage: 1Ti
+  selector:
+    matchLabels:
+      storage.type: nfs-media
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audiobookshelf
+  namespace: audiobookshelf
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      name: http
+  selector:
+    app: audiobookshelf
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
   name: audiobookshelf
   namespace: audiobookshelf
   annotations:
-    kustomize.toolkit.fluxcd.io/depends-on: cert-manager.io/Certificate/cert-manager/wildcard-media-f4mily-net
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "1000m"
 spec:
-  interval: 1h
-  targetNamespace: audiobookshelf
-  chart:
-    spec:
-      chart: audiobookshelf
-      version: "1.7.1"
-      sourceRef:
-        kind: HelmRepository
-        name: audiobookshelf-repo
-        namespace: flux-system
-  values:
-    replicaCount: 1
-    strategy:
-      type: Recreate
-    image:
-      repository: ghcr.io/audiobookshelf/audiobookshelf
-      tag: "2.32.1"
-    service:
-      port: 80
-    ingress:
-      enabled: true
-      className: nginx
-      annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-production
-        cert-manager.io/uses-release-name: "true"
-        nginx.ingress.kubernetes.io/ssl-redirect: "true"
-      hosts:
-        - host: audible.media.f4mily.net
-          paths:
-            - path: /
-              pathType: Prefix
-      tls:
-        - secretName: wildcard-media-f4mily-net-tls
-          hosts:
-            - audible.media.f4mily.net
-    persistence:
-      enabled: false
-    env:
-      - name: TZ
-        value: "Europe/Berlin"
-    livenessProbe:
-      initialDelaySeconds: 60
-      periodSeconds: 20
-      timeoutSeconds: 10
-      failureThreshold: 5
-    readinessProbe:
-      initialDelaySeconds: 30
-      periodSeconds: 15
-      timeoutSeconds: 10
-      failureThreshold: 4
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "200m"
-      limits:
-        memory: "1024Mi"
-        cpu: "1000m"
-    podSecurityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
-      fsGroup: 1000
-    securityContext:
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: false
-      capabilities:
-        drop:
-          - ALL
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - audible.media.f4mily.net
+      secretName: wildcard-media-f4mily-net-tls
+  rules:
+    - host: audible.media.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: audiobookshelf
+                port:
+                  number: 80
