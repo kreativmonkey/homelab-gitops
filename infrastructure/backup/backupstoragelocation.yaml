@@ -8,7 +8,7 @@ spec:
   objectStorage:
     bucket: velero
     config:
-      region: us-east-1
+      region: home
       s3Url: http://192.168.10.94:30186
       insecureSkipTLSVerify: "true"
       s3ForcePathStyle: "true"
