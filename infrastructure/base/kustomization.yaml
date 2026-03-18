@@ -5,3 +5,4 @@ resources:
   - priorityclass.yaml
   - ingressclass.yaml
   - hetzner.secret.yaml
+  - metrics-server.yaml
