@@ -1,0 +1,100 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: audiobookshelf-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://charts.christianhuth.de
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: audiobookshelf
+  namespace: audiobookshelf
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: cert-manager.io/Certificate/cert-manager/wildcard-media-f4mily-net
+spec:
+  interval: 1h
+  targetNamespace: audiobookshelf
+  chart:
+    spec:
+      chart: audiobookshelf
+      version: "1.7.1"
+      sourceRef:
+        kind: HelmRepository
+        name: audiobookshelf-repo
+        namespace: flux-system
+  values:
+    replicaCount: 1
+    # Recreate strategy required for RWO volumes
+    strategy:
+      type: Recreate
+    image:
+      repository: ghcr.io/audiobookshelf/audiobookshelf
+      tag: "2.32.1"
+    service:
+      port: 80
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+        cert-manager.io/uses-release-name: "true"
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      hosts:
+        - host: audible.media.f4mily.net
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: wildcard-media-f4mily-net-tls
+          hosts:
+            - audible.media.f4mily.net
+    persistence:
+      enabled: true
+      config:
+        enabled: true
+        type: PVC
+        storageClass: longhorn
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        mountPath: /app/config
+      metadata:
+        enabled: true
+        type: PVC
+        storageClass: longhorn
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        mountPath: /app/metadata
+    env:
+      - name: TZ
+        value: "Europe/Berlin"
+    # Relaxed probes to prevent premature restarts
+    livenessProbe:
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 10
+      failureThreshold: 5
+    readinessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 15
+      timeoutSeconds: 10
+      failureThreshold: 4
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "1024Mi"
+        cpu: "1000m"
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      fsGroup: 1000
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
