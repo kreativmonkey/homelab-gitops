@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-cluster-f4mily-net
+  namespace: cert-manager
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/cert-manager/cert-manager
+spec:
+  secretName: wildcard-cluster-f4mily-net-tls
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.cluster.f4mily.net"
+    - "cluster.f4mily.net"
