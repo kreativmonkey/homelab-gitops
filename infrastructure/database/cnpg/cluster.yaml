@@ -19,7 +19,7 @@ spec:
       effective_cache_size: 256MB
   
   storage:
-    storageClassName: longhorn
+    storageClass: longhorn
     size: 10Gi
   
   resources:
