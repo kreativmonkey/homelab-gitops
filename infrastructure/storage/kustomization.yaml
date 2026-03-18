@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - longhorn.yaml
   - ingress.yaml
+  - pv-nfs.yaml
