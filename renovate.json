@@ -14,7 +14,11 @@
     "enabled": true
   },
   "helm-values": {
-    "enabled": true
+    "enabled": true,
+    "fileMatch": [
+      "\\.yaml$",
+      "\\.yml$"
+    ]
   },
   "packageRules": [
     {
