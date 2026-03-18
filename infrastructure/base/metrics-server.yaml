@@ -22,8 +22,8 @@ spec:
       - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
     resources:
       requests:
-        cpu: 100m
-        memory: 256Mi
+        cpu: 50m
+        memory: 64Mi
       limits:
-        cpu: 500m
-        memory: 512Mi
+        cpu: 200m
+        memory: 128Mi
