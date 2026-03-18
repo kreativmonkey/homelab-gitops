@@ -11,7 +11,7 @@ spec:
   chart:
     spec:
       chart: velero
-      version: "6.0.1"
+      version: "12.0.0"
       sourceRef:
         kind: HelmRepository
         name: velero-repo
@@ -20,27 +20,25 @@ spec:
     global:
       priorityClassName: "homelab-infrastructure"
     configuration:
-      provider: aws
       backupStorageLocation:
-        name: default
-        bucket: velero
-        config:
-          region: home
-          s3Url: http://192.168.10.94:30186
-          insecureSkipTLSVerify: "true"
-          s3ForcePathStyle: "true"
+        - name: default
+          bucket: velero
+          default: true
+          provider: aws
+          config:
+            region: home
+            s3Url: http://192.168.10.94:30186
+            insecureSkipTLSVerify: "true"
+            s3ForcePathStyle: "true"
       volumeSnapshotLocation:
-        name: default
-        config:
-          region: home
-      features: EnableCSI
-      restic:
-        enabled: true
+        - name: default
+          provider: aws
+          config:
+            region: home
     credentials:
       existingSecret: velero-credentials
-    deployRestic:
+    nodeAgent:
       enabled: true
-    restic:
       priorityClassName: "homelab-infrastructure"
       resources:
         requests:
@@ -55,13 +53,12 @@ spec:
         requests:
           cpu: 100m
           memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
     metrics:
       enabled: true
       service:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "8085"
-
