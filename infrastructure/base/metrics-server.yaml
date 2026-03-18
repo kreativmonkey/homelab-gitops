@@ -17,6 +17,9 @@ spec:
   values:
     global:
       priorityClassName: "homelab-infrastructure"
+    args:
+      - --kubelet-insecure-tls
+      - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
     resources:
       requests:
         cpu: 100m
