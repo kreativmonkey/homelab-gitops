@@ -51,23 +51,7 @@ spec:
           hosts:
             - audible.media.f4mily.net
     persistence:
-      enabled: true
-      config:
-        enabled: true
-        type: PVC
-        storageClass: longhorn
-        accessMode: ReadWriteOnce
-        size: 1Gi
-        mountPath: /app/config
-      metadata:
-        enabled: true
-        type: PVC
-        storageClass: longhorn
-        accessMode: ReadWriteOnce
-        size: 1Gi
-        mountPath: /app/metadata
-      backup:
-        enabled: false
+      enabled: false
     env:
       - name: TZ
         value: "Europe/Berlin"
