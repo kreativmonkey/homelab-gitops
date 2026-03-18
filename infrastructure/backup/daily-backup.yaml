@@ -22,21 +22,4 @@ spec:
     ttl: 168h
     includeClusterResources: true
     snapshotVolumes: false
-    defaultVolumesToRestic: true
-    hooks:
-      resources:
-        - name: longhorn-backup
-          includedNamespaces:
-            - longhorn-system
-          labelSelector:
-            matchLabels:
-              app.kubernetes.io/name: longhorn
-          pre:
-            - exec:
-                container: longhorn-manager
-                command:
-                  - /bin/sh
-                  - -c
-                  - echo "Pre-hook: Longhorn backup triggered"
-                onError: Fail
-                timeout: 300s
+    defaultVolumesToFsBackup: true
