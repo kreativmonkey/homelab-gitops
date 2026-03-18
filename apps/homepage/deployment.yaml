@@ -44,11 +44,11 @@ spec:
             drop: ["ALL"]
         resources:
           limits:
-            cpu: 500m
-            memory: 256Mi
-          requests:
             cpu: 100m
-            memory: 128Mi
+            memory: 64Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
       volumes:
       - name: config
         configMap:
