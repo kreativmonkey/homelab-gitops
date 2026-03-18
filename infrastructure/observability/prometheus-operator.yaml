@@ -3,8 +3,6 @@ kind: HelmRelease
 metadata:
   name: prometheus-operator
   namespace: monitoring
-  annotations:
-    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/kube-system/metrics-server
 spec:
   interval: 1h
   targetNamespace: monitoring

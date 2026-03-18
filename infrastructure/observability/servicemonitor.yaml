@@ -5,6 +5,8 @@ metadata:
   namespace: monitoring
   labels:
     release: victoriametrics
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/monitoring/prometheus-operator
 spec:
   endpoints:
     - port: metrics
@@ -24,6 +26,8 @@ metadata:
   namespace: monitoring
   labels:
     release: victoriametrics
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/monitoring/prometheus-operator
 spec:
   endpoints:
     - port: tcp-webhook
@@ -45,6 +49,8 @@ metadata:
   namespace: monitoring
   labels:
     release: victoriametrics
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/monitoring/prometheus-operator
 spec:
   endpoints:
     - port: http
