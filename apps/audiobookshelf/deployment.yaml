@@ -63,24 +63,7 @@ spec:
         - name: metadata
           emptyDir: {}
         - name: media
-          persistentVolumeClaim:
-            claimName: audiobookshelf-media
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: audiobookshelf-media
-  namespace: audiobookshelf
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: nfs-media-static
-  resources:
-    requests:
-      storage: 1Ti
-  selector:
-    matchLabels:
-      storage.type: nfs-media
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
