@@ -39,12 +39,9 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /app/config
-        - name: tmp
-          mountPath: /tmp
         securityContext:
           capabilities:
             drop: ["ALL"]
-          readOnlyRootFilesystem: true
         resources:
           limits:
             cpu: 500m
@@ -56,6 +53,4 @@ spec:
       - name: config
         configMap:
           name: homepage-config
-      - name: tmp
-        emptyDir: {}
       priorityClassName: homelab-infrastructure
