@@ -11,7 +11,7 @@ spec:
   chart:
     spec:
       chart: cloudnative-pg
-      version: "1.6.0"
+      version: "0.27.1"
       sourceRef:
         kind: HelmRepository
         name: cnpg-repo
@@ -25,7 +25,7 @@ spec:
       enabled: true
     image:
       repository: ghcr.io/cloudnative-pg/cloudnative-pg
-      tag: "1.6.0"
+      tag: "1.28.1"
     serviceAccount:
       create: true
     crds:

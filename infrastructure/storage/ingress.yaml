@@ -12,7 +12,7 @@ spec:
   tls:
   - hosts:
     - longhorn.cluster.f4mily.net
-    secretName: longhorn-ui-tls
+    secretName: wildcard-cluster-f4mily-net-tls
   rules:
   - host: longhorn.cluster.f4mily.net
     http:
