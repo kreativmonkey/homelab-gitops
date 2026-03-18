@@ -25,14 +25,14 @@ spec:
         name: default
         bucket: velero
         config:
-          region: us-east-1
+          region: home
           s3Url: http://192.168.10.94:30186
           insecureSkipTLSVerify: "true"
           s3ForcePathStyle: "true"
       volumeSnapshotLocation:
         name: default
         config:
-          region: us-east-1
+          region: home
       features: EnableCSI
       restic:
         enabled: true
