@@ -1,4 +1,3 @@
 ressources:
   - ../network/base
-  - ../observability/base
   - ../backup/base
