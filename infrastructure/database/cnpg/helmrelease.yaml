@@ -8,6 +8,11 @@ metadata:
 spec:
   interval: 1h
   targetNamespace: cnpg-system
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  wait: true
   chart:
     spec:
       chart: cloudnative-pg
