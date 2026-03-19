@@ -5,4 +5,4 @@ resources:
   - helmrelease.yaml
   - datasources-configmap.yaml
   - ingress.yaml
-namespace: monitoring
+
