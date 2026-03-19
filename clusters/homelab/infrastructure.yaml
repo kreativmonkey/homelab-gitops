@@ -28,7 +28,7 @@ spec:
     - name: infra-sources
   interval: 1h
   retryInterval: 1m
-  path: ./infrastructure/sources
+  path: ./infrastructure/storage
   prune: true
   sourceRef:
     kind: GitRepository
