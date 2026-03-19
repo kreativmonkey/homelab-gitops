@@ -1,3 +1,5 @@
 ressources:
-  - ../network/base
+  - ../network/cert-manager
+  - ../network/external-dns
+  - ../network/ingress
   - ../backup/base
