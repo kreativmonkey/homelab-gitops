@@ -57,40 +57,55 @@ spec:
         cpu: 500m
         memory: 512Mi
 
-    # Dashboard providers from ConfigMap
+    # Dashboard providers
     dashboardProviders:
       dashboardproviders.yaml:
         apiVersion: 1
-        providers: []
+        providers:
+          - name: default
+            orgId: 1
+            folder: ""
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /tmp/dashboards
 
-    # Dashboards from ConfigMap
+    # Dashboards loaded from grafana.com
     dashboards:
       default:
+        # Kubernetes cluster overview (works with Prometheus-compatible datasources)
         kubernetes-cluster:
-          gnetId: 315
-          revision: 2
-          datasource: Prometheus
-        kubernetes-nodes:
-          gnetId: 11074
+          gnetId: 7249
           revision: 1
-          datasource: Prometheus
+          datasource: VictoriaMetrics
+        # Node exporter full
+        node-exporter:
+          gnetId: 1860
+          revision: 37
+          datasource: VictoriaMetrics
+        # VictoriaMetrics single-node self-monitoring
+        victoriametrics:
+          gnetId: 10229
+          revision: 22
+          datasource: VictoriaMetrics
 
     # Sidecar for datasources and dashboards
     sidecar:
       datasources:
         enabled: true
         initDatasources: true
-        search:
-          namespace: monitoring
-          label: app
-          value: grafana
+        label: grafana_datasource
+        labelValue: "1"
       dashboards:
         enabled: true
         initDashboards: true
-        search:
-          namespace: monitoring
-          label: app
-          value: grafana
+        label: grafana_dashboard
+        labelValue: "1"
+        folder: /tmp/dashboards
+        provider:
+          name: default
+          foldersFromFilesStructure: false
 
     # Backup annotation
     podAnnotations:
