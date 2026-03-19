@@ -5,3 +5,4 @@ resources:
   - sterling-pdf
   - kite
   - audiobookshelf
+  - monitoring/victoria-metrics
