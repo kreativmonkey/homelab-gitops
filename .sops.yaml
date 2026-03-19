@@ -4,3 +4,8 @@ creation_rules:
     # Der LOKALE Age Public Key (Beginnt meist mit age1...)
     # Der zugehörige Private Key wurde über Terraform ins Cluster deployt
     age: "age1u5lcvuuwd4lk7f3xewjk70j75yuh68myr89qkd0e8d44zgyjleeqw03vqs"
+    # Nur Werte in data und stringData verschlüsseln, nicht die YAML-Struktur
+    key_groups:
+      - age:
+          - "age1u5lcvuuwd4lk7f3xewjk70j75yuh68myr89qkd0e8d44zgyjleeqw03vqs"
+        encrypted_regex: '^(data|stringData)$'
