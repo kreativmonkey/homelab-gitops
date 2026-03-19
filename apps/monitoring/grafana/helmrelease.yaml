@@ -35,6 +35,19 @@ spec:
         drop:
           - ALL
 
+    # Extra volume mounts needed for readOnlyRootFilesystem + plugin installer
+    extraVolumes:
+      - name: tmp
+        emptyDir: {}
+      - name: plugins-dir
+        emptyDir: {}
+
+    extraVolumeMounts:
+      - name: tmp
+        mountPath: /tmp
+      - name: plugins-dir
+        mountPath: /var/lib/grafana/plugins
+
     # Ingress disabled - use separate Ingress resource
     ingress:
       enabled: false
