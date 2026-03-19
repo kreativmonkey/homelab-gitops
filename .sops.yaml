@@ -5,7 +5,4 @@ creation_rules:
     # Der zugehörige Private Key wurde über Terraform ins Cluster deployt
     age: "REMOVED_BY_HISTORY_REWRITE"
     # Nur Werte in data und stringData verschlüsseln, nicht die YAML-Struktur
-    key_groups:
-      - age:
-          - "REMOVED_BY_HISTORY_REWRITE"
-        encrypted_regex: '^(data|stringData)$'
+    encrypted_regex: '^(data|stringData)$'
