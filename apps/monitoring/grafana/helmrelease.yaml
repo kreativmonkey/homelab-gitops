@@ -74,20 +74,20 @@ spec:
     # Dashboards loaded from grafana.com
     dashboards:
       default:
-        # Kubernetes cluster overview (works with Prometheus-compatible datasources)
-        kubernetes-cluster:
-          gnetId: 7249
-          revision: 1
+        # VictoriaMetrics single-node self-monitoring
+        victoriametrics-single:
+          gnetId: 10229
+          revision: 22
           datasource: VictoriaMetrics
         # Node exporter full
         node-exporter:
           gnetId: 1860
           revision: 37
           datasource: VictoriaMetrics
-        # VictoriaMetrics single-node self-monitoring
-        victoriametrics:
-          gnetId: 10229
-          revision: 22
+        # Kubernetes cluster overview
+        kubernetes-cluster:
+          gnetId: 7249
+          revision: 1
           datasource: VictoriaMetrics
 
     # Sidecar for datasources and dashboards
@@ -106,6 +106,10 @@ spec:
         provider:
           name: default
           foldersFromFilesStructure: false
+
+    # Install VictoriaMetrics native datasource plugin
+    plugins:
+      - victoriametrics-metrics-datasource
 
     # Backup annotation
     podAnnotations:

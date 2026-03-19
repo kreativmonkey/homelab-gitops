@@ -11,7 +11,7 @@ data:
     apiVersion: 1
     datasources:
       - name: VictoriaMetrics
-        type: prometheus
+        type: victoriametrics-metrics-datasource
         access: proxy
         url: http://victoria-metrics-single:8428
         isDefault: true
