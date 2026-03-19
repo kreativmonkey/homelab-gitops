@@ -5,5 +5,4 @@ resources:
   - helmrelease.yaml
   - ingress.yaml
   - vmalert-rules-configmap.yaml
-  - servicemonitor.yaml
-namespace: monitoring
+
