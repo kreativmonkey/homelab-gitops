@@ -6,7 +6,7 @@ metadata:
 spec:
   interval: 1h
   retryInterval: 1m
-  path: ./infrastructure/seurces
+  path: ./infrastructure/sources
   prune: true
   sourceRef:
     kind: GitRepository
