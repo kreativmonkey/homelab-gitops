@@ -1,0 +1,97 @@
+# apps/monitoring/grafana/helmrelease.yaml
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana
+  namespace: monitoring
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/monitoring/victoria-metrics
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: grafana
+      version: "8.5.5"
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community-repo
+        namespace: flux-system
+  values:
+    admin:
+      existingSecret: grafana-admin-credentials
+      userKey: admin-username
+      passwordKey: admin-password
+
+    # Security Context
+    podSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+
+    # Ingress disabled - use separate Ingress resource
+    ingress:
+      enabled: false
+
+    # Persistence
+    persistence:
+      enabled: true
+      storageClassName: longhorn
+      size: 2Gi
+
+    # Priority Class
+    priorityClassName: "homelab-infrastructure"
+
+    # Resources
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    # Dashboard providers from ConfigMap
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers: []
+
+    # Dashboards from ConfigMap
+    dashboards:
+      default:
+        kubernetes-cluster:
+          gnetId: 315
+          revision: 2
+          datasource: Prometheus
+        kubernetes-nodes:
+          gnetId: 11074
+          revision: 1
+          datasource: Prometheus
+
+    # Sidecar for datasources and dashboards
+    sidecar:
+      datasources:
+        enabled: true
+        initDatasources: true
+        search:
+          namespace: monitoring
+          label: app
+          value: grafana
+      dashboards:
+        enabled: true
+        initDashboards: true
+        search:
+          namespace: monitoring
+          label: app
+          value: grafana
+
+    # Backup annotation
+    podAnnotations:
+      backup.velero.io/backup-volumes: grafana-storage
