@@ -65,7 +65,7 @@ spec:
   timeout: 10m
   dependsOn:
     - name: infra-storage
-  path: ./infrastructure/networking/base
+  path: ./infrastructure/network/base
   prune: true
   sourceRef:
     kind: GitRepository
