@@ -1,12 +1,12 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: infra-base
+  name: infra-sources
   namespace: flux-system
 spec:
   interval: 1h
   retryInterval: 1m
-  path: ./infrastructure/base
+  path: ./infrastructure/seurces
   prune: true
   sourceRef:
     kind: GitRepository
@@ -21,11 +21,11 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: infra-sources
+  name: infra-storage
   namespace: flux-system
 spec:
   dependsOn:
-    - name: infra-base
+    - name: infra-sources
   interval: 1h
   retryInterval: 1m
   path: ./infrastructure/sources
@@ -39,14 +39,14 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: infra-storage
+  name: infra-base
   namespace: flux-system
 spec:
   dependsOn:
-    - name: infra-sources
+    - name: infra-storage
   interval: 1h
   retryInterval: 1m
-  path: ./infrastructure/storage
+  path: ./infrastructure/base
   prune: true
   sourceRef:
     kind: GitRepository
@@ -57,38 +57,17 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: infra-networking-base
+  name: infra-config
   namespace: flux-system
 spec:
   interval: 1h
   retryInterval: 1m
   timeout: 10m
   dependsOn:
-    - name: infra-storage
-  path: ./infrastructure/network/base
+    - name: infra-base
+  path: ./infrastructure/config
   prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
   wait: true
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: infrastructure
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 10m
-  dependsOn:
-    - name: infra-networking-base
-  path: ./infrastructure
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
