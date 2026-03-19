@@ -2,4 +2,4 @@ resources:
   - ../network/cert-manager
   - ../network/external-dns
   - ../network/ingress
-  - ../backup/base
+  - ../backup
