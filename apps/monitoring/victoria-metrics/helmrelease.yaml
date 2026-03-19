@@ -12,7 +12,7 @@ spec:
       version: "0.10.2"
       sourceRef:
         kind: HelmRepository
-        name: victoria-metrics-charts
+        name: victoriametrics-repo
         namespace: flux-system
   values:
     server:
