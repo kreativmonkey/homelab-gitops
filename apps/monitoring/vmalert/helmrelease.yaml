@@ -21,10 +21,6 @@ spec:
     image:
       repository: victoriametrics/vmalert
       tag: v1.138.0
-    remoteWriteUrls:
-      - http://victoria-metrics-single.monitoring.svc:8428/api/v1/write
-    alertmanager:
-      url: http://victoria-metrics-alertmanager.monitoring.svc:9093
     podAnnotations:
       prometheus.io/scrape: "true"
       prometheus.io/port: "8080"
@@ -45,11 +41,12 @@ spec:
       limits:
         cpu: 500m
         memory: 256Mi
-    notifier:
-      url: http://victoria-metrics-alertmanager.monitoring.svc:9093/api/v1/alerts
-    rule_files:
-      - /etc/vmalert/*.rules
-    config:
+    datasource:
+      url: http://victoria-metrics-single.monitoring.svc:8428
+    remoteWrite:
+      url: http://victoria-metrics-single.monitoring.svc:8428/api/v1/write
+    alertmanager:
+      url: ""
       groups:
         - name: kubernetes
           interval: 30s
