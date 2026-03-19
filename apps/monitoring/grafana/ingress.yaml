@@ -5,6 +5,7 @@ metadata:
   name: grafana
   namespace: monitoring
   annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   labels:
     app.kubernetes.io/part-of: grafana
@@ -13,7 +14,7 @@ spec:
   tls:
     - hosts:
         - grafana.cluster.f4mily.net
-      secretName: wildcard-cluster-f4mily-net-tls
+      secretName: grafana-tls
   rules:
     - host: grafana.cluster.f4mily.net
       http:

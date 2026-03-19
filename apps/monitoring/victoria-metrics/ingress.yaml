@@ -11,7 +11,7 @@ spec:
   tls:
     - hosts:
         - metrics.cluster.f4mily.net
-      secretName: wildcard-cluster-f4mily-net-tls
+      secretName: victoria-metrics-tls
   rules:
     - host: metrics.cluster.f4mily.net
       http:
