@@ -24,6 +24,8 @@ spec:
     installCRDs: true
     global:
       priorityClassName: "homelab-infrastructure"
+    serviceAccount:
+      name: cert-manager
     resources:
       requests:
         cpu: 20m
