@@ -5,3 +5,4 @@ resources:
   - ingress.yaml
   - prometheus-operator.yaml
   - servicemonitor.yaml
+  - metrics-server.yaml
