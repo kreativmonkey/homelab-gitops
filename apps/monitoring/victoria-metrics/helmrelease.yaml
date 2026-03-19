@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: victoria-metrics-single
-      version: "0.10.x" # Prüfe regelmäßig auf Updates via Renovate
+      version: "0.10.2"
       sourceRef:
         kind: HelmRepository
         name: victoria-metrics-charts
@@ -61,4 +61,3 @@ spec:
       # Extra Args für Performance & Retention
       extraArgs:
         retentionPeriod: "1" # 1 Monat Aufbewahrung
-        search.maxUniqueTimeseries: "1000000"
