@@ -12,7 +12,6 @@ spec:
     crds: CreateReplace
   upgrade:
     crds: CreateReplace
-  wait: true
   chart:
     spec:
       chart: cloudnative-pg
