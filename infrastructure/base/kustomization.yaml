@@ -3,3 +3,4 @@ resources:
   - ../network/external-dns
   - ../network/ingress
   - ../backup
+  - ../database
