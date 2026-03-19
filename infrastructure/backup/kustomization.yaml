@@ -4,5 +4,3 @@ resources:
   - namespace.yaml
   - velero-credentials.secret.yaml
   - helmrelease.yaml
-  - daily-backup.yaml
-  - weekly-backup.yaml
