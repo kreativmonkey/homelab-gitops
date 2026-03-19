@@ -75,3 +75,6 @@ spec:
     provider: sops
     secretRef:
       name: sops-age
+  kubeConfig:
+    force: true
+  validation: none
