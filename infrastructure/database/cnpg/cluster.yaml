@@ -6,6 +6,8 @@ metadata:
   labels:
     app.kubernetes.io/name: homelab-postgres
     app.kubernetes.io/managed-by: cnpg
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/cnpg-system/cnpg
 spec:
   description: "Homelab PostgreSQL cluster"
   imageName: ghcr.io/cloudnative-pg/postgresql:17.2
