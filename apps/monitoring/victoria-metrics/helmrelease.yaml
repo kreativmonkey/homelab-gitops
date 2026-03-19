@@ -46,8 +46,9 @@ spec:
           cert-manager.io/cluster-issuer: letsencrypt-production
           nginx.ingress.kubernetes.io/ssl-redirect: "true"
         hosts:
-          - host: "metrics.cluster.f4mily.net"
-            paths: /
+          - fqdn: "metrics.cluster.f4mily.net"
+            paths:
+              - path: /
             port: https
         tls:
           - hosts:
