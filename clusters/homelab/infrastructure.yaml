@@ -75,5 +75,4 @@ spec:
     provider: sops
     secretRef:
       name: sops-age
-  kubeConfig:
-    force: true
+  force: true
