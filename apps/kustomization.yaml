@@ -6,5 +6,4 @@ resources:
   - kite
   - audiobookshelf
   - monitoring/victoria-metrics
-  - monitoring/vmagent
-  - monitoring/vmalert
+  - monitoring/grafana
