@@ -1,0 +1,36 @@
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: cnpg-restore-from-backup
+  namespace: velero
+spec:
+  backupName: ""
+  includedNamespaces:
+    - cnpg-system
+  excludedResources:
+    - events
+    - events.events.k8s.io
+  restorePVs: true
+  preserveNodePorts: false
+  hooks:
+    resources:
+      - name: cnpg-post-restore
+        includedNamespaces:
+          - cnpg-system
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/managed-by: cnpg
+        postHooks:
+          - exec:
+              container: postgresql
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  until pg_isready -U postgres; do
+                    echo "Waiting for PostgreSQL..."
+                    sleep 5
+                  done
+                  echo "PostgreSQL is ready"
+              onError: Continue
+              waitTimeout: 300s
