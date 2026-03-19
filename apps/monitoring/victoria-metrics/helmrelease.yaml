@@ -49,7 +49,6 @@ spec:
           - fqdn: "metrics.cluster.f4mily.net"
             paths:
               - path: /
-            port: https
         tls:
           - hosts:
               - "metrics.cluster.f4mily.net"
