@@ -4,4 +4,3 @@ resources:
   - ../network/cert-manager-issuer
   - ../network/certificates
   - ../backup
-  - ../database
