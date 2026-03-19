@@ -1,0 +1,64 @@
+# apps/monitoring/victoria-metrics/helmrelease.yaml
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: victoria-metrics
+  namespace: monitoring
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: victoria-metrics-single
+      version: "0.10.x" # Prüfe regelmäßig auf Updates via Renovate
+      sourceRef:
+        kind: HelmRepository
+        name: victoria-metrics-charts
+        namespace: flux-system
+  values:
+    server:
+      fullnameOverride: victoria-metrics-single
+      
+      # Persistence: Wir binden das oben erstellte PVC an
+      persistentVolume:
+        enabled: true
+        existingClaim: vm-data-victoria-metrics-single-0
+
+      # Best Practices: Security Context
+      podSecurityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+
+      # Best Practices: Resources
+      resources:
+        limits:
+          cpu: "1"
+          memory: 2Gi
+        requests:
+          cpu: "500m"
+          memory: 1Gi
+
+      # Ingress: Routing & TLS
+      ingress:
+        enabled: true
+        annotations:
+          kubernetes.io/ingress.class: nginx
+          cert-manager.io/cluster-issuer: letsencrypt-production
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        hosts:
+          - host: "metrics.cluster.f4mily.net"
+            paths: /
+            port: https
+        tls:
+          - hosts:
+              - "metrics.cluster.f4mily.net"
+            secretName: wildcard-cluster-f4mily-net-tls
+
+      # Backup: Velero Annotation für Filesystem-Backups (falls kein Snapshot-FS)
+      podAnnotations:
+        backup.velero.io/backup-volumes: server-volume
+
+      # Extra Args für Performance & Retention
+      extraArgs:
+        retentionPeriod: "1" # 1 Monat Aufbewahrung
+        search.maxUniqueTimeseries: "1000000"

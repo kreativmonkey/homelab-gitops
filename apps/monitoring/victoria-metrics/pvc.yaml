@@ -1,0 +1,13 @@
+# apps/monitoring/victoria-metrics/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vm-data-victoria-metrics-single-0
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi # Initialer Wert - bitte bei Bedarf anpassen
+  storageClassName: longhorn
