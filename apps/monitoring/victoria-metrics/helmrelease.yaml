@@ -38,21 +38,9 @@ spec:
           cpu: "500m"
           memory: 1Gi
 
-      # Ingress: Routing & TLS
+      # Ingress: Disabled - use separate ingress resource
       ingress:
-        enabled: true
-        annotations:
-          kubernetes.io/ingress.class: nginx
-          cert-manager.io/cluster-issuer: letsencrypt-production
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
-        hosts:
-          - fqdn: "metrics.cluster.f4mily.net"
-            paths:
-              - path: /
-        tls:
-          - hosts:
-              - "metrics.cluster.f4mily.net"
-            secretName: wildcard-cluster-f4mily-net-tls
+        enabled: false
 
       # Backup: Velero Annotation für Filesystem-Backups (falls kein Snapshot-FS)
       podAnnotations:
