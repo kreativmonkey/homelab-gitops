@@ -17,6 +17,10 @@ spec:
   install:
     crds: CreateReplace
   values:
+    crds:
+      enabled: true
+    prometheus:
+      enabled: true
     installCRDs: true
     global:
       priorityClassName: "homelab-infrastructure"
