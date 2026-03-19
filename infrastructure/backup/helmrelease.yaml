@@ -26,15 +26,15 @@ spec:
           default: true
           provider: aws
           config:
-            region: home
-            s3Url: http://192.168.10.94:30186
+            region: us-east-1
+            s3Url: https://192.168.10.94:30292
             insecureSkipTLSVerify: "true"
             s3ForcePathStyle: "true"
       volumeSnapshotLocation:
         - name: default
           provider: aws
           config:
-            region: home
+            region: us-east-1
     credentials:
       existingSecret: velero-credentials
     nodeAgent:
