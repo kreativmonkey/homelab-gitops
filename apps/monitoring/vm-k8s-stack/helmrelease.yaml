@@ -174,10 +174,10 @@ spec:
 
       resources:
         requests:
-          cpu: 100m
+          cpu: 50m
           memory: 128Mi
         limits:
-          cpu: 500m
+          cpu: 256m
           memory: 512Mi
 
       # Give grafana time to download and install the VM plugin before health checks
