@@ -35,8 +35,9 @@ spec:
             cpu: "2"
             memory: 4Gi
         priorityClassName: homelab-infrastructure
-        podAnnotations:
-          backup.velero.io/backup-volumes: vm-data
+        podMetadata:
+          annotations:
+            backup.velero.io/backup-volumes: vm-data
       ingress:
         enabled: false
 
