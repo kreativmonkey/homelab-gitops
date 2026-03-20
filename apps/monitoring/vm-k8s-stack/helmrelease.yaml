@@ -180,6 +180,12 @@ spec:
           cpu: 500m
           memory: 512Mi
 
+      # Give grafana time to download and install the VM plugin before readiness checks
+      readinessProbe:
+        initialDelaySeconds: 60
+        timeoutSeconds: 5
+        failureThreshold: 10
+
       ingress:
         enabled: false
 
