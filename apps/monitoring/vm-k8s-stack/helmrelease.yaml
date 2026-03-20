@@ -95,9 +95,6 @@ spec:
     # ============================================
     defaultDashboards:
       enabled: true
-      # label required by grafana sidecar
-      labels:
-        grafana_dashboard: "1"
 
     defaultRules:
       enabled: true
