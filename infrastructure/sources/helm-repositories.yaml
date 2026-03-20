@@ -8,14 +8,13 @@ spec:
   url: https://charts.jetstack.io
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
-kind: OCIRepository
+kind: HelmRepository
 metadata:
   name: nginx-ingress-oci
   namespace: flux-system
 spec:
   interval: 24h
-  ref:
-    semver: "2.5.0"
+  type: oci
   url: oci://ghcr.io/nginx/charts/nginx-ingress
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
