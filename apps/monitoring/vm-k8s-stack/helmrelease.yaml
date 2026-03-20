@@ -42,6 +42,24 @@ spec:
         enabled: false
 
     # ============================================
+    # OPERATOR - use quay.io to avoid Docker Hub rate limits
+    # ============================================
+    victoria-metrics-operator:
+      image:
+        registry: quay.io
+      env:
+        - name: VM_CONFIG_RELOADER_IMAGE
+          value: "quay.io/victoriametrics/operator:config-reloader-v0.68.3"
+        - name: VM_VMSINGLEDEFAULT_IMAGE
+          value: "quay.io/victoriametrics/victoria-metrics"
+        - name: VM_VMAGENTDEFAULT_IMAGE
+          value: "quay.io/victoriametrics/vmagent"
+        - name: VM_VMALERTDEFAULT_IMAGE
+          value: "quay.io/victoriametrics/vmalert"
+        - name: VM_VMALERTMANAGER_ALERTMANAGERDEFAULTBASEIMAGE
+          value: "quay.io/prometheus/alertmanager"
+
+    # ============================================
     # VMAGENT - Scraping & auto-discovery
     # ============================================
     vmagent:
