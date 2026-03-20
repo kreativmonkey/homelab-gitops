@@ -13,7 +13,7 @@ spec:
       chart: nginx-ingress
       version: "2.5.0"
       sourceRef:
-        kind: OCIRepository
+        kind: HelmRepository
         name: nginx-ingress-oci
         namespace: flux-system
   values:
