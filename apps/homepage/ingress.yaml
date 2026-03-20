@@ -5,7 +5,7 @@ metadata:
   namespace: homepage
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-production"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.org/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:

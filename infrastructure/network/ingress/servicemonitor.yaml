@@ -1,0 +1,16 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: nginx-ingress-metrics
+  namespace: ingress-nginx
+  labels:
+    release: victoriametrics
+spec:
+  endpoints:
+    - interval: 30s
+      path: /metrics
+      port: prometheus
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/name: nginx-ingress
