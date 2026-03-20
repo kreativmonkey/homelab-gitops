@@ -48,6 +48,10 @@ spec:
       - name: plugins-dir
         mountPath: /var/lib/grafana/plugins
 
+    # Recreate strategy avoids RWO volume deadlock during rolling updates
+    deploymentStrategy:
+      type: Recreate
+
     # Ingress disabled - use separate Ingress resource
     ingress:
       enabled: false
