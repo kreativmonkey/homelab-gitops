@@ -6,6 +6,8 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  labels:
+    app.kubernetes.io/part-of: vm-k8s-stack
 spec:
   ingressClassName: nginx
   tls:
@@ -20,6 +22,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: victoria-metrics-single
+                name: vmsingle-vm-k8s-stack
                 port:
                   number: 8428

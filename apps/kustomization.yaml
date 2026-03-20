@@ -5,5 +5,4 @@ resources:
   - sterling-pdf
   - kite
   - audiobookshelf
-  - monitoring/victoria-metrics
-  - monitoring/grafana
+  - monitoring/vm-k8s-stack
