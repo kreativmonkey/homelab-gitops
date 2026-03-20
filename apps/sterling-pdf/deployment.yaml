@@ -36,31 +36,6 @@ spec:
     service:
       type: ClusterIP
       externalPort: 8080
-    # Pre-install hook to wait for ingress-nginx webhook to be ready
-    # Prevents race condition where TLS cert is not yet generated
-    extraObjects:
-      - apiVersion: batch/v1
-        kind: Job
-        metadata:
-          name: "sterling-pdf-webhook-wait"
-          annotations:
-            "helm.sh/hook": pre-install,pre-upgrade
-            "helm.sh/hook-weight": "-5"
-            "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
-        spec:
-          template:
-            spec:
-              restartPolicy: Never
-              containers:
-                - name: wait
-                  image: busybox:latest
-                  command:
-                    - /bin/sh
-                    - -c
-                    - |
-                      echo "Waiting 30s for ingress-nginx webhook TLS to be ready..."
-                      sleep 30
-                      echo "Continuing with installation"
     persistence:
       enabled: true
       storageClass: longhorn
@@ -96,7 +71,7 @@ spec:
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-production
         cert-manager.io/uses-release-name: "true"
-        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.org/ssl-redirect: "true"
       hosts:
         - name: sterling-pdf.f4mily.net
           path: /
