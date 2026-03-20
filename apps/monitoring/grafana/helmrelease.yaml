@@ -11,7 +11,7 @@ spec:
   chart:
     spec:
       chart: grafana
-      version: "8.5.5"
+      version: "8.15.0"
       sourceRef:
         kind: HelmRepository
         name: grafana-repo
@@ -121,8 +121,9 @@ spec:
           foldersFromFilesStructure: false
 
     # Install VictoriaMetrics native datasource plugin
+    # Pin to 0.22.0 - latest version (0.23.x) requires Grafana >=11.6.11 which is not yet available
     plugins:
-      - victoriametrics-metrics-datasource
+      - victoriametrics-metrics-datasource 0.22.0
 
     # Backup annotation
     podAnnotations:
