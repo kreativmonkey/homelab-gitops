@@ -186,32 +186,26 @@ spec:
       podAnnotations:
         backup.velero.io/backup-volumes: grafana-storage
 
-      # Sidecar watches for dashboard/datasource configmaps
+      # Sidecar watches for dashboard configmaps (chart handles datasource natively)
       sidecar:
         datasources:
           enabled: true
-          initDatasources: true
+          initDatasources: false
           label: grafana_datasource
           labelValue: "1"
         dashboards:
           enabled: true
-          initDashboards: true
           label: grafana_dashboard
           labelValue: "1"
 
     # ============================================
-    # DATASOURCE - use native VM plugin
+    # DATASOURCE - chart manages this natively
     # ============================================
     defaultDatasources:
       enabled: true
-      datasources:
-        - name: VictoriaMetrics
-          type: victoriametrics-metrics-datasource
-          access: proxy
-          isDefault: true
-          editable: false
-          jsonData:
-            timeInterval: 30s
+      victoriametrics:
+        # Use native VM datasource plugin as default
+        datasourceType: victoriametrics-metrics-datasource
 
     # ============================================
     # KUBELET SCRAPING
