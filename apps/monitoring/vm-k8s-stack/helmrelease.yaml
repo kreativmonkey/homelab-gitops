@@ -168,7 +168,7 @@ spec:
       # Native VictoriaMetrics datasource plugin
       # Pin to 0.22.0 - 0.23.x requires Grafana >=11.6.11 (not yet available in charts)
       plugins:
-        - victoriametrics-metrics-datasource 0.22.0
+        - victoriametrics-metrics-datasource@0.22.0
 
       priorityClassName: homelab-infrastructure
 
