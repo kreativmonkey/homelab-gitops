@@ -15,7 +15,7 @@ metadata:
 spec:
   interval: 24h
   type: oci
-  url: oci://ghcr.io/nginx/charts/nginx-ingress
+  url: oci://ghcr.io/nginx/charts
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
