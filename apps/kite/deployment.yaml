@@ -35,6 +35,8 @@ spec:
       tag: "v0.8.1"
     service:
       port: 8080
+    host: https://kite.f4mily.net
+    
     # Pre-install hook to wait for ingress-nginx webhook to be ready
     # Prevents race condition where TLS cert is not yet generated
     extraObjects:
