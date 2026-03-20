@@ -27,6 +27,20 @@ data:
   services.yaml: |
     ---
     - Infrastructure:
+        - Opnsense Firewall:
+            icon: https://www.opnsense.org/images/logo-opnsense.png
+            href: "https://opnsense.f4mily.net"
+            external: true
+            description: Network Firewall & Router
+            ping: https://opnsense.f4mily.net
+
+        - Proxmox VE:
+            icon: https://www.proxmox.com/images/proxmox-ve-logo.png
+            href: "https://192.168.10.5:8006"
+            external: true
+            description: Virtualization Platform
+            ping: https://192.168.10.5:8006
+
         - VictoriaMetrics:
             icon: https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/master/docs/assets/vm_logo.webp
             href: "https://metrics.cluster.f4mily.net"
@@ -42,25 +56,105 @@ data:
             ping: https://kite.f4mily.net
 
         - Longhorn:
-            icon: https://raw.githubusercontent.com/longhorn/longhorn/master/assets/longhorn-logo.svg
+            icon: https://raw.githubusercontent.com/longhorn/website/master/static/img/logos/longhorn-icon-color.png
             href: "https://longhorn.cluster.f4mily.net"
             external: true
             description: Distributed Storage
             ping: https://longhorn.cluster.f4mily.net
+        - FritzBox:
+            icon: https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/FRITZ_Box_7590.jpg/1200px-FRITZ_Box_7590.jpg
+            href: "http://192.168.10.158"
+            external: false
+            description: SIP Server
+            ping: http://192.168.10.158
+        - HP-2520G-8-PoE-Switch:
+            icon: https://support.hpe.com/hpesc/public/images/4/4b/2520-8-poe-switch.jpg
+            href: "http://192.168.10.201"
+            external: false
+            description: Network Switch
+            ping: http://192.168.10.201
+        - HP-2530-24G-PoE-Switch:
+            icon: https://support.hpe.com/hpesc/public/images/4/4b/2520-8-poe-switch.jpg
+            href: "http://192.168.10.200"
+            external: false
+            description: Network Switch
+            ping: http://192.168.10.200
 
     - Office:
         - Sterling PDF:
-            icon: https://raw.githubusercontent.com/Stirling-Tools/Stirling-PDF/main/images/stirling.png
+            icon: https://raw.githubusercontent.com/Stirling-Tools/Stirling-PDF/main/frontend/public/modern-logo/logo192.png
             href: "https://sterling-pdf.f4mily.net"
             external: true
             description: PDF Tools
             ping: https://sterling-pdf.f4mily.net
+        - Nextcloud:
+            icon: https://raw.githubusercontent.com/nextcloud/nextcloud-snap/master/meta/gui/icon.png
+            href: "https://nx.cloud.f4mily.net"
+            external: true
+            description: File Sharing & Sync
+            ping: https://nx.cloud.f4mily.net
+    
+    - Survillance:
+        - Frigate:
+            icon: https://raw.githubusercontent.com/blakeblackshear/frigate/master/docs/images/frigate-icon.png
+            href: "https://frigate.f4mily.net"
+            external: true
+            description: NVR & Object Detection
+            ping: https://frigate.f4mily.net
+        - Akuvox S563 Intercom:
+            icon: https://www.akuvox.com/upload/2021/11/20211117112844_763.png
+            href: "http://192.168.10.212"
+            external: false
+            description: Intercom System
+            ping: http://192.168.10.212
+        - Akuvox C313V2 Intercom:
+            icon: https://www.akuvox.com/upload/2021/11/20211117112844_763.png
+            href: "http://192.168.10.211"
+            external: false
+            description: Intercom System
+            ping: http://192.168.10.211
+        - Akuvox E12W Doorphone:
+            icon: https://www.akuvox.com/upload/2021/11/20211117112844_763.png
+            href: "http://192.168.10.210"
+            external: false
+            description: Doorphone System
+            ping: http://192.168.10.210
+
+    - Energy:
+        - WarpCharger 3:
+            href: "http://192.168.10.49"
+            external: true
+            description: EV Charger Management
+            ping: http://192.168.10.49
+        - EVCC:
+            href: "http://192.168.10.234:7070"
+            external: true
+            description: EV Charger Management
+            ping: "http://192.168.10.234:7070"
+        - RS485 RTU Gateway:
+            href: "http://192.168.10.34"
+            external: true
+            description: RS485 Modbus Gateway
+            ping: http://192.168.10.34
+
+      - Sensoren:
+        - Home Assistant:
+            icon: https://www.home-assistant.io/images/favicon-192x192.png
+            href: "https://ha.f4mily.net"
+            external: true
+            description: Home Automation & Sensor Data
+            ping: https://ha.f4mily.net
+        - GW1200A Sensor Gateway:
+            href: "http://192.168.10.153"
+            external: true
+            description: Sensor Gateway
+            ping: http://192.168.10.153
   widgets.yaml: |
     ---
     - resources:
         cpu: true
         memory: true
         disk: 
-          - /
+          - /var/lib/longhorn
   bookmarks.yaml: |
     ---
