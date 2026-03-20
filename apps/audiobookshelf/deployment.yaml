@@ -86,8 +86,8 @@ metadata:
   namespace: audiobookshelf
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "1000m"
+    nginx.org/client-max-body-size: "1000m"
+    nginx.org/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:
