@@ -85,6 +85,11 @@ metadata:
   name: audiobookshelf
   namespace: audiobookshelf
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Audiobookshelf
+    gethomepage.dev/description: Audiobooks
+    gethomepage.dev/group: Medien
+    gethomepage.dev/icon: audiobookshelf.png
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/client-max-body-size: "1000m"
     nginx.org/ssl-redirect: "true"

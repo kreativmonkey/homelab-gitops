@@ -21,9 +21,9 @@ data:
         - kubernetes:
             clusterName: homelab
             showCluster: true
-    kubernetes:
-      mode: cluster
-      refreshInterval: 30000
+  kubernetes.yaml: |
+    mode: cluster
+    ingress: true
   services.yaml: |
     ---
     - Infrastructure:

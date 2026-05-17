@@ -4,6 +4,11 @@ metadata:
   name: speedtest-tracker
   namespace: speedtest-tracker
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Speedtest Tracker
+    gethomepage.dev/description: Speed tests
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: speedtest-tracker.png
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "true"
 spec:

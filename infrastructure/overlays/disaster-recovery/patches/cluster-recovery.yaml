@@ -1,0 +1,26 @@
+# Strategic merge: bootstrap from latest Barman backup in S3 (see docs/disaster-recovery/cnpg-s3-dr.md)
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: homelab-postgres
+  namespace: cnpg-system
+spec:
+  bootstrap:
+    recovery:
+      source: homelab-postgres
+  externalClusters:
+    - name: homelab-postgres
+      barmanObjectStore:
+        destinationPath: s3://cnpg-backups/homelab-postgres
+        endpointURL: https://192.168.10.94:30292
+        serverName: homelab-postgres
+        s3Credentials:
+          accessKeyId:
+            name: cnpg-barman-s3-credentials
+            key: ACCESS_KEY_ID
+          secretAccessKey:
+            name: cnpg-barman-s3-credentials
+            key: ACCESS_SECRET_KEY
+        wal:
+          compression: gzip
+          maxParallel: 4

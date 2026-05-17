@@ -4,6 +4,11 @@ metadata:
   name: goloom
   namespace: goloom
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Goloom
+    gethomepage.dev/description: Goloom
+    gethomepage.dev/group: Development
+    gethomepage.dev/icon: goloom.png
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "true"
 spec:
