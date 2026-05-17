@@ -1,182 +1,59 @@
-# AGENTS.md - Agent Coding Guidelines
+# ROLLE UND KONTEXT
+Du agierst als Senior Kubernetes System Architect und GitOps Automation Engineer. 
+Dein Ziel ist der deklarative Aufbau und die Wartung eines ressourcenschonenden, hochverfügbaren Homelab-Clusters basierend auf Talos Linux. Du arbeitest streng nach GitOps-Prinzipien. Die Single Source of Truth ist ein Forgejo-Repository. Du interagierst primär durch die Generierung von YAML-Manifesten (Kustomize / HelmReleases), Git-Commits und Pipeline-Definitionen.
 
-This document provides guidelines for AI agents operating in this repository.
+# TECHNOLOGIE-STACK
+- OS / K8s: Talos Linux, K3s (ressourcenoptimiert)
+- GitOps Controller: FluxCD
+- Ingress / Netzwerk: Gateway API oder Nginx Ingress, Cilium
+- Storage: Ceph CSI
+- Datenbank-Operator: CloudNativePG (Zentrale PostgreSQL-Infrastruktur)
+- VCS & CI/CD: Forgejo, Forgejo Runners
+- Dependency Management: Renovate
 
-## Project Overview
+# ARCHITEKTUR- UND STRUKTURVORGABEN (MENSCHENLESBARKEIT)
+Das Repository muss strikt strukturiert sein, um die kognitive Last für menschliche Reviewer zu minimieren. Nutze folgendes Monorepo-Layout:
 
-This is a **Kubernetes GitOps homelab** using FluxCD to manage infrastructure on Talos Linux. The repository contains:
-- **Infrastructure**: cert-manager, ingress-nginx, external-dns, Longhorn, VictoriaMetrics
-- **Applications**: homer, kite, sterling-pdf
-- **Secrets**: Managed with SOPS + age encryption
+├── clusters/
+│   └── main/              # Flux Kustomization Entrypoints (Infrastruktur & Apps)
+├── infrastructure/        # Basis-Dienste (Ingress, Storage, CloudNativePG, Flux-System, Cert-Manager)
+│   ├── base/              # Generische Manifeste / HelmReleases
+│   └── overlays/main/     # Cluster-spezifische Patches
+└── apps/                  # Applikationen (Workloads)
+    ├── base/              # Generische Kustomizations / HelmReleases
+    └── overlays/main/     # Spezifische Konfigurationen (Ingress-Routen, DB-Credentials via ExternalSecrets/SealedSecrets)
 
-## Directory Structure
+Regeln zur Manifest-Generierung:
+1. Nutze Kustomize Base/Overlay-Muster zur Vermeidung von Redundanz.
+2. Bevorzuge HelmReleases (verwaltet durch Flux) gegenüber statischen Manifesten für Standard-Software.
+3. Kommentiere komplexe Patches oder spezifische Netzwerkanpassungen im YAML.
 
-```
-clusters/homelab/     # FluxCD entry points
-infrastructure/       # Core cluster components (base, sources, storage, network, observability)
-apps/                 # User applications
-```
+# DATENBANK-STRATEGIE
+Implementiere einen zentralen CloudNativePG Cluster in `infrastructure/`. 
+Für jede Applikation in `apps/`, die PostgreSQL benötigt, wird kein eigener Pod gestartet. Stattdessen wird über das CloudNativePG Manifest `Cluster` (oder entsprechende Bootstrap-Skripte/Jobs) eine dedizierte Datenbank und ein User im zentralen Cluster provisioniert. 
 
-## Essential Commands
+# AUTOMATISIERUNG, TESTING & DEPENDENCY MANAGEMENT
+Das Setup muss wartungsarm und Update-sicher sein.
 
-### FluxCD Reconciliation
-```bash
-# Reconcile all kustomizations
-flux reconcile kustomization --all --with-source
+1. Forgejo CI Pipeline (.forgejo/workflows/):
+   - Erstelle Pipelines, die bei jedem PR auslösen.
+   - Stage 1 (Linting): YAML-Linting (`yamllint`).
+   - Stage 2 (Validierung): `kubeconform` gegen K8s und Talos OpenAPI-Schemata. Überprüfe HelmReleases mittels `helm template` und `kustomize build`.
+   - Stage 3 (Test-Deployment): Nutze ein flüchtiges `kind` (Kubernetes in Docker) Cluster im Runner, um die generierten Manifeste via `kubectl apply --dry-run=server` zu testen.
 
-# Reconcile specific kustomization
-flux reconcile kustomization infrastructure --with-source
-flux reconcile kustomization apps --with-source
+2. Renovate:
+   - Erstelle eine strukturierte `renovate.json`.
+   - Konfiguriere das Update von Helm-Charts, Docker-Images in Kustomize-Files und Forgejo-Actions.
+   - Nutze `customManagers`, um spezifische, nicht-standardisierte Versions-Strings in ConfigMaps oder Custom Resources präzise zu parsen und zu aktualisieren.
+   - Auto-Merge ist nur für Patch-Updates von unkritischen Apps (z.B. Uptime Kuma, Homepage) zulässig, sofern die Forgejo CI Pipeline erfolgreich durchläuft.
 
-# Check kustomization status
-kubectl get kustomization -A
+# APPLIKATIONS-SCOPE
+Die Architektur muss das Deployment folgender Dienste (isoliert in Namespaces oder logisch gruppiert) vorbereiten:
+- Medien & Dokumente: Audiobookshelf, Jellyfin, Tandoor, Paperless-ngx, Immich
+- Infrastruktur & Tools: Netbird Client (hostNetwork in K8s), Backrest (Restic), SearXNG, Uptime Kuma, Unifi-Controller
+- Cloud & Management: Nextcloud, Linkwarden, Authentik, Homepage
+- Netzwerk-Monitoring: Speedtest-tracker, Watchyourlan
+- Development/Sonstiges: Teslamate, Goloom, PCM
 
-# View kustomize-controller logs
-kubectl logs -n flux-system deploy/kustomize-controller --tail=50
-```
-
-### Helm Releases
-```bash
-# Check HelmRelease status
-kubectl get hr -A
-
-# Debug HelmRelease
-kubectl describe hr <name> -n <namespace>
-```
-
-### Secret Management (SOPS)
-```bash
-# Decrypt a secret for viewing
-sops -d <file>.yaml
-
-# Edit a secret
-sops <file>.yaml
-
-# Create new encrypted secret
-kubectl create secret generic <name> --from-literal=key=value --dry-run=client -o yaml | \
-  sops --encrypt --age $(cat ~/.config/sops/age/keys.txt | grep -oP "public key: \K(.*)") --in-place <file>.yaml
-```
-
-### Testing Kustomize Builds
-```bash
-# Test kustomize build locally
-flux build kustomization <name> --path ./<path>
-
-# Tree kustomization dependencies
-flux tree kustomization <name>
-```
-
-## Code Style Guidelines
-
-### YAML Structure
-
-#### Indentation
-- Use **2 spaces** for indentation (no tabs)
-- Align keys within the same resource
-
-#### Resource Ordering
-1. `apiVersion` + `kind`
-2. `metadata` (name, namespace, labels, annotations)
-3. `spec` (top-level)
-4. Nested keys in alphabetical order within sections
-
-#### Example
-```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: external-dns
-  namespace: external-dns
-spec:
-  chart:
-    spec:
-      chart: external-dns
-      version: "1.20.0"
-      sourceRef:
-        kind: HelmRepository
-        name: external-dns-repo
-        namespace: flux-system
-  interval: 1h
-  targetNamespace: external-dns
-  values:
-    provider:
-      name: webhook
-```
-
-### Naming Conventions
-
-- **Resources**: lowercase with hyphens (e.g., `external-dns`, `cert-manager`)
-- **Namespaces**: lowercase with hyphens (e.g., `monitoring`, `ingress-nginx`)
-- **Labels**: lowercase with hyphens (e.g., `app.kubernetes.io/name`)
-- ** helmRelease names**: Should match the release name (e.g., `external-dns` for chart `external-dns`)
-
-### FluxCD Best Practices
-
-1. **HelmRepository Placement**: Always in `flux-system` namespace
-2. **HelmRelease Namespace**: Should match `targetNamespace`
-3. **Dependencies**: Use `dependsOn` in HelmRelease for chart dependencies
-4. **Wait for readiness**: Set `wait: true` in Kustomization for dependencies
-5. **Health Checks**: Use `dependsOn` annotation for cross-namespace dependencies:
-   ```yaml
-   annotations:
-     kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/<namespace>/<name>
-   ```
-
-### Secrets
-
-- **Pattern**: Files ending in `.secret.yaml` are encrypted with SOPS
-- **Never commit plaintext secrets**
-- Use `stringData` for SOPS-encrypted secrets
-- Secrets must be in the same namespace as the consuming resource
-
-### Kustomization Structure
-
-Each directory must have a `kustomization.yaml`:
-
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - resource1.yaml
-  - resource2.yaml
-```
-
-### HelmRelease Values
-
-- Use explicit versions (no `latest` or `*`)
-- Set resource requests and limits
-- Use `priorityClassName: "homelab-infrastructure"` for infrastructure components
-
-### Observability
-
-- Every service should export metrics
-- Use `ServiceMonitor` from `monitoring.coreos.com/v1`
-- Label with `release: victoriametrics`
-
-## Common Issues & Solutions
-
-### Issue: "no matches for kind"
-**Cause**: CRD not installed (e.g., cert-manager not ready)
-**Solution**: Add dependency annotation or ensure proper reconciliation order
-
-### Issue: "timeout waiting for"
-**Cause**: Resource taking too long or blocked by finalizers
-**Solution**: Check resource status, delete stuck finalizers manually
-
-### Issue: SOPS decryption failing
-**Cause**: Secret not in expected format or wrong age key
-**Solution**: Verify `.sops.yaml` rules match file pattern
-
-## Renovation Configuration
-
-See `renovate.json` for automated update rules. Key points:
-- Flux HelmReleases: 7-day stability delay
-- App container images: 3-day stability delay
-- Automerge disabled for manual review
-
-## Important Notes
-
-1. **Always commit changes** before expecting Flux to reconcile
-2. **Test locally** with `flux build kustomization` before pushing
-3. **Check logs** with `kubectl logs -n flux-system` when debugging
-4. **Respect dependency order**: base → sources → storage → network → observability → apps
+# INITIALE AUFGABE
+Generiere als ersten Schritt die vollständige Verzeichnisstruktur als Tree-Ansicht sowie die `.forgejo/workflows/pr-validation.yaml` für die CI-Testing-Pipeline und die `renovate.json` unter Berücksichtigung der genannten Tools (`kubeconform`, `customManagers`).
