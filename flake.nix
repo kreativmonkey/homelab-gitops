@@ -1,65 +1,55 @@
 {
-  description = "Entwicklungsumgebung";
+  description = "GitOps Homelab – Entwicklungs- und CI-Umgebung";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    naersk.url = "github:nix-community/naersk";
-    gastown-src = {
-      url = "github:Wenjix/gastown";
-      flake = false;
-    };
   };
 
-  outputs = { self, nixpkgs, naersk, gastown-src }:
+  outputs = { self, nixpkgs }:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-      naersk-lib = pkgs.callPackage naersk { };
 
-      # Gastown Paket Definition
-      gastown-pkg = naersk-lib.buildPackage {
-        src = gastown-src;
-        nativeBuildInputs = with pkgs; [ pkg-config clang ];
-        buildInputs = with pkgs; [ openssl ];
-        LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-      };
+      ciTools = with pkgs; [
+        yamllint
+        kubeconform
+        kustomize
+        kubectl
+        kubernetes-helm
+        kind
+        yq-go
+        fluxcd
+        age
+        sops
+      ];
     in
     {
-      # Pakete exportieren
-      packages.${system}.default = gastown-pkg;
-
       devShells.${system} = {
-        # Bestehende Shell (aufrufbar via: nix develop .#age)
         age = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            age
-            sops
-            fluxcd
-          ];
+          buildInputs = with pkgs; [ age sops fluxcd ];
           shellHook = ''
-            [ -d "dns" ] && cd dns
             echo "Age/Sops Umgebung bereit."
           '';
         };
 
-        # Neue kombinierte Shell (aufrufbar via: nix develop)
         default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            # Ansible/Age Tools
-            age
-            sops
-            fluxcd
-            # Gastown & Rust Tools
-            gastown-pkg
-            cargo
-            rustc
-          ];
-
+          buildInputs = ciTools;
           shellHook = ''
-            export LIBCLANG_PATH="${pkgs.llvmPackages.libclang.lib}/lib"
-            echo "Kombinierte Umgebung geladen: Ansible-Tools & Gastown verfügbar."
+            echo "GitOps CI-Umgebung: yamllint, kubeconform, kustomize, helm, kind"
+            echo "Tests: ./scripts/ci/validate.sh  |  SKIP_KIND=1 für Stages 1–2"
           '';
         };
       };
+
+      checks.${system}.validation = pkgs.runCommand "gitops-validation" {
+        nativeBuildInputs = ciTools;
+        src = ./.;
+      } ''
+        cp -r $src source
+        cd source
+        export SKIP_KIND=1
+        ${pkgs.bash}/bin/bash scripts/ci/validate.sh
+        touch $out
+      '';
     };
 }

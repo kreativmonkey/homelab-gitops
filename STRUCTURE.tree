@@ -1,0 +1,146 @@
+.
+├── apps
+│   ├── base
+│   │   ├── audiobookshelf
+│   │   │   ├── deployment.yaml
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── authentik
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── backrest
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── goloom
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── homepage
+│   │   │   ├── configmap.yaml
+│   │   │   ├── deployment.yaml
+│   │   │   ├── ingress.yaml
+│   │   │   ├── kustomization.yaml
+│   │   │   ├── namespace.yaml
+│   │   │   └── service.yaml
+│   │   ├── homer
+│   │   │   ├── configmap.yaml
+│   │   │   ├── deployment.yaml
+│   │   │   ├── ingress.yaml
+│   │   │   ├── kustomization.yaml
+│   │   │   ├── namespace.yaml
+│   │   │   └── service.yaml
+│   │   ├── immich
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── jellyfin
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── kite
+│   │   │   ├── deployment.yaml
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── linkwarden
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── monitoring
+│   │   │   └── vm-k8s-stack
+│   │   ├── netbird
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── nextcloud
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── paperless-ngx
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── pcm
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── searxng
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── speedtest-tracker
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── sterling-pdf
+│   │   │   ├── deployment.yaml
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── tandoor
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── teslamate
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── unifi-controller
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── uptime-kuma
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   ├── watchyourlan
+│   │   │   ├── kustomization.yaml
+│   │   │   └── namespace.yaml
+│   │   └── kustomization.yaml
+│   ├── overlays
+│   │   └── main
+│   │       └── kustomization.yaml
+│   └── README.md
+├── clusters
+│   └── main
+│       ├── flux-system
+│       │   ├── gotk-components.yaml
+│       │   ├── gotk-sync.yaml
+│       │   └── kustomization.yaml
+│       ├── apps.yaml
+│       └── infrastructure.yaml
+├── infrastructure
+│   ├── base
+│   │   ├── backup
+│   │   │   ├── daily-backup.yaml
+│   │   │   ├── helmrelease.yaml
+│   │   │   ├── kustomization.yaml
+│   │   │   ├── namespace.yaml
+│   │   │   ├── servicemonitor.yaml
+│   │   │   ├── velero-credentials.secret.yaml
+│   │   │   └── weekly-backup.yaml
+│   │   ├── database
+│   │   │   ├── cnpg
+│   │   │   └── kustomization.yaml
+│   │   ├── network
+│   │   │   ├── certificates
+│   │   │   ├── cert-manager
+│   │   │   ├── cert-manager-issuer
+│   │   │   ├── external-dns
+│   │   │   └── ingress
+│   │   ├── sources
+│   │   │   ├── helm-repositories.yaml
+│   │   │   ├── hetzner.secret.yaml
+│   │   │   ├── ingressclass.yaml
+│   │   │   ├── kustomization.yaml
+│   │   │   ├── namespaces.yaml
+│   │   │   └── priorityclass.yaml
+│   │   ├── storage
+│   │   │   ├── ingress.yaml
+│   │   │   ├── kustomization.yaml
+│   │   │   ├── longhorn.yaml
+│   │   │   ├── pv-nfs.yaml
+│   │   │   └── storageclass.yaml
+│   │   └── kustomization.yaml
+│   └── overlays
+│       └── main
+│           ├── database-clusters
+│           └── kustomization.yaml
+├── scripts
+│   └── ci
+│       └── validate.sh
+├── AGENTS.md
+├── FIXES.md
+├── flake.lock
+├── flake.nix
+├── keys.txt
+├── opencode.json
+├── README.md
+├── renovate.json
+└── STRUCTURE.tree
+
+50 directories, 94 files
