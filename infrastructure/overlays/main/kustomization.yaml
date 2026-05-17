@@ -5,3 +5,4 @@ resources:
   - ../../base/network/cert-manager-issuer
   - ../../base/network/certificates
   - database-clusters
+  - pgadmin

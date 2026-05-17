@@ -41,7 +41,7 @@ spec:
           name: http
         env:
         - name: HOMEPAGE_ALLOWED_HOSTS
-          value: "home.cluster.f4mily.net"
+          value: "home.f4mily.net"
         - name: PUID
           value: "1000"
         - name: PGID
