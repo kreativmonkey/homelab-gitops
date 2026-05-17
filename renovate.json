@@ -20,6 +20,45 @@
       "\\.yml$"
     ]
   },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "CloudNativePG PostgreSQL image in Cluster CR",
+      "fileMatch": [
+        "infrastructure/overlays/.*/database-clusters/.*\\.yaml$"
+      ],
+      "matchStrings": [
+        "imageName:\\s*ghcr\\.io/cloudnative-pg/postgresql:(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "ghcr.io/cloudnative-pg/postgresql",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "CNPG operator image tag in HelmRelease values",
+      "fileMatch": [
+        "infrastructure/.*/database/cnpg/helmrelease\\.yaml$"
+      ],
+      "matchStrings": [
+        "tag:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "ghcr.io/cloudnative-pg/cloudnative-pg",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Forgejo workflow action versions",
+      "fileMatch": [
+        "^\\.forgejo/workflows/.*\\.ya?ml$"
+      ],
+      "matchStrings": [
+        "uses:\\s*(?<depName>[^@\\s]+)@(?<currentValue>[^\\s#]+)"
+      ],
+      "datasourceTemplate": "github-tags"
+    }
+  ],
   "packageRules": [
     {
       "matchManagers": [
@@ -46,6 +85,23 @@
       ],
       "groupName": "nix packages",
       "automerge": true
+    },
+    {
+      "description": "Auto-merge patch updates for low-risk dashboards",
+      "matchManagers": [
+        "flux",
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "matchPaths": [
+        "apps/base/homepage/**",
+        "apps/base/uptime-kuma/**"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
     }
   ],
   "prHourlyLimit": 2,
