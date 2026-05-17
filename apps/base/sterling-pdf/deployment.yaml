@@ -73,10 +73,10 @@ spec:
         cert-manager.io/uses-release-name: "true"
         nginx.org/ssl-redirect: "true"
       hosts:
-        - name: sterling-pdf.f4mily.net
+        - name: pdf.f4mily.net
           path: /
           tls: true
       tls:
         - secretName: wildcard-f4mily-net-tls
           hosts:
-            - sterling-pdf.f4mily.net
+            - pdf.f4mily.net

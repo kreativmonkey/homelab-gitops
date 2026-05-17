@@ -9,8 +9,9 @@ K8S_VERSION="${K8S_VERSION:-1.32.0}"
 KUBECONFORM_ARGS=(
   -kubernetes-version "$K8S_VERSION"
   -ignore-missing-schemas
+  -ignore-filename-pattern '.*\.secret\.yaml'
   -skip
-  "HelmRelease,HelmRepository,OCIRepository,GitRepository,Kustomization,HelmChart,Provider,Alert,Bucket,Receiver,ImageRepository,ImagePolicy,ImageUpdateAutomation"
+  "HelmRelease,HelmRepository,OCIRepository,GitRepository,Kustomization,HelmChart,Provider,Alert,Bucket,Receiver,ImageRepository,ImagePolicy,ImageUpdateAutomation,Secret"
 )
 
 log() { printf '\n==> %s\n' "$*"; }

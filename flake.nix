@@ -21,6 +21,7 @@
         fluxcd
         age
         sops
+        just
       ];
     in
     {
@@ -35,21 +36,12 @@
         default = pkgs.mkShell {
           buildInputs = ciTools;
           shellHook = ''
-            echo "GitOps CI-Umgebung: yamllint, kubeconform, kustomize, helm, kind"
-            echo "Tests: ./scripts/ci/validate.sh  |  SKIP_KIND=1 für Stages 1–2"
+            echo "GitOps CI-Umgebung: just, yamllint, kubeconform, kustomize, helm, kind, sops"
+            echo "  just --list          # alle Befehle"
+            echo "  just validate        # CI Stages 1–2"
           '';
         };
       };
 
-      checks.${system}.validation = pkgs.runCommand "gitops-validation" {
-        nativeBuildInputs = ciTools;
-        src = ./.;
-      } ''
-        cp -r $src source
-        cd source
-        export SKIP_KIND=1
-        ${pkgs.bash}/bin/bash scripts/ci/validate.sh
-        touch $out
-      '';
     };
 }

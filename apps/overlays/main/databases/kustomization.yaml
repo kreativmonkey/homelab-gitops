@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - authentik.yaml
+  - immich.yaml
+  - paperless.yaml
+  - tandoor.yaml
+  - nextcloud.yaml
+  - linkwarden.yaml
+  - teslamate.yaml

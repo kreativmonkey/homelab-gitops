@@ -10,11 +10,11 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - homer.f4mily.net
+    - homer.cluster.f4mily.net
     - f4mily.net
     secretName: homer-tls
   rules:
-  - host: homer.f4mily.net
+  - host: homer.cluster.f4mily.net
     http:
       paths:
       - path: /

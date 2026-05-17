@@ -1,0 +1,11 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: homelab-postgres-authentik
+  namespace: authentik
+spec:
+  name: authentik
+  owner: authentik
+  cluster:
+    name: homelab-postgres
+    namespace: cnpg-system

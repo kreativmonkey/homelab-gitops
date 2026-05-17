@@ -50,10 +50,10 @@ data:
 
         - Kite:
             icon: https://raw.githubusercontent.com/kite-project/kite/master/logo.png
-            href: "https://kite.f4mily.net"
+            href: "https://kite.cluster.f4mily.net"
             external: true
             description: Kubernetes Dashboard
-            ping: https://kite.f4mily.net
+            ping: https://kite.cluster.f4mily.net
 
         - Longhorn:
             icon: https://raw.githubusercontent.com/longhorn/website/master/static/img/logos/longhorn-icon-color.png
@@ -83,16 +83,16 @@ data:
     - Office:
         - Sterling PDF:
             icon: https://raw.githubusercontent.com/Stirling-Tools/Stirling-PDF/main/frontend/public/modern-logo/logo192.png
-            href: "https://sterling-pdf.f4mily.net"
+            href: "https://pdf.f4mily.net"
             external: true
             description: PDF Tools
-            ping: https://sterling-pdf.f4mily.net
+            ping: https://pdf.f4mily.net
         - Nextcloud:
             icon: https://raw.githubusercontent.com/nextcloud/nextcloud-snap/master/meta/gui/icon.png
-            href: "https://nx.cloud.f4mily.net"
+            href: "https://nextcloud.cluster.f4mily.net"
             external: true
             description: File Sharing & Sync
-            ping: https://nx.cloud.f4mily.net
+            ping: https://nextcloud.cluster.f4mily.net
     
     - Survillance:
         - Frigate:

@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tandoor
+  namespace: tandoor
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.org/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - rezepte.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: rezepte.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tandoor
+                port:
+                  number: 80

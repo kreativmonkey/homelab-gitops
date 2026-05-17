@@ -92,10 +92,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - audible.media.f4mily.net
-      secretName: wildcard-media-f4mily-net-tls
+        - audible.f4mily.net
+      secretName: wildcard-f4mily-net-tls
   rules:
-    - host: audible.media.f4mily.net
+    - host: audible.f4mily.net
       http:
         paths:
           - path: /

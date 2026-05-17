@@ -1,0 +1,11 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: homelab-postgres-teslamate
+  namespace: teslamate
+spec:
+  name: teslamate
+  owner: teslamate
+  cluster:
+    name: homelab-postgres
+    namespace: cnpg-system
