@@ -38,6 +38,26 @@ spec:
   affinity:
     podAntiAffinityType: preferred
 
+  # Continuous backup: base backups + WAL archive to S3-compatible object store
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://cnpg-backups/homelab-postgres
+      endpointURL: https://192.168.10.94:30292
+      serverName: homelab-postgres
+      s3Credentials:
+        accessKeyId:
+          name: cnpg-barman-s3-credentials
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: cnpg-barman-s3-credentials
+          key: ACCESS_SECRET_KEY
+      wal:
+        compression: gzip
+        maxParallel: 4
+      data:
+        compression: gzip
+    retentionPolicy: 30d
+
   # Application roles (passwords in auto-generated or referenced Secrets)
   managed:
     roles:

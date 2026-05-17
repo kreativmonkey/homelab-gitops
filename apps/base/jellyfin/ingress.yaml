@@ -4,6 +4,11 @@ metadata:
   name: jellyfin
   namespace: jellyfin
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Jellyfin
+    gethomepage.dev/description: Media server
+    gethomepage.dev/group: Medien
+    gethomepage.dev/icon: jellyfin.png
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "true"
 spec:

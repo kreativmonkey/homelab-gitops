@@ -4,6 +4,11 @@ metadata:
   name: backrest
   namespace: backrest
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Backrest
+    gethomepage.dev/description: Restic backup UI
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: backrest.png
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "true"
 spec:
