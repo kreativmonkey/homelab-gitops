@@ -69,6 +69,11 @@ spec:
       enabled: true
       ingressClassName: nginx
       annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: Sterling PDF
+        gethomepage.dev/description: PDF tools
+        gethomepage.dev/group: Office
+        gethomepage.dev/icon: stirling-pdf.png
         cert-manager.io/cluster-issuer: letsencrypt-production
         cert-manager.io/uses-release-name: "true"
         nginx.org/ssl-redirect: "true"

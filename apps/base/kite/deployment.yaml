@@ -41,6 +41,11 @@ spec:
       enabled: true
       className: nginx
       annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: Kite
+        gethomepage.dev/description: Kubernetes dashboard
+        gethomepage.dev/group: Infrastructure
+        gethomepage.dev/icon: kubernetes.png
         cert-manager.io/cluster-issuer: letsencrypt-production
         cert-manager.io/uses-release-name: "true"
         nginx.org/ssl-redirect: "true"

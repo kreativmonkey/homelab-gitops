@@ -57,3 +57,9 @@ Die Architektur muss das Deployment folgender Dienste (isoliert in Namespaces od
 
 # INITIALE AUFGABE
 Generiere als ersten Schritt die vollständige Verzeichnisstruktur als Tree-Ansicht sowie die `.forgejo/workflows/pr-validation.yaml` für die CI-Testing-Pipeline und die `renovate.json` unter Berücksichtigung der genannten Tools (`kubeconform`, `customManagers`).
+
+# DATENBANK-BACKUP & DISASTER RECOVERY (DR) STRATEGIE
+1. Konfiguriere den zentralen CloudNativePG (CNPG) Cluster strikt mit einem `barmanObjectStore` (S3-kompatibel) für kontinuierliche Backups (Base-Backups + WAL). 
+2. Hinterlege S3-Credentials niemals im Klartext in Git. Nutze dafür Platzhalter (z.B. SealedSecrets oder ExternalSecrets-Definitionen).
+3. Bereite ein Kustomize-Overlay unter `infrastructure/overlays/disaster-recovery/` vor. Dieses Overlay muss den `bootstrap: recovery`-Block im CNPG-Manifest per Patch injizieren. 
+4. Der DR-Prozess sieht vor: Bei einem vollständigen Cluster-Neuaufbau wird initial das `disaster-recovery`-Overlay angewendet. CNPG lädt den Zustand aus S3, provisioniert die Datenbanken und erst anschließend starten die Applikationen aus dem `apps/`-Verzeichnis. Das System heilt sich somit selbstständig aus dem Cloud-Storage.

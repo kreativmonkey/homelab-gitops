@@ -13,6 +13,8 @@ spec:
       labels:
         app: homepage
     spec:
+      serviceAccountName: homepage
+      automountServiceAccountToken: true
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
