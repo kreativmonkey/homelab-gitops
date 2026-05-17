@@ -53,7 +53,7 @@ data:
             logo: "https://cdn-icons-png.flaticon.com/512/33/33736.png"
             subtitle: "PDF Werkzeuge"
             tag: "pdf"
-            url: "https://sterling-pdf.f4mily.net"
+            url: "https://pdf.f4mily.net"
       - name: "Infrastructure"
         icon: "fas fa-server"
         items:
@@ -61,7 +61,7 @@ data:
             logo: "https://raw.githubusercontent.com/kite-org/kite/main/logo.svg"
             subtitle: "Kubernetes Dashboard"
             tag: "k8s"
-            url: "https://kite.f4mily.net"
+            url: "https://kite.cluster.f4mily.net"
           - name: "Longhorn"
             logo: "https://longhorn.io/img/logos/longhorn-icon-color.png"
             subtitle: "Distributed storage"

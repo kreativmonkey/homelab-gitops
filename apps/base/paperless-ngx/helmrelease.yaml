@@ -1,0 +1,49 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: paperless-ngx
+  namespace: paperless-ngx
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/paperless-ngx/homelab-postgres-paperless
+spec:
+  interval: 1h
+  timeout: 15m
+  chart:
+    spec:
+      chart: paperless-ngx
+      version: "0.0.3"
+      sourceRef:
+        kind: HelmRepository
+        name: breuerfelix-repo
+        namespace: flux-system
+  valuesFrom:
+    - kind: Secret
+      name: homelab-postgres-paperless
+      valuesKey: username
+      targetPath: env.PAPERLESS_DBUSER
+    - kind: Secret
+      name: homelab-postgres-paperless
+      valuesKey: password
+      targetPath: env.PAPERLESS_DBPASS
+  values:
+    postgresql:
+      enabled: false
+    redis:
+      enabled: true
+    env:
+      PAPERLESS_DBHOST: homelab-postgres-rw.cnpg-system.svc.cluster.local
+      PAPERLESS_DBPORT: "5432"
+      PAPERLESS_DBNAME: paperless
+    ingress:
+      enabled: false
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 10Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 2Gi

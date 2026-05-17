@@ -90,15 +90,15 @@ This repository uses **SOPS** with the **age** encryption tool. Secrets are encr
 * **Private Key:** Stored in the cluster as a Kubernetes Secret named `sops-age` in the `flux-system` namespace.
 
 ### Workflow: Creating/Editing Secrets
-1. **To create a new secret:**
-   ```bash
-   kubectl create secret generic my-secret --from-literal=api-key=12345 --dry-run=client -o yaml > secret.enc.yaml
-   sops --encrypt --age $(cat ~/.config/sops/age/keys.txt | grep -oP "public key: \K(.*)") --encrypted-regex '^(data|stringData)$' --in-place secret.enc.yaml
-   ```
-2. **To edit an existing secret:**
-   ```bash
-   sops secret.enc.yaml
-   ```
+
+With `nix develop` (includes `just` and `sops`):
+
+```bash
+just sops-create my-secret flux-system . api-key=12345
+just sops-edit infrastructure/base/sources/my-secret.secret.yaml
+```
+
+Manual equivalent: `kubectl create secret … --dry-run=client -o yaml` then `sops --encrypt --in-place`.
 
 ---
 

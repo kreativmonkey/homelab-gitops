@@ -97,4 +97,33 @@ metadata:
 spec:
   interval: 24h
   url: https://charts.goauthentik.io
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: runix-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://helm.runix.net
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: breuerfelix-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://breuerfelix.github.io/helm-charts
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: immich-charts
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: oci://ghcr.io/immich-app/immich-charts
+  ref:
+    tag: "0.9.3"
 

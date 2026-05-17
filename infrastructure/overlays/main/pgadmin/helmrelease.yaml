@@ -1,0 +1,51 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: pgadmin
+  namespace: cnpg-system
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Cluster/cnpg-system/homelab-postgres
+spec:
+  interval: 1h
+  targetNamespace: cnpg-system
+  chart:
+    spec:
+      chart: pgadmin4
+      version: "1.33.1"
+      sourceRef:
+        kind: HelmRepository
+        name: runix-repo
+        namespace: flux-system
+  values:
+    existingSecret: pgadmin-credentials
+    secretKeys:
+      emailKey: email
+      passwordKey: password
+    env:
+      variables:
+        - name: PGADMIN_CONFIG_SERVER_MODE
+          value: "True"
+        - name: PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED
+          value: "False"
+    serverDefinitions:
+      enabled: true
+      servers:
+        homelab-postgres:
+          Name: homelab-postgres
+          Group: Homelab
+          Host: homelab-postgres-rw.cnpg-system.svc.cluster.local
+          Port: 5432
+          MaintenanceDB: postgres
+          Username: postgres
+          SSLMode: prefer
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 512Mi
+    persistentVolume:
+      enabled: true
+      size: 1Gi
+      storageClass: longhorn

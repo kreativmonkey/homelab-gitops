@@ -37,3 +37,42 @@ spec:
 
   affinity:
     podAntiAffinityType: preferred
+
+  # Application roles (passwords in auto-generated or referenced Secrets)
+  managed:
+    roles:
+      - name: authentik
+        ensure: present
+        login: true
+        passwordSecret:
+          name: authentik-db-credentials
+      - name: immich
+        ensure: present
+        login: true
+        passwordSecret:
+          name: immich-db-credentials
+      - name: paperless
+        ensure: present
+        login: true
+        passwordSecret:
+          name: paperless-db-credentials
+      - name: tandoor
+        ensure: present
+        login: true
+        passwordSecret:
+          name: tandoor-db-credentials
+      - name: nextcloud
+        ensure: present
+        login: true
+        passwordSecret:
+          name: nextcloud-db-credentials
+      - name: linkwarden
+        ensure: present
+        login: true
+        passwordSecret:
+          name: linkwarden-db-credentials
+      - name: teslamate
+        ensure: present
+        login: true
+        passwordSecret:
+          name: teslamate-db-credentials
