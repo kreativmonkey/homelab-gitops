@@ -38,7 +38,8 @@
           shellHook = ''
             echo "GitOps CI-Umgebung: just, yamllint, kubeconform, kustomize, helm, kind, sops"
             echo "  just --list          # alle Befehle"
-            echo "  just validate        # CI Stages 1–2"
+            echo "  just validate        # CI stages 1–2 (Forgejo PR workflow)"
+            echo "  just validate-full   # + kind dry-run (local or ENABLE_KIND_CI=1)"
           '';
         };
       };
