@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: authentik
+  namespace: authentik
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Authentik
+    gethomepage.dev/description: Identity Provider
+    gethomepage.dev/group: Cloud & Auth
+    gethomepage.dev/icon: authentik.png
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.org/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - login.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: login.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: authentik-server
+                port:
+                  number: 80

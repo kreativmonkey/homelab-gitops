@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homepage
+  namespace: homepage
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Homepage
+    gethomepage.dev/description: Homelab dashboard
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: homepage.png
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    nginx.org/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - home.f4mily.net
+    secretName: wildcard-f4mily-net-tls
+  rules:
+  - host: home.f4mily.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: homepage
+            port:
+              number: 80

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: goloom
+  labels:
+    app.kubernetes.io/name: goloom
+    app.kubernetes.io/part-of: homelab-apps

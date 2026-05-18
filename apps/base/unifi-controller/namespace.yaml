@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: unifi-controller
+  labels:
+    app.kubernetes.io/name: unifi-controller
+    app.kubernetes.io/part-of: homelab-apps

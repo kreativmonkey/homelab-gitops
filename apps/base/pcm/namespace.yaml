@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pcm
+  labels:
+    app.kubernetes.io/name: pcm
+    app.kubernetes.io/part-of: homelab-apps
