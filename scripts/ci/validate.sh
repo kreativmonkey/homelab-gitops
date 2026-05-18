@@ -81,10 +81,19 @@ if [[ -n "${SKIP_KIND:-}" ]] || ! command -v kind >/dev/null; then
   echo "WARN: kind stage skipped (SKIP_KIND set or kind unavailable)"
   exit 0
 fi
+if [[ "${CI:-}" == "true" && "${ENABLE_KIND_CI:-}" != "1" ]]; then
+  echo "WARN: kind stage skipped in CI (set ENABLE_KIND_CI=1 and configure runner: container.privileged, container.docker_host=automount)"
+  exit 0
+fi
+if ! docker info >/dev/null 2>&1; then
+  echo "WARN: kind stage skipped (docker daemon not reachable)"
+  exit 0
+fi
 
 CLUSTER_NAME="gitops-homelab-ci"
+KIND_IMAGE="kindest/node:v${K8S_VERSION}"
 kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || true
-kind create cluster --name "$CLUSTER_NAME" --wait 120s
+kind create cluster --name "$CLUSTER_NAME" --image "$KIND_IMAGE" --wait 120s
 
 kubectl apply --server-side --force-conflicts -f \
   https://github.com/fluxcd/flux2/releases/latest/download/install.yaml
