@@ -19,7 +19,7 @@ validate-full:
     ./scripts/ci/validate.sh
 
 lint:
-    yamllint -c .yamllint.yml clusters infrastructure apps .forgejo/workflows
+    yamllint -c .yamllint.yml clusters infrastructure apps .forgejo/workflows .github/workflows
 
 build-infra:
     kustomize build infrastructure/overlays/main

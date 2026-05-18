@@ -19,7 +19,8 @@ log() { printf '\n==> %s\n' "$*"; }
 log "Stage 1: YAML lint (yamllint)"
 yamllint -c .yamllint.yml \
   clusters infrastructure apps \
-  .forgejo/workflows
+  .forgejo/workflows \
+  .github/workflows
 
 log "Stage 2: Kustomize build + kubeconform"
 BUILD_DIR="$(mktemp -d)"
