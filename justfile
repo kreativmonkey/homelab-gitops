@@ -78,3 +78,12 @@ sops-encrypt file:
     [[ -f "$file" ]] || { echo "error: not found: $file"; exit 1; }
     sops --encrypt --in-place "$file"
     echo "Encrypted: $file"
+
+# CNPG Barman S3 credentials (kubectl data + SOPS; then uncomment in database-clusters/kustomization.yaml)
+barman-s3-credentials access_key secret_key:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd infrastructure/overlays/main/database-clusters
+    just sops-create cnpg-barman-s3-credentials cnpg-system \
+      "ACCESS_KEY_ID={{access_key}}" "ACCESS_SECRET_KEY={{secret_key}}"
+    echo "Uncomment barman-s3-credentials.secret.yaml in kustomization.yaml, commit, and reconcile infra-main."

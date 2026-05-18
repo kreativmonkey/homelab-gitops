@@ -92,7 +92,7 @@ kubectl get database -A
 cd infrastructure/overlays/main/database-clusters
 just sops-create cnpg-barman-s3-credentials cnpg-system \
   ACCESS_KEY_ID=xxx ACCESS_SECRET_KEY=yyy
-just sops-encrypt cnpg-barman-s3-credentials.secret.yaml
+# Produces barman-s3-credentials.secret.yaml (encrypted). Use real Garage/S3 keys, not placeholders.
 ```
 
 ## Velero vs Barman
