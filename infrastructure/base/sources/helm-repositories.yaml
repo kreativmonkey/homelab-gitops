@@ -116,14 +116,12 @@ spec:
   interval: 24h
   url: https://breuerfelix.github.io/helm-charts
 ---
-apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: OCIRepository
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
 metadata:
   name: immich-charts
   namespace: flux-system
 spec:
   interval: 24h
-  url: oci://ghcr.io/immich-app/immich-charts
-  ref:
-    tag: "0.9.3"
+  url: https://immich-app.github.io/immich-charts
 
