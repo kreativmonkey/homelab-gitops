@@ -15,17 +15,17 @@
   },
   "helm-values": {
     "enabled": true,
-    "fileMatch": [
-      "\\.yaml$",
-      "\\.yml$"
+    "managerFilePatterns": [
+      "/\\.yaml$/",
+      "/\\.yml$/"
     ]
   },
   "customManagers": [
     {
       "customType": "regex",
       "description": "CloudNativePG PostgreSQL image in Cluster CR",
-      "fileMatch": [
-        "infrastructure/overlays/.*/database-clusters/.*\\.yaml$"
+      "managerFilePatterns": [
+        "/infrastructure/overlays/.*/database-clusters/.*\\.yaml$/"
       ],
       "matchStrings": [
         "imageName:\\s*ghcr\\.io/cloudnative-pg/postgresql:(?<currentValue>[^\\s]+)"
@@ -37,8 +37,8 @@
     {
       "customType": "regex",
       "description": "CNPG operator image tag in HelmRelease values",
-      "fileMatch": [
-        "infrastructure/.*/database/cnpg/helmrelease\\.yaml$"
+      "managerFilePatterns": [
+        "/infrastructure/.*/database/cnpg/helmrelease\\.yaml$/"
       ],
       "matchStrings": [
         "tag:\\s*\"(?<currentValue>[^\"]+)\""
@@ -50,8 +50,8 @@
     {
       "customType": "regex",
       "description": "CI workflow action versions (Forgejo and GitHub)",
-      "fileMatch": [
-        "^\\.(forgejo|github)/workflows/.*\\.ya?ml$"
+      "managerFilePatterns": [
+        "/^\\.(forgejo|github)/workflows/.*\\.ya?ml$/"
       ],
       "matchStrings": [
         "uses:\\s*(?<depName>[^@\\s]+)@(?<currentValue>[^\\s#]+)"
@@ -66,7 +66,7 @@
       ],
       "groupName": "flux helm releases",
       "groupSlug": "flux-helm-releases",
-      "stabilityDays": 7,
+      "minimumReleaseAge": "7 days",
       "automerge": false
     },
     {
@@ -75,7 +75,7 @@
       ],
       "groupName": "helm chart versions",
       "groupSlug": "helm-chart-versions",
-      "stabilityDays": 7,
+      "minimumReleaseAge": "7 days",
       "automerge": false
     },
     {
@@ -95,7 +95,7 @@
       "matchUpdateTypes": [
         "patch"
       ],
-      "matchPaths": [
+      "matchFileNames": [
         "apps/base/homepage/**",
         "apps/base/uptime-kuma/**"
       ],
