@@ -29,7 +29,7 @@ spec:
       enabled: true
     image:
       repository: ghcr.io/cloudnative-pg/cloudnative-pg
-      tag: "1.28.1"
+      tag: "1.29.1"
     serviceAccount:
       create: true
     crds:
