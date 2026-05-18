@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: victoria-metrics
+  namespace: monitoring
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: VictoriaMetrics
+    gethomepage.dev/description: Metrics
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: victoria-metrics.png
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.org/ssl-redirect: "true"
+  labels:
+    app.kubernetes.io/part-of: vm-k8s-stack
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - metrics.cluster.f4mily.net
+      secretName: victoria-metrics-tls
+  rules:
+    - host: metrics.cluster.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vmsingle-vm-k8s-stack
+                port:
+                  number: 8428

@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: longhorn-ui
+  namespace: longhorn-system
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Longhorn
+    gethomepage.dev/description: Distributed storage
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: longhorn.png
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    nginx.org/client-max-body-size: "1000m"
+    nginx.org/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - longhorn.cluster.f4mily.net
+    secretName: wildcard-cluster-f4mily-net-tls
+  rules:
+  - host: longhorn.cluster.f4mily.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: longhorn-frontend
+            port:
+              number: 80

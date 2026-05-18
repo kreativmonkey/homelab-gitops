@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backrest
+  labels:
+    app.kubernetes.io/name: backrest
+    app.kubernetes.io/part-of: homelab-apps

@@ -1,0 +1,23 @@
+---
+extends: default
+
+rules:
+  line-length:
+    max: 320
+    level: warning
+  document-start: disable
+  comments:
+    min-spaces-from-content: 1
+  truthy:
+    check-keys: false
+  indentation: disable
+  new-line-at-end-of-file: disable
+  empty-lines:
+    max: 2
+    max-end: 1
+  trailing-spaces: disable
+
+ignore: |
+  clusters/**/flux-system/gotk-components.yaml
+  **/*.secret.yaml
+  .opencode/

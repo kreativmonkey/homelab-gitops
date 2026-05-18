@@ -1,0 +1,87 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: stirling-pdf-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://stirling-tools.github.io/Stirling-PDF-chart
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: sterling-pdf
+  namespace: sterling-pdf
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: cert-manager.io/Certificate/cert-manager/wildcard-f4mily-net
+spec:
+  interval: 1h
+  targetNamespace: sterling-pdf
+  chart:
+    spec:
+      chart: stirling-pdf-chart
+      version: "3.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: stirling-pdf-repo
+        namespace: flux-system
+  values:
+    replicaCount: 1
+    image:
+      repository: stirlingtools/stirling-pdf
+      tag: "2.7.2"
+    envs:
+      - name: DOCKER_ENABLE_SECURITY
+        value: "false"
+    service:
+      type: ClusterIP
+      externalPort: 8080
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      accessMode: ReadWriteOnce
+      size: 8Gi
+      path: /configs
+    securityContext:
+      enabled: true
+      fsGroup: 1000
+    probes:
+      liveness:
+        enabled: true
+        initialDelaySeconds: 120
+        periodSeconds: 20
+        timeoutSeconds: 10
+        failureThreshold: 6
+      readiness:
+        enabled: true
+        initialDelaySeconds: 60
+        periodSeconds: 15
+        timeoutSeconds: 10
+        failureThreshold: 5
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "1024Mi"
+        cpu: "500m"
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: Sterling PDF
+        gethomepage.dev/description: PDF tools
+        gethomepage.dev/group: Office
+        gethomepage.dev/icon: stirling-pdf.png
+        cert-manager.io/cluster-issuer: letsencrypt-production
+        cert-manager.io/uses-release-name: "true"
+        nginx.org/ssl-redirect: "true"
+      hosts:
+        - name: pdf.f4mily.net
+          path: /
+          tls: true
+      tls:
+        - secretName: wildcard-f4mily-net-tls
+          hosts:
+            - pdf.f4mily.net

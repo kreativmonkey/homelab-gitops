@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: watchyourlan
+  namespace: watchyourlan
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: WatchYourLAN
+    gethomepage.dev/description: LAN discovery
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: watchyourlan.png
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.org/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - watchyourlan.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
+  rules:
+    - host: watchyourlan.cluster.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: watchyourlan
+                port:
+                  number: 80

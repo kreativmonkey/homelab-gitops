@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: linkwarden
+  labels:
+    app.kubernetes.io/name: linkwarden
+    app.kubernetes.io/part-of: homelab-apps

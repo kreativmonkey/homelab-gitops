@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# DR overlay: same as main, but CNPG Cluster bootstraps via recovery from S3.
+# Activate by pointing Flux infra-main to ./infrastructure/overlays/disaster-recovery
+resources:
+  - ../main
+patches:
+  - path: patches/cluster-recovery.yaml
+    target:
+      kind: Cluster
+      name: homelab-postgres
+      namespace: cnpg-system
