@@ -10,29 +10,14 @@
     "enabled": true,
     "automerge": true
   },
-  "kubernetes": {
-    "enabled": true,
-    "managerFilePatterns": [
-      "/apps/.*\\.yaml$/",
-      "/apps/.*\\.yml$/"
-    ],
-    "matchPackagePatterns": [
-      "*"
-    ]
-  },
   "flux": {
     "enabled": true
   },
   "helm-values": {
-    "enabled": true
-  },
-  "regex": {
     "enabled": true,
-    "managerFilePatterns": [
-      "/Dockerfile$/"
-    ],
-    "matchStrings": [
-      "image:(?<depName>.*?):(?<currentValue>.*?)(?:#|$)"
+    "fileMatch": [
+      "\\.yaml$",
+      "\\.yml$"
     ]
   },
   "packageRules": [
@@ -56,37 +41,11 @@
     },
     {
       "matchManagers": [
-        "kubernetes"
+        "nix",
+        "lockFileMaintenance"
       ],
-      "groupName": "app container images",
-      "groupSlug": "app-container-images",
-      "stabilityDays": 3,
-      "automerge": false
-    },
-    {
-      "matchManagers": [
-        "regex"
-      ],
-      "groupName": "dockerfiles",
-      "automerge": false
-    },
-    {
-      "matchManagers": [
-        "nix"
-      ],
-      "groupName": "nix dependencies",
-      "matchPackageNames": [
-        "*"
-      ]
-    },
-    {
-      "matchPackagePrefixes": [
-        "b4bz/homer",
-        "kiteproxy/kite",
-        "docspa/sterling-pdf"
-      ],
-      "groupName": "app images",
-      "stabilityDays": 3
+      "groupName": "nix packages",
+      "automerge": true
     }
   ],
   "prHourlyLimit": 2,

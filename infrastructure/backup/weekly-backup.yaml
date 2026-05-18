@@ -1,0 +1,20 @@
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: weekly-backup
+  namespace: velero
+spec:
+  schedule: "0 3 * * 0"
+  template:
+    includedNamespaces:
+      - '*'
+    excludedResources:
+      - events
+      - events.events.k8s.io
+    storageLocation: default
+    volumeSnapshotLocations:
+      - default
+    ttl: 672h
+    includeClusterResources: true
+    snapshotVolumes: false
+    defaultVolumesToFsBackup: true

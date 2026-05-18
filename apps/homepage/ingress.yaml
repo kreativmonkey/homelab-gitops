@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homepage
+  namespace: homepage
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    nginx.org/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - home.cluster.f4mily.net
+    secretName: wildcard-cluster-f4mily-net-tls
+  rules:
+  - host: home.cluster.f4mily.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: homepage
+            port:
+              number: 80

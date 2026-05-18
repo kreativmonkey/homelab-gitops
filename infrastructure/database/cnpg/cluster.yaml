@@ -1,0 +1,39 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: homelab-postgres
+  namespace: cnpg-system
+  labels:
+    app.kubernetes.io/name: homelab-postgres
+    app.kubernetes.io/managed-by: cnpg
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/cnpg-system/cnpg
+spec:
+  description: "Homelab PostgreSQL cluster"
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.2
+  
+  instances: 1
+  
+  postgresql:
+    parameters:
+      max_connections: "50"
+      shared_buffers: 64MB
+      effective_cache_size: 256MB
+  
+  storage:
+    storageClass: longhorn
+    size: 10Gi
+  
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  
+  monitoring:
+    enablePodMonitor: true
+
+  affinity:
+    podAntiAffinityType: preferred

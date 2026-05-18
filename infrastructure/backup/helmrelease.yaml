@@ -1,0 +1,64 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: velero
+  namespace: velero
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/longhorn-system/longhorn
+spec:
+  interval: 1h
+  targetNamespace: velero
+  chart:
+    spec:
+      chart: velero
+      version: "12.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: velero-repo
+        namespace: flux-system
+  values:
+    global:
+      priorityClassName: "homelab-infrastructure"
+    configuration:
+      backupStorageLocation:
+        - name: default
+          bucket: velero
+          default: true
+          provider: aws
+          config:
+            region: us-east-1
+            s3Url: https://192.168.10.94:30292
+            insecureSkipTLSVerify: "true"
+            s3ForcePathStyle: "true"
+      volumeSnapshotLocation:
+        - name: default
+          provider: aws
+          config:
+            region: us-east-1
+    credentials:
+      existingSecret: velero-credentials
+    nodeAgent:
+      enabled: true
+      priorityClassName: "homelab-infrastructure"
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+    velero:
+      priorityClassName: "homelab-infrastructure"
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+    metrics:
+      enabled: true
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8085"
