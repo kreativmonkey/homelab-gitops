@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pgadmin
+  namespace: cnpg-system
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: pgAdmin
+    gethomepage.dev/description: PostgreSQL admin
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: pgadmin.png
+    gethomepage.dev/app: pgadmin-pgadmin4
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.org/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - pgadmin.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
+  rules:
+    - host: pgadmin.cluster.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pgadmin-pgadmin4
+                port:
+                  number: 80

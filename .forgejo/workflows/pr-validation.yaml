@@ -1,0 +1,22 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: https://github.com/cachix/install-nix-action@v31
+
+      - name: Run validation (nix develop)
+        run: nix develop -c just validate

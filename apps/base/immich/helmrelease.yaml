@@ -1,0 +1,50 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: immich
+  namespace: immich
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/immich/homelab-postgres-immich
+spec:
+  interval: 1h
+  timeout: 20m
+  chart:
+    spec:
+      chart: immich
+      version: "0.9.3"
+      sourceRef:
+        kind: OCIRepository
+        name: immich-charts
+        namespace: flux-system
+  valuesFrom:
+    - kind: Secret
+      name: homelab-postgres-immich
+      valuesKey: username
+      targetPath: env.DB_USERNAME
+    - kind: Secret
+      name: homelab-postgres-immich
+      valuesKey: password
+      targetPath: env.DB_PASSWORD
+  values:
+    postgresql:
+      enabled: false
+    redis:
+      enabled: true
+    env:
+      DB_HOSTNAME: homelab-postgres-rw.cnpg-system.svc.cluster.local
+      DB_PORT: "5432"
+      DB_DATABASE_NAME: immich
+    immich:
+      persistence:
+        library:
+          existingClaim: immich-library
+    server:
+      ingress:
+        enabled: false
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 4Gi

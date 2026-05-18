@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: uptime-kuma
+  namespace: uptime-kuma
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Uptime Kuma
+    gethomepage.dev/description: Uptime monitoring
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: uptime-kuma.png
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.org/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - uptime-kuma.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
+  rules:
+    - host: uptime-kuma.cluster.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: uptime-kuma
+                port:
+                  number: 3001
