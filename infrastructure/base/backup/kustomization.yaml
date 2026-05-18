@@ -4,6 +4,4 @@ resources:
   - namespace.yaml
   - velero-credentials.secret.yaml
   - helmrelease.yaml
-  - daily-backup.yaml
-  - weekly-backup.yaml
   # servicemonitor.yaml: re-enable when apps monitoring (VictoriaMetrics) is installed
