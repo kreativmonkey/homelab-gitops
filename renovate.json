@@ -49,9 +49,9 @@
     },
     {
       "customType": "regex",
-      "description": "Forgejo workflow action versions",
+      "description": "CI workflow action versions (Forgejo and GitHub)",
       "fileMatch": [
-        "^\\.forgejo/workflows/.*\\.ya?ml$"
+        "^\\.(forgejo|github)/workflows/.*\\.ya?ml$"
       ],
       "matchStrings": [
         "uses:\\s*(?<depName>[^@\\s]+)@(?<currentValue>[^\\s#]+)"
