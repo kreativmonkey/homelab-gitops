@@ -1,0 +1,256 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vm-k8s-stack
+  namespace: monitoring
+spec:
+  interval: 1h
+  timeout: 10m
+  chart:
+    spec:
+      chart: victoria-metrics-k8s-stack
+      version: "0.72.5"
+      sourceRef:
+        kind: HelmRepository
+        name: victoriametrics-repo
+        namespace: flux-system
+  values:
+    # ============================================
+    # VMSINGLE - Storage
+    # ============================================
+    vmsingle:
+      enabled: true
+      spec:
+        retentionPeriod: "1"
+        storage:
+          storageClassName: longhorn
+          resources:
+            requests:
+              storage: 20Gi
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        priorityClassName: homelab-infrastructure
+        podMetadata:
+          annotations:
+            backup.velero.io/backup-volumes: vm-data
+      ingress:
+        enabled: false
+
+    # ============================================
+    # OPERATOR - use quay.io to avoid Docker Hub rate limits
+    # ============================================
+    victoria-metrics-operator:
+      image:
+        registry: quay.io
+      env:
+        - name: VM_CONFIG_RELOADER_IMAGE
+          value: "quay.io/victoriametrics/operator:config-reloader-v0.68.3"
+        - name: VM_VMSINGLEDEFAULT_IMAGE
+          value: "quay.io/victoriametrics/victoria-metrics"
+        - name: VM_VMAGENTDEFAULT_IMAGE
+          value: "quay.io/victoriametrics/vmagent"
+        - name: VM_VMALERTDEFAULT_IMAGE
+          value: "quay.io/victoriametrics/vmalert"
+        - name: VM_VMALERTMANAGER_ALERTMANAGERDEFAULTBASEIMAGE
+          value: "quay.io/prometheus/alertmanager"
+
+    # ============================================
+    # VMAGENT - Scraping & auto-discovery
+    # ============================================
+    vmagent:
+      enabled: true
+      spec:
+        selectAllByDefault: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+    # ============================================
+    # VMALERT - Alerting
+    # ============================================
+    vmalert:
+      enabled: true
+      spec:
+        # No alertmanager configured - send alerts to blackhole
+        extraArgs:
+          notifier.blackhole: "true"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+    # ============================================
+    # ALERTMANAGER - Disabled for now
+    # ============================================
+    alertmanager:
+      enabled: false
+
+    # ============================================
+    # NODE EXPORTER
+    # ============================================
+    prometheus-node-exporter:
+      enabled: true
+
+    # ============================================
+    # KUBE STATE METRICS
+    # ============================================
+    kube-state-metrics:
+      enabled: true
+
+    # ============================================
+    # DEFAULT DASHBOARDS & RULES
+    # ============================================
+    defaultDashboards:
+      enabled: true
+
+    defaultRules:
+      enabled: true
+
+    # ============================================
+    # GRAFANA
+    # ============================================
+    grafana:
+      enabled: true
+
+      admin:
+        existingSecret: grafana-admin-credentials
+        userKey: admin-username
+        passwordKey: admin-password
+
+      # Recreate avoids RWO PVC deadlock on upgrades
+      deploymentStrategy:
+        type: Recreate
+
+      # Persistence - reuse existing PVC
+      persistence:
+        enabled: true
+        storageClassName: longhorn
+        size: 2Gi
+
+      # Security context
+      podSecurityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+
+      containerSecurityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+
+      # emptyDir volumes needed for readOnlyRootFilesystem + plugin installer
+      extraVolumes:
+        - name: tmp
+          emptyDir: {}
+        - name: plugins-dir
+          emptyDir: {}
+
+      extraVolumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: plugins-dir
+          mountPath: /var/lib/grafana/plugins
+
+      # Native VictoriaMetrics datasource plugin
+      # Pin to 0.22.0 - 0.23.x requires Grafana >=11.6.11 (not yet available in charts)
+      plugins:
+        - victoriametrics-metrics-datasource@0.22.0
+
+      priorityClassName: homelab-infrastructure
+
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 256m
+          memory: 512Mi
+
+      # Give grafana time to download and install the VM plugin before health checks
+      readinessProbe:
+        initialDelaySeconds: 60
+        timeoutSeconds: 5
+        failureThreshold: 10
+      livenessProbe:
+        initialDelaySeconds: 120
+        timeoutSeconds: 10
+        failureThreshold: 10
+
+      ingress:
+        enabled: false
+
+      podAnnotations:
+        backup.velero.io/backup-volumes: grafana-storage
+
+      # Sidecar watches for dashboard configmaps (chart handles datasource natively)
+      sidecar:
+        datasources:
+          enabled: true
+          initDatasources: false
+          label: grafana_datasource
+          labelValue: "1"
+        dashboards:
+          enabled: true
+          label: grafana_dashboard
+          labelValue: "1"
+
+    # ============================================
+    # DATASOURCE - chart manages this natively
+    # ============================================
+    defaultDatasources:
+      enabled: true
+      victoriametrics:
+        # Use native VM datasource plugin as default
+        datasourceType: victoriametrics-metrics-datasource
+
+    # ============================================
+    # KUBELET SCRAPING
+    # ============================================
+    kubelet:
+      enabled: true
+      spec:
+        interval: 30s
+
+    # ============================================
+    # KUBE API SERVER SCRAPING
+    # ============================================
+    kubeApiServer:
+      enabled: true
+
+    # ============================================
+    # KUBE CONTROLLER MANAGER
+    # ============================================
+    kubeControllerManager:
+      enabled: true
+
+    # ============================================
+    # KUBE SCHEDULER
+    # ============================================
+    kubeScheduler:
+      enabled: true
+
+    # ============================================
+    # KUBE ETCD
+    # ============================================
+    kubeEtcd:
+      enabled: true
+
+    # ============================================
+    # KUBE PROXY
+    # ============================================
+    kubeProxy:
+      enabled: false
