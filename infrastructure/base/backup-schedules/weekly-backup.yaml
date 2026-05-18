@@ -1,25 +1,20 @@
 apiVersion: velero.io/v1
 kind: Schedule
 metadata:
-  name: daily-backup
+  name: weekly-backup
   namespace: velero
 spec:
-  schedule: "0 2 * * *"
+  schedule: "0 3 * * 0"
   template:
     includedNamespaces:
-      - default
-      - monitoring
-      - longhorn-system
-      - external-dns
-      - ingress-nginx
-      - cnpg-system
+      - '*'
     excludedResources:
       - events
       - events.events.k8s.io
     storageLocation: default
     volumeSnapshotLocations:
       - default
-    ttl: 168h
+    ttl: 672h
     includeClusterResources: true
     snapshotVolumes: false
     defaultVolumesToFsBackup: true

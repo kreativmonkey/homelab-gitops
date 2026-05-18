@@ -28,6 +28,7 @@ trap 'rm -rf "$BUILD_DIR"' EXIT
 
 KUSTOMIZE_PATHS=(
   infrastructure/base
+  infrastructure/base/backup-schedules
   infrastructure/overlays/main
   apps/overlays/main
 )
