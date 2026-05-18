@@ -21,13 +21,13 @@ spec:
       defaultClass: false
       defaultDataPath: /var/lib/longhorn
     defaultSettings:
-      createDefaultDiskLabeledNodes: true
-      replicaCount: 3
+      createDefaultDiskLabeledNodes: false
+      replicaCount: 2
     longhornManager:
       resources:
         requests:
-          cpu: 100m
-          memory: 256Mi
+          cpu: 50m
+          memory: 128Mi
         limits:
-          cpu: 500m
-          memory: 512Mi
+          cpu: 200m
+          memory: 256Mi
