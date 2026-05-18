@@ -13,7 +13,7 @@ spec:
       chart: immich
       version: "0.9.3"
       sourceRef:
-        kind: OCIRepository
+        kind: HelmRepository
         name: immich-charts
         namespace: flux-system
   valuesFrom:
