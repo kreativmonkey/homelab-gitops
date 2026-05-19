@@ -19,8 +19,14 @@ data:
             format: "HH:mm"
             dateFormat: "DD.MM.YYYY"
         - kubernetes:
-            clusterName: homelab
-            showCluster: true
+            cluster:
+              show: true
+              cpu: true
+              memory: true
+              showLabel: true
+              label: homelab
+            nodes:
+              show: false
   kubernetes.yaml: |
     mode: cluster
     # Services are defined manually in services.yaml; ingress auto-discovery
