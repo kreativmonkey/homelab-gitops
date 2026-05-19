@@ -1,6 +1,17 @@
 # Static NFS volumes on TrueNAS (192.168.10.94).
-# NFS export paths use the pool mount (/mnt/Storagepool/...). Docker host paths
-# (/mnt/truenas/...) must map to these exports — verify on TrueNAS before apply.
+#
+# TrueNAS exports only these paths (must match fstab on Docker host):
+#   192.168.10.94:/mnt/Storagepool/Media      → /mnt/truenas/Media
+#   192.168.10.94:/mnt/Storagepool/Documents → /mnt/truenas/Documents
+#
+# Kubernetes cannot mount subdirectories as separate NFS roots unless they are
+# their own export. Each PV therefore uses an export root; apps mount a
+# subdirectory via volumeMount.subPath (see apps/base/*/deployment.yaml and
+# immich/paperless HelmRelease values).
+#
+# subPath reference (relative to export root):
+#   Media/Bilder, Media/Fotos, Media/paperless/*, Media/jellyfin/*,
+#   Media/MediaStack/*, Media/docker/audiobookshelf/* (create on NAS if missing)
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -19,8 +30,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    # Docker: /mnt/truenas/Media/Bilder → /usr/src/app/upload
-    path: /mnt/Storagepool/Media/Bilder
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: immich-library
@@ -44,8 +54,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    # Docker: /mnt/truenas/Media/Fotos → /fotos (external library in Immich UI)
-    path: /mnt/Storagepool/Media/Fotos
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: immich-fotos
@@ -69,7 +78,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/Media/paperless/data
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: paperless-ngx-data
@@ -93,7 +102,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/Media/paperless/media
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: paperless-ngx-media
@@ -117,7 +126,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/Media/paperless/export
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: paperless-ngx-export
@@ -141,7 +150,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/Media/paperless/redis
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: redis-data
@@ -165,8 +174,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    # Docker: /docker/audiobookshelf/config — export this path or migrate data here
-    path: /mnt/Storagepool/docker/audiobookshelf/config
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: audiobookshelf-config
@@ -190,7 +198,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/docker/audiobookshelf/metadata
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: audiobookshelf-metadata
@@ -214,8 +222,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    # Docker: /mnt/truenas/Media/MediaStack/audiobooks → /audiobooks
-    path: /mnt/Storagepool/Media/MediaStack/audiobooks
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: audiobookshelf-audiobooks
@@ -239,14 +246,12 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    # Docker: /mnt/truenas/Media/MediaStack/podcasts → /podcasts
-    path: /mnt/Storagepool/Media/MediaStack/podcasts
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: audiobookshelf-podcasts
     namespace: audiobookshelf
 ---
-# Jellyfin: docker host /mnt/truenas/... == NFS export /mnt/Storagepool/... on 192.168.10.94
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -265,8 +270,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    # host: /docker/jellyfin/config
-    path: /mnt/Storagepool/Media/jellyfin/config
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: jellyfin-config
@@ -290,8 +294,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    # host: /docker/jellyfin/cache
-    path: /mnt/Storagepool/Media/jellyfin/cache
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: jellyfin-cache
@@ -316,8 +319,7 @@ spec:
     - nfsvers=4.1
     - ro
   nfs:
-    # host: /mnt/truenas/Media/MediaStack/media (read-only in compose)
-    path: /mnt/Storagepool/Media/MediaStack/media
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: jellyfin-media
@@ -341,7 +343,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/Media/nextcloud
+    path: /mnt/Storagepool/Media
     server: 192.168.10.94
   claimRef:
     name: nextcloud-data
