@@ -8,25 +8,6 @@ data:
     ---
     title: "Homelab Dashboard"
     language: "de"
-    header:
-      left:
-        - search:
-            provider: custom
-            url: https://search.f4mily.net/search?q=
-            focus: true
-      right:
-        - clock:
-            format: "HH:mm"
-            dateFormat: "DD.MM.YYYY"
-        - kubernetes:
-            cluster:
-              show: true
-              cpu: true
-              memory: true
-              showLabel: true
-              label: homelab
-            nodes:
-              show: false
   kubernetes.yaml: |
     mode: cluster
     # Services are defined manually in services.yaml; ingress auto-discovery
@@ -159,11 +140,26 @@ data:
             ping: http://192.168.10.153
   widgets.yaml: |
     ---
+    - search:
+        provider: custom
+        url: https://search.f4mily.net/search?q=
+        focus: true
+    - datetime:
+        locale: de
+        format:
+          timeStyle: short
+          dateStyle: short
     - kubernetes:
         cluster:
           show: true
           cpu: true
           memory: true
           showLabel: true
+          label: homelab
+        nodes:
+          show: false
+          cpu: false
+          memory: false
+          showLabel: false
   bookmarks.yaml: |
     ---
