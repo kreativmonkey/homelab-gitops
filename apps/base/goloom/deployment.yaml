@@ -30,11 +30,18 @@ spec:
             - secretRef:
                 name: goloom-app
           env:
-            - name: DATABASE_URL
+            - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   name: homelab-postgres-goloom
-                  key: uri
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-goloom
+                  key: password
+            - name: DATABASE_URL
+              value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@homelab-postgres-rw.cnpg-system.svc.cluster.local:5432/goloom?sslmode=disable
           livenessProbe:
             httpGet:
               path: /healthz
