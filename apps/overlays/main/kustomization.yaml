@@ -46,7 +46,7 @@ resources:
 
   # --- Development / Misc -----------------------------------------------
   # - ../../base/teslamate           # wip: ingress only, no workload
-  # - ../../base/goloom              # wip: ingress only, no workload
+  - ../../base/goloom
   # - ../../base/pcm                 # wip: ingress only, no workload
 
   # --- Standalone workloads (already-deployed) --------------------------
@@ -150,6 +150,16 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.host_goloom
+    targets:
+      - select: {kind: Ingress, name: goloom}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.host_nextcloud
     targets:
       - select: {kind: Ingress, name: nextcloud}
@@ -218,6 +228,8 @@ replacements:
       - select: {kind: HelmRelease, name: sterling-pdf}
         fieldPaths: [spec.values.ingress.tls.0.secretName]
       - select: {kind: Ingress, name: searxng}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: goloom}
         fieldPaths: [spec.tls.0.secretName]
 
   - source:
