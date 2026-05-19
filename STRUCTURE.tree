@@ -1,17 +1,25 @@
 .
+├── AGENTS.md
 ├── apps
 │   ├── base
 │   │   ├── audiobookshelf
 │   │   │   ├── deployment.yaml
 │   │   │   ├── kustomization.yaml
-│   │   │   └── namespace.yaml
+│   │   │   ├── namespace.yaml
+│   │   │   └── pvc.yaml
 │   │   ├── authentik
+│   │   │   ├── authentik-secret-key.secret.yaml
+│   │   │   ├── authentik-secret-key.secret.yaml.template
+│   │   │   ├── helmrelease.yaml
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── backrest
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── goloom
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── homepage
@@ -20,6 +28,7 @@
 │   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   ├── namespace.yaml
+│   │   │   ├── rbac.yaml
 │   │   │   └── service.yaml
 │   │   ├── homer
 │   │   │   ├── configmap.yaml
@@ -29,16 +38,24 @@
 │   │   │   ├── namespace.yaml
 │   │   │   └── service.yaml
 │   │   ├── immich
+│   │   │   ├── helmrelease.yaml
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
-│   │   │   └── namespace.yaml
+│   │   │   ├── namespace.yaml
+│   │   │   ├── pvc-fotos.yaml
+│   │   │   └── pvc-library.yaml
 │   │   ├── jellyfin
+│   │   │   ├── deployment.yaml
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
-│   │   │   └── namespace.yaml
+│   │   │   ├── namespace.yaml
+│   │   │   └── pvc.yaml
 │   │   ├── kite
 │   │   │   ├── deployment.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── linkwarden
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── monitoring
@@ -47,18 +64,25 @@
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── nextcloud
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
-│   │   │   └── namespace.yaml
+│   │   │   ├── namespace.yaml
+│   │   │   └── pvc.yaml
 │   │   ├── paperless-ngx
+│   │   │   ├── helmrelease.yaml
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── pcm
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── searxng
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── speedtest-tracker
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── sterling-pdf
@@ -66,46 +90,66 @@
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── tandoor
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── teslamate
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── unifi-controller
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
 │   │   ├── uptime-kuma
+│   │   │   ├── ingress.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   └── namespace.yaml
-│   │   ├── watchyourlan
-│   │   │   ├── kustomization.yaml
-│   │   │   └── namespace.yaml
-│   │   └── kustomization.yaml
+│   │   └── watchyourlan
+│   │       ├── ingress.yaml
+│   │       ├── kustomization.yaml
+│   │       └── namespace.yaml
 │   ├── overlays
 │   │   └── main
+│   │       ├── cluster-config.yaml
+│   │       ├── databases
+│   │       ├── db-secrets
 │   │       └── kustomization.yaml
 │   └── README.md
 ├── clusters
 │   └── main
+│       ├── apps.yaml
 │       ├── flux-system
 │       │   ├── gotk-components.yaml
 │       │   ├── gotk-sync.yaml
 │       │   └── kustomization.yaml
-│       ├── apps.yaml
 │       └── infrastructure.yaml
+├── docs
+│   ├── applications.md
+│   ├── cluster-access.md
+│   ├── disaster-recovery
+│   │   └── cnpg-s3-dr.md
+│   └── migrations
+│       ├── nfs-migration.md
+│       └── phase1-postgres.md
+├── FIXES.md
+├── flake.nix
 ├── infrastructure
 │   ├── base
 │   │   ├── backup
-│   │   │   ├── daily-backup.yaml
 │   │   │   ├── helmrelease.yaml
 │   │   │   ├── kustomization.yaml
 │   │   │   ├── namespace.yaml
 │   │   │   ├── servicemonitor.yaml
-│   │   │   ├── velero-credentials.secret.yaml
+│   │   │   └── velero-credentials.secret.yaml
+│   │   ├── backup-schedules
+│   │   │   ├── daily-backup.yaml
+│   │   │   ├── kustomization.yaml
 │   │   │   └── weekly-backup.yaml
 │   │   ├── database
 │   │   │   ├── cnpg
 │   │   │   └── kustomization.yaml
+│   │   ├── kustomization.yaml
 │   │   ├── network
 │   │   │   ├── certificates
 │   │   │   ├── cert-manager
@@ -119,28 +163,26 @@
 │   │   │   ├── kustomization.yaml
 │   │   │   ├── namespaces.yaml
 │   │   │   └── priorityclass.yaml
-│   │   ├── storage
-│   │   │   ├── ingress.yaml
-│   │   │   ├── kustomization.yaml
-│   │   │   ├── longhorn.yaml
-│   │   │   ├── pv-nfs.yaml
-│   │   │   └── storageclass.yaml
-│   │   └── kustomization.yaml
+│   │   └── storage
+│   │       ├── ingress.yaml
+│   │       ├── kustomization.yaml
+│   │       ├── longhorn.yaml
+│   │       ├── pv-nfs.yaml
+│   │       └── storageclass.yaml
+│   ├── kustomization.yaml
 │   └── overlays
+│       ├── disaster-recovery
+│       │   ├── kustomization.yaml
+│       │   └── patches
 │       └── main
 │           ├── database-clusters
-│           └── kustomization.yaml
-├── scripts
-│   └── ci
-│       └── validate.sh
-├── AGENTS.md
-├── FIXES.md
-├── flake.lock
-├── flake.nix
-├── keys.txt
+│           ├── kustomization.yaml
+│           └── pgadmin
+├── justfile
 ├── opencode.json
 ├── README.md
 ├── renovate.json
+├── scripts
+│   └── ci
+│       └── validate.sh
 └── STRUCTURE.tree
-
-50 directories, 94 files
