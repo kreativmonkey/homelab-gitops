@@ -33,6 +33,9 @@ spec:
       architecture: standalone
       auth:
         enabled: false
+      master:
+        persistence:
+          storageClass: longhorn
     authentik:
       postgresql:
         host: homelab-postgres-rw.cnpg-system.svc.cluster.local

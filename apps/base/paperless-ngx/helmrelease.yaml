@@ -19,31 +19,50 @@ spec:
   valuesFrom:
     - kind: Secret
       name: homelab-postgres-paperless
-      valuesKey: username
-      targetPath: env.PAPERLESS_DBUSER
-    - kind: Secret
-      name: homelab-postgres-paperless
       valuesKey: password
-      targetPath: env.PAPERLESS_DBPASS
+      targetPath: paperless.env[4].value
   values:
-    postgresql:
-      enabled: false
+    paperless:
+      env:
+        - name: PAPERLESS_DBHOST
+          value: homelab-postgres-rw.cnpg-system.svc.cluster.local
+        - name: PAPERLESS_DBPORT
+          value: "5432"
+        - name: PAPERLESS_DBNAME
+          value: paperless
+        - name: PAPERLESS_DBUSER
+          value: paperless
+        - name: PAPERLESS_DBPASS
+          value: ""
+        - name: PAPERLESS_REDIS
+          value: redis://redis:6379
+        - name: PAPERLESS_TIME_ZONE
+          value: Europe/Berlin
+        - name: PAPERLESS_OCR_LANGUAGE
+          value: eng
+      ingress:
+        enabled: false
+      volumes:
+        - name: data
+          path: /usr/src/paperless/data
+          size: 5Gi
+          storageClassName: longhorn
+        - name: media
+          path: /usr/src/paperless/media
+          size: 15Gi
+          storageClassName: longhorn
+        - name: export
+          path: /usr/src/paperless/export
+          size: 20Gi
+          storageClassName: longhorn
+      secretRefs:
+        - key: PAPERLESS_SECRET_KEY
+          name: paperless-ngx
+        - key: PAPERLESS_URL
+          name: paperless-ngx
     redis:
-      enabled: true
-    env:
-      PAPERLESS_DBHOST: homelab-postgres-rw.cnpg-system.svc.cluster.local
-      PAPERLESS_DBPORT: "5432"
-      PAPERLESS_DBNAME: paperless
-    ingress:
-      enabled: false
-    persistence:
-      enabled: true
-      storageClass: longhorn
-      size: 10Gi
-    resources:
-      requests:
-        cpu: 100m
-        memory: 512Mi
-      limits:
-        cpu: "1"
-        memory: 2Gi
+      volumes:
+        - name: data
+          path: /data
+          size: 5Gi
+          storageClassName: longhorn
