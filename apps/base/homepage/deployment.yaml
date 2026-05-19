@@ -58,12 +58,11 @@ spec:
           capabilities:
             drop: ["ALL"]
         resources:
-          limits:
-            cpu: 500m
-            memory: 256Mi
           requests:
-            cpu: 100m
-            memory: 50Mi
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 256Mi
       volumes:
       - name: config
         emptyDir: {}

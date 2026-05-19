@@ -84,6 +84,34 @@ spec:
                         volumeMounts:
                           - name: data
                             subPath: paperless/redis
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: paperless-ngx
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 50m
+                    memory: 256Mi
+                  limits:
+                    memory: 1Gi
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: redis
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 10m
+                    memory: 64Mi
+                  limits:
+                    memory: 256Mi
   chart:
     spec:
       chart: paperless-ngx
