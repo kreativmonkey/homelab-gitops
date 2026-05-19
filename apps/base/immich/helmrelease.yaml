@@ -34,6 +34,9 @@ spec:
       valuesKey: password
       targetPath: env.DB_PASSWORD
   values:
+    global:
+      security:
+        allowInsecureImages: true
     postgresql:
       enabled: false
     redis:
@@ -56,10 +59,14 @@ spec:
           existingClaim: immich-library
     server:
       persistence:
+        # subPath = directory under NFS export /mnt/Storagepool/Media (see pv-nfs.yaml)
+        library:
+          subPath: Bilder
         fotos:
           enabled: true
           mountPath: /fotos
           existingClaim: immich-fotos
+          subPath: Fotos
       ingress:
         main:
           enabled: false

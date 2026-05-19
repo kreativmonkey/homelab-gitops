@@ -8,6 +8,49 @@ metadata:
 spec:
   interval: 1h
   timeout: 15m
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: paperless-ngx
+            patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: paperless-ngx
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: paperless-ngx
+                        volumeMounts:
+                          - name: data
+                            subPath: paperless/data
+                          - name: media
+                            subPath: paperless/media
+                          - name: export
+                            subPath: paperless/export
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: redis
+            patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: redis
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: redis
+                        volumeMounts:
+                          - name: data
+                            subPath: paperless/redis
   chart:
     spec:
       chart: paperless-ngx

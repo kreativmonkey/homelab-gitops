@@ -1,5 +1,21 @@
 # PVC Migration: Longhorn → NFS (`nfs-media-static`)
 
+## TrueNAS exports (fstab reference)
+
+Only these paths are exported from `192.168.10.94`:
+
+```fstab
+192.168.10.94:/mnt/Storagepool/Documents /mnt/truenas/Documents nfs defaults 0 0
+192.168.10.94:/mnt/Storagepool/Media     /mnt/truenas/Media     nfs defaults 0 0
+```
+
+All static PVs in `infrastructure/base/storage/pv-nfs.yaml` use one of these as `spec.nfs.path`.
+Application data lives in subdirectories (`Bilder`, `jellyfin/config`, `MediaStack/media`, …)
+and is mounted via `volumeMount.subPath` in the app manifests.
+
+Changing `spec.nfs.path` on an existing PV is not supported — delete the PV (after
+releasing the PVC) and let Flux recreate it from Git.
+
 ## Why this exists
 
 PersistentVolumeClaim specs are **immutable** for the fields

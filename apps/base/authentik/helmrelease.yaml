@@ -26,6 +26,9 @@ spec:
       valuesKey: secret-key
       targetPath: authentik.secret_key
   values:
+    global:
+      security:
+        allowInsecureImages: true
     postgresql:
       enabled: false
     redis:
