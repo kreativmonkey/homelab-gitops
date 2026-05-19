@@ -9,16 +9,16 @@ metadata:
     gethomepage.dev/description: Goloom
     gethomepage.dev/group: Development
     gethomepage.dev/icon: goloom.png
-    # TLS: wildcard-f4mily-net-tls via reflector (cert-manager namespace)
+    # TLS: wildcard-cluster-f4mily-net-tls via reflector (cert-manager namespace)
     nginx.org/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - goloom.f4mily.net
-      secretName: wildcard-f4mily-net-tls
+        - goloom.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
   rules:
-    - host: goloom.f4mily.net
+    - host: goloom.cluster.f4mily.net
       http:
         paths:
           - path: /
