@@ -1,14 +1,13 @@
-# Binds to pv-nfs-immich-library → TrueNAS .../Media/Bilder (chart mounts at /usr/src/app/upload)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: immich-library
+  name: immich-fotos
   namespace: immich
 spec:
   accessModes:
     - ReadWriteMany
   storageClassName: nfs-media-static
-  volumeName: pv-nfs-immich-library
+  volumeName: pv-nfs-immich-fotos
   resources:
     requests:
       storage: 2Ti

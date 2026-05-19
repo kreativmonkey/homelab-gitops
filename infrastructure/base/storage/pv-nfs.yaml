@@ -1,17 +1,348 @@
+# Static NFS volumes on TrueNAS (192.168.10.94).
+# NFS export paths use the pool mount (/mnt/Storagepool/...). Docker host paths
+# (/mnt/truenas/...) must map to these exports — verify on TrueNAS before apply.
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-nfs-audiobooks
+  name: pv-nfs-immich-library
   labels:
+    app: immich
     storage.type: nfs-media
 spec:
   capacity:
-    storage: 1Ti # K8s benötigt einen Wert, das NAS ignoriert das Limit de facto
+    storage: 2Ti
   volumeMode: Filesystem
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
   storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/Media
+    # Docker: /mnt/truenas/Media/Bilder → /usr/src/app/upload
+    path: /mnt/Storagepool/Media/Bilder
     server: 192.168.10.94
+  claimRef:
+    name: immich-library
+    namespace: immich
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-immich-fotos
+  labels:
+    app: immich
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 2Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    # Docker: /mnt/truenas/Media/Fotos → /fotos (external library in Immich UI)
+    path: /mnt/Storagepool/Media/Fotos
+    server: 192.168.10.94
+  claimRef:
+    name: immich-fotos
+    namespace: immich
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-paperless-data
+  labels:
+    app: paperless-ngx
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media/paperless/data
+    server: 192.168.10.94
+  claimRef:
+    name: paperless-ngx-data
+    namespace: paperless-ngx
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-paperless-media
+  labels:
+    app: paperless-ngx
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 500Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media/paperless/media
+    server: 192.168.10.94
+  claimRef:
+    name: paperless-ngx-media
+    namespace: paperless-ngx
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-paperless-export
+  labels:
+    app: paperless-ngx
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media/paperless/export
+    server: 192.168.10.94
+  claimRef:
+    name: paperless-ngx-export
+    namespace: paperless-ngx
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-paperless-redis
+  labels:
+    app: paperless-ngx
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media/paperless/redis
+    server: 192.168.10.94
+  claimRef:
+    name: redis-data
+    namespace: paperless-ngx
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-audiobookshelf-config
+  labels:
+    app: audiobookshelf
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    # Docker: /docker/audiobookshelf/config — export this path or migrate data here
+    path: /mnt/Storagepool/docker/audiobookshelf/config
+    server: 192.168.10.94
+  claimRef:
+    name: audiobookshelf-config
+    namespace: audiobookshelf
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-audiobookshelf-metadata
+  labels:
+    app: audiobookshelf
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/docker/audiobookshelf/metadata
+    server: 192.168.10.94
+  claimRef:
+    name: audiobookshelf-metadata
+    namespace: audiobookshelf
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-audiobookshelf-audiobooks
+  labels:
+    app: audiobookshelf
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 2Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    # Docker: /mnt/truenas/Media/MediaStack/audiobooks → /audiobooks
+    path: /mnt/Storagepool/Media/MediaStack/audiobooks
+    server: 192.168.10.94
+  claimRef:
+    name: audiobookshelf-audiobooks
+    namespace: audiobookshelf
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-audiobookshelf-podcasts
+  labels:
+    app: audiobookshelf
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 2Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    # Docker: /mnt/truenas/Media/MediaStack/podcasts → /podcasts
+    path: /mnt/Storagepool/Media/MediaStack/podcasts
+    server: 192.168.10.94
+  claimRef:
+    name: audiobookshelf-podcasts
+    namespace: audiobookshelf
+---
+# Jellyfin: docker host /mnt/truenas/... == NFS export /mnt/Storagepool/... on 192.168.10.94
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-jellyfin-config
+  labels:
+    app: jellyfin
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    # host: /docker/jellyfin/config
+    path: /mnt/Storagepool/Media/jellyfin/config
+    server: 192.168.10.94
+  claimRef:
+    name: jellyfin-config
+    namespace: jellyfin
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-jellyfin-cache
+  labels:
+    app: jellyfin
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    # host: /docker/jellyfin/cache
+    path: /mnt/Storagepool/Media/jellyfin/cache
+    server: 192.168.10.94
+  claimRef:
+    name: jellyfin-cache
+    namespace: jellyfin
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-jellyfin-media
+  labels:
+    app: jellyfin
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 2Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+    - ro
+  nfs:
+    # host: /mnt/truenas/Media/MediaStack/media (read-only in compose)
+    path: /mnt/Storagepool/Media/MediaStack/media
+    server: 192.168.10.94
+  claimRef:
+    name: jellyfin-media
+    namespace: jellyfin
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-nextcloud
+  labels:
+    app: nextcloud
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 500Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media/nextcloud
+    server: 192.168.10.94
+  claimRef:
+    name: nextcloud-data
+    namespace: nextcloud
