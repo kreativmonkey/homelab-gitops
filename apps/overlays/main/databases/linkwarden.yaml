@@ -2,10 +2,9 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
   name: homelab-postgres-linkwarden
-  namespace: linkwarden
+  namespace: cnpg-system
 spec:
   name: linkwarden
   owner: linkwarden
   cluster:
     name: homelab-postgres
-    namespace: cnpg-system

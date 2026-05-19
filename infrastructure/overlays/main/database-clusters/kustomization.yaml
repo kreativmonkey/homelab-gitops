@@ -3,8 +3,7 @@ kind: Kustomization
 resources:
   - cluster.yaml
   - scheduled-backup.yaml
-  # Enable after: just sops-create cnpg-barman-s3-credentials cnpg-system ACCESS_KEY_ID=... ACCESS_SECRET_KEY=...
-  # (see barman-s3-credentials.secret.yaml.template — do not encrypt stringData into data:)
+  # Enable after: just overlay-secrets-help (requires SOPS_AGE_KEY_FILE)
   # - barman-s3-credentials.secret.yaml
   - credentials
   # Velero volume-level restore (optional, separate from Barman PITR)

@@ -2,10 +2,9 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
   name: homelab-postgres-tandoor
-  namespace: tandoor
+  namespace: cnpg-system
 spec:
   name: tandoor
   owner: tandoor
   cluster:
     name: homelab-postgres
-    namespace: cnpg-system
