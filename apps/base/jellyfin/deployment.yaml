@@ -39,10 +39,9 @@ spec:
             allowPrivilegeEscalation: false
           resources:
             requests:
-              cpu: 250m
-              memory: 512Mi
+              cpu: 50m
+              memory: 256Mi
             limits:
-              cpu: "2"
               memory: 4Gi
           livenessProbe:
             httpGet:
