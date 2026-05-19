@@ -27,14 +27,15 @@ spec:
           provider: aws
           config:
             region: us-east-1
-            s3Url: https://192.168.10.94:30292
-            insecureSkipTLSVerify: "true"
+            s3Url: http://192.168.10.94:30186
             s3ForcePathStyle: "true"
-      volumeSnapshotLocation:
-        - name: default
-          provider: aws
-          config:
-            region: us-east-1
+    initContainers:
+      - name: velero-plugin-for-aws
+        image: velero/velero-plugin-for-aws:v1.11.1
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /target
+            name: plugins
     credentials:
       existingSecret: velero-credentials
     nodeAgent:
