@@ -44,32 +44,25 @@ Use credentials from the app namespace secret `homelab-postgres-<app>`.
 
 ## 4. Immich: VectorChord (dedicated cluster)
 
-Immich v1.119+ requires **VectorChord** (`vchord`) and `earthdistance` on PostgreSQL 16+, not the stock CNPG image on `homelab-postgres`.
+Immich v1.119+ requires **VectorChord** (`vchord`) and `earthdistance` on PostgreSQL 16+, not the stock CNPG image on `homelab-postgres`. The homelab is still in a **test phase**: there is no production Immich database to migrate. Flux provisions an empty `immich` database; photos live on **NFS** (`immich-library` / `immich-fotos` PVCs) and Immich will re-index the library on first run.
 
-After Flux reconciles `immich-postgres` and the `Database` CR `homelab-postgres-immich` (same name as before; `spec.cluster.name` now points at `immich-postgres`):
+Sections 2–3 (Docker `pg_dump` / `pg_restore`) do **not** apply to Immich.
+
+After Flux reconciles `immich-postgres` and the `Database` CR `homelab-postgres-immich`:
 
 ```bash
 kubectl get cluster -n cnpg-system immich-postgres
 kubectl exec -n cnpg-system immich-postgres-1 -- psql -U postgres -d immich -c '\dx'
 ```
 
-Expect `cube`, `vchord`, and `earthdistance`. A fresh cluster starts with an empty `immich` database.
-
-Import from Docker or the old `homelab-postgres` instance (port-forward the new RW service):
-
-```bash
-kubectl port-forward -n cnpg-system svc/immich-postgres-rw 5433:5432
-pg_restore -h localhost -p 5433 -U immich -d immich --clean --if-exists /backup/immich.dump
-```
-
-Immich v1.119+ may require a [VectorChord upgrade path](https://docs.immich.app/administration/postgres-standalone/) after restore; do not assume a plain dump from pgvector-only Postgres is enough without reindex/upgrade steps.
+Expect `cube`, `vchord`, and `earthdistance`. If the cluster was recreated, delete any stale `immich` database on `homelab-postgres` manually only when you no longer need it for experiments.
 
 ## 5. Application-specific notes
 
 | App | URL | Notes |
 |-----|-----|-------|
 | Authentik | https://login.f4mily.net | Set `secret-key` via `just sops-edit apps/base/authentik/authentik-secret-key.secret.yaml` (see `.template`) |
-| Immich | https://immich.f4mily.net | Resize `immich-library` PVC; copy library files from Docker volume |
+| Immich | https://immich.f4mily.net | Library on NFS (`subPath` Bilder/Fotos); empty DB is fine — run admin setup / library scan after deploy |
 | Paperless | https://paperless.f4mily.net | Copy `media`/`data` volumes; re-run consumer after DB import |
 
 ## 6. Cutover
