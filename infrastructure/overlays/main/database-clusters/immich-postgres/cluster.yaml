@@ -1,0 +1,67 @@
+# Dedicated PostgreSQL for Immich — requires VectorChord (vchord), not stock CNPG image.
+# See: https://github.com/immich-app/immich-charts/blob/main/local/cloudnative-pg.yaml
+#      https://docs.immich.app/administration/postgres-standalone
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: immich-postgres
+  namespace: cnpg-system
+  labels:
+    app.kubernetes.io/name: immich-postgres
+    app.kubernetes.io/managed-by: cnpg
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/cnpg-system/cnpg
+spec:
+  description: "Immich PostgreSQL with VectorChord"
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16.9-0.4.3
+  instances: 1
+
+  postgresql:
+    shared_preload_libraries:
+      - vchord.so
+    parameters:
+      max_connections: "100"
+      shared_buffers: 256MB
+      effective_cache_size: 512MB
+
+  storage:
+    storageClass: longhorn
+    size: 10Gi
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+
+  monitoring:
+    enablePodMonitor: true
+
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://cnpg-backups/immich-postgres
+      endpointURL: https://192.168.10.94:30292
+      serverName: immich-postgres
+      s3Credentials:
+        accessKeyId:
+          name: cnpg-barman-s3-credentials
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: cnpg-barman-s3-credentials
+          key: ACCESS_SECRET_KEY
+      wal:
+        compression: gzip
+        maxParallel: 4
+      data:
+        compression: gzip
+    retentionPolicy: 30d
+
+  managed:
+    roles:
+      - name: immich
+        ensure: present
+        login: true
+        passwordSecret:
+          name: immich-db-credentials
