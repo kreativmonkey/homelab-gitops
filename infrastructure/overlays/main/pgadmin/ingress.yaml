@@ -9,8 +9,9 @@ metadata:
     gethomepage.dev/description: PostgreSQL admin
     gethomepage.dev/group: Infrastructure
     gethomepage.dev/icon: pgadmin.png
-    gethomepage.dev/app: pgadmin-pgadmin4
-    cert-manager.io/cluster-issuer: letsencrypt-production
+    gethomepage.dev/app: cnpg-system-pgadmin-pgadmin4
+    # TLS: wildcard-cluster-f4mily-net-tls replicated from cert-manager (reflector).
+    # Do not use cert-manager.io/cluster-issuer — ingress-shim conflicts with reflector.
     nginx.org/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
@@ -26,6 +27,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: pgadmin-pgadmin4
+                name: cnpg-system-pgadmin-pgadmin4
                 port:
                   number: 80
