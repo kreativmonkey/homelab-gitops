@@ -9,9 +9,11 @@ spec:
   interval: 1h
   timeout: 20m
   install:
+    disableWait: true
     remediation:
       retries: 3
   upgrade:
+    disableWait: true
     remediation:
       retries: 3
   chart:
