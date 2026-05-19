@@ -35,7 +35,7 @@ spec:
         enabled: false
       master:
         persistence:
-          storageClass: longhorn-1
+          enabled: false
     authentik:
       postgresql:
         host: homelab-postgres-rw.cnpg-system.svc.cluster.local
