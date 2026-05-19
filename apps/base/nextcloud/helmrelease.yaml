@@ -87,12 +87,23 @@ spec:
         subPath: docker/nextcloud
       strategy:
         type: Recreate
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 60
+    livenessProbe:
+      initialDelaySeconds: 60
+      failureThreshold: 6
+    readinessProbe:
+      initialDelaySeconds: 30
+      failureThreshold: 30
     resources:
       requests:
         cpu: 50m
-        memory: 256Mi
+        memory: 512Mi
       limits:
-        memory: 2Gi
+        memory: 4Gi
     podSecurityContext:
       fsGroup: 33
     cronjob:
