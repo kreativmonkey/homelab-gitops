@@ -9,6 +9,7 @@ data:
     general:
       instance_name: "search"
     server:
+      secret_key: "REPLACED_SEARXNG_SECRET_KEY"
       port: 8080
       bind_address: "0.0.0.0"
       limiter: false

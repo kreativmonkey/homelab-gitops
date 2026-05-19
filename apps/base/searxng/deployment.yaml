@@ -20,30 +20,6 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-      initContainers:
-        - name: configure
-          image: busybox:1.37
-          command:
-            - sh
-            - -c
-            - |
-              key="$(cat /secret/secret-key)"
-              awk -v key="$key" '
-                /^    server:/ { print; print "      secret_key: \"" key "\""; next }
-                { print }
-              ' /config/settings.yml > /etc/searxng/settings.yml
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: secret
-              mountPath: /secret
-              readOnly: true
-            - name: settings
-              mountPath: /etc/searxng
       containers:
         - name: searxng
           image: docker.io/searxng/searxng:2025.2.7-739822f70
@@ -83,14 +59,9 @@ spec:
             limits:
               memory: 512Mi
           volumeMounts:
-            - name: settings
+            - name: config
               mountPath: /etc/searxng
       volumes:
         - name: config
           configMap:
             name: searxng-settings
-        - name: secret
-          secret:
-            secretName: searxng-secret-key
-        - name: settings
-          emptyDir: {}
