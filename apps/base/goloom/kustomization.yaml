@@ -4,7 +4,6 @@ resources:
   - namespace.yaml
   - configmap.yaml
   - goloom-app.secret.yaml
-  - pvc.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml

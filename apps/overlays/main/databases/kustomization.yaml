@@ -8,3 +8,4 @@ resources:
   - nextcloud.yaml
   - linkwarden.yaml
   - teslamate.yaml
+  - goloom.yaml

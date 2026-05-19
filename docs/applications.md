@@ -71,7 +71,7 @@ here so it is obvious what is **planned** but not deployed:
 | speedtest-tracker  | wip    | ingress only, missing Deployment          |
 | watchyourlan       | wip    | ingress only, missing Deployment          |
 | teslamate          | wip    | ingress only, missing HelmRelease         |
-| goloom             | on     | Deployment, SQLite on Longhorn, Forgejo image |
+| goloom             | on     | Deployment, CNPG PostgreSQL, goloom.cluster.f4mily.net |
 | pcm                | wip    | ingress only, missing HelmRelease         |
 
 ## 2. The config file (`apps/overlays/main/cluster-config.yaml`)
