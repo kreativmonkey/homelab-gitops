@@ -33,6 +33,8 @@ spec:
             region: us-east-1
             s3Url: http://192.168.10.94:30186
             s3ForcePathStyle: "true"
+            insecureSkipTLSVerify: "true"
+            checksumAlgorithm: ""
       volumeSnapshotLocation: []
     initContainers:
       - name: velero-plugin-for-aws
