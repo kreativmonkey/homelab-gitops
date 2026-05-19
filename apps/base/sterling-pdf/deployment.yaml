@@ -17,6 +17,18 @@ metadata:
 spec:
   interval: 1h
   timeout: 30m
+  # stirling-pdf-chart renders ingress TLS hosts but drops values.ingress.tls.secretName
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: networking.k8s.io
+              version: v1
+              kind: Ingress
+            patch: |
+              - op: add
+                path: /spec/tls/0/secretName
+                value: wildcard-f4mily-net-tls
   install:
     timeout: 30m
     remediation:
@@ -92,7 +104,6 @@ spec:
         gethomepage.dev/group: Office
         gethomepage.dev/icon: stirling-pdf.png
         cert-manager.io/cluster-issuer: letsencrypt-production
-        cert-manager.io/uses-release-name: "true"
         nginx.org/ssl-redirect: "true"
       hosts:
         - name: pdf.f4mily.net
