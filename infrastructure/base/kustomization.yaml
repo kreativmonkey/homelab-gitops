@@ -4,5 +4,6 @@ resources:
   - network/cert-manager
   - network/external-dns
   - network/ingress
+  - metrics-server
   - backup
   - database
