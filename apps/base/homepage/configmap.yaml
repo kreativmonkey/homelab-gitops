@@ -23,7 +23,9 @@ data:
             showCluster: true
   kubernetes.yaml: |
     mode: cluster
-    ingress: true
+    # Services are defined manually in services.yaml; ingress auto-discovery
+    # needs per-app podSelector labels and spams errors otherwise.
+    ingress: false
   services.yaml: |
     ---
     - Infrastructure:
@@ -151,10 +153,11 @@ data:
             ping: http://192.168.10.153
   widgets.yaml: |
     ---
-    - resources:
-        cpu: true
-        memory: true
-        disk: 
-          - /var/lib/longhorn
+    - kubernetes:
+        cluster:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
   bookmarks.yaml: |
     ---
