@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - authentik-db-credentials.secret.yaml
   - immich-db-credentials.secret.yaml
+  - nextcloud-db-credentials.secret.yaml
   - paperless-db-credentials.secret.yaml
 patches:
   - target:
@@ -25,6 +26,16 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: immich
+  - target:
+      kind: Secret
+      name: nextcloud-db-credentials
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: homelab-postgres-nextcloud
+      - op: replace
+        path: /metadata/namespace
+        value: nextcloud
   - target:
       kind: Secret
       name: paperless-db-credentials
