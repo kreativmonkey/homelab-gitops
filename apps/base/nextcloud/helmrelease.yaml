@@ -47,6 +47,8 @@ spec:
       tag: 33.0.3-apache
     ingress:
       enabled: false
+    service:
+      port: 80
     phpClientHttpsFix:
       enabled: true
       protocol: https
@@ -85,15 +87,6 @@ spec:
         subPath: docker/nextcloud
       strategy:
         type: Recreate
-      securityContext:
-        runAsUser: 33
-        runAsGroup: 33
-        runAsNonRoot: true
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop: ["ALL"]
-        seccompProfile:
-          type: RuntimeDefault
     resources:
       requests:
         cpu: 50m
@@ -102,26 +95,5 @@ spec:
         memory: 2Gi
     podSecurityContext:
       fsGroup: 33
-      seccompProfile:
-        type: RuntimeDefault
-    nginx:
-      securityContext:
-        runAsUser: 101
-        runAsGroup: 101
-        runAsNonRoot: true
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop: ["ALL"]
-        seccompProfile:
-          type: RuntimeDefault
     cronjob:
       enabled: true
-      securityContext:
-        runAsUser: 33
-        runAsGroup: 33
-        runAsNonRoot: true
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop: ["ALL"]
-        seccompProfile:
-          type: RuntimeDefault
