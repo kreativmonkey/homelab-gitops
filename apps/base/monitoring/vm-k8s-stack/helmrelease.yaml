@@ -45,6 +45,9 @@ spec:
     # OPERATOR - use quay.io to avoid Docker Hub rate limits
     # ============================================
     victoria-metrics-operator:
+      # Avoid install deadlock when operator pod is not up yet (webhook connection refused).
+      admissionWebhooks:
+        enabled: false
       image:
         registry: quay.io
       env:

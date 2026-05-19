@@ -10,6 +10,8 @@ spec:
   cluster:
     name: immich-postgres
   extensions:
+    - name: vector
+      ensure: present
     - name: cube
       ensure: present
     - name: vchord

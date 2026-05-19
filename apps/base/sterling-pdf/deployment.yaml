@@ -60,10 +60,10 @@ spec:
       # only kicks in once the app is actually responsive.
       startup:
         enabled: true
-        initialDelaySeconds: 30
-        periodSeconds: 10
-        timeoutSeconds: 5
-        failureThreshold: 60
+        initialDelaySeconds: 60
+        periodSeconds: 15
+        timeoutSeconds: 10
+        failureThreshold: 40
       liveness:
         enabled: true
         initialDelaySeconds: 0
@@ -75,14 +75,14 @@ spec:
         initialDelaySeconds: 0
         periodSeconds: 15
         timeoutSeconds: 10
-        failureThreshold: 5
+        failureThreshold: 10
     resources:
       requests:
-        memory: "256Mi"
+        memory: "512Mi"
         cpu: "200m"
       limits:
-        memory: "1024Mi"
-        cpu: "500m"
+        memory: "2Gi"
+        cpu: "1000m"
     ingress:
       enabled: true
       ingressClassName: nginx
