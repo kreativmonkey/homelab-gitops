@@ -9,6 +9,7 @@ data:
     general:
       instance_name: "search"
     server:
+      secret_key: "0c97a82d4ed60e58c2e97c918780b8735d1e8aa7d25bf314d3d84a69ba99434e"
       port: 8080
       bind_address: "0.0.0.0"
       limiter: false
