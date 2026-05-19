@@ -11,6 +11,39 @@ spec:
   postRenderers:
     - kustomize:
         patches:
+          # Static NFS PVs (nfs-media-static has no provisioner — bind by volumeName).
+          - target:
+              version: v1
+              kind: PersistentVolumeClaim
+              name: paperless-ngx-data
+            patch: |
+              - op: add
+                path: /spec/volumeName
+                value: pv-nfs-paperless-data
+          - target:
+              version: v1
+              kind: PersistentVolumeClaim
+              name: paperless-ngx-media
+            patch: |
+              - op: add
+                path: /spec/volumeName
+                value: pv-nfs-paperless-media
+          - target:
+              version: v1
+              kind: PersistentVolumeClaim
+              name: paperless-ngx-export
+            patch: |
+              - op: add
+                path: /spec/volumeName
+                value: pv-nfs-paperless-export
+          - target:
+              version: v1
+              kind: PersistentVolumeClaim
+              name: redis-data
+            patch: |
+              - op: add
+                path: /spec/volumeName
+                value: pv-nfs-paperless-redis
           - target:
               group: apps
               version: v1

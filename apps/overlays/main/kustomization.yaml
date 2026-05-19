@@ -122,7 +122,7 @@ replacements:
       name: homelab-cluster-config
       fieldPath: data.host_paperless
     targets:
-      - select: {kind: Ingress, name: paperless-ngx}
+      - select: {kind: Ingress, name: paperless}
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
@@ -193,7 +193,7 @@ replacements:
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: jellyfin}
         fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: paperless-ngx}
+      - select: {kind: Ingress, name: paperless}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: HelmRelease, name: sterling-pdf}
         fieldPaths: [spec.values.ingress.tls.0.secretName]
