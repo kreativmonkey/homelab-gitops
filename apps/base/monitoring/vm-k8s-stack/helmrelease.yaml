@@ -29,10 +29,9 @@ spec:
               storage: 20Gi
         resources:
           requests:
-            cpu: 500m
-            memory: 1Gi
+            cpu: 100m
+            memory: 512Mi
           limits:
-            cpu: "2"
             memory: 4Gi
         priorityClassName: homelab-infrastructure
         podMetadata:
@@ -71,10 +70,9 @@ spec:
         selectAllByDefault: true
         resources:
           requests:
-            cpu: 100m
-            memory: 128Mi
+            cpu: 25m
+            memory: 64Mi
           limits:
-            cpu: 500m
             memory: 512Mi
 
     # ============================================
@@ -88,10 +86,9 @@ spec:
           notifier.blackhole: "true"
         resources:
           requests:
-            cpu: 50m
+            cpu: 10m
             memory: 64Mi
           limits:
-            cpu: 200m
             memory: 256Mi
 
     # ============================================
@@ -177,10 +174,9 @@ spec:
 
       resources:
         requests:
-          cpu: 50m
+          cpu: 25m
           memory: 128Mi
         limits:
-          cpu: 256m
           memory: 512Mi
 
       # Give grafana time to download and install the VM plugin before health checks

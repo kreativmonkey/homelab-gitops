@@ -75,10 +75,9 @@ spec:
           enabled: false
       resources:
         requests:
-          cpu: 200m
-          memory: 512Mi
+          cpu: 50m
+          memory: 256Mi
         limits:
-          cpu: "2"
           memory: 4Gi
     machine-learning:
       enabled: true
@@ -87,5 +86,4 @@ spec:
           cpu: 200m
           memory: 1Gi
         limits:
-          cpu: "2"
           memory: 4Gi
