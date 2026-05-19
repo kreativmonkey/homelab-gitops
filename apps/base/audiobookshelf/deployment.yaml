@@ -27,6 +27,9 @@ spec:
           env:
             - name: TZ
               value: "Europe/Berlin"
+            # Docker image defaults to /audiobookshelf; root ingress needs empty base path.
+            - name: ROUTER_BASE_PATH
+              value: ""
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -59,10 +62,10 @@ spec:
               subPath: docker/audiobookshelf/metadata
             - name: audiobooks
               mountPath: /audiobooks
-              subPath: MediaStack/audiobooks
+              subPath: MediaStack/media/audiobooks
             - name: podcasts
               mountPath: /podcasts
-              subPath: MediaStack/podcasts
+              subPath: MediaStack/media/podcasts
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -105,6 +108,7 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/client-max-body-size: "1000m"
     nginx.org/ssl-redirect: "true"
+    nginx.org/websocket-services: "audiobookshelf"
 spec:
   ingressClassName: nginx
   tls:
