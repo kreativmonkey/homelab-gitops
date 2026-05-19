@@ -98,4 +98,4 @@ Tracked in `apps/overlays/main/kustomization.yaml`:
 | paperless-ngx | longhorn     | nfs-media-static    | migrated     |
 | audiobookshelf| —            | nfs-media-static    | clean install|
 | jellyfin      | —            | nfs-media-static    | clean install|
-| nextcloud     | —            | nfs-media-static    | wip          |
+| nextcloud     | —            | nfs-media-static    | deployed     |
