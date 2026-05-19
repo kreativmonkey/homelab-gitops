@@ -4,7 +4,7 @@ metadata:
   name: immich
   namespace: immich
   annotations:
-    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/immich/homelab-postgres-immich
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-immich
 spec:
   interval: 1h
   timeout: 20m
@@ -40,11 +40,12 @@ spec:
           existingClaim: immich-library
     server:
       ingress:
-        enabled: false
-    resources:
-      requests:
-        cpu: 200m
-        memory: 512Mi
-      limits:
-        cpu: "2"
-        memory: 4Gi
+        main:
+          enabled: false
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 4Gi

@@ -2,10 +2,9 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
   name: homelab-postgres-nextcloud
-  namespace: nextcloud
+  namespace: cnpg-system
 spec:
   name: nextcloud
   owner: nextcloud
   cluster:
     name: homelab-postgres
-    namespace: cnpg-system

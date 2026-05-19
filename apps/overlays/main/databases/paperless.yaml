@@ -2,10 +2,9 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
   name: homelab-postgres-paperless
-  namespace: paperless-ngx
+  namespace: cnpg-system
 spec:
   name: paperless
   owner: paperless
   cluster:
     name: homelab-postgres
-    namespace: cnpg-system
