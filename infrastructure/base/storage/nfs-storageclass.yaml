@@ -1,0 +1,10 @@
+# Static NFS: PVs in pv-nfs.yaml reference this class; no dynamic provisioner.
+# PVCs must either set volumeName to a pre-created PV or match a PV claimRef.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-media-static
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: Immediate
+reclaimPolicy: Retain
+allowVolumeExpansion: false
