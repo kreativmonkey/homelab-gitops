@@ -29,6 +29,11 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: reflector-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: monitoring
   labels:
     pod-security.kubernetes.io/enforce: privileged
