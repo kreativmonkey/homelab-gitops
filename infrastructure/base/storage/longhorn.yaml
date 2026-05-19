@@ -22,7 +22,7 @@ spec:
       defaultDataPath: /var/lib/longhorn
     defaultSettings:
       createDefaultDiskLabeledNodes: false
-      replicaCount: 2
+      replicaCount: 1
     longhornManager:
       resources:
         requests:
