@@ -57,12 +57,16 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
           volumeMounts:
+            # PV mounts export root /mnt/Storagepool/Media — subPath = path under /mnt/truenas/Media
             - name: config
               mountPath: /config
+              subPath: jellyfin/config
             - name: cache
               mountPath: /cache
+              subPath: jellyfin/cache
             - name: media
               mountPath: /media
+              subPath: MediaStack/media
               readOnly: true
       volumes:
         - name: config
