@@ -102,17 +102,15 @@ metadata:
     gethomepage.dev/description: Audiobooks
     gethomepage.dev/group: Medien
     gethomepage.dev/icon: audiobookshelf.png
-    cert-manager.io/cluster-issuer: letsencrypt-production
+    # TLS: wildcard-f4mily-net-tls replicated from cert-manager (reflector).
+    # Do not use cert-manager.io/cluster-issuer — ingress-shim conflicts with reflector.
     nginx.org/client-max-body-size: "1000m"
     nginx.org/ssl-redirect: "true"
     nginx.org/websocket-services: "audiobookshelf"
     nginx.org/proxy-read-timeout: "3600s"
     nginx.org/proxy-send-timeout: "3600s"
-    # v2.18+ client is built for /audiobookshelf; do not set ROUTER_BASE_PATH="".
-    nginx.org/server-snippets: |
-      location = / {
-        return 302 /audiobookshelf/;
-      }
+    # v2.18+ client is built for /audiobookshelf; redirect / without server-snippets.
+    nginx.org/app-root: /audiobookshelf
 spec:
   ingressClassName: nginx
   tls:
