@@ -1,13 +1,18 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
+  # Keep resource name to avoid Flux deleting/recreating the CR (and risking the old DB).
   name: homelab-postgres-immich
   namespace: cnpg-system
 spec:
   name: immich
   owner: immich
   cluster:
-    name: homelab-postgres
+    name: immich-postgres
   extensions:
-    - name: vector
+    - name: cube
+      ensure: present
+    - name: vchord
+      ensure: present
+    - name: earthdistance
       ensure: present

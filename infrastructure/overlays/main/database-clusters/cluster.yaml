@@ -66,11 +66,6 @@ spec:
         login: true
         passwordSecret:
           name: authentik-db-credentials
-      - name: immich
-        ensure: present
-        login: true
-        passwordSecret:
-          name: immich-db-credentials
       - name: paperless
         ensure: present
         login: true

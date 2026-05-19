@@ -41,8 +41,7 @@ spec:
       enabled: false
     redis:
       enabled: true
-      # Bitnami moved their images off Docker Hub in 2025; pin to the legacy
-      # mirror to keep `bitnami/redis` references working.
+      # Bitnami moved images off docker.io/bitnami; chart default breaks without legacy mirror.
       image:
         registry: docker.io
         repository: bitnamilegacy/redis
@@ -50,7 +49,7 @@ spec:
         persistence:
           enabled: false
     env:
-      DB_HOSTNAME: homelab-postgres-rw.cnpg-system.svc.cluster.local
+      DB_HOSTNAME: immich-postgres-rw.cnpg-system.svc.cluster.local
       DB_PORT: "5432"
       DB_DATABASE_NAME: immich
     immich:
@@ -58,8 +57,9 @@ spec:
         library:
           existingClaim: immich-library
     server:
+      image:
+        tag: v1.119.0
       persistence:
-        # subPath = directory under NFS export /mnt/Storagepool/Media (see pv-nfs.yaml)
         library:
           subPath: Bilder
         fotos:
@@ -74,6 +74,15 @@ spec:
         requests:
           cpu: 200m
           memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 4Gi
+    machine-learning:
+      enabled: true
+      resources:
+        requests:
+          cpu: 200m
+          memory: 1Gi
         limits:
           cpu: "2"
           memory: 4Gi
