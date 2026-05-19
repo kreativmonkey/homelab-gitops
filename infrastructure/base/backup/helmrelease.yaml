@@ -19,16 +19,21 @@ spec:
   values:
     global:
       priorityClassName: "homelab-infrastructure"
+    snapshotsEnabled: false
     configuration:
       backupStorageLocation:
         - name: default
           bucket: velero
           default: true
           provider: aws
+          credential:
+            name: velero-credentials
+            key: cloud
           config:
             region: us-east-1
             s3Url: http://192.168.10.94:30186
             s3ForcePathStyle: "true"
+      volumeSnapshotLocation: []
     initContainers:
       - name: velero-plugin-for-aws
         image: velero/velero-plugin-for-aws:v1.11.1
