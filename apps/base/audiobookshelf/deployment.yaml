@@ -27,9 +27,6 @@ spec:
           env:
             - name: TZ
               value: "Europe/Berlin"
-            # Docker image defaults to /audiobookshelf; root ingress needs empty base path.
-            - name: ROUTER_BASE_PATH
-              value: ""
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -109,6 +106,13 @@ metadata:
     nginx.org/client-max-body-size: "1000m"
     nginx.org/ssl-redirect: "true"
     nginx.org/websocket-services: "audiobookshelf"
+    nginx.org/proxy-read-timeout: "3600s"
+    nginx.org/proxy-send-timeout: "3600s"
+    # v2.18+ client is built for /audiobookshelf; do not set ROUTER_BASE_PATH="".
+    nginx.org/server-snippets: |
+      location = / {
+        return 302 /audiobookshelf/;
+      }
 spec:
   ingressClassName: nginx
   tls:
@@ -119,7 +123,7 @@ spec:
     - host: audible.f4mily.net
       http:
         paths:
-          - path: /
+          - path: /audiobookshelf
             pathType: Prefix
             backend:
               service:
