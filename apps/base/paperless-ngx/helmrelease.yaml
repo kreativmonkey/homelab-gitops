@@ -46,15 +46,15 @@ spec:
         - name: data
           path: /usr/src/paperless/data
           size: 5Gi
-          storageClassName: longhorn
+          storageClassName: longhorn-1
         - name: media
           path: /usr/src/paperless/media
           size: 15Gi
-          storageClassName: longhorn
+          storageClassName: longhorn-1
         - name: export
           path: /usr/src/paperless/export
           size: 20Gi
-          storageClassName: longhorn
+          storageClassName: longhorn-1
       secretRefs:
         - key: PAPERLESS_SECRET_KEY
           name: paperless-ngx
@@ -65,4 +65,4 @@ spec:
         - name: data
           path: /data
           size: 5Gi
-          storageClassName: longhorn
+          storageClassName: longhorn-1

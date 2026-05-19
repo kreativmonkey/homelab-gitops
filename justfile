@@ -6,7 +6,8 @@ default:
 help:
     @just --list
     @echo ""
-    @echo "Secrets: set SOPS_AGE_KEY_FILE to your age private key file."
+    @echo "Secrets: set SOPS_AGE_KEY_FILE to your cluster age private key."
+    @echo "  just overlay-secrets-help"
     @echo "  just sops-edit path/to/secret.secret.yaml"
     @echo "  cd <dir> && just sops-create my-secret flux-system api-token=xxx"
 
@@ -79,11 +80,39 @@ sops-encrypt file:
     sops --encrypt --in-place "$file"
     echo "Encrypted: $file"
 
-# CNPG Barman S3 credentials (kubectl data + SOPS; then uncomment in database-clusters/kustomization.yaml)
+# List commands to recreate infra-main overlay secrets (after commenting them out in kustomize)
+overlay-secrets-help:
+    @echo "Set: export SOPS_AGE_KEY_FILE=/path/to/cluster-age-key"
+    @echo ""
+    @echo "  just barman-s3-credentials GARAGE_KEY GARAGE_SECRET"
+    @echo "  just pgadmin-credentials admin@example.com 'pgadmin-password'"
+    @echo "  just cnpg-db-credential immich-db-credentials immich 'password'"
+    @echo "  (repeat cnpg-db-credential for each app — see credentials/credentials.secret.yaml.template)"
+    @echo ""
+    @echo "Then uncomment secret resources in:"
+    @echo "  infrastructure/overlays/main/database-clusters/kustomization.yaml"
+    @echo "  infrastructure/overlays/main/pgadmin/kustomization.yaml"
+
+# CNPG Barman S3 credentials (Garage/MinIO)
 barman-s3-credentials access_key secret_key:
     #!/usr/bin/env bash
     set -euo pipefail
     cd infrastructure/overlays/main/database-clusters
     just sops-create cnpg-barman-s3-credentials cnpg-system \
       "ACCESS_KEY_ID={{access_key}}" "ACCESS_SECRET_KEY={{secret_key}}"
-    echo "Uncomment barman-s3-credentials.secret.yaml in kustomization.yaml, commit, and reconcile infra-main."
+
+# pgAdmin login secret
+pgadmin-credentials email password:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd infrastructure/overlays/main/pgadmin
+    just sops-create pgadmin-credentials cnpg-system \
+      "email={{email}}" "password={{password}}"
+
+# CNPG Database bootstrap secret (username + password keys)
+cnpg-db-credential secret_name username password:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd infrastructure/overlays/main/database-clusters/credentials
+    just sops-create "{{secret_name}}" cnpg-system \
+      "username={{username}}" "password={{password}}"
