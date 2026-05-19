@@ -63,7 +63,7 @@ here so it is obvious what is **planned** but not deployed:
 | tandoor            | wip    | ingress only, missing HelmRelease         |
 | netbird            | wip    | namespace only                            |
 | backrest           | wip    | ingress only, missing HelmRelease         |
-| searxng            | wip    | ingress only, missing Deployment          |
+| searxng            | on     | Deployment + ingress at search.f4mily.net |
 | uptime-kuma        | wip    | ingress only, missing Deployment          |
 | unifi-controller   | wip    | ingress only, missing HelmRelease         |
 | nextcloud          | wip    | PVC+ingress only, missing HelmRelease     |

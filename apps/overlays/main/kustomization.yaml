@@ -30,7 +30,7 @@ resources:
   # --- Infrastructure & Tools -------------------------------------------
   # - ../../base/netbird             # wip: namespace only, no workload
   # - ../../base/backrest            # wip: ingress only, no workload
-  - ../../base/searxng             # wip: ingress only (TLS); workload pending
+  - ../../base/searxng
   # - ../../base/uptime-kuma         # wip: ingress only, no workload
   # - ../../base/unifi-controller    # wip: ingress only, no workload
 
