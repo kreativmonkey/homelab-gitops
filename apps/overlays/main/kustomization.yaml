@@ -30,12 +30,12 @@ resources:
   # --- Infrastructure & Tools -------------------------------------------
   # - ../../base/netbird             # wip: namespace only, no workload
   # - ../../base/backrest            # wip: ingress only, no workload
-  # - ../../base/searxng             # wip: ingress only, no workload
+  - ../../base/searxng             # wip: ingress only (TLS); workload pending
   # - ../../base/uptime-kuma         # wip: ingress only, no workload
   # - ../../base/unifi-controller    # wip: ingress only, no workload
 
   # --- Cloud & Management -----------------------------------------------
-  # - ../../base/nextcloud           # wip: PVC + ingress, no workload
+  - ../../base/nextcloud           # wip: PVC + ingress (TLS); workload pending
   # - ../../base/linkwarden          # wip: ingress only, no workload
   - ../../base/authentik
   - ../../base/homepage
@@ -140,6 +140,26 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.host_searxng
+    targets:
+      - select: {kind: Ingress, name: searxng}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_nextcloud
+    targets:
+      - select: {kind: Ingress, name: nextcloud}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.host_homer
     targets:
       - select: {kind: Ingress, name: homer}
@@ -197,12 +217,16 @@ replacements:
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: HelmRelease, name: sterling-pdf}
         fieldPaths: [spec.values.ingress.tls.0.secretName]
+      - select: {kind: Ingress, name: searxng}
+        fieldPaths: [spec.tls.0.secretName]
 
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
       fieldPath: data.clusterTlsSecret
     targets:
+      - select: {kind: Ingress, name: nextcloud}
+        fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: grafana}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: victoria-metrics}
