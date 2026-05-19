@@ -30,6 +30,9 @@ spec:
       enabled: false
     redis:
       enabled: true
+      master:
+        persistence:
+          storageClass: longhorn
     env:
       DB_HOSTNAME: homelab-postgres-rw.cnpg-system.svc.cluster.local
       DB_PORT: "5432"
