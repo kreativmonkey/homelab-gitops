@@ -33,6 +33,11 @@ spec:
       architecture: standalone
       auth:
         enabled: false
+      # Bitnami moved their images off Docker Hub in 2025; pin to the legacy
+      # mirror to keep `bitnami/redis` references working.
+      image:
+        registry: docker.io
+        repository: bitnamilegacy/redis
       master:
         persistence:
           enabled: false

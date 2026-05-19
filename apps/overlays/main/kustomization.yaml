@@ -1,7 +1,209 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
+# ============================================================================
+# APP CATALOG (enable / disable applications)
+# ----------------------------------------------------------------------------
+# Each line below references an app's Kustomize base in apps/base/<app>.
+#   * To DISABLE an app: prefix the line with "#".
+#   * To ENABLE an app:  remove the "#" prefix.
+# Flux will prune disabled resources automatically on the next reconcile.
+#
+# Apps annotated `wip:` still require manual work (missing workload, broken
+# upstream chart, etc.) — see docs/applications.md.
+# ============================================================================
 resources:
-  - ../../base
+  # --- Central config (used by replacements; not emitted to cluster) ----
+  - cluster-config.yaml
+
+  # --- Cross-cutting (databases & secrets for apps in this overlay) -----
   - databases
   - db-secrets
-# Cluster-spezifische Patches (Ingress, ExternalSecrets) hier ergänzen
+
+  # --- Media & Documents ------------------------------------------------
+  - ../../base/audiobookshelf
+  - ../../base/jellyfin
+  # - ../../base/tandoor             # wip: ingress only, no workload
+  - ../../base/paperless-ngx
+  - ../../base/immich
+
+  # --- Infrastructure & Tools -------------------------------------------
+  # - ../../base/netbird             # wip: namespace only, no workload
+  # - ../../base/backrest            # wip: ingress only, no workload
+  # - ../../base/searxng             # wip: ingress only, no workload
+  # - ../../base/uptime-kuma         # wip: ingress only, no workload
+  # - ../../base/unifi-controller    # wip: ingress only, no workload
+
+  # --- Cloud & Management -----------------------------------------------
+  # - ../../base/nextcloud           # wip: PVC + ingress, no workload
+  # - ../../base/linkwarden          # wip: ingress only, no workload
+  - ../../base/authentik
+  - ../../base/homepage
+
+  # --- Network Monitoring -----------------------------------------------
+  # - ../../base/speedtest-tracker   # wip: ingress only, no workload
+  # - ../../base/watchyourlan        # wip: ingress only, no workload
+
+  # --- Development / Misc -----------------------------------------------
+  # - ../../base/teslamate           # wip: ingress only, no workload
+  # - ../../base/goloom              # wip: ingress only, no workload
+  # - ../../base/pcm                 # wip: ingress only, no workload
+
+  # --- Standalone workloads (already-deployed) --------------------------
+  - ../../base/homer
+  - ../../base/kite
+  - ../../base/sterling-pdf
+  - ../../base/monitoring/vm-k8s-stack
+
+# ============================================================================
+# REPLACEMENTS (cluster-config → per-app ingress hosts & TLS settings)
+# ----------------------------------------------------------------------------
+# Each block below propagates a value from the homelab-cluster-config
+# ConfigMap into one or more ingress fields (Ingress or HelmRelease values).
+#
+# Adding a new app:
+#   1. Add `host_<app>: <fqdn>` to cluster-config.yaml.
+#   2. Append a target block here referencing the new key.
+# ============================================================================
+replacements:
+  # -------- Per-app hostnames (full-value replacement) ----------------------
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_audiobookshelf
+    targets:
+      - select: {kind: Ingress, name: audiobookshelf}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_authentik
+    targets:
+      - select: {kind: Ingress, name: authentik}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_homepage
+    targets:
+      - select: {kind: Ingress, name: homepage}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_immich
+    targets:
+      - select: {kind: Ingress, name: immich}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_jellyfin
+    targets:
+      - select: {kind: Ingress, name: jellyfin}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_paperless
+    targets:
+      - select: {kind: Ingress, name: paperless-ngx}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_sterling_pdf
+    targets:
+      - select: {kind: HelmRelease, name: sterling-pdf}
+        fieldPaths:
+          - spec.values.ingress.hosts.0.name
+          - spec.values.ingress.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_homer
+    targets:
+      - select: {kind: Ingress, name: homer}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_grafana
+    targets:
+      - select: {kind: Ingress, name: grafana}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_victoria_metrics
+    targets:
+      - select: {kind: Ingress, name: victoria-metrics}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_kite
+    targets:
+      - select: {kind: HelmRelease, name: kite}
+        fieldPaths:
+          - spec.values.ingress.hosts.0.host
+          - spec.values.ingress.tls.0.hosts.0
+
+  # -------- TLS secret names ----------------------------------------------
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.publicTlsSecret
+    targets:
+      - select: {kind: Ingress, name: audiobookshelf}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: authentik}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: homepage}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: immich}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: jellyfin}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: paperless-ngx}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: HelmRelease, name: sterling-pdf}
+        fieldPaths: [spec.values.ingress.tls.0.secretName]
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.clusterTlsSecret
+    targets:
+      - select: {kind: Ingress, name: grafana}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: victoria-metrics}
+        fieldPaths: [spec.tls.0.secretName]
