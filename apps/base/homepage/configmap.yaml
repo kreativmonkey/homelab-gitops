@@ -137,7 +137,7 @@ data:
             description: RS485 Modbus Gateway
             ping: http://192.168.10.34
 
-      - Sensoren:
+    - Sensoren:
         - Home Assistant:
             icon: https://www.home-assistant.io/images/favicon-192x192.png
             href: "https://ha.f4mily.net"
