@@ -19,7 +19,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: audiobookshelf
-          image: ghcr.io/advplyr/audiobookshelf:2.19.5
+          image: ghcr.io/advplyr/audiobookshelf:2.33.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
@@ -55,15 +55,23 @@ spec:
               mountPath: /config
             - name: metadata
               mountPath: /metadata
-            - name: media
+            - name: audiobooks
               mountPath: /audiobooks
+            - name: podcasts
+              mountPath: /podcasts
       volumes:
         - name: config
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: audiobookshelf-config
         - name: metadata
-          emptyDir: {}
-        - name: media
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: audiobookshelf-metadata
+        - name: audiobooks
+          persistentVolumeClaim:
+            claimName: audiobookshelf-audiobooks
+        - name: podcasts
+          persistentVolumeClaim:
+            claimName: audiobookshelf-podcasts
 ---
 apiVersion: v1
 kind: Service
