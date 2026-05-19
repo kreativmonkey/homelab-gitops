@@ -4,8 +4,7 @@ resources:
   - cluster.yaml
   - immich-postgres
   - scheduled-backup.yaml
-  # Enable after: just overlay-secrets-help (requires SOPS_AGE_KEY_FILE)
-  # - barman-s3-credentials.secret.yaml
+  - barman-s3-credentials.secret.yaml
   - credentials
   # Velero volume-level restore (optional, separate from Barman PITR)
   - restore.yaml

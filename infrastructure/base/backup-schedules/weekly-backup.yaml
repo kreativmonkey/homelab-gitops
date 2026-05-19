@@ -12,8 +12,6 @@ spec:
       - events
       - events.events.k8s.io
     storageLocation: default
-    volumeSnapshotLocations:
-      - default
     ttl: 672h
     includeClusterResources: true
     snapshotVolumes: false
