@@ -45,6 +45,7 @@ spec:
       image:
         registry: docker.io
         repository: bitnamilegacy/redis
+        tag: 7.4.3-debian-12-r0
       master:
         persistence:
           enabled: false
