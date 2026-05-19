@@ -1,0 +1,127 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nextcloud
+  namespace: nextcloud
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-nextcloud
+spec:
+  interval: 1h
+  timeout: 20m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: nextcloud
+      version: "9.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: nextcloud-repo
+        namespace: flux-system
+  valuesFrom:
+    - kind: Secret
+      name: homelab-postgres-nextcloud
+      valuesKey: username
+      targetPath: externalDatabase.user
+    - kind: Secret
+      name: homelab-postgres-nextcloud
+      valuesKey: password
+      targetPath: externalDatabase.password
+    - kind: Secret
+      name: nextcloud-admin
+      valuesKey: username
+      targetPath: nextcloud.username
+    - kind: Secret
+      name: nextcloud-admin
+      valuesKey: password
+      targetPath: nextcloud.password
+  values:
+    global:
+      security:
+        allowInsecureImages: true
+    image:
+      tag: 33.0.3-apache
+    ingress:
+      enabled: false
+    phpClientHttpsFix:
+      enabled: true
+      protocol: https
+    mariadb:
+      enabled: false
+    postgresql:
+      enabled: false
+    externalDatabase:
+      enabled: true
+      type: postgresql
+      host: homelab-postgres-rw.cnpg-system.svc.cluster.local
+      database: nextcloud
+    redis:
+      enabled: true
+      architecture: standalone
+      auth:
+        enabled: false
+      image:
+        registry: docker.io
+        repository: bitnamilegacy/redis
+        tag: 8.2.1-debian-12-r0
+      master:
+        persistence:
+          enabled: false
+    persistence:
+      enabled: true
+      existingClaim: nextcloud-data
+    nextcloud:
+      host: nextcloud.cluster.f4mily.net
+      trustedDomains:
+        - nextcloud.cluster.f4mily.net
+      extraEnv:
+        - name: TZ
+          value: Europe/Berlin
+      persistence:
+        subPath: docker/nextcloud
+      strategy:
+        type: Recreate
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 33
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 2Gi
+    podSecurityContext:
+      fsGroup: 33
+      seccompProfile:
+        type: RuntimeDefault
+    nginx:
+      securityContext:
+        runAsUser: 101
+        runAsGroup: 101
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault
+    cronjob:
+      enabled: true
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 33
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault

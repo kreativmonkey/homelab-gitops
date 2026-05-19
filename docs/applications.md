@@ -66,7 +66,7 @@ here so it is obvious what is **planned** but not deployed:
 | searxng            | on     | Deployment + ingress at search.f4mily.net |
 | uptime-kuma        | wip    | ingress only, missing Deployment          |
 | unifi-controller   | wip    | ingress only, missing HelmRelease         |
-| nextcloud          | wip    | PVC+ingress only, missing HelmRelease     |
+| nextcloud          | on     | HelmRelease + CNPG + NFS at cluster domain  |
 | linkwarden         | wip    | ingress only, missing HelmRelease         |
 | speedtest-tracker  | wip    | ingress only, missing Deployment          |
 | watchyourlan       | wip    | ingress only, missing Deployment          |
