@@ -54,7 +54,7 @@ spec:
       DB_PORT: "5432"
       DB_DATABASE_NAME: immich
       # v1.119 supports pgvector or pgvecto.rs only; VectorChord needs Immich v2+.
-      DB_VECTOR_EXTENSION: vector
+      DB_VECTOR_EXTENSION: pgvector
     immich:
       persistence:
         library:
