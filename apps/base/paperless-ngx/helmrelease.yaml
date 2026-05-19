@@ -4,7 +4,7 @@ metadata:
   name: paperless-ngx
   namespace: paperless-ngx
   annotations:
-    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/paperless-ngx/homelab-postgres-paperless
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-paperless
 spec:
   interval: 1h
   timeout: 15m
