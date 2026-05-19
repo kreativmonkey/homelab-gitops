@@ -1,6 +1,6 @@
 # Phase 1: PostgreSQL apps migration (Docker → Kubernetes)
 
-Migrate **Authentik**, **Paperless-ngx**, and **Immich** to the central CloudNativePG cluster (`homelab-postgres`).
+Migrate **Authentik** and **Paperless-ngx** to the central CloudNativePG cluster (`homelab-postgres`). **Immich** uses a dedicated cluster (`immich-postgres`) with the VectorChord image — see `infrastructure/overlays/main/database-clusters/immich-postgres/`.
 
 ## Prerequisites
 
@@ -42,15 +42,27 @@ pg_restore -h localhost -U authentik -d authentik --clean --if-exists /backup/au
 
 Use credentials from the app namespace secret `homelab-postgres-<app>`.
 
-## 4. Immich: vector extension
+## 4. Immich: VectorChord (dedicated cluster)
 
-Immich requires the `vector` extension. Confirm after Database reconcile:
+Immich v1.119+ requires **VectorChord** (`vchord`) and `earthdistance` on PostgreSQL 16+, not the stock CNPG image on `homelab-postgres`.
+
+After Flux reconciles `immich-postgres` and the `Database` CR `homelab-postgres-immich` (same name as before; `spec.cluster.name` now points at `immich-postgres`):
 
 ```bash
-kubectl exec -n cnpg-system homelab-postgres-1 -- psql -U postgres -d immich -c '\dx'
+kubectl get cluster -n cnpg-system immich-postgres
+kubectl exec -n cnpg-system immich-postgres-1 -- psql -U postgres -d immich -c '\dx'
 ```
 
-If `vector` is missing, install a CNPG image with pgvector or adjust `infrastructure/overlays/main/database-clusters/cluster.yaml` image.
+Expect `cube`, `vchord`, and `earthdistance`. A fresh cluster starts with an empty `immich` database.
+
+Import from Docker or the old `homelab-postgres` instance (port-forward the new RW service):
+
+```bash
+kubectl port-forward -n cnpg-system svc/immich-postgres-rw 5433:5432
+pg_restore -h localhost -p 5433 -U immich -d immich --clean --if-exists /backup/immich.dump
+```
+
+Immich v1.119+ may require a [VectorChord upgrade path](https://docs.immich.app/administration/postgres-standalone/) after restore; do not assume a plain dump from pgvector-only Postgres is enough without reindex/upgrade steps.
 
 ## 5. Application-specific notes
 

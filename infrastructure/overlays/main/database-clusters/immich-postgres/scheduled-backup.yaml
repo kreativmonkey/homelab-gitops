@@ -1,0 +1,12 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: immich-postgres-daily
+  namespace: cnpg-system
+spec:
+  schedule: "0 45 2 * * *"
+  backupOwnerReference: cluster
+  cluster:
+    name: immich-postgres
+  method: barmanObjectStore
+  target: prefer-standby
