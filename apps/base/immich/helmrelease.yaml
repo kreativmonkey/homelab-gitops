@@ -8,6 +8,14 @@ metadata:
 spec:
   interval: 1h
   timeout: 20m
+  install:
+    timeout: 20m
+    remediation:
+      retries: 3
+  upgrade:
+    timeout: 20m
+    remediation:
+      retries: 3
   chart:
     spec:
       chart: immich
@@ -30,6 +38,11 @@ spec:
       enabled: false
     redis:
       enabled: true
+      # Bitnami moved their images off Docker Hub in 2025; pin to the legacy
+      # mirror to keep `bitnami/redis` references working.
+      image:
+        registry: docker.io
+        repository: bitnamilegacy/redis
       master:
         persistence:
           enabled: false

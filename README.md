@@ -2,6 +2,10 @@
 
 This repository is the **Single Source of Truth** for my Kubernetes homelab. It leverages a declarative approach to manage infrastructure on **Talos Linux** using **FluxCD** for continuous delivery.
 
+> **New here?** Start with [`docs/cluster-access.md`](./docs/cluster-access.md)
+> to get a kubeconfig, then [`docs/applications.md`](./docs/applications.md)
+> to learn how to enable / disable apps and configure their hostnames.
+
 ## 🏗 Infrastructure Overview
 
 | Component | Technology | Role |
@@ -36,39 +40,56 @@ We distinguish between two types of persistence:
 
 ## 📂 Repository Structure
 
-The repository follows a Kustomize-friendly structure to separate base definitions from environment-specific overlays:
+The repository follows a strict Kustomize **base/overlay** structure. The
+**overlay** is the *human switchboard* — it decides which apps are
+deployed and what hostnames/TLS they use. The **base** holds reusable,
+opinionated manifests per app.
 
 ```bash
 .
 ├── clusters/
-│   └── homelab/                # FluxCD Entry Point
-│       ├── flux-system/        # Auto-generated Flux configuration
-│       ├── infrastructure.yaml # Kustomization: Syncs /infrastructure (Priority 1)
-│       └── apps.yaml           # Kustomization: Syncs /apps (Depends on infrastructure)
+│   └── main/                       # FluxCD entry point for the homelab cluster
+│       ├── flux-system/            # Bootstrap (Flux components + GitRepository)
+│       ├── infrastructure.yaml     # Kustomization → infrastructure/ (priority 1)
+│       └── apps.yaml               # Kustomization → apps/ (depends on infra)
 │
-├── infrastructure/             # Core Cluster Components
-│   ├── sources/                # Central HelmRepositories (e.g., Jetstack, Nginx)
-│   ├── storage/
-│   │   ├── longhorn/           # CSI for distributed block storage
-│   │   └── nfs-provisioner/    # Controller for dynamic NFS provisioning
-│   ├── network/
-│   │   ├── nginx-ingress/      # Ingress Controller
-│   │   ├── cert-manager/       # TLS management & ClusterIssuers
-│   │   └── external-dns/       # DNS automation for Pi-hole/Cloudflare
-│   ├── observability/
-│   │   └── victoriametrics/    # K8s Stack (Metrics, Grafana, Alertmanager)
-│   └── backup/
-│       └── velero/             # Disaster Recovery & Snapshots
+├── infrastructure/                 # Core cluster components
+│   ├── base/
+│   │   ├── sources/                # HelmRepositories, IngressClass, namespaces
+│   │   ├── storage/                # Longhorn HR + static NFS PVs + storageclasses
+│   │   ├── network/
+│   │   │   ├── cert-manager/       # cert-manager HelmRelease
+│   │   │   ├── cert-manager-issuer/# Let's Encrypt ClusterIssuer (Hetzner DNS-01)
+│   │   │   ├── certificates/       # Wildcard Certificates (*.f4mily.net, *.cluster.f4mily.net)
+│   │   │   ├── external-dns/       # ExternalDNS HelmRelease
+│   │   │   └── ingress/            # nginx-ingress HelmRelease
+│   │   ├── database/cnpg/          # CloudNativePG operator
+│   │   ├── backup/                 # Velero HelmRelease
+│   │   └── backup-schedules/       # Velero Schedules (daily / weekly)
+│   └── overlays/main/              # Cluster-specific patches
+│       ├── database-clusters/      # Central PostgreSQL cluster + barman S3
+│       └── pgadmin/                # pgAdmin UI for the central cluster
 │
-└── apps/                       # User Applications & Services
-    └── immich/                 # Example: Hybrid Storage Use-Case
-        ├── namespace.yaml
-        ├── storage/            # Longhorn (DB/Config) & Static NFS (Mass Data)
-        ├── workloads/          # Deployments, StatefulSets & ConfigMaps
-        ├── routing/            # Ingress & ExternalDNS configuration
-        ├── observability/      # VictoriaMetrics ServiceMonitors
-        └── kustomization.yaml  # Bundle for Flux reconciliation
+└── apps/
+    ├── base/                       # One self-contained kustomize base per app
+    │   ├── audiobookshelf/         #   namespace, deployment, ingress, …
+    │   ├── homepage/
+    │   ├── homer/
+    │   ├── immich/                 # HelmRelease + ingress + NFS PVCs
+    │   ├── paperless-ngx/          # HelmRelease + NFS PVCs
+    │   ├── monitoring/vm-k8s-stack # VictoriaMetrics + Grafana
+    │   └── …                       # ~20 apps total
+    └── overlays/main/              # ◀ THE SWITCHBOARD
+        ├── kustomization.yaml      #   enabled/disabled apps + replacements
+        ├── cluster-config.yaml     #   ConfigMap: domains, TLS, per-app hosts
+        ├── databases/              #   CNPG `Database` CRs (per-app schemas)
+        └── db-secrets/             #   SOPS-encrypted DB user passwords
 ```
+
+See [`docs/applications.md`](./docs/applications.md) for the day-to-day
+workflow (enable / disable apps, change hostnames, add a new app) and
+[`docs/cluster-access.md`](./docs/cluster-access.md) for how to talk to
+the cluster (kubeconfig, talosctl, flux CLI).
 
 ## 🛡 Design Principles
 
@@ -104,16 +125,35 @@ Manual equivalent: `kubectl create secret … --dry-run=client -o yaml` then `so
 
 ## 🚀 Bootstrap & Recovery
 
-To bootstrap a new cluster on Talos:
+The cluster is bootstrapped from the sibling
+[`homelab-infrastructure`](../homelab-infrastructure) repository via
+OpenTofu (see `homelab-infrastructure/talos/`). The Terraform module
+`flux.tf` performs the Flux bootstrap and seeds the SOPS age secret.
+After Tofu apply, this repo is the only thing Flux ever needs.
 
-1.  Apply the Talos machine configuration.
-2.  Export your `GITHUB_TOKEN`.
-3.  Run the Flux bootstrap command:
-    ```bash
-    flux bootstrap github \
-      --owner=$GITHUB_USER \
-      --repository=homelab-ops \
-      --branch=main \
-      --path=./clusters/prod \
-      --personal
-    ```
+### Day-1: bootstrap a fresh cluster
+
+```bash
+cd ../homelab-infrastructure
+nix develop .#talos
+cd talos
+tofu init && tofu apply        # Creates VMs, applies Talos config, bootstraps Flux
+kubectl get nodes              # 3 control planes
+flux get kustomizations -A     # All green
+```
+
+### Day-2: change something in this repo
+
+```bash
+nix develop                    # gitops-homelab dev-shell
+just validate                  # lint + kustomize + kubeconform + helm template
+git commit -am "feat: …" && git push
+flux reconcile kustomization apps --with-source   # optional, otherwise 1h interval
+```
+
+### Disaster recovery (Postgres only)
+
+Documented in [`docs/disaster-recovery/cnpg-s3-dr.md`](./docs/disaster-recovery/cnpg-s3-dr.md).
+Short version: the central PostgreSQL cluster is continuously backed up
+to S3 (Garage) via Barman. The `disaster-recovery` overlay rehydrates
+the cluster from S3 on a fresh deploy.
