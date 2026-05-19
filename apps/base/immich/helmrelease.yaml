@@ -42,6 +42,11 @@ spec:
         library:
           existingClaim: immich-library
     server:
+      persistence:
+        fotos:
+          enabled: true
+          mountPath: /fotos
+          existingClaim: immich-fotos
       ingress:
         main:
           enabled: false

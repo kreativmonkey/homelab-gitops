@@ -3,5 +3,6 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - pvc-library.yaml
+  - pvc-fotos.yaml
   - helmrelease.yaml
   - ingress.yaml
