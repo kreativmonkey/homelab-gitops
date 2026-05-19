@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: goloom-config
+  namespace: goloom
+data:
+  APP_ENV: production
+  HTTP_ADDR: ":8080"
+  LOG_LEVEL: info
+  LOG_FORMAT: json
+  DATABASE_URL: file:/app/data/goloom.db
+  PUBLIC_BASE_URL: https://goloom.f4mily.net
+  ALLOWED_ORIGINS: https://goloom.f4mily.net
+  RATE_LIMIT_PER_MINUTE: "120"
+  SCHEDULER_POLL_INTERVAL: 15s
+  SCHEDULER_WORKERS: "4"
+  BOOTSTRAP_ADMIN_EMAIL: admin@goloom.local
+  BOOTSTRAP_ADMIN_NAME: Homelab Administrator
+  MASTODON_APP_NAME: goloom
+  MASTODON_REDIRECT_URI: https://goloom.f4mily.net/v1/oauth/mastodon/callback
+  MASTODON_DEFAULT_SCOPES: read,write
+  TZ: Europe/Berlin

@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/description: Goloom
     gethomepage.dev/group: Development
     gethomepage.dev/icon: goloom.png
-    cert-manager.io/cluster-issuer: letsencrypt-production
+    # TLS: wildcard-f4mily-net-tls via reflector (cert-manager namespace)
     nginx.org/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
