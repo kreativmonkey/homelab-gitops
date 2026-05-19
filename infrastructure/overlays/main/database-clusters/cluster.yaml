@@ -90,3 +90,8 @@ spec:
         login: true
         passwordSecret:
           name: teslamate-db-credentials
+      - name: goloom
+        ensure: present
+        login: true
+        passwordSecret:
+          name: goloom-db-credentials

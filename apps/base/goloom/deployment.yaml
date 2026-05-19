@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: goloom
   namespace: goloom
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-goloom
 spec:
   replicas: 1
   strategy:
@@ -27,9 +29,12 @@ spec:
                 name: goloom-config
             - secretRef:
                 name: goloom-app
-          volumeMounts:
-            - name: data
-              mountPath: /app/data
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-goloom
+                  key: uri
           livenessProbe:
             httpGet:
               path: /healthz
@@ -48,15 +53,11 @@ spec:
             failureThreshold: 6
           resources:
             requests:
-              cpu: 25m
-              memory: 64Mi
+              cpu: 10m
+              memory: 15Mi
             limits:
-              memory: 512Mi
+              memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: goloom-data
