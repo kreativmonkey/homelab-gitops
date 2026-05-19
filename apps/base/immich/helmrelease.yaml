@@ -32,7 +32,7 @@ spec:
       enabled: true
       master:
         persistence:
-          storageClass: longhorn
+          storageClass: longhorn-1
     env:
       DB_HOSTNAME: homelab-postgres-rw.cnpg-system.svc.cluster.local
       DB_PORT: "5432"
