@@ -16,6 +16,15 @@ metadata:
     kustomize.toolkit.fluxcd.io/depends-on: cert-manager.io/Certificate/cert-manager/wildcard-f4mily-net
 spec:
   interval: 1h
+  timeout: 30m
+  install:
+    timeout: 30m
+    remediation:
+      retries: 3
+  upgrade:
+    timeout: 30m
+    remediation:
+      retries: 3
   targetNamespace: sterling-pdf
   chart:
     spec:
@@ -46,15 +55,24 @@ spec:
       enabled: true
       fsGroup: 1000
     probes:
+      # stirling-pdf takes 2-3 minutes to initialise the JVM + LibreOffice
+      # backend on first start. Use a generous startup probe so liveness
+      # only kicks in once the app is actually responsive.
+      startup:
+        enabled: true
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 60
       liveness:
         enabled: true
-        initialDelaySeconds: 120
-        periodSeconds: 20
+        initialDelaySeconds: 0
+        periodSeconds: 30
         timeoutSeconds: 10
-        failureThreshold: 6
+        failureThreshold: 5
       readiness:
         enabled: true
-        initialDelaySeconds: 60
+        initialDelaySeconds: 0
         periodSeconds: 15
         timeoutSeconds: 10
         failureThreshold: 5

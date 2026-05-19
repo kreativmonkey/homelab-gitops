@@ -1,0 +1,57 @@
+# Central cluster-wide configuration for apps in this overlay.
+#
+# Single source of truth for domains, TLS secrets and per-app hostnames used
+# by the Kustomize `replacements:` in this overlay's kustomization.yaml.
+#
+# Notes
+# -----
+# * The annotation `config.kubernetes.io/local-config: "true"` marks this
+#   ConfigMap as a Kustomize-only variable carrier. It is NOT emitted into
+#   the cluster, so it does not pollute the API server with config noise.
+# * To change a value, edit it here and Flux propagates it on the next sync.
+# * Adding a new app? Add its hostname here as `host_<app>` and reference it
+#   from a replacement target in kustomization.yaml.
+#
+# Domain change procedure
+# -----------------------
+# Changing the apex domain (e.g. from f4mily.net to example.org) requires:
+#   1. Update `publicDomain`, `clusterDomain` below.
+#   2. Update all `host_*` values below (only the trailing domain part).
+#   3. Update the certificate `secretName`/`dnsNames` under
+#      infrastructure/base/network/certificates/.
+#   4. Re-run `just validate && flux reconcile kustomization apps`.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homelab-cluster-config
+  namespace: flux-system
+  annotations:
+    config.kubernetes.io/local-config: "true"
+data:
+  # ---------------------------------------------------------------------
+  # Documentation / reference values (informational; not auto-propagated).
+  # ---------------------------------------------------------------------
+  publicDomain: f4mily.net
+  clusterDomain: cluster.f4mily.net
+  clusterIssuer: letsencrypt-production
+  publicTlsSecret: wildcard-f4mily-net-tls
+  clusterTlsSecret: wildcard-cluster-f4mily-net-tls
+  ingressClassName: nginx
+
+  # ---------------------------------------------------------------------
+  # Per-app HOSTNAMES (substituted into ingresses via replacements).
+  # ---------------------------------------------------------------------
+  # Public-facing apps (covered by *.f4mily.net wildcard):
+  host_audiobookshelf: audible.f4mily.net
+  host_authentik: login.f4mily.net
+  host_homepage: home.f4mily.net
+  host_immich: immich.f4mily.net
+  host_jellyfin: jellyfin.f4mily.net
+  host_paperless: paperless.f4mily.net
+  host_sterling_pdf: pdf.f4mily.net
+
+  # Cluster-internal apps (covered by *.cluster.f4mily.net wildcard):
+  host_homer: homer.cluster.f4mily.net
+  host_grafana: grafana.cluster.f4mily.net
+  host_victoria_metrics: metrics.cluster.f4mily.net
+  host_kite: kite.cluster.f4mily.net
