@@ -11,7 +11,7 @@
 #
 # subPath reference (relative to export root):
 #   Media/Bilder, Media/Fotos, Media/paperless/*, Media/jellyfin/*,
-#   Media/MediaStack/*, Media/docker/audiobookshelf/* (create on NAS if missing)
+#   Media/MediaStack/media/*, Media/docker/audiobookshelf/* (create on NAS if missing)
 apiVersion: v1
 kind: PersistentVolume
 metadata:
