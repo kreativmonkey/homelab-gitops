@@ -27,6 +27,9 @@ spec:
           env:
             - name: TZ
               value: "Europe/Berlin"
+            # Serve at / (not /audiobookshelf) — required for Netbird reverse proxy path /
+            - name: ROUTER_BASE_PATH
+              value: ""
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -105,12 +108,13 @@ metadata:
     # TLS: wildcard-f4mily-net-tls replicated from cert-manager (reflector).
     # Do not use cert-manager.io/cluster-issuer — ingress-shim conflicts with reflector.
     nginx.org/client-max-body-size: "1000m"
-    nginx.org/ssl-redirect: "true"
+    # Netbird reverse proxy terminates TLS and forwards HTTP with X-Forwarded-Proto: https.
+    # ssl-redirect ignores that header and causes redirect loops; redirect-to-https respects it.
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
     nginx.org/websocket-services: "audiobookshelf"
     nginx.org/proxy-read-timeout: "3600s"
     nginx.org/proxy-send-timeout: "3600s"
-    # Redirect / → /audiobookshelf (needs path / below; precedence over ssl-redirect per F5 docs)
-    nginx.org/app-root: /audiobookshelf
 spec:
   ingressClassName: nginx
   tls:
@@ -121,15 +125,8 @@ spec:
     - host: audible.f4mily.net
       http:
         paths:
-          - path: /audiobookshelf
-            pathType: Prefix
-            backend:
-              service:
-                name: audiobookshelf
-                port:
-                  number: 80
           - path: /
-            pathType: Exact
+            pathType: Prefix
             backend:
               service:
                 name: audiobookshelf

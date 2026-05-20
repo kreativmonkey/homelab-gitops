@@ -59,7 +59,7 @@ GitOps setzt `NB_ENABLE_LOCAL_FORWARDING=true`, damit Tunnel-Traffic die lokalen
 1. Service-Status im Dashboard **active** (nicht `tunnel_not_created`).
 2. Vom Routing Peer lokal testen: `curl -skI -H 'Host: audible.f4mily.net' https://192.168.10.245/`
 3. Backend bindet nicht nur `127.0.0.1` — Ingress ist OK (`hostNetwork`).
-4. Audiobookshelf: Ingress-Pfad `/audiobookshelf` + `app-root` `/` — Root-URL sollte redirecten; bei Problemen Path `/audiobookshelf` im Proxy-Target setzen.
+4. Audiobookshelf: Ingress `path: /`, kein `ssl-redirect` (siehe Redirect-Schleife oben).
 5. Self-hosted Debug: `NB_PROXY_DEBUG_ENDPOINT=true` → `netbird-proxy debug ping <account-id> 192.168.10.245 443`
 
 ## Netbird-Server (Docker)
@@ -91,33 +91,32 @@ Terraform: `homelab-infrastructure/dns/servers.tf` (`audible` public CNAME).
 
 Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den öffentlichen Reverse Proxy reicht oft ein Peer außerhalb der CP-Nodes.
 
-## 404 / 502 bei `audible.f4mily.net`
+## 404 / 502 / Redirect-Schleife bei `audible.f4mily.net`
 
-Die **dunkelblaue** „404 page not found“-Seite kommt von **Audiobookshelf** (SPA), nicht von NGINX: Die App läuft intern unter `/audiobookshelf`, der Browser/Proxy ruft aber `/` auf.
+| Symptom | Ursache | Fix |
+|---------|---------|-----|
+| **502** | Backend HTTPS/443 oder Routing-Peer → eigene VIP (Issue 1) | HTTP **80**, Peer-Ziel oder `srv1` → `192.168.10.245`, `NB_ENABLE_LOCAL_FORWARDING` |
+| **404** (dunkelblaue SPA-Seite) | Früher Subpfad `/audiobookshelf`; Proxy rief `/` auf | GitOps: `ROUTER_BASE_PATH=""`, Ingress nur `path: /` |
+| **Redirect-Schleife** (HTTP) | `nginx.org/ssl-redirect` leitet jedes HTTP auf HTTPS — ignoriert `X-Forwarded-Proto` vom Netbird-Proxy | GitOps: `ssl-redirect: false`, `redirect-to-https: true` |
 
-Im Intranet wirkt `https://audible.f4mily.net/` ohne Subpfad, weil der Browser Redirects folgt (`app-root` → `/audiobookshelf`). Der Netbird-Proxy folgt diesen Redirects nicht immer wie ein Browser.
-
-### Netbird-Dashboard (empfohlen)
+### Netbird-Dashboard (`audible.f4mily.net`)
 
 | Feld | Wert |
 |------|------|
-| Target | Host `192.168.10.245` (dein Routing-Peer-Setup) |
-| Protocol / Port | **HTTP** / **80** (nicht HTTPS/443 zum Backend) |
-| Path | **`/audiobookshelf`** (ohne trailing slash) |
+| Target | Host `192.168.10.245` (Routing Peer z. B. `srv1`) **oder** Peer `talos-cp*` bei K8s-only-Setup |
+| Protocol / Port | **HTTP** / **80** |
+| Path | **`/`** oder leer (App liegt an der Root) |
 | Pass Host Header | **An** |
-| Rewrite Redirects | **An** (rewritet `Location: …:443/…` auf die öffentliche URL) |
+| Rewrite Redirects | **An** |
 
-**502 mit Path `/audiobookshelf`:** fast immer **HTTPS 443** als Backend-Protokoll oder Rewrite-Konflikt — auf **HTTP 80** bleiben.
+### GitOps (Audiobookshelf)
 
-**404 mit Path `/`:** App erwartet `/audiobookshelf` — Path im Proxy setzen oder Ingress-Pfad `/` (GitOps, siehe unten).
-
-### GitOps
-
-Ingress enthält `path: /` (Exact) + `nginx.org/app-root: /audiobookshelf`, damit `GET /` per 302 auf `/audiobookshelf` geht (vor ssl-redirect, laut F5-Doku).
+- `ROUTER_BASE_PATH=""` — App unter `/`, kein `/audiobookshelf`-Subpfad
+- Ingress: `nginx.org/ssl-redirect: "false"`, `nginx.org/redirect-to-https: "true"` (TLS-Terminierung am Netbird-Proxy)
 
 ## Beispiel-Checkliste `audible`
 
-- [ ] Reverse-Proxy: **Host** `192.168.10.245` (oder Peer), **HTTP 80** oder **HTTPS 443**, Host Header + Rewrite an
+- [ ] Reverse-Proxy: **Host** `192.168.10.245` (oder Peer), **HTTP 80**, Path `/`, Host Header + Rewrite an
 - [ ] Netbird-Pods mit `NB_ENABLE_LOCAL_FORWARDING=true` (Flux)
 - [ ] Service-Status **active**
 - [ ] Proxy Events: kein 502 mehr
