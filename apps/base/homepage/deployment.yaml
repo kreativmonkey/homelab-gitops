@@ -12,6 +12,9 @@ spec:
     metadata:
       labels:
         app: homepage
+      annotations:
+        # Bump to force rollout when only ConfigMap content changes.
+        config-version: "2026-05-20"
     spec:
       serviceAccountName: homepage
       automountServiceAccountToken: true
@@ -22,19 +25,6 @@ spec:
         fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
-      initContainers:
-      - name: copy-config
-        image: busybox:1.37
-        command: ['sh', '-c', 'cp /tmp/config/* /app/config/ 2>/dev/null || true']
-        volumeMounts:
-        - name: config
-          mountPath: /app/config
-        - name: config-source
-          mountPath: /tmp/config
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ["ALL"]
       containers:
       - name: homepage
         image: ghcr.io/gethomepage/homepage:v1.13.1
@@ -42,17 +32,45 @@ spec:
         - containerPort: 3000
           name: http
         env:
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         - name: HOMEPAGE_ALLOWED_HOSTS
-          value: "home.f4mily.net"
+          value: "$(MY_POD_IP):3000,home.f4mily.net"
         - name: PUID
           value: "1000"
         - name: PGID
           value: "1000"
         - name: TZ
           value: "Europe/Berlin"
+        livenessProbe:
+          httpGet:
+            path: /api/healthcheck
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 30
         volumeMounts:
-        - name: config
-          mountPath: /app/config
+        - name: homepage-config
+          mountPath: /app/config/kubernetes.yaml
+          subPath: kubernetes.yaml
+        - name: homepage-config
+          mountPath: /app/config/services.yaml
+          subPath: services.yaml
+        - name: homepage-config
+          mountPath: /app/config/settings.yaml
+          subPath: settings.yaml
+        - name: homepage-config
+          mountPath: /app/config/widgets.yaml
+          subPath: widgets.yaml
+        - name: homepage-config
+          mountPath: /app/config/bookmarks.yaml
+          subPath: bookmarks.yaml
+        - name: homepage-config
+          mountPath: /app/config/docker.yaml
+          subPath: docker.yaml
+        - name: logs
+          mountPath: /app/config/logs
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -64,9 +82,9 @@ spec:
           limits:
             memory: 256Mi
       volumes:
-      - name: config
-        emptyDir: {}
-      - name: config-source
+      - name: homepage-config
         configMap:
           name: homepage-config
+      - name: logs
+        emptyDir: {}
       priorityClassName: homelab-infrastructure
