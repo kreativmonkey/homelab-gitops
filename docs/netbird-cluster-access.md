@@ -33,17 +33,13 @@ Leite diese Netze über die Peer-Gruppe der Kubernetes-Router:
 
 Distribution: Gruppe deiner Netbird-Clients (z. B. alle verbundenen Geräte).
 
-### 3. Access Control (Networks)
+### 3. Access Control (Networks, optional für VPN)
 
-Für **Reverse Proxy** zum Ingress brauchst du eine Forward-Policy:
+Für **direkten Mesh-Zugriff** (Laptop → Cluster): Policies von deiner Client-Gruppe zur Resource-Gruppe `k8s-ingress`.
 
-- **Source:** Gruppe mit dem **`netbird-proxy`**-Peer (nicht nur K8s-Nodes)
-- **Destination:** Resource-Gruppe `k8s-ingress` (`192.168.10.245/32`)
-- **Port:** TCP 443
+Der **Reverse Proxy** nutzt dafür **keine** eigene Source-Gruppe `netbird-proxy` — der Tunnel zum Ziel wird über das Management beim Service angelegt.
 
-Zusätzlich optional: deine Client-Gruppe → `k8s-ingress` (direkter Mesh-Zugriff).
-
-Details: [netbird-reverse-proxy.md](netbird-reverse-proxy.md#netbird-networks-pflicht-für-cluster-ziele).
+**Wichtig:** Reverse Proxy zum Ingress auf denselben K8s-Nodes → Target-Typ **Peer**, nicht Network Resource `192.168.10.245` (sonst 502). Siehe [netbird-reverse-proxy.md](netbird-reverse-proxy.md#502-request-failed--typische-ursache-im-talos-cluster).
 
 ## Erreichbarkeit
 
