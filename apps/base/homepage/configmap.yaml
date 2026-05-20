@@ -10,9 +10,9 @@ data:
     language: "de"
   kubernetes.yaml: |
     mode: cluster
-    # Services are defined manually in services.yaml; ingress auto-discovery
-    # needs per-app podSelector labels and spams errors otherwise.
-    ingress: false
+    # Ingresses with gethomepage.dev/* annotations are auto-discovered.
+    # Use gethomepage.dev/pod-selector when pods use app= not app.kubernetes.io/name=.
+    ingress: true
   services.yaml: |
     ---
     - Infrastructure:
