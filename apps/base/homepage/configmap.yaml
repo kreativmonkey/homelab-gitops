@@ -55,14 +55,6 @@ data:
             description: Network Switch
             ping: http://192.168.10.200
 
-    - Office:
-        - Nextcloud:
-            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/nextcloud.png
-            href: "https://nextcloud.cluster.f4mily.net"
-            external: true
-            description: File Sharing & Sync
-            ping: https://nextcloud.cluster.f4mily.net
-    
     - Survillance:
         - Frigate:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/frigate.png
