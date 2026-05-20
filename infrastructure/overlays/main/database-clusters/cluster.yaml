@@ -94,6 +94,8 @@ spec:
       - name: teslamate
         ensure: present
         login: true
+        # TeslaMate migrations require superuser for earthdistance/cube extensions.
+        superuser: true
         passwordSecret:
           name: teslamate-db-credentials
       - name: goloom
