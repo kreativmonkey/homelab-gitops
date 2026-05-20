@@ -109,6 +109,7 @@ metadata:
     nginx.org/websocket-services: "audiobookshelf"
     nginx.org/proxy-read-timeout: "3600s"
     nginx.org/proxy-send-timeout: "3600s"
+    # Redirect / → /audiobookshelf (needs path / below; precedence over ssl-redirect per F5 docs)
     nginx.org/app-root: /audiobookshelf
 spec:
   ingressClassName: nginx
@@ -122,6 +123,13 @@ spec:
         paths:
           - path: /audiobookshelf
             pathType: Prefix
+            backend:
+              service:
+                name: audiobookshelf
+                port:
+                  number: 80
+          - path: /
+            pathType: Exact
             backend:
               service:
                 name: audiobookshelf

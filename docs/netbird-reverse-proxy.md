@@ -91,15 +91,29 @@ Terraform: `homelab-infrastructure/dns/servers.tf` (`audible` public CNAME).
 
 Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den öffentlichen Reverse Proxy reicht oft ein Peer außerhalb der CP-Nodes.
 
-## 404 statt 502 (`audible.f4mily.net`)
+## 404 / 502 bei `audible.f4mily.net`
 
-502 weg, **404** → Traffic erreicht NGINX, aber **kein passender Ingress-Pfad**:
+Die **dunkelblaue** „404 page not found“-Seite kommt von **Audiobookshelf** (SPA), nicht von NGINX: Die App läuft intern unter `/audiobookshelf`, der Browser/Proxy ruft aber `/` auf.
 
-- Netbird liefert standardmäßig `GET /`.
-- Ingress hatte nur `/audiobookshelf` → NGINX-Default → 404.
-- Ingress kennt nur `/audiobookshelf`, Netbird sendet `/` → **404**.
-- **Fix im Dashboard:** am Reverse-Proxy-Target **Path** `/audiobookshelf` (Pass Host Header + Rewrite Redirects an).
-- Optional: zweites Target mit Path `/` nur wenn die App wirklich unter `/` läuft (Standard-Image erwartet `/audiobookshelf`).
+Im Intranet wirkt `https://audible.f4mily.net/` ohne Subpfad, weil der Browser Redirects folgt (`app-root` → `/audiobookshelf`). Der Netbird-Proxy folgt diesen Redirects nicht immer wie ein Browser.
+
+### Netbird-Dashboard (empfohlen)
+
+| Feld | Wert |
+|------|------|
+| Target | Host `192.168.10.245` (dein Routing-Peer-Setup) |
+| Protocol / Port | **HTTP** / **80** (nicht HTTPS/443 zum Backend) |
+| Path | **`/audiobookshelf`** (ohne trailing slash) |
+| Pass Host Header | **An** |
+| Rewrite Redirects | **An** (rewritet `Location: …:443/…` auf die öffentliche URL) |
+
+**502 mit Path `/audiobookshelf`:** fast immer **HTTPS 443** als Backend-Protokoll oder Rewrite-Konflikt — auf **HTTP 80** bleiben.
+
+**404 mit Path `/`:** App erwartet `/audiobookshelf` — Path im Proxy setzen oder Ingress-Pfad `/` (GitOps, siehe unten).
+
+### GitOps
+
+Ingress enthält `path: /` (Exact) + `nginx.org/app-root: /audiobookshelf`, damit `GET /` per 302 auf `/audiobookshelf` geht (vor ssl-redirect, laut F5-Doku).
 
 ## Beispiel-Checkliste `audible`
 
