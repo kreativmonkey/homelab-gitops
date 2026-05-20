@@ -35,31 +35,29 @@ Wenn der **Netbird-Client auf denselben Nodes** läuft wie der Ingress (DaemonSe
 - Der Routing Peer soll Subnet-Traffic **an andere Hosts** weiterleiten.
 - Leitet er auf eine **eigene** IP (hier die Ingress-VIP auf dem Node), fehlen die ACL-Regeln für „self-targeted“ Traffic → Timeout → **502**.
 
-**Lösung für `audible.f4mily.net` (K8s: Netbird + Ingress auf demselben Node):**
+**Lösung für `audible.f4mily.net` und andere Cluster-Ingress-Hosts (K8s: Netbird + Ingress auf demselben Node):**
 
 | Feld | Wert |
 |------|------|
-| Target type | **Peer** |
+| Target type | **Peer** (nicht Host/Subnet/Network Resource) |
 | Peer | z. B. `talos-cp1` (Node mit Ingress; im Dashboard „Connected“) |
 | Protocol / Port | **HTTP** / **80** (nicht HTTPS/443 — siehe unten) |
 | Pass Host Header | **An** |
 | Rewrite Redirects | **An** |
-| Domain | Custom: `audible.f4mily.net` |
+| Domain | Custom: z. B. `audible.f4mily.net` |
 
 Der öffentliche Reverse Proxy **beendet TLS** am Edge; zum Peer soll **HTTP auf Port 80** gehen. Bei **HTTPS/443** auf die Netbird-IP (`100.96.x.x`) schlägt die Verbindung oft fehl → Proxy Events **502 / request failed** ([Issue 2: bind/interface](https://docs.netbird.io/manage/reverse-proxy/troubleshooting#issue-2-service-bound-to-localhost-is-unreachable)).
 
 GitOps setzt `NB_ENABLE_LOCAL_FORWARDING=true`, damit Tunnel-Traffic die lokalen Listener (NGINX `hostNetwork`) erreicht.
 
-**Saubere Alternative:** Netbird-Client nur auf **`srv1`** (Routing Peer), Ziel **Host** `192.168.10.245` — dann kein Peer+Ingress auf einem Node.
-
-**Alternative:** Netbird nur auf einem **anderen** Host (z. B. `srv1` / `192.168.10.23`) als Routing Peer — dann darf `Host` `192.168.10.245` wieder funktionieren, weil die VIP nicht die Peer-eigene Adresse ist.
+**Alternative:** Netbird-Client nur auf **`srv1`** (Routing Peer), Ziel **Host** `192.168.10.245` — dann kein Peer+Ingress auf einem Node und `Host`/`Subnet` funktionieren wieder.
 
 ### Weitere 502-Ursachen (Checkliste)
 
 1. Service-Status im Dashboard **active** (nicht `tunnel_not_created`).
 2. Vom Routing Peer lokal testen: `curl -skI -H 'Host: audible.f4mily.net' https://192.168.10.245/`
 3. Backend bindet nicht nur `127.0.0.1` — Ingress ist OK (`hostNetwork`).
-4. Audiobookshelf: Ingress `path: /`, kein `ssl-redirect` (siehe Redirect-Schleife oben).
+4. Audiobookshelf: Ingress `path: /`, kein `ssl-redirect` (siehe Redirect-Schleife unten).
 5. Self-hosted Debug: `NB_PROXY_DEBUG_ENDPOINT=true` → `netbird-proxy debug ping <account-id> 192.168.10.245 443`
 
 ## Netbird-Server (Docker)
@@ -68,9 +66,42 @@ GitOps setzt `NB_ENABLE_LOCAL_FORWARDING=true`, damit Tunnel-Traffic die lokalen
 
 ## Kubernetes (GitOps)
 
-- DaemonSet `netbird` in `netbird`, Client ≥ 0.71, Namespace **privileged**.
+- Namespace `netbird`: **privileged** Pod-Security (`hostNetwork`, NET_ADMIN).
+- DaemonSet `netbird`: Client **≥ 0.71**.
+- **Network Routes** im Dashboard (Peers der Setup-Key-Gruppe):
+
+| Netz | Zweck |
+|------|--------|
+| `10.244.0.0/16` | Pods |
+| `10.96.0.0/12` | Services |
+| `192.168.10.0/24` | Ingress-VIP `192.168.10.245`, Nodes |
+
+Ohne diese Routen sieht der Proxy den Ingress nicht.
+
 - Optional **Networks** `k8s-ingress` für VPN-Zugriff auf `192.168.10.0/24` (Mesh-Clients) — Routing Peers = K8s-Peer-Gruppe, Masquerade an, Policies Source = deine Client-Gruppen → Resource-Gruppe.
 - **Reverse Proxy** zum Ingress: Target-Typ **Peer**, nicht die Network Resource.
+
+## Services im Dashboard
+
+**Reverse Proxy → Services → Add Service**
+
+### Empfohlen: eine HTTP-Service-Instanz pro App (Custom Domain)
+
+Passt zu bestehenden Ingress-Hostnames (`audible.f4mily.net`, `search.f4mily.net`, `*.cluster.f4mily.net`, …), sofern DNS öffentlich auf Netbird zeigt (z. B. CNAME → `netbird.f4mily.net`).
+
+| Feld | Wert |
+|------|------|
+| Mode | **HTTP** |
+| Domain | Custom: z. B. `search.f4mily.net` |
+| Target type | **Peer** (K8s-Ingress auf demselben Node) **oder** **Host** `192.168.10.245` (Routing Peer z. B. `srv1`) |
+| Protocol / Port | **HTTP** / **80** |
+| Settings | **Pass Host Header** = an |
+| Settings | **Rewrite Redirects** = an |
+| Authentication | SSO / Passwort / PIN nach Bedarf |
+
+### Alternative: Cluster-Domain unter `proxy.f4mily.net`
+
+Netbird-verwaltete Subdomain statt Custom Domain — siehe [Reverse Proxy](https://docs.netbird.io/manage/reverse-proxy).
 
 ## DNS `audible.f4mily.net`
 
@@ -87,7 +118,7 @@ Terraform: `homelab-infrastructure/dns/servers.tf` (`audible` public CNAME).
 |------------|--------|
 | Resource `192.168.10.245/32` oder `192.168.10.0/24` | Ingress-VIP |
 | Routing Peers | K8s-Netbird-Nodes und/oder andere Server im LAN (`srv1`, …) |
-| Reverse Proxy | Ziel **Host** `192.168.10.245` + Routing Peer auf **anderem** Host (dein aktueller Weg) |
+| Reverse Proxy | Ziel **Host** `192.168.10.245` + Routing Peer auf **anderem** Host |
 
 Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den öffentlichen Reverse Proxy reicht oft ein Peer außerhalb der CP-Nodes.
 
@@ -116,12 +147,22 @@ Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den
 
 ## Beispiel-Checkliste `audible`
 
-- [ ] Reverse-Proxy: **Host** `192.168.10.245` (oder Peer), **HTTP 80**, Path `/`, Host Header + Rewrite an
+- [ ] `netbird-proxy` läuft, Status im Dashboard: Proxy-Instanz **connected**
+- [ ] Traefik TCP-Router TLS passthrough → Proxy `:8443`
+- [ ] K8s: `kubectl get pods -n netbird` → Ready
+- [ ] Network Routes aktiv
+- [ ] Reverse-Proxy: **Peer** (oder Host `192.168.10.245` via `srv1`), **HTTP 80**, Path `/`, Host Header + Rewrite an
 - [ ] Netbird-Pods mit `NB_ENABLE_LOCAL_FORWARDING=true` (Flux)
-- [ ] Service-Status **active**
-- [ ] Proxy Events: kein 502 mehr
+- [ ] Service-Status **active**, Proxy Events: kein 502
 - [ ] Öffentlich: `dig audible.f4mily.net` → Netbird-Host, nicht `192.168.10.245`
 - [ ] `https://audible.f4mily.net` von außen (ohne VPN)
+
+## Hinweise
+
+- **Rosenpass**: Reverse Proxy funktioniert derzeit nicht mit Rosenpass.
+- **Backends** (Nextcloud, Jellyfin, …): ggf. „trusted proxies“ / `trusted_domains` für Netbird-IP-Bereiche — siehe [Service configuration](https://docs.netbird.io/manage/reverse-proxy/service-configuration).
+- **L4** (SSH, DB): separater Modus TCP/TLS; extra Ports in `docker-compose` freigeben — siehe [L4 ports](https://docs.netbird.io/selfhosted/migration/enable-reverse-proxy#exposing-l4-ports).
+- Schnelltest ohne Dashboard: `netbird expose` auf einem Peer (CLI) — eher für temporäre Freigaben.
 
 ## Links
 
