@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teslamate
+  namespace: teslamate
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-teslamate
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: teslamate
+  template:
+    metadata:
+      labels:
+        app: teslamate
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: teslamate
+          image: docker.io/teslamate/teslamate:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: teslamate-config
+          env:
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: teslamate-app
+                  key: ENCRYPTION_KEY
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-teslamate
+                  key: username
+            - name: DATABASE_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-teslamate
+                  key: password
+            - name: DATABASE_NAME
+              value: teslamate
+            - name: DATABASE_HOST
+              value: homelab-postgres-rw.cnpg-system.svc.cluster.local
+            - name: DATABASE_PORT
+              value: "5432"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: import
+              mountPath: /opt/app/import
+      volumes:
+        - name: import
+          emptyDir: {}
