@@ -12,6 +12,8 @@ data:
     ---
     title: "Homelab Dashboard"
     language: "de"
+    showStats: true
+    statusStyle: dot
   kubernetes.yaml: |
     mode: cluster
     # Ingresses with gethomepage.dev/* annotations are auto-discovered.
