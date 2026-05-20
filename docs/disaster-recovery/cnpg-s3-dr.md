@@ -1,6 +1,6 @@
 # CNPG Backup & Disaster Recovery (S3 / Barman)
 
-Central PostgreSQL (`homelab-postgres`) uses **Barman Cloud** via `barmanObjectStore` for continuous WAL archiving and scheduled base backups to S3-compatible storage (Garage on TrueNAS at `http://192.168.10.94:30186`, same endpoint as Velero).
+Central PostgreSQL (`homelab-postgres`) uses **Barman Cloud** via `barmanObjectStore` for continuous WAL archiving and scheduled base backups to S3-compatible storage (Garage on TrueNAS at `http://192.168.10.94:30188` (S3 API; `:30186` is the web UI only), same endpoint as Velero).
 
 ## Prerequisites
 

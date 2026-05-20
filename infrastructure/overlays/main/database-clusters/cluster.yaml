@@ -37,11 +37,17 @@ spec:
   affinity:
     podAntiAffinityType: preferred
 
+  env:
+    - name: AWS_DEFAULT_REGION
+      value: garage
+    - name: AWS_REGION
+      value: garage
+
   # Continuous backup: base backups + WAL archive to S3-compatible object store
   backup:
     barmanObjectStore:
       destinationPath: s3://cnpg-backups/homelab-postgres
-      endpointURL: http://192.168.10.94:30186
+      endpointURL: http://192.168.10.94:30188
       serverName: homelab-postgres
       s3Credentials:
         accessKeyId:
