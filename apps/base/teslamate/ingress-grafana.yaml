@@ -1,16 +1,16 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: teslamate
+  name: teslamate-grafana
   namespace: teslamate
   annotations:
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: Teslamate
-    gethomepage.dev/description: Tesla logging
+    gethomepage.dev/name: TeslaMate Grafana
+    gethomepage.dev/description: Tesla metrics dashboards
     gethomepage.dev/group: Energy
-    gethomepage.dev/icon: teslamate.png
-    gethomepage.dev/app: teslamate
-    gethomepage.dev/pod-selector: app=teslamate
+    gethomepage.dev/icon: grafana.png
+    gethomepage.dev/app: teslamate-grafana
+    gethomepage.dev/pod-selector: app=teslamate-grafana
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
@@ -18,16 +18,16 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - teslamate.cluster.f4mily.net
+        - teslamate-grafana.cluster.f4mily.net
       secretName: wildcard-cluster-f4mily-net-tls
   rules:
-    - host: teslamate.cluster.f4mily.net
+    - host: teslamate-grafana.cluster.f4mily.net
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: teslamate
+                name: teslamate-grafana
                 port:
-                  number: 4000
+                  number: 3000

@@ -56,12 +56,6 @@ data:
             ping: http://192.168.10.200
 
     - Office:
-        - Sterling PDF:
-            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/stirling-pdf.png
-            href: "https://pdf.f4mily.net"
-            external: true
-            description: PDF Tools
-            ping: https://pdf.f4mily.net
         - Nextcloud:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/nextcloud.png
             href: "https://nextcloud.cluster.f4mily.net"

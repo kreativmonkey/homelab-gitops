@@ -9,6 +9,7 @@ metadata:
     gethomepage.dev/description: Distributed storage
     gethomepage.dev/group: Infrastructure
     gethomepage.dev/icon: longhorn.png
+    gethomepage.dev/app: longhorn
     cert-manager.io/cluster-issuer: "letsencrypt-production"
     nginx.org/client-max-body-size: "1000m"
     nginx.org/ssl-redirect: "false"

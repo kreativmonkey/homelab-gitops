@@ -16,6 +16,7 @@ spec:
     metadata:
       labels:
         app: teslamate
+        app.kubernetes.io/name: teslamate
     spec:
       securityContext:
         seccompProfile:
