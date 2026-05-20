@@ -5,9 +5,9 @@ metadata:
   namespace: monitoring
   annotations:
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: Grafana
-    gethomepage.dev/description: Dashboards
-    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/name: Teslamate Grafana
+    gethomepage.dev/description: Tesla metrics dashboards
+    gethomepage.dev/group: Energy
     gethomepage.dev/icon: grafana.png
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "false"
