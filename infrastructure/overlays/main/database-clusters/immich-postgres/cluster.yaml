@@ -38,10 +38,16 @@ spec:
   monitoring:
     enablePodMonitor: true
 
+  env:
+    - name: AWS_DEFAULT_REGION
+      value: garage
+    - name: AWS_REGION
+      value: garage
+
   backup:
     barmanObjectStore:
       destinationPath: s3://cnpg-backups/immich-postgres
-      endpointURL: http://192.168.10.94:30186
+      endpointURL: http://192.168.10.94:30188
       serverName: immich-postgres
       s3Credentials:
         accessKeyId:
