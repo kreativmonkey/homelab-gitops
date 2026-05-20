@@ -9,14 +9,43 @@ data:
     general:
       instance_name: "search"
     server:
-      secret_key: "0c97a82d4ed60e58c2e97c918780b8735d1e8aa7d25bf314d3d84a69ba99434e"
       port: 8080
       bind_address: "0.0.0.0"
-      limiter: false
+      limiter: true
       image_proxy: false
+    valkey:
+      url: valkey://valkey:6379/0
     search:
       safe_search: 0
-      autocomplete: "duckduckgo"
+      autocomplete: ""
       formats:
         - html
-        - json
+    engines:
+      - name: duckduckgo
+        disabled: true
+      - name: google
+        disabled: true
+  limiter.toml: |
+    [botdetection]
+
+    ipv4_prefix = 32
+    ipv6_prefix = 48
+
+    trusted_proxies = [
+      '127.0.0.0/8',
+      '::1',
+      '10.0.0.0/8',
+      '172.16.0.0/12',
+      '192.168.0.0/16',
+    ]
+
+    [botdetection.ip_limit]
+    filter_link_local = false
+    link_token = true
+
+    [botdetection.ip_lists]
+
+    pass_ip = [
+      '192.168.10.0/24',
+      '10.0.0.0/8',
+    ]
