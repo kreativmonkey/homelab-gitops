@@ -3,6 +3,9 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - configmap.yaml
+  - searxng-secret.secret.yaml
+  - valkey-deployment.yaml
+  - valkey-service.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml

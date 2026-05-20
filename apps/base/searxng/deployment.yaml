@@ -21,12 +21,28 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       initContainers:
+        - name: wait-valkey
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z valkey 6379; do
+                echo "waiting for valkey..."
+                sleep 2
+              done
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
         - name: copy-config
           image: busybox:1.37
           command:
             - sh
             - -c
-            - cp /config/settings.yml /etc/searxng/settings.yml
+            - |
+              cp /config/settings.yml /etc/searxng/settings.yml
+              cp /config/limiter.toml /etc/searxng/limiter.toml
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -43,6 +59,11 @@ spec:
           env:
             - name: SEARXNG_BASE_URL
               value: "https://search.f4mily.net/"
+            - name: SEARXNG_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: searxng-secret
+                  key: SEARXNG_SECRET
             - name: TZ
               value: "Europe/Berlin"
           ports:
