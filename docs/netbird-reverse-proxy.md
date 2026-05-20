@@ -79,9 +79,31 @@ GitOps setzt `NB_ENABLE_LOCAL_FORWARDING=true`, damit Tunnel-Traffic die lokalen
 
 Terraform: `homelab-infrastructure/dns/servers.tf` (`audible` public CNAME).
 
+## VIP `192.168.10.245` im Cluster
+
+Über **Networks** (IP-Routing, kein DNS für „245“):
+
+| Komponente | Zweck |
+|------------|--------|
+| Resource `192.168.10.245/32` oder `192.168.10.0/24` | Ingress-VIP |
+| Routing Peers | K8s-Netbird-Nodes und/oder andere Server im LAN (`srv1`, …) |
+| Reverse Proxy | Ziel **Host** `192.168.10.245` + Routing Peer auf **anderem** Host (dein aktueller Weg) |
+
+Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den öffentlichen Reverse Proxy reicht oft ein Peer außerhalb der CP-Nodes.
+
+## 404 statt 502 (`audible.f4mily.net`)
+
+502 weg, **404** → Traffic erreicht NGINX, aber **kein passender Ingress-Pfad**:
+
+- Netbird liefert standardmäßig `GET /`.
+- Ingress hatte nur `/audiobookshelf` → NGINX-Default → 404.
+- Ingress kennt nur `/audiobookshelf`, Netbird sendet `/` → **404**.
+- **Fix im Dashboard:** am Reverse-Proxy-Target **Path** `/audiobookshelf` (Pass Host Header + Rewrite Redirects an).
+- Optional: zweites Target mit Path `/` nur wenn die App wirklich unter `/` läuft (Standard-Image erwartet `/audiobookshelf`).
+
 ## Beispiel-Checkliste `audible`
 
-- [ ] Reverse-Proxy-Service: Target **Peer** `talos-cp1`, **HTTP 80**, Host Header + Rewrite an
+- [ ] Reverse-Proxy: **Host** `192.168.10.245` (oder Peer), **HTTP 80** oder **HTTPS 443**, Host Header + Rewrite an
 - [ ] Netbird-Pods mit `NB_ENABLE_LOCAL_FORWARDING=true` (Flux)
 - [ ] Service-Status **active**
 - [ ] Proxy Events: kein 502 mehr

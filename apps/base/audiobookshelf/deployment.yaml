@@ -109,7 +109,6 @@ metadata:
     nginx.org/websocket-services: "audiobookshelf"
     nginx.org/proxy-read-timeout: "3600s"
     nginx.org/proxy-send-timeout: "3600s"
-    # v2.18+ client is built for /audiobookshelf; redirect / without server-snippets.
     nginx.org/app-root: /audiobookshelf
 spec:
   ingressClassName: nginx
