@@ -10,6 +10,7 @@ metadata:
     gethomepage.dev/group: Infrastructure
     gethomepage.dev/icon: watchyourlan.png
     cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
   ingressClassName: nginx
