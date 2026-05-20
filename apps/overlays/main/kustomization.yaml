@@ -45,7 +45,7 @@ resources:
   # - ../../base/watchyourlan        # wip: ingress only, no workload
 
   # --- Development / Misc -----------------------------------------------
-  # - ../../base/teslamate           # wip: ingress only, no workload
+  - ../../base/teslamate
   - ../../base/goloom
   # - ../../base/pcm                 # wip: ingress only, no workload
 
@@ -160,6 +160,16 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.host_teslamate
+    targets:
+      - select: {kind: Ingress, name: teslamate}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.host_nextcloud
     targets:
       - select: {kind: Ingress, name: nextcloud}
@@ -236,6 +246,8 @@ replacements:
       fieldPath: data.clusterTlsSecret
     targets:
       - select: {kind: Ingress, name: goloom}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: teslamate}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: nextcloud}
         fieldPaths: [spec.tls.0.secretName]
