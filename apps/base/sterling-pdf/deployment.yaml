@@ -104,7 +104,7 @@ spec:
         gethomepage.dev/group: Office
         gethomepage.dev/icon: stirling-pdf.png
         # TLS: wildcard-f4mily-net-tls replicated from cert-manager (reflector)
-        nginx.org/ssl-redirect: "true"
+        nginx.org/redirect-to-https: "true"
       hosts:
         - name: pdf.f4mily.net
           path: /
