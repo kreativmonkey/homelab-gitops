@@ -30,8 +30,8 @@ spec:
             name: velero-credentials
             key: cloud
           config:
-            region: us-east-1
-            s3Url: http://192.168.10.94:30186
+            region: garage
+            s3Url: http://192.168.10.94:30188
             s3ForcePathStyle: "true"
             insecureSkipTLSVerify: "true"
             checksumAlgorithm: ""
