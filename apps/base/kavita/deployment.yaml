@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kavita
+  namespace: kavita
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: kavita
+  template:
+    metadata:
+      labels:
+        app: kavita
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: kavita
+          image: ghcr.io/kareadita/kavita:0.9.0.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+              name: http
+          env:
+            - name: TZ
+              value: Europe/Berlin
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /kavita/config
+              subPath: docker/kavita/config
+            - name: books
+              mountPath: /books
+              subPath: Books
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: kavita-config
+        - name: books
+          persistentVolumeClaim:
+            claimName: kavita-books
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kavita
+  namespace: kavita
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: http
+      name: http
+  selector:
+    app: kavita
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kavita
+  namespace: kavita
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Kavita
+    gethomepage.dev/description: Comics, manga & ebooks
+    gethomepage.dev/group: Medien
+    gethomepage.dev/icon: kavita.png
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+    nginx.org/websocket-services: kavita
+    nginx.org/proxy-read-timeout: 3600s
+    nginx.org/proxy-send-timeout: 3600s
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - books.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: books.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kavita
+                port:
+                  number: 5000
