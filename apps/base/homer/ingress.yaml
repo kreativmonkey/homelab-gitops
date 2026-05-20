@@ -5,6 +5,7 @@ metadata:
   namespace: homer
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-production"
+    nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
   ingressClassName: nginx

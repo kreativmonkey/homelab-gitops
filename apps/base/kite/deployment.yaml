@@ -48,6 +48,7 @@ spec:
         gethomepage.dev/icon: kubernetes.png
         cert-manager.io/cluster-issuer: letsencrypt-production
         cert-manager.io/uses-release-name: "true"
+        nginx.org/ssl-redirect: "false"
         nginx.org/redirect-to-https: "true"
       hosts:
         - host: kite.cluster.f4mily.net

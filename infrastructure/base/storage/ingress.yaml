@@ -11,6 +11,7 @@ metadata:
     gethomepage.dev/icon: longhorn.png
     cert-manager.io/cluster-issuer: "letsencrypt-production"
     nginx.org/client-max-body-size: "1000m"
+    nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
   ingressClassName: nginx
