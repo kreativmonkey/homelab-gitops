@@ -41,12 +41,19 @@ Wenn der **Netbird-Client auf denselben Nodes** läuft wie der Ingress (DaemonSe
 |------|------|
 | Target type | **Peer** (nicht Host/Subnet/Network Resource) |
 | Peer | z. B. `talos-cp1` (Node mit Ingress; im Dashboard „Connected“) |
-| Protocol / Port | **HTTP** / **80** (nicht HTTPS/443 — siehe unten) |
+| Protocol / Port | **HTTPS** / **443** (wie Jellyfin & Co. auf `192.168.10.245`) |
 | Pass Host Header | **An** |
 | Rewrite Redirects | **An** |
+| Path | **leer** (nicht `/audiobookshelf` anhängen) |
 | Domain | Custom: z. B. `audible.f4mily.net` |
 
-Der öffentliche Reverse Proxy **beendet TLS** am Edge; zum Peer soll **HTTP auf Port 80** gehen. Bei **HTTPS/443** auf die Netbird-IP (`100.96.x.x`) schlägt die Verbindung oft fehl → Proxy Events **502 / request failed** ([Issue 2: bind/interface](https://docs.netbird.io/manage/reverse-proxy/troubleshooting#issue-2-service-bound-to-localhost-is-unreachable)).
+**Empfohlen:** Target **Peer** = K8s-Control-Plane (`talos-cp*`), damit der Cluster später ohne `srv1` auskommt. GitOps: `NB_ENABLE_LOCAL_FORWARDING=true`.
+
+**Fallback bei 502:** Protocol **HTTP** / **80** (selber Peer, Path leer).
+
+**Nur mit Routing Peer auf anderem Host** (z. B. `srv1`): Target **Host** `192.168.10.245`, HTTPS **443** — wie im Heimnetz.
+
+Bei **HTTPS/443** auf die Netbird-Peer-IP ohne Local Forwarding schlägt die Verbindung oft fehl → **502** ([Issue 2](https://docs.netbird.io/manage/reverse-proxy/troubleshooting#issue-2-service-bound-to-localhost-is-unreachable)).
 
 GitOps setzt `NB_ENABLE_LOCAL_FORWARDING=true`, damit Tunnel-Traffic die lokalen Listener (NGINX `hostNetwork`) erreicht.
 
@@ -57,7 +64,7 @@ GitOps setzt `NB_ENABLE_LOCAL_FORWARDING=true`, damit Tunnel-Traffic die lokalen
 1. Service-Status im Dashboard **active** (nicht `tunnel_not_created`).
 2. Vom Routing Peer lokal testen: `curl -skI -H 'Host: audible.f4mily.net' https://192.168.10.245/`
 3. Backend bindet nicht nur `127.0.0.1` — Ingress ist OK (`hostNetwork`).
-4. Audiobookshelf: Netbird-Pfad `/audiobookshelf`, kein `ssl-redirect` (siehe unten).
+4. Audiobookshelf: Netbird wie andere Apps — Path leer, HTTPS 443, Host `audible.f4mily.net`.
 5. Self-hosted Debug: `NB_PROXY_DEBUG_ENDPOINT=true` → `netbird-proxy debug ping <account-id> 192.168.10.245 443`
 
 ## Netbird-Server (Docker)
@@ -94,7 +101,8 @@ Passt zu bestehenden Ingress-Hostnames (`audible.f4mily.net`, `search.f4mily.net
 | Mode | **HTTP** |
 | Domain | Custom: z. B. `search.f4mily.net` |
 | Target type | **Peer** (K8s-Ingress auf demselben Node) **oder** **Host** `192.168.10.245` (Routing Peer z. B. `srv1`) |
-| Protocol / Port | **HTTP** / **80** |
+| Protocol / Port | **HTTPS** / **443** (Fallback: HTTP **80**) |
+| Path | **leer** |
 | Settings | **Pass Host Header** = an |
 | Settings | **Rewrite Redirects** = an |
 | Authentication | SSO / Passwort / PIN nach Bedarf |
@@ -122,29 +130,28 @@ Terraform: `homelab-infrastructure/dns/servers.tf` (`audible` public CNAME).
 
 Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den öffentlichen Reverse Proxy reicht oft ein Peer außerhalb der CP-Nodes.
 
-## 404 / 502 / Redirect-Schleife bei `audible.f4mily.net`
+## 404 / 502 bei `audible.f4mily.net`
 
 | Symptom | Ursache | Fix |
 |---------|---------|-----|
-| **502** | Backend HTTPS/443 oder Routing-Peer → eigene VIP (Issue 1) | HTTP **80**, Peer-Ziel oder `srv1` → `192.168.10.245`, `NB_ENABLE_LOCAL_FORWARDING` |
-| **404** / Endless Spinner | Proxy-Pfad `/` liefert HTML, Assets unter `/audiobookshelf/_nuxt/` → 404 | Netbird-Pfad **`/audiobookshelf`**, HTTP **80** (nicht HTTPS/443) |
-| **304** + Spinner | Gecachtes `index.html` ohne passende JS-Bundles | Hard-Reload; Ingress setzt `Cache-Control: no-cache` |
-| **Redirect-Schleife** (HTTP) | `nginx.org/ssl-redirect` leitet jedes HTTP auf HTTPS — ignoriert `X-Forwarded-Proto` vom Netbird-Proxy | GitOps: `ssl-redirect: false`, `redirect-to-https: true` |
+| **502** | Peer ohne Local Forwarding oder falsches Protokoll | Peer `talos-cp*`, **HTTPS 443**, `NB_ENABLE_LOCAL_FORWARDING`; sonst HTTP **80** |
+| **404** (NGINX) | Falscher Ingress-Pfad oder Host-Header fehlt | Path im Proxy **leer**, **Pass Host Header** an |
+| **Cannot GET /audiobookshelf/** | Pfad im Netbird-Proxy gesetzt — doppelt/inkorrekt | Path-Feld **leer** lassen; URL `https://audible.f4mily.net/` (App leitet intern um) |
 
-### Netbird-Dashboard (`audible.f4mily.net`)
+### Netbird-Dashboard (`audible.f4mily.net`) — wie andere Homelab-Apps
 
 | Feld | Wert |
 |------|------|
-| Target | Host `192.168.10.245` (Routing Peer z. B. `srv1`) **oder** Peer `talos-cp*` bei K8s-only-Setup |
-| Protocol / Port | **HTTP** / **80** |
-| Path | **`/audiobookshelf`** (ohne trailing slash; App-Default seit v2.18) |
+| Target type | **Peer** (`talos-cp1` o. ä.) |
+| Protocol / Port | **HTTPS** / **443** |
+| Path | **leer** |
 | Pass Host Header | **An** |
 | Rewrite Redirects | **An** |
 
 ### GitOps (Audiobookshelf)
 
-- Ingress: `path: /audiobookshelf` + `app-root` für `/`, `ssl-redirect: false`, `redirect-to-https: true`
-- Öffentliche URL: `https://audible.f4mily.net/audiobookshelf` (oder `/` mit Redirect)
+- Ingress wie Jellyfin: `ssl-redirect: true`, Pfade `/` und `/audiobookshelf` (App v2.18+)
+- Heimnetz-Test: `curl -skI -H 'Host: audible.f4mily.net' https://192.168.10.245/`
 
 ## Beispiel-Checkliste `audible`
 
@@ -152,7 +159,7 @@ Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den
 - [ ] Traefik TCP-Router TLS passthrough → Proxy `:8443`
 - [ ] K8s: `kubectl get pods -n netbird` → Ready
 - [ ] Network Routes aktiv
-- [ ] Reverse-Proxy: **Peer** (oder Host `192.168.10.245` via `srv1`), **HTTP 80**, Path **`/audiobookshelf`**, Host Header + Rewrite an
+- [ ] Reverse-Proxy: **Peer** `talos-cp*`, **HTTPS 443**, Path **leer**, Host Header + Rewrite an
 - [ ] Netbird-Pods mit `NB_ENABLE_LOCAL_FORWARDING=true` (Flux)
 - [ ] Service-Status **active**, Proxy Events: kein 502
 - [ ] Öffentlich: `dig audible.f4mily.net` → Netbird-Host, nicht `192.168.10.245`
