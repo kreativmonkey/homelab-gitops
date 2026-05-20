@@ -54,7 +54,7 @@
         "/^\\.(forgejo|github)/workflows/.*\\.ya?ml$/"
       ],
       "matchStrings": [
-        "uses:\\s*(?<depName>[^@\\s]+)@(?<currentValue>[^\\s#]+)"
+        "uses:\\s*(?:https://github\\.com/)?(?<depName>[^@\\s/]+/[^@\\s]+)@(?<currentValue>[^\\s#]+)"
       ],
       "datasourceTemplate": "github-tags"
     }
