@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kavita-config
+  namespace: kavita
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-media-static
+  volumeName: pv-nfs-kavita-config
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kavita-books
+  namespace: kavita
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-media-static
+  volumeName: pv-nfs-kavita-books
+  resources:
+    requests:
+      storage: 2Ti
