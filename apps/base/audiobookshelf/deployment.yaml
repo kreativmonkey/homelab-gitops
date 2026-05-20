@@ -105,18 +105,10 @@ metadata:
     # TLS: wildcard-f4mily-net-tls replicated from cert-manager (reflector).
     # Do not use cert-manager.io/cluster-issuer — ingress-shim conflicts with reflector.
     nginx.org/client-max-body-size: "1000m"
-    # Netbird reverse proxy terminates TLS and forwards HTTP with X-Forwarded-Proto: https.
-    # ssl-redirect ignores that header and causes redirect loops; redirect-to-https respects it.
-    nginx.org/ssl-redirect: "false"
-    nginx.org/redirect-to-https: "true"
+    nginx.org/ssl-redirect: "true"
     nginx.org/websocket-services: "audiobookshelf"
     nginx.org/proxy-read-timeout: "3600s"
     nginx.org/proxy-send-timeout: "3600s"
-    # Default app base path /audiobookshelf (static client); redirect bare / for browsers and Netbird.
-    nginx.org/app-root: /audiobookshelf
-    # Avoid stale index.html (304) after path changes — assets live under /audiobookshelf/_nuxt/.
-    nginx.org/location-snippets: |
-      add_header Cache-Control "no-cache, no-store, must-revalidate" always;
 spec:
   ingressClassName: nginx
   tls:
@@ -135,7 +127,7 @@ spec:
                 port:
                   number: 80
           - path: /
-            pathType: Exact
+            pathType: Prefix
             backend:
               service:
                 name: audiobookshelf
