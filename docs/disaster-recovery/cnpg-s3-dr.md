@@ -1,6 +1,6 @@
 # CNPG Backup & Disaster Recovery (S3 / Barman)
 
-Central PostgreSQL (`homelab-postgres`) uses **Barman Cloud** via `barmanObjectStore` for continuous WAL archiving and scheduled base backups to S3-compatible storage (Garage on TrueNAS at `http://192.168.10.94:30188` (S3 API; `:30186` is the web UI only), same endpoint as Velero).
+PostgreSQL clusters (`homelab-postgres`, `immich-postgres`) use **Barman Cloud** via `barmanObjectStore` for continuous WAL archiving and scheduled base backups to S3-compatible storage (Garage on TrueNAS at `http://192.168.10.94:30188` (S3 API; `:30186` is the web UI only), same endpoint as Velero).
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ Central PostgreSQL (`homelab-postgres`) uses **Barman Cloud** via `barmanObjectS
 Flux path: `./infrastructure/overlays/main`
 
 - WAL archived continuously (`archive_timeout` default ~5 min RPO)
-- `ScheduledBackup` `homelab-postgres-daily` at 02:30 UTC
+- `ScheduledBackup` `homelab-postgres-daily` and `immich-postgres-daily` at 02:30 UTC
 - Retention: `30d` on object store
 
 Verify:
@@ -46,13 +46,19 @@ Commit/push or patch locally, then reconcile:
 flux reconcile kustomization infra-main --with-source
 ```
 
-The DR overlay applies [`patches/cluster-recovery.yaml`](../../infrastructure/overlays/disaster-recovery/patches/cluster-recovery.yaml), injecting `bootstrap.recovery` from S3.
+The DR overlay applies recovery patches for both clusters:
+
+- [`patches/cluster-recovery.yaml`](../../infrastructure/overlays/disaster-recovery/patches/cluster-recovery.yaml) — `homelab-postgres`
+- [`patches/cluster-recovery-immich.yaml`](../../infrastructure/overlays/disaster-recovery/patches/cluster-recovery-immich.yaml) — `immich-postgres`
+
+Each injects `bootstrap.recovery` from its S3 prefix under `cnpg-backups/`.
 
 ### 3. Wait for CNPG recovery
 
 ```bash
 kubectl wait --for=condition=Ready cluster/homelab-postgres -n cnpg-system --timeout=30m
-kubectl get cluster -n cnpg-system homelab-postgres -o yaml | grep -A5 phase
+kubectl wait --for=condition=Ready cluster/immich-postgres -n cnpg-system --timeout=30m
+kubectl get cluster -n cnpg-system homelab-postgres immich-postgres -o custom-columns=NAME:.metadata.name,PHASE:.status.phase,READY:.status.conditions[?(@.type==\'Ready\')].status
 ```
 
 Managed roles and `Database` CRs reconcile after the cluster becomes primary.
