@@ -73,6 +73,8 @@ sops -d infrastructure/base/sources/hetzner.secret.yaml
 For day-to-day secret operations there are `just` helpers in this repo
 (`just sops-edit`, `just sops-create`, `just barman-s3-credentials`, …).
 
+Netbird-Mesh-Zugriff auf den Cluster: siehe [netbird-cluster-access.md](netbird-cluster-access.md).
+
 ## 5. Talos administration
 
 ```bash
