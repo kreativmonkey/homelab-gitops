@@ -12,7 +12,7 @@ spec:
     - name: homelab-postgres
       barmanObjectStore:
         destinationPath: s3://cnpg-backups/homelab-postgres
-        endpointURL: http://192.168.10.94:30186
+        endpointURL: http://192.168.10.94:30188
         serverName: homelab-postgres
         s3Credentials:
           accessKeyId:
