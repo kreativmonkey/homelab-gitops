@@ -35,18 +35,22 @@ Wenn der **Netbird-Client auf denselben Nodes** läuft wie der Ingress (DaemonSe
 - Der Routing Peer soll Subnet-Traffic **an andere Hosts** weiterleiten.
 - Leitet er auf eine **eigene** IP (hier die Ingress-VIP auf dem Node), fehlen die ACL-Regeln für „self-targeted“ Traffic → Timeout → **502**.
 
-**Lösung für `audible.f4mily.net` (und alle Cluster-Ingress-Hosts):**
+**Lösung für `audible.f4mily.net` (K8s: Netbird + Ingress auf demselben Node):**
 
 | Feld | Wert |
 |------|------|
-| Target type | **Peer** (nicht Host/Subnet/Network Resource) |
-| Peer | z. B. `talos-cp1` (beliebiger K8s-Node mit Netbird + Ingress) |
-| Protocol / Port | **HTTPS** / **443** |
+| Target type | **Peer** |
+| Peer | z. B. `talos-cp1` (Node mit Ingress; im Dashboard „Connected“) |
+| Protocol / Port | **HTTP** / **80** (nicht HTTPS/443 — siehe unten) |
 | Pass Host Header | **An** |
 | Rewrite Redirects | **An** |
 | Domain | Custom: `audible.f4mily.net` |
 
-Der Ingress lauscht per `hostNetwork` auf dem Node; der WireGuard-Tunnel endet auf dem Peer — kein Subnet-Forward-Hop nötig.
+Der öffentliche Reverse Proxy **beendet TLS** am Edge; zum Peer soll **HTTP auf Port 80** gehen. Bei **HTTPS/443** auf die Netbird-IP (`100.96.x.x`) schlägt die Verbindung oft fehl → Proxy Events **502 / request failed** ([Issue 2: bind/interface](https://docs.netbird.io/manage/reverse-proxy/troubleshooting#issue-2-service-bound-to-localhost-is-unreachable)).
+
+GitOps setzt `NB_ENABLE_LOCAL_FORWARDING=true`, damit Tunnel-Traffic die lokalen Listener (NGINX `hostNetwork`) erreicht.
+
+**Saubere Alternative:** Netbird-Client nur auf **`srv1`** (Routing Peer), Ziel **Host** `192.168.10.245` — dann kein Peer+Ingress auf einem Node.
 
 **Alternative:** Netbird nur auf einem **anderen** Host (z. B. `srv1` / `192.168.10.23`) als Routing Peer — dann darf `Host` `192.168.10.245` wieder funktionieren, weil die VIP nicht die Peer-eigene Adresse ist.
 
@@ -77,7 +81,8 @@ Terraform: `homelab-infrastructure/dns/servers.tf` (`audible` public CNAME).
 
 ## Beispiel-Checkliste `audible`
 
-- [ ] Reverse-Proxy-Service: Target **Peer** `talos-cp1`, HTTPS **443**, Host Header + Rewrite an
+- [ ] Reverse-Proxy-Service: Target **Peer** `talos-cp1`, **HTTP 80**, Host Header + Rewrite an
+- [ ] Netbird-Pods mit `NB_ENABLE_LOCAL_FORWARDING=true` (Flux)
 - [ ] Service-Status **active**
 - [ ] Proxy Events: kein 502 mehr
 - [ ] Öffentlich: `dig audible.f4mily.net` → Netbird-Host, nicht `192.168.10.245`

@@ -35,6 +35,9 @@ spec:
                   fieldPath: spec.nodeName
             - name: NB_LOG_LEVEL
               value: info
+            # Deliver tunnel traffic to host listeners (ingress :80/:443 on same node)
+            - name: NB_ENABLE_LOCAL_FORWARDING
+              value: "true"
           securityContext:
             privileged: true
             capabilities:
