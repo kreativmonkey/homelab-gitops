@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/group: Infrastructure
     gethomepage.dev/icon: grafana.png
     cert-manager.io/cluster-issuer: letsencrypt-production
-    nginx.org/ssl-redirect: "true"
+    nginx.org/redirect-to-https: "true"
   labels:
     app.kubernetes.io/part-of: vm-k8s-stack
 spec:

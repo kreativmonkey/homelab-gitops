@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/group: Medien
     gethomepage.dev/icon: immich.png
     cert-manager.io/cluster-issuer: letsencrypt-production
-    nginx.org/ssl-redirect: "true"
+    nginx.org/redirect-to-https: "true"
     nginx.org/proxy-body-size: "0"
 spec:
   ingressClassName: nginx

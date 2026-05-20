@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/group: Development
     gethomepage.dev/icon: goloom.png
     # TLS: wildcard-cluster-f4mily-net-tls via reflector (cert-manager namespace)
-    nginx.org/ssl-redirect: "true"
+    nginx.org/redirect-to-https: "true"
 spec:
   ingressClassName: nginx
   tls:

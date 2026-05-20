@@ -12,7 +12,7 @@ metadata:
     gethomepage.dev/app: cnpg-system-pgadmin-pgadmin4
     # TLS: wildcard-cluster-f4mily-net-tls replicated from cert-manager (reflector).
     # Do not use cert-manager.io/cluster-issuer — ingress-shim conflicts with reflector.
-    nginx.org/ssl-redirect: "true"
+    nginx.org/redirect-to-https: "true"
 spec:
   ingressClassName: nginx
   tls:
