@@ -36,26 +36,6 @@ data:
             description: Virtualization Platform
             ping: https://192.168.10.5:8006
 
-        - VictoriaMetrics:
-            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/victoriametrics.png
-            href: "https://metrics.cluster.f4mily.net"
-            external: true
-            description: Monitoring & Metrics
-            ping: https://metrics.cluster.f4mily.net
-
-        - Kite:
-            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/kubernetes.png
-            href: "https://kite.cluster.f4mily.net"
-            external: true
-            description: Kubernetes Dashboard
-            ping: https://kite.cluster.f4mily.net
-
-        - Longhorn:
-            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/longhorn.png
-            href: "https://longhorn.cluster.f4mily.net"
-            external: true
-            description: Distributed Storage
-            ping: https://longhorn.cluster.f4mily.net
         - FritzBox:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/fritzbox.png
             href: "http://192.168.10.158"

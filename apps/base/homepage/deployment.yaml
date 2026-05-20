@@ -14,7 +14,7 @@ spec:
         app: homepage
       annotations:
         # Bump to force rollout when only ConfigMap content changes.
-        config-version: "2026-05-21b"
+        config-version: "2026-05-21c"
     spec:
       serviceAccountName: homepage
       automountServiceAccountToken: true

@@ -4,11 +4,7 @@ metadata:
   name: homepage
   namespace: homepage
   annotations:
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: Homepage
-    gethomepage.dev/description: Homelab dashboard
-    gethomepage.dev/group: Infrastructure
-    gethomepage.dev/icon: homepage.png
+    gethomepage.dev/enabled: "false"
     cert-manager.io/cluster-issuer: "letsencrypt-production"
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
