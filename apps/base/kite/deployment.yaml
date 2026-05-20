@@ -32,7 +32,7 @@ spec:
       type: Recreate
     image:
       repository: ghcr.io/kite-org/kite
-      tag: "v0.8.1"
+      tag: "v0.12.2"
     service:
       port: 8080
     host: https://kite.cluster.f4mily.net
