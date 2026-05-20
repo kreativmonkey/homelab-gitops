@@ -6,7 +6,7 @@ metadata:
   annotations:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: VictoriaMetrics
-    gethomepage.dev/description: Metrics
+    gethomepage.dev/description: Metrics DB & VMUI
     gethomepage.dev/group: Infrastructure
     gethomepage.dev/icon: victoriametrics.png
     cert-manager.io/cluster-issuer: letsencrypt-production
@@ -28,6 +28,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: vmsingle-vm-k8s-stack
+                name: vmsingle-vm-k8s-stack-victoria-metrics-k8s-stack
                 port:
                   number: 8428
