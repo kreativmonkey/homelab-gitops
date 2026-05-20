@@ -46,6 +46,7 @@ spec:
         gethomepage.dev/description: Kubernetes dashboard
         gethomepage.dev/group: Infrastructure
         gethomepage.dev/icon: kubernetes.png
+        gethomepage.dev/app: kite
         cert-manager.io/cluster-issuer: letsencrypt-production
         cert-manager.io/uses-release-name: "true"
         nginx.org/ssl-redirect: "false"

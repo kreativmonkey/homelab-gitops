@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/description: PostgreSQL admin
     gethomepage.dev/group: Infrastructure
     gethomepage.dev/icon: pgadmin.png
-    gethomepage.dev/app: cnpg-system-pgadmin-pgadmin4
+    gethomepage.dev/app: pgadmin4
     # TLS: wildcard-cluster-f4mily-net-tls replicated from cert-manager (reflector).
     # Do not use cert-manager.io/cluster-issuer — ingress-shim conflicts with reflector.
     nginx.org/ssl-redirect: "false"
