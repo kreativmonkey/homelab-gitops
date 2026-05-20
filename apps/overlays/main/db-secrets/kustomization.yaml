@@ -6,6 +6,7 @@ resources:
   - nextcloud-db-credentials.secret.yaml
   - paperless-db-credentials.secret.yaml
   - goloom-db-credentials.secret.yaml
+  - teslamate-db-credentials.secret.yaml
 patches:
   - target:
       kind: Secret
@@ -57,3 +58,13 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: goloom
+  - target:
+      kind: Secret
+      name: teslamate-db-credentials
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: homelab-postgres-teslamate
+      - op: replace
+        path: /metadata/namespace
+        value: teslamate
