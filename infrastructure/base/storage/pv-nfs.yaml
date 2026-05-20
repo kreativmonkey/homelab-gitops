@@ -11,7 +11,7 @@
 #
 # subPath reference (relative to export root):
 #   Media/Bilder, Media/Fotos, Media/paperless/*, Media/jellyfin/*,
-#   Media/MediaStack/media/*, Media/docker/audiobookshelf/* (create on NAS if missing)
+#   Media/MediaStack/media/*, Media/Books, Media/docker/* (create on NAS if missing)
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -324,6 +324,54 @@ spec:
   claimRef:
     name: jellyfin-media
     namespace: jellyfin
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-kavita-config
+  labels:
+    app: kavita
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media
+    server: 192.168.10.94
+  claimRef:
+    name: kavita-config
+    namespace: kavita
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-kavita-books
+  labels:
+    app: kavita
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 2Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media
+    server: 192.168.10.94
+  claimRef:
+    name: kavita-books
+    namespace: kavita
 ---
 apiVersion: v1
 kind: PersistentVolume

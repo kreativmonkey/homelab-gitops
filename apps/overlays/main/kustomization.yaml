@@ -23,6 +23,7 @@ resources:
   # --- Media & Documents ------------------------------------------------
   - ../../base/audiobookshelf
   - ../../base/jellyfin
+  - ../../base/kavita
   # - ../../base/tandoor             # wip: ingress only, no workload
   - ../../base/paperless-ngx
   - ../../base/immich
@@ -113,6 +114,16 @@ replacements:
       fieldPath: data.host_jellyfin
     targets:
       - select: {kind: Ingress, name: jellyfin}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_kavita
+    targets:
+      - select: {kind: Ingress, name: kavita}
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
@@ -232,6 +243,8 @@ replacements:
       - select: {kind: Ingress, name: immich}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: jellyfin}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: kavita}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: paperless}
         fieldPaths: [spec.tls.0.secretName]
