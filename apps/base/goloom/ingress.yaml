@@ -8,7 +8,7 @@ metadata:
     gethomepage.dev/name: Goloom
     gethomepage.dev/description: Goloom
     gethomepage.dev/group: Development
-    gethomepage.dev/icon: goloom.png
+    gethomepage.dev/icon: mdi-view-dashboard
     # TLS: wildcard-cluster-f4mily-net-tls via reflector (cert-manager namespace)
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"

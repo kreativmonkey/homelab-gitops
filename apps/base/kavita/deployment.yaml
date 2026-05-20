@@ -91,6 +91,7 @@ metadata:
     gethomepage.dev/description: Comics, manga & ebooks
     gethomepage.dev/group: Medien
     gethomepage.dev/icon: kavita.png
+    gethomepage.dev/pod-selector: app=kavita
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
     nginx.org/websocket-services: kavita
