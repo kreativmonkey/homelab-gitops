@@ -103,6 +103,7 @@ spec:
         gethomepage.dev/description: PDF tools
         gethomepage.dev/group: Office
         gethomepage.dev/icon: stirling-pdf.png
+        gethomepage.dev/app: stirling-pdf-chart
         # TLS: wildcard-f4mily-net-tls replicated from cert-manager (reflector)
         nginx.org/ssl-redirect: "false"
         nginx.org/redirect-to-https: "true"

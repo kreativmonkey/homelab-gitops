@@ -9,6 +9,7 @@ metadata:
     gethomepage.dev/description: Metrics DB & VMUI
     gethomepage.dev/group: Infrastructure
     gethomepage.dev/icon: victoriametrics.png
+    gethomepage.dev/app: vmsingle
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
