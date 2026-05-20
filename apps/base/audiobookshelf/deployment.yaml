@@ -27,9 +27,6 @@ spec:
           env:
             - name: TZ
               value: "Europe/Berlin"
-            # Serve at / (not /audiobookshelf) — required for Netbird reverse proxy path /
-            - name: ROUTER_BASE_PATH
-              value: ""
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -115,6 +112,11 @@ metadata:
     nginx.org/websocket-services: "audiobookshelf"
     nginx.org/proxy-read-timeout: "3600s"
     nginx.org/proxy-send-timeout: "3600s"
+    # Default app base path /audiobookshelf (static client); redirect bare / for browsers and Netbird.
+    nginx.org/app-root: /audiobookshelf
+    # Avoid stale index.html (304) after path changes — assets live under /audiobookshelf/_nuxt/.
+    nginx.org/location-snippets: |
+      add_header Cache-Control "no-cache, no-store, must-revalidate" always;
 spec:
   ingressClassName: nginx
   tls:
@@ -125,8 +127,15 @@ spec:
     - host: audible.f4mily.net
       http:
         paths:
-          - path: /
+          - path: /audiobookshelf
             pathType: Prefix
+            backend:
+              service:
+                name: audiobookshelf
+                port:
+                  number: 80
+          - path: /
+            pathType: Exact
             backend:
               service:
                 name: audiobookshelf
