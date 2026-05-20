@@ -4,6 +4,8 @@ Der Homelab-Cluster tritt dem selbst gehosteten Netbird-Management unter
 **https://netbird.f4mily.net** bei. Pro Node läuft ein Netbird-Client als
 `DaemonSet` mit `hostNetwork` (Namespace `netbird`).
 
+**Externe Erreichbarkeit ohne Port-Forwarding:** [netbird-reverse-proxy.md](netbird-reverse-proxy.md) — Reverse-Proxy-Feature auf dem Netbird-Server plus HTTP-Services im Dashboard (Ziel: Ingress `192.168.10.245:443`).
+
 ## GitOps
 
 | Ressource | Beschreibung |
