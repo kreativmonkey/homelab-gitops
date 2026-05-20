@@ -4,7 +4,10 @@ metadata:
   name: homepage-config
   namespace: homepage
 data:
-  docker.yaml: ""
+  custom.css: ""
+  custom.js: ""
+  docker.yaml: |
+    ---
   settings.yaml: |
     ---
     title: "Homelab Dashboard"
