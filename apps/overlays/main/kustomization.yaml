@@ -28,7 +28,7 @@ resources:
   - ../../base/immich
 
   # --- Infrastructure & Tools -------------------------------------------
-  # - ../../base/netbird             # wip: namespace only, no workload
+  - ../../base/netbird
   # - ../../base/backrest            # wip: ingress only, no workload
   - ../../base/searxng
   # - ../../base/uptime-kuma         # wip: ingress only, no workload
