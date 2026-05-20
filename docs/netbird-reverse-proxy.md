@@ -35,27 +35,29 @@ Wenn der **Netbird-Client auf denselben Nodes** läuft wie der Ingress (DaemonSe
 - Der Routing Peer soll Subnet-Traffic **an andere Hosts** weiterleiten.
 - Leitet er auf eine **eigene** IP (hier die Ingress-VIP auf dem Node), fehlen die ACL-Regeln für „self-targeted“ Traffic → Timeout → **502**.
 
-**Lösung für `audible.f4mily.net` (und alle Cluster-Ingress-Hosts):**
+**Lösung für `audible.f4mily.net` und andere Cluster-Ingress-Hosts (K8s: Netbird + Ingress auf demselben Node):**
 
 | Feld | Wert |
 |------|------|
 | Target type | **Peer** (nicht Host/Subnet/Network Resource) |
-| Peer | z. B. `talos-cp1` (beliebiger K8s-Node mit Netbird + Ingress) |
-| Protocol / Port | **HTTPS** / **443** |
+| Peer | z. B. `talos-cp1` (Node mit Ingress; im Dashboard „Connected“) |
+| Protocol / Port | **HTTP** / **80** (nicht HTTPS/443 — siehe unten) |
 | Pass Host Header | **An** |
 | Rewrite Redirects | **An** |
-| Domain | Custom: `audible.f4mily.net` |
+| Domain | Custom: z. B. `audible.f4mily.net` |
 
-Der Ingress lauscht per `hostNetwork` auf dem Node; der WireGuard-Tunnel endet auf dem Peer — kein Subnet-Forward-Hop nötig.
+Der öffentliche Reverse Proxy **beendet TLS** am Edge; zum Peer soll **HTTP auf Port 80** gehen. Bei **HTTPS/443** auf die Netbird-IP (`100.96.x.x`) schlägt die Verbindung oft fehl → Proxy Events **502 / request failed** ([Issue 2: bind/interface](https://docs.netbird.io/manage/reverse-proxy/troubleshooting#issue-2-service-bound-to-localhost-is-unreachable)).
 
-**Alternative:** Netbird nur auf einem **anderen** Host (z. B. `srv1` / `192.168.10.23`) als Routing Peer — dann darf `Host` `192.168.10.245` wieder funktionieren, weil die VIP nicht die Peer-eigene Adresse ist.
+GitOps setzt `NB_ENABLE_LOCAL_FORWARDING=true`, damit Tunnel-Traffic die lokalen Listener (NGINX `hostNetwork`) erreicht.
+
+**Alternative:** Netbird-Client nur auf **`srv1`** (Routing Peer), Ziel **Host** `192.168.10.245` — dann kein Peer+Ingress auf einem Node und `Host`/`Subnet` funktionieren wieder.
 
 ### Weitere 502-Ursachen (Checkliste)
 
 1. Service-Status im Dashboard **active** (nicht `tunnel_not_created`).
 2. Vom Routing Peer lokal testen: `curl -skI -H 'Host: audible.f4mily.net' https://192.168.10.245/`
 3. Backend bindet nicht nur `127.0.0.1` — Ingress ist OK (`hostNetwork`).
-4. Audiobookshelf: Ingress-Pfad `/audiobookshelf` + `app-root` `/` — Root-URL sollte redirecten; bei Problemen Path `/audiobookshelf` im Proxy-Target setzen.
+4. Audiobookshelf: Ingress `path: /`, kein `ssl-redirect` (siehe Redirect-Schleife unten).
 5. Self-hosted Debug: `NB_PROXY_DEBUG_ENDPOINT=true` → `netbird-proxy debug ping <account-id> 192.168.10.245 443`
 
 ## Netbird-Server (Docker)
@@ -75,9 +77,45 @@ Der Ingress lauscht per `hostNetwork` auf dem Node; der WireGuard-Tunnel endet a
 
 Terraform: `homelab-infrastructure/dns/servers.tf` (`audible` public CNAME).
 
+## VIP `192.168.10.245` im Cluster
+
+Über **Networks** (IP-Routing, kein DNS für „245“):
+
+| Komponente | Zweck |
+|------------|--------|
+| Resource `192.168.10.245/32` oder `192.168.10.0/24` | Ingress-VIP |
+| Routing Peers | K8s-Netbird-Nodes und/oder andere Server im LAN (`srv1`, …) |
+| Reverse Proxy | Ziel **Host** `192.168.10.245` + Routing Peer auf **anderem** Host |
+
+Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den öffentlichen Reverse Proxy reicht oft ein Peer außerhalb der CP-Nodes.
+
+## 404 / 502 / Redirect-Schleife bei `audible.f4mily.net`
+
+| Symptom | Ursache | Fix |
+|---------|---------|-----|
+| **502** | Backend HTTPS/443 oder Routing-Peer → eigene VIP (Issue 1) | HTTP **80**, Peer-Ziel oder `srv1` → `192.168.10.245`, `NB_ENABLE_LOCAL_FORWARDING` |
+| **404** (dunkelblaue SPA-Seite) | Früher Subpfad `/audiobookshelf`; Proxy rief `/` auf | GitOps: `ROUTER_BASE_PATH=""`, Ingress nur `path: /` |
+| **Redirect-Schleife** (HTTP) | `nginx.org/ssl-redirect` leitet jedes HTTP auf HTTPS — ignoriert `X-Forwarded-Proto` vom Netbird-Proxy | GitOps: `ssl-redirect: false`, `redirect-to-https: true` |
+
+### Netbird-Dashboard (`audible.f4mily.net`)
+
+| Feld | Wert |
+|------|------|
+| Target | Host `192.168.10.245` (Routing Peer z. B. `srv1`) **oder** Peer `talos-cp*` bei K8s-only-Setup |
+| Protocol / Port | **HTTP** / **80** |
+| Path | **`/`** oder leer (App liegt an der Root) |
+| Pass Host Header | **An** |
+| Rewrite Redirects | **An** |
+
+### GitOps (Audiobookshelf)
+
+- `ROUTER_BASE_PATH=""` — App unter `/`, kein `/audiobookshelf`-Subpfad
+- Ingress: `nginx.org/ssl-redirect: "false"`, `nginx.org/redirect-to-https: "true"` (TLS-Terminierung am Netbird-Proxy)
+
 ## Beispiel-Checkliste `audible`
 
-- [ ] Reverse-Proxy-Service: Target **Peer** `talos-cp1`, HTTPS **443**, Host Header + Rewrite an
+- [ ] Reverse-Proxy: **Peer** (oder Host `192.168.10.245` via `srv1`), **HTTP 80**, Path `/`, Host Header + Rewrite an
+- [ ] Netbird-Pods mit `NB_ENABLE_LOCAL_FORWARDING=true` (Flux)
 - [ ] Service-Status **active**
 - [ ] Proxy Events: kein 502 mehr
 - [ ] Öffentlich: `dig audible.f4mily.net` → Netbird-Host, nicht `192.168.10.245`
