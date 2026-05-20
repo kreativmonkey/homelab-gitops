@@ -97,14 +97,56 @@ Erreichbar dann als `https://search.proxy.f4mily.net` — ohne extra CNAME pro A
 
 Mehrere Targets mit unterschiedlichen **Path**-Präfixen (`/api`, `/`) — nur sinnvoll, wenn die Apps Pfade unter einer Domain teilen.
 
+## Netbird Networks (Pflicht für Cluster-Ziele)
+
+Eine **Network Resource** (`k8s-ingress` / `192.168.10.245/32`) allein reicht nicht. Du brauchst zusätzlich:
+
+### 1. Network `k8s-ingress`
+
+| Einstellung | Wert |
+|-------------|------|
+| Resource | `192.168.10.245/32` (oder `192.168.10.0/24`) |
+| Resource-Gruppe | z. B. `k8s-ingress` |
+| **Routing Peers** | Gruppe mit allen K8s-Netbird-Peers (`talos-cp1` …) |
+| Masquerade | **An** (Standard) |
+
+### 2. Access Control (häufigster Fehler)
+
+Ohne Policy ist Traffic **deny-by-default** — der Reverse Proxy erreicht den Ingress nicht.
+
+| Policy | Source | Destination | Ports |
+|--------|--------|-------------|-------|
+| Proxy → Ingress | Gruppe **`reverse-proxy`** (Peer `netbird-proxy`) | Gruppe **`k8s-ingress`** (Resource) | TCP **443** (optional 80) |
+| Optional LAN/VPN | Deine Client-Gruppe | `k8s-ingress` | TCP 443 |
+
+Der **netbird-proxy**-Container ist ein eigener Peer — er muss in der Source-Gruppe der Forward-Policy stehen, nicht nur dein Laptop.
+
+### 3. Reverse-Proxy-Service (z. B. `audible.f4mily.net`)
+
+| Feld | Wert |
+|------|------|
+| Target | Resource **Host** `192.168.10.245` oder Subnet + IP |
+| Protocol / Port | **HTTPS** / **443** |
+| Pass Host Header | **An** |
+| Rewrite Redirects | **An** |
+| Path (Audiobookshelf) | optional `/audiobookshelf` — Ingress hat `app-root` auf `/`, beides möglich |
+
+Status im UI: `tunnel_not_created` → Routing Peers / Access Policy prüfen; `certificate_failed` → DNS.
+
+### 4. DNS
+
+Öffentlich muss `audible.f4mily.net` auf den **Netbird-Host** zeigen (CNAME `netbird.f4mily.net`), **nicht** auf `192.168.10.245`. Lokal bleibt AdGuard auf die VIP (Terraform: public CNAME + lokales A).
+
 ## Beispiel-Checkliste
 
 - [ ] `netbird-proxy` läuft, Status im Dashboard: Proxy-Instanz **connected**
 - [ ] Traefik TCP-Router TLS passthrough → Proxy `:8443`
 - [ ] K8s: `kubectl get pods -n netbird` → 3/3 Ready
-- [ ] Network Routes aktiv
-- [ ] Service `search.f4mily.net` → Target `192.168.10.245:443`, Status **active**
-- [ ] Test von Mobilfunk ohne VPN: `https://search.f4mily.net`
+- [ ] Network `k8s-ingress` mit Routing Peers (K8s-Gruppe) + Masquerade
+- [ ] Access Policy: **`reverse-proxy` → `k8s-ingress`**, TCP 443
+- [ ] Öffentliches DNS `audible` → `netbird.f4mily.net`
+- [ ] Service `audible.f4mily.net` → Target `192.168.10.245:443`, Status **active**
+- [ ] Test von Mobilfunk ohne VPN: `https://audible.f4mily.net`
 
 ## Hinweise
 
