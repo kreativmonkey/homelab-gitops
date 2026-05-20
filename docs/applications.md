@@ -61,7 +61,7 @@ here so it is obvious what is **planned** but not deployed:
 | App                | Status | Reason                                    |
 |--------------------|--------|-------------------------------------------|
 | tandoor            | wip    | ingress only, missing HelmRelease         |
-| netbird            | wip    | namespace only                            |
+| netbird            | on     | DaemonSet (hostNetwork), routing to cluster |
 | backrest           | wip    | ingress only, missing HelmRelease         |
 | searxng            | on     | Deployment + ingress at search.f4mily.net |
 | uptime-kuma        | wip    | ingress only, missing Deployment          |
