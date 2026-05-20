@@ -50,12 +50,8 @@ spec:
         - containerPort: 3000
           name: http
         env:
-        - name: MY_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
         - name: HOMEPAGE_ALLOWED_HOSTS
-          value: "$(MY_POD_IP):3000,home.f4mily.net,localhost"
+          value: "home.f4mily.net"
         - name: PUID
           value: "1000"
         - name: PGID
@@ -63,20 +59,16 @@ spec:
         - name: TZ
           value: "Europe/Berlin"
         startupProbe:
-          httpGet:
-            path: /api/healthcheck
+          tcpSocket:
             port: http
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          failureThreshold: 30
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 24
         livenessProbe:
-          httpGet:
-            path: /api/healthcheck
+          tcpSocket:
             port: http
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
           periodSeconds: 30
-          timeoutSeconds: 5
-          failureThreshold: 5
         volumeMounts:
         - name: config
           mountPath: /app/config
