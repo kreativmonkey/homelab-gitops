@@ -41,7 +41,7 @@ data:
 
     [botdetection.ip_limit]
     filter_link_local = false
-    link_token = true
+    link_token = false
 
     [botdetection.ip_lists]
 
