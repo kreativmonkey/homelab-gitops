@@ -58,3 +58,4 @@ data:
   host_grafana: grafana.cluster.f4mily.net
   host_victoria_metrics: metrics.cluster.f4mily.net
   host_kite: kite.cluster.f4mily.net
+  host_teslamate: teslamate.cluster.f4mily.net
