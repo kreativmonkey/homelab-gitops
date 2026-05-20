@@ -10,3 +10,8 @@ patches:
       kind: Cluster
       name: homelab-postgres
       namespace: cnpg-system
+  - path: patches/cluster-recovery-immich.yaml
+    target:
+      kind: Cluster
+      name: immich-postgres
+      namespace: cnpg-system
