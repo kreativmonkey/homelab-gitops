@@ -57,7 +57,7 @@ GitOps setzt `NB_ENABLE_LOCAL_FORWARDING=true`, damit Tunnel-Traffic die lokalen
 1. Service-Status im Dashboard **active** (nicht `tunnel_not_created`).
 2. Vom Routing Peer lokal testen: `curl -skI -H 'Host: audible.f4mily.net' https://192.168.10.245/`
 3. Backend bindet nicht nur `127.0.0.1` — Ingress ist OK (`hostNetwork`).
-4. Audiobookshelf: Ingress `path: /`, kein `ssl-redirect` (siehe Redirect-Schleife unten).
+4. Audiobookshelf: Netbird-Pfad `/audiobookshelf`, kein `ssl-redirect` (siehe unten).
 5. Self-hosted Debug: `NB_PROXY_DEBUG_ENDPOINT=true` → `netbird-proxy debug ping <account-id> 192.168.10.245 443`
 
 ## Netbird-Server (Docker)
@@ -127,7 +127,8 @@ Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den
 | Symptom | Ursache | Fix |
 |---------|---------|-----|
 | **502** | Backend HTTPS/443 oder Routing-Peer → eigene VIP (Issue 1) | HTTP **80**, Peer-Ziel oder `srv1` → `192.168.10.245`, `NB_ENABLE_LOCAL_FORWARDING` |
-| **404** (dunkelblaue SPA-Seite) | Früher Subpfad `/audiobookshelf`; Proxy rief `/` auf | GitOps: `ROUTER_BASE_PATH=""`, Ingress nur `path: /` |
+| **404** / Endless Spinner | Proxy-Pfad `/` liefert HTML, Assets unter `/audiobookshelf/_nuxt/` → 404 | Netbird-Pfad **`/audiobookshelf`**, HTTP **80** (nicht HTTPS/443) |
+| **304** + Spinner | Gecachtes `index.html` ohne passende JS-Bundles | Hard-Reload; Ingress setzt `Cache-Control: no-cache` |
 | **Redirect-Schleife** (HTTP) | `nginx.org/ssl-redirect` leitet jedes HTTP auf HTTPS — ignoriert `X-Forwarded-Proto` vom Netbird-Proxy | GitOps: `ssl-redirect: false`, `redirect-to-https: true` |
 
 ### Netbird-Dashboard (`audible.f4mily.net`)
@@ -136,14 +137,14 @@ Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den
 |------|------|
 | Target | Host `192.168.10.245` (Routing Peer z. B. `srv1`) **oder** Peer `talos-cp*` bei K8s-only-Setup |
 | Protocol / Port | **HTTP** / **80** |
-| Path | **`/`** oder leer (App liegt an der Root) |
+| Path | **`/audiobookshelf`** (ohne trailing slash; App-Default seit v2.18) |
 | Pass Host Header | **An** |
 | Rewrite Redirects | **An** |
 
 ### GitOps (Audiobookshelf)
 
-- `ROUTER_BASE_PATH=""` — App unter `/`, kein `/audiobookshelf`-Subpfad
-- Ingress: `nginx.org/ssl-redirect: "false"`, `nginx.org/redirect-to-https: "true"` (TLS-Terminierung am Netbird-Proxy)
+- Ingress: `path: /audiobookshelf` + `app-root` für `/`, `ssl-redirect: false`, `redirect-to-https: true`
+- Öffentliche URL: `https://audible.f4mily.net/audiobookshelf` (oder `/` mit Redirect)
 
 ## Beispiel-Checkliste `audible`
 
@@ -151,7 +152,7 @@ Der K8s-DaemonSet kann als Routing Peer die VIP im Mesh bekannt machen; für den
 - [ ] Traefik TCP-Router TLS passthrough → Proxy `:8443`
 - [ ] K8s: `kubectl get pods -n netbird` → Ready
 - [ ] Network Routes aktiv
-- [ ] Reverse-Proxy: **Peer** (oder Host `192.168.10.245` via `srv1`), **HTTP 80**, Path `/`, Host Header + Rewrite an
+- [ ] Reverse-Proxy: **Peer** (oder Host `192.168.10.245` via `srv1`), **HTTP 80**, Path **`/audiobookshelf`**, Host Header + Rewrite an
 - [ ] Netbird-Pods mit `NB_ENABLE_LOCAL_FORWARDING=true` (Flux)
 - [ ] Service-Status **active**, Proxy Events: kein 502
 - [ ] Öffentlich: `dig audible.f4mily.net` → Netbird-Host, nicht `192.168.10.245`
