@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: searxng
+        app.kubernetes.io/name: searxng
     spec:
       securityContext:
         fsGroup: 977

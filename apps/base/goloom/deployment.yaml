@@ -16,6 +16,7 @@ spec:
     metadata:
       labels:
         app: goloom
+        app.kubernetes.io/name: goloom
     spec:
       containers:
         - name: goloom

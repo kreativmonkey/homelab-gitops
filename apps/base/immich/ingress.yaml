@@ -9,6 +9,7 @@ metadata:
     gethomepage.dev/description: Photo library
     gethomepage.dev/group: Medien
     gethomepage.dev/icon: immich.png
+    gethomepage.dev/app: server
     cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
