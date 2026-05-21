@@ -112,15 +112,21 @@ Siehe [`docs/integrations/grafana-authentik.md`](docs/integrations/grafana-authe
 
 ---
 
-### Phase 6 — KI-Triage (optional, offen)
+### Phase 6 — KI-Triage (n8n + Telegram)
 
 | Task | Status |
 |------|--------|
-| Webhook-Bridge Alertmanager → lesbare ntfy-Titel | ⬜ |
-| Optional: LLM-Triage-Service (intern, Rate-Limit) | ⬜ |
-| Runbook-URLs in Prompt-Kontext für Cursor-Agent | ⬜ |
+| n8n-Workflow `homelab-alert-triage.workflow.json` | ✅ |
+| Doku `docs/integrations/alerting-n8n-telegram-triage.md` | ✅ |
+| AM-Receiver `n8n-triage` (parallel ntfy, `continue: true`) | ✅ |
+| SOPS `alertmanager-n8n-webhook` (volle Webhook-URL) | ⬜ manuell |
+| Telegram-Bot + LLM-Credentials in n8n | ⬜ manuell |
+| Remediation-API (Auto-Fix Allowlist) | ⬜ Phase 2 |
+| Human-in-the-Loop (Telegram-Buttons / Wait) | ⬜ Phase 2 |
 
 **KI-Workflow heute:** Issue → `.opencode/agents/architect` Plan → `k8s-specialist` YAML → PR → `integration-test` CI.
+
+**Alert-Workflow:** AM → n8n (LLM) → Telegram; optional Remediation nur `NtfyBridgeDown` mit Label `homelab/auto_triage=true`.
 
 ---
 
@@ -129,9 +135,11 @@ Siehe [`docs/integrations/grafana-authentik.md`](docs/integrations/grafana-authe
 ```
 apps/base/monitoring/
 ├── kustomization.yaml
-├── vm-k8s-stack/helmrelease.yaml      # AM + defaultRules
+├── vm-k8s-stack/helmrelease.yaml      # AM + defaultRules + n8n-triage
+├── n8n-workflows/homelab-alert-triage.workflow.json
 ├── notifications/
-│   └── alertmanager-ntfy-credentials.secret.yaml
+│   ├── alertmanager-ntfy-credentials.secret.yaml
+│   └── alertmanager-n8n-webhook.secret.yaml  # nach sops-create
 └── rules/
     └── platform-p0-vmrule.yaml
 
