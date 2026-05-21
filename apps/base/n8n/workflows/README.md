@@ -15,3 +15,5 @@ just n8n-bootstrap
 Imports (or updates) the GitOps workflow and activates it. LLM + GitHub use `LLM_API_KEY`, `LLM_BASE_URL`, `GITHUB_TOKEN` from the HelmRelease / Secret.
 
 Full guide: [`docs/integrations/alerting-n8n-gitops-remediation.md`](../../../docs/integrations/alerting-n8n-gitops-remediation.md)
+
+Auth (why no Authentik OIDC yet): [`docs/integrations/n8n-auth.md`](../../../docs/integrations/n8n-auth.md)
