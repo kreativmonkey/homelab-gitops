@@ -139,3 +139,17 @@ spec:
             summary: "Alertmanager scrape down ({{ $labels.job }})"
             description: "Benachrichtigungen nach ntfy werden nicht zugestellt."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/monitoring-stack.md"
+
+        - alert: NtfyBridgeDown
+          expr: |
+            kube_deployment_spec_replicas{namespace="monitoring", deployment="ntfy-bridge"}
+            != kube_deployment_status_replicas_available{namespace="monitoring", deployment="ntfy-bridge"}
+          for: 2m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "ntfy-bridge nicht verfügbar"
+            description: "Alertmanager kann keine lesbaren ntfy-Nachrichten zustellen. Andere Alerts erscheinen erst in AM/Grafana bis die Bridge wieder läuft."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/monitoring-stack.md"
