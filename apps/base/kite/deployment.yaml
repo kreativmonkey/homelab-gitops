@@ -69,7 +69,8 @@ spec:
         persistence:
           pvc:
             enabled: true
-            storageClass: longhorn-1
+            # Must match existing PVC storageClassName (immutable after bind). New installs: longhorn-1 is fine.
+            storageClass: longhorn
             accessModes:
               - ReadWriteOnce
             size: 1Gi
