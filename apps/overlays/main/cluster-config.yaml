@@ -51,6 +51,8 @@ data:
   host_paperless: paperless.f4mily.net
   host_sterling_pdf: pdf.f4mily.net
   host_searxng: search.f4mily.net
+  host_tandoor: rezepte.f4mily.net
+  host_linkwarden: linkwarden.f4mily.net
 
   # Cluster-internal apps (covered by *.cluster.f4mily.net wildcard):
   host_goloom: goloom.cluster.f4mily.net
@@ -61,5 +63,8 @@ data:
   host_kite: kite.cluster.f4mily.net
   host_teslamate: teslamate.cluster.f4mily.net
   host_n8n: n8n.cluster.f4mily.net
+  host_uptime_kuma: uptime-kuma.cluster.f4mily.net
+  host_unifi_controller: unifi-controller.cluster.f4mily.net
+  host_watchyourlan: watchyourlan.cluster.f4mily.net
   # Full base URL for n8n production webhooks (trailing slash required by n8n)
   url_n8n_webhook: https://n8n.cluster.f4mily.net/
