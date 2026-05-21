@@ -33,7 +33,7 @@ Remote: `git@github.com:kreativmonkey/homelab-gitops.git`
 | `apps/base/monitoring/rules/workload-remediation-vmrule.yaml` | Alerts |
 | `apps/base/monitoring/vm-k8s-stack/helmrelease.yaml` | Receiver `n8n-remediation` |
 
-Webhook (in-cluster): `http://n8n.ai-ops.svc.cluster.local:5678/webhook/vmalert`
+Webhook (in-cluster): `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmalert`
 
 ## Bootstrap
 
@@ -76,7 +76,7 @@ Webhook (in-cluster): `http://n8n.ai-ops.svc.cluster.local:5678/webhook/vmalert`
 ## Test
 
 ```bash
-curl -sS -X POST "http://n8n.ai-ops.svc.cluster.local:5678/webhook/vmalert" \
+curl -sS -X POST "http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmalert" \
   -H 'Content-Type: application/json' \
   -d '{"status":"firing","alerts":[{"labels":{"alertname":"KubePodCrashLoopBackOff","namespace":"default","pod":"demo","container":"app","homelab/auto_remediate":"true"},"annotations":{"summary":"test"}}]}'
 ```

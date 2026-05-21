@@ -178,7 +178,7 @@ spec:
           # Closed-loop GitOps: VMRule OOM/CrashLoop → n8n workflow /webhook/vmalert
           - name: n8n-remediation
             webhook_configs:
-              - url: http://n8n.ai-ops.svc.cluster.local:5678/webhook/vmalert
+              - url: http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmalert
                 send_resolved: true
           - name: blackhole
 
