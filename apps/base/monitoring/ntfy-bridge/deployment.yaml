@@ -26,7 +26,8 @@ spec:
           type: RuntimeDefault
       containers:
         - name: bridge
-          image: docker.io/library/python:3.12-alpine
+          # slim (not alpine): includes CA bundle for https://ntfy.f4mily.net
+          image: docker.io/library/python:3.12-slim-bookworm
           command: ["python3", "/app/bridge.py"]
           ports:
             - name: http
