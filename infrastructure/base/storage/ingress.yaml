@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/group: Infrastructure
     gethomepage.dev/icon: longhorn.png
     gethomepage.dev/app: longhorn
-    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    # TLS: wildcard-cluster-f4mily-net-tls via reflector (no cluster-issuer).
     nginx.org/client-max-body-size: "1000m"
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
