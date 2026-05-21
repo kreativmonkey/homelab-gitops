@@ -35,6 +35,7 @@ Für jede Applikation in `apps/`, die PostgreSQL benötigt, wird kein eigener Po
 # OBSERVABILITY & ALERTING
 - Stack: VictoriaMetrics k8s-stack (`apps/base/monitoring/vm-k8s-stack/`)
 - Notifications: Alertmanager → ntfy topic `monitoring` on `ntfy.f4mily.net`; token in SOPS `apps/base/monitoring/notifications/alertmanager-ntfy-credentials.secret.yaml`
+- Optional KI-Triage: AM → n8n → Telegram — see `docs/integrations/alerting-n8n-telegram-triage.md`, workflow in `apps/base/monitoring/n8n-workflows/`
 - Platform rules: `apps/base/monitoring/rules/`; runbooks: `docs/runbooks/`
 - Progress tracker: [`KI-ALERT-PLAN.md`](KI-ALERT-PLAN.md)
 - OpenCode agents (`.opencode/agents/`) maintain Git manifests; they do not receive cluster webhooks

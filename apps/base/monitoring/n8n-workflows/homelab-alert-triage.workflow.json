@@ -1,0 +1,308 @@
+{
+  "name": "Homelab Alert Triage (AM → LLM → Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "homelab-alert/:webhookSecret",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000001",
+      "name": "Webhook Alertmanager",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "homelab-alert-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const AUTO_FIX_ALLOWLIST = new Set(['NtfyBridgeDown']);\nconst expectedSecret = $env.WEBHOOK_SECRET || '';\nconst gotSecret = $input.first().params?.webhookSecret || $input.first().headers?.['x-webhook-secret'] || '';\nif (expectedSecret && gotSecret !== expectedSecret) {\n  throw new Error('Invalid webhook secret');\n}\nconst body = $input.first().json.body ?? $input.first().json;\nconst alerts = body.alerts || [];\nconst first = alerts[0] || {};\nconst labels = { ...(body.commonLabels || {}), ...(first.labels || {}) };\nconst annotations = { ...(body.commonAnnotations || {}), ...(first.annotations || {}) };\nconst alertname = labels.alertname || body.groupLabels?.alertname || 'Unknown';\nconst autoTriage = labels['homelab/auto_triage'] === 'true';\nconst allowAutoFix = autoTriage && AUTO_FIX_ALLOWLIST.has(alertname);\nreturn [{\n  json: {\n    status: body.status || 'firing',\n    alertname,\n    severity: labels.severity || 'warning',\n    namespace: labels.namespace || '',\n    instance: labels.instance || labels.pod || '',\n    cluster: labels.cluster || 'homelab',\n    owner: labels['homelab/owner'] || '',\n    autoTriage,\n    allowAutoFix,\n    runbookUrl: annotations.runbook_url || '',\n    summary: annotations.summary || '',\n    description: annotations.description || '',\n    alertCount: alerts.length,\n    fingerprint: first.fingerprint || '',\n    raw: body,\n  },\n}];"
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000002",
+      "name": "Parse Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "resolved",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "resolved"
+            }
+          ]
+        },
+        "options": { "fallbackOutput": "extra" }
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000003",
+      "name": "Resolved?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $input.first().json;\nconst text = `✅ *RESOLVED*\\n\\n*${a.alertname}*\\n${a.summary || ''}\\n\\n_ns:_ ${a.namespace || '—'}_`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000004",
+      "name": "Format Resolved",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 160]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.telegramText }}",
+        "additionalFields": { "parse_mode": "={{ $json.parseMode }}" }
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000005",
+      "name": "Telegram Resolved",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [960, 160],
+      "credentials": { "telegramApi": { "id": "CONFIGURE_ME", "name": "Telegram Homelab Bot" } }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": { "temperature": 0.2 },
+        "messages": {
+          "values": [
+            {
+              "content": "=Du bist Homelab-SRE. Antworte NUR mit gültigem JSON (kein Markdown):\n{\"action_needed\":bool,\"automatable\":bool,\"risk\":\"low|medium|high\",\"outcome\":\"no_action|needs_human|cannot_fix|auto_fix_candidate\",\"summary_de\":\"...\",\"proposed_steps\":[\"...\"],\"telegram_message\":\"...\"}\n\nRegeln:\n- outcome=no_action bei reinem Lärm oder unklaren Chart-Defaults\n- outcome=needs_human bei CNPG, Disk, Memory, Velero, Datenverlust-Risiko\n- outcome=cannot_fix wenn Agent keine sichere Aktion hat\n- outcome=auto_fix_candidate nur bei klarer, risikoarmer Aktion (z.B. Pod-Restart bekanntes Deployment)\n- automatable=true nur wenn allowAutoFix={{ $json.allowAutoFix }} und Aktion in Allowlist\n\nAlert: {{ $json.alertname }}\nSeverity: {{ $json.severity }}\nStatus: {{ $json.status }}\nSummary: {{ $json.summary }}\nDescription: {{ $json.description }}\nRunbook: {{ $json.runbookUrl }}\nNamespace: {{ $json.namespace }}"
+            }
+          ]
+        }
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000006",
+      "name": "LLM Triage",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [720, 440],
+      "credentials": { "openAiApi": { "id": "CONFIGURE_ME", "name": "OpenAI Homelab" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const alert = $('Parse Alert').first().json;\nlet triage = {};\ntry {\n  const raw = $input.first().json.message?.content ?? $input.first().json.text ?? $input.first().json.output ?? '';\n  const m = String(raw).match(/\\{[\\s\\S]*\\}/);\n  triage = m ? JSON.parse(m[0]) : { outcome: 'cannot_fix', summary_de: 'LLM-Antwort nicht parsebar', action_needed: true };\n} catch (e) {\n  triage = { outcome: 'cannot_fix', summary_de: 'LLM parse error: ' + e.message, action_needed: true, automatable: false };\n}\nconst mayAutoFix = alert.allowAutoFix && triage.automatable === true && triage.outcome === 'auto_fix_candidate';\nreturn [{ json: { ...alert, triage, mayAutoFix } }];"
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000007",
+      "name": "Merge Triage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 440]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mayAutoFix }}",
+                    "rightValue": true,
+                    "operator": { "type": "boolean", "operation": "true" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "auto_fix"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.triage.outcome }}",
+                    "rightValue": "needs_human",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "needs_human"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.triage.outcome }}",
+                    "rightValue": "cannot_fix",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "blocked"
+            }
+          ]
+        },
+        "options": { "fallbackOutput": "extra" }
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000008",
+      "name": "Route Outcome",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [1200, 440]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.REMEDIATION_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.REMEDIATION_TOKEN || '' }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alertname: $json.alertname, namespace: $json.namespace, action: 'restart_ntfy_bridge' }) }}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000009",
+      "name": "Call Remediation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 280],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $('Merge Triage').first().json;\nconst rem = $input.first().json;\nconst ok = rem.statusCode >= 200 && rem.statusCode < 300;\nconst text = ok\n  ? `🔧 *Auto-Fix ausgeführt*\\n\\n*${a.alertname}*\\n${a.triage.summary_de || ''}\\n\\nStatus: erledigt — bitte Alert/Metrik prüfen.`\n  : `⚠️ *Auto-Fix fehlgeschlagen*\\n\\n*${a.alertname}*\\n${a.triage.summary_de || ''}\\n\\nHTTP ${rem.statusCode || '?'} — *Human-in-the-Loop*: Remediation-API prüfen oder manuell eingreifen.`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000010",
+      "name": "Format Auto-Fix Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 280]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.telegramText }}",
+        "additionalFields": { "parse_mode": "={{ $json.parseMode }}" }
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000011",
+      "name": "Telegram Auto-Fix",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1920, 280],
+      "credentials": { "telegramApi": { "id": "CONFIGURE_ME", "name": "Telegram Homelab Bot" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $input.first().json;\nconst t = a.triage || {};\nconst icon = { needs_human: '👤', cannot_fix: '🚫', no_action: 'ℹ️' }[t.outcome] || '🔔';\nconst hitl = t.outcome === 'needs_human' ? '\\n\\n*Rückmeldung nötig* — antworte mit /ack oder Details.' : '';\nconst text = `${icon} *${a.status === 'resolved' ? 'OK' : 'FIRING'}: ${a.alertname}*\\n\\n${t.telegram_message || t.summary_de || a.summary}\\n\\nSeverity: ${a.severity}\\nNamespace: ${a.namespace || '—'}\\nOutcome: ${t.outcome || 'unknown'}${hitl}\\n${a.runbookUrl ? '\\n' + a.runbookUrl : ''}`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000012",
+      "name": "Format Notify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 560]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.telegramText }}",
+        "additionalFields": { "parse_mode": "={{ $json.parseMode }}" }
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000013",
+      "name": "Telegram Notify",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1680, 560],
+      "credentials": { "telegramApi": { "id": "CONFIGURE_ME", "name": "Telegram Homelab Bot" } }
+    },
+    {
+      "parameters": {
+        "content": "## Human-in-the-Loop (Phase 2)\n\nAktiviere einen **Telegram Trigger** (Callback Query) + **Wait**-Node:\n- User tippt ✅ → Remediation ausführen\n- User tippt ❌ → Workflow beenden\n\nDokumentation: docs/integrations/alerting-n8n-telegram-triage.md",
+        "height": 220,
+        "width": 380
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000014",
+      "name": "Note HITL",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1920, 520]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "leftValue": "={{ $env.REMEDIATION_URL }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000015",
+      "name": "Remediation configured?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1440, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Alertmanager": { "main": [[{ "node": "Parse Alert", "type": "main", "index": 0 }]] },
+    "Parse Alert": { "main": [[{ "node": "Resolved?", "type": "main", "index": 0 }]] },
+    "Resolved?": {
+      "main": [
+        [{ "node": "Format Resolved", "type": "main", "index": 0 }],
+        [{ "node": "LLM Triage", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format Resolved": { "main": [[{ "node": "Telegram Resolved", "type": "main", "index": 0 }]] },
+    "LLM Triage": { "main": [[{ "node": "Merge Triage", "type": "main", "index": 0 }]] },
+    "Merge Triage": { "main": [[{ "node": "Route Outcome", "type": "main", "index": 0 }]] },
+    "Route Outcome": {
+      "main": [
+        [{ "node": "Remediation configured?", "type": "main", "index": 0 }],
+        [{ "node": "Format Notify", "type": "main", "index": 0 }],
+        [{ "node": "Format Notify", "type": "main", "index": 0 }],
+        [{ "node": "Format Notify", "type": "main", "index": 0 }]
+      ]
+    },
+    "Remediation configured?": {
+      "main": [
+        [{ "node": "Call Remediation", "type": "main", "index": 0 }],
+        [{ "node": "Format Notify", "type": "main", "index": 0 }]
+      ]
+    },
+    "Call Remediation": { "main": [[{ "node": "Format Auto-Fix Result", "type": "main", "index": 0 }]] },
+    "Format Auto-Fix Result": { "main": [[{ "node": "Telegram Auto-Fix", "type": "main", "index": 0 }]] },
+    "Format Notify": { "main": [[{ "node": "Telegram Notify", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": [{ "name": "homelab" }, { "name": "monitoring" }],
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "homelab-gitops-alert-triage"
+  }
+}
