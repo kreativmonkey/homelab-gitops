@@ -1,0 +1,98 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: n8n
+  namespace: ai-ops
+spec:
+  interval: 1h
+  timeout: 15m
+  chart:
+    spec:
+      chart: n8n
+      version: "2.0.1"
+      sourceRef:
+        kind: HelmRepository
+        name: n8n-repo
+        namespace: flux-system
+  valuesFrom:
+    - kind: Secret
+      name: n8n-encryption-key
+      valuesKey: encryption-key
+      targetPath: main.secret.n8n.encryption_key
+  values:
+    # Stable Service DNS: n8n.ai-ops.svc.cluster.local
+    fullnameOverride: n8n
+
+    ingress:
+      enabled: false
+
+    main:
+      config:
+        n8n:
+          # Public URL for editor links; WEBHOOK_URL must match reachable webhook base
+          host: n8n.cluster.f4mily.net
+          protocol: https
+          port: 443
+          webhook_url: https://n8n.cluster.f4mily.net/
+          generic_timezone: Europe/Berlin
+          log_level: info
+          # SQLite embedded DB on PVC (homelab single-replica)
+          enforce_settings_file_permissions: false
+      persistence:
+        enabled: true
+        type: dynamic
+        storageClass: local-path
+        accessModes:
+          - ReadWriteOnce
+        size: 10Gi
+      deploymentStrategy:
+        type: Recreate
+      replicaCount: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
+      service:
+        type: ClusterIP
+        port: 5678
+      # GitHub (primary) + LLM keys for GitOps remediation workflow (see workflows/)
+      extraEnv:
+        WEBHOOK_URL:
+          value: https://n8n.cluster.f4mily.net/
+        N8N_PROXY_HOPS:
+          value: "1"
+        GITHUB_API_URL:
+          value: https://api.github.com
+        GITHUB_REPO_OWNER:
+          value: kreativmonkey
+        GITHUB_REPO_NAME:
+          value: homelab-gitops
+        GITHUB_DEFAULT_BRANCH:
+          value: main
+        GITOPS_MANIFESTS_PATH:
+          value: gitops-homelab
+        GITHUB_TOKEN:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: github-token
+        LLM_API_KEY:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: llm-api-key
+        # Optional: override for Ollama (http://ollama.llm.svc:11434/v1)
+        LLM_BASE_URL:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: llm-base-url
+              optional: true
+
+    # Single-node homelab: no queue/redis split
+    worker:
+      enabled: false
+    webhook:
+      enabled: false

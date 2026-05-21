@@ -102,6 +102,7 @@ spec:
         replicaCount: 1
         secrets:
           - alertmanager-ntfy-credentials
+          - alertmanager-n8n-webhook
         resources:
           requests:
             cpu: 10m
@@ -124,6 +125,20 @@ spec:
                 - alertname="NtfyBridgeDown"
               receiver: ntfy-emergency
               repeat_interval: 3h
+            # OOM / CrashLoop → in-cluster n8n GitOps remediation (ai-ops)
+            - matchers:
+                - alertname=~"KubePodOOMKilled|KubePodCrashLoopBackOff"
+                - homelab/auto_remediate="true"
+              receiver: n8n-remediation
+              group_wait: 30s
+              repeat_interval: 12h
+              continue: true
+            # Homelab P0 → n8n KI-Triage (parallel zu ntfy); URL in SOPS alertmanager-n8n-webhook
+            - matchers:
+                - homelab/owner="platform"
+                - severity=~"critical|warning"
+              receiver: n8n-triage
+              continue: true
             - matchers:
                 - severity=critical
               receiver: ntfy-monitoring
@@ -156,6 +171,15 @@ spec:
                   authorization:
                     type: Bearer
                     credentials_file: /etc/vm/secrets/alertmanager-ntfy-credentials/token
+          - name: n8n-triage
+            webhook_configs:
+              - url_file: /etc/vm/secrets/alertmanager-n8n-webhook/url
+                send_resolved: true
+          # Closed-loop GitOps: VMRule OOM/CrashLoop → n8n workflow /webhook/vmalert
+          - name: n8n-remediation
+            webhook_configs:
+              - url: http://n8n.ai-ops.svc.cluster.local:5678/webhook/vmalert
+                send_resolved: true
           - name: blackhole
 
     # ============================================
