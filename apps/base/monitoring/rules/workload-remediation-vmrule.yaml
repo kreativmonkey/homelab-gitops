@@ -1,0 +1,40 @@
+# Critical workload alerts → closed-loop GitOps remediation via n8n → GitHub PR (ai-ops).
+# Alertmanager receiver: n8n-remediation (in-cluster webhook).
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: homelab-workload-remediation
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.platform.workloads
+      interval: 30s
+      rules:
+        - alert: KubePodOOMKilled
+          expr: kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+          for: 1m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+            homelab/auto_remediate: "true"
+          annotations:
+            summary: "OOMKilled: {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }})"
+            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} was terminated with OOMKilled. Consider memory limits/requests or workload scaling."
+            runbook_url: "https://github.com/kreativmonkey/homelab-gitops/blob/main/gitops-homelab/docs/runbooks/pod-crash-remediation.md"
+
+        - alert: KubePodCrashLoopBackOff
+          expr: kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} == 1
+          for: 5m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+            homelab/auto_remediate: "true"
+          annotations:
+            summary: "CrashLoopBackOff: {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }})"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is in CrashLoopBackOff for at least 5 minutes."
+            runbook_url: "https://github.com/kreativmonkey/homelab-gitops/blob/main/gitops-homelab/docs/runbooks/pod-crash-remediation.md"

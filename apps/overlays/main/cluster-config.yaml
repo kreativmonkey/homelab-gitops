@@ -60,3 +60,6 @@ data:
   host_victoria_metrics: metrics.cluster.f4mily.net
   host_kite: kite.cluster.f4mily.net
   host_teslamate: teslamate.cluster.f4mily.net
+  host_n8n: n8n.cluster.f4mily.net
+  # Full base URL for n8n production webhooks (trailing slash required by n8n)
+  url_n8n_webhook: https://n8n.cluster.f4mily.net/

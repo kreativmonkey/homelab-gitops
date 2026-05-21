@@ -149,6 +149,7 @@ spec:
             severity: critical
             cluster: homelab
             homelab/owner: platform
+            homelab/auto_triage: "true"
           annotations:
             summary: "ntfy-bridge nicht verfügbar"
             description: "Alertmanager kann keine lesbaren ntfy-Nachrichten zustellen. Andere Alerts erscheinen erst in AM/Grafana bis die Bridge wieder läuft."

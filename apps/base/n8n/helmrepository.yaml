@@ -1,0 +1,10 @@
+# Official community n8n chart (8gears / open-8gears on Artifact Hub)
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: n8n-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  type: oci
+  url: oci://8gears.container-registry.com/library

@@ -1,0 +1,30 @@
+# Internal HTTPS access (cluster wildcard TLS). Alertmanager uses in-cluster URL.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: n8n
+  namespace: ai-ops
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+    # Webhook POST bodies can be large (full AM payload + LLM context)
+    nginx.org/client-max-body-size: "10m"
+    nginx.org/proxy-read-timeout: "300s"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - n8n.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
+  rules:
+    - host: n8n.cluster.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: n8n
+                port:
+                  number: 5678
