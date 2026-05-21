@@ -96,6 +96,8 @@ spec:
     # ============================================
     alertmanager:
       enabled: true
+      # Short name: default generates StatefulSet labels >63 chars (pod create fails)
+      name: vm-am
       spec:
         replicaCount: 1
         secrets:
