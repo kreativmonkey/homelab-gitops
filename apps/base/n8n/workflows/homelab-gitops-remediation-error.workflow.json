@@ -1,0 +1,109 @@
+{
+  "name": "Homelab GitOps Remediation — Error Notify",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b2000001-0001-4000-8000-000000000001",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst exec = item.execution || {};\nconst trig = item.trigger || {};\nconst wf = item.workflow || {};\nconst err = exec.error || trig.error || {};\nconst msg = err.message || (err.cause && err.cause.message) || 'Unknown error';\nconst node = exec.lastNodeExecuted || (err.node && err.node.name) || 'unknown';\nconst stack = String(err.stack || (err.cause && err.cause.stack) || '').split('\\n').slice(0, 8).join('\\n');\nconst lines = [\n  'n8n workflow failed',\n  'Workflow: ' + (wf.name || '?'),\n  'Node: ' + node,\n  'Error: ' + msg,\n];\nif (exec.id) lines.push('Execution ID: ' + exec.id);\nif (exec.url) lines.push('URL: ' + exec.url);\nif (stack) lines.push('', stack);\nreturn [{\n  json: {\n    ntfyTitle: 'n8n: ' + (wf.name || 'workflow') + ' failed',\n    ntfyMessage: lines.join('\\n'),\n    ntfyTags: ['warning', 'skull'],\n    ntfyPriority: 4,\n  },\n}];"
+      },
+      "id": "b2000001-0001-4000-8000-000000000002",
+      "name": "Format Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.NTFY_URL || 'https://ntfy.f4mily.net/monitoring').replace(/\\/$/, '') }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $env.NTFY_TOKEN ? 'Bearer ' + $env.NTFY_TOKEN : '' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $json.ntfyTitle, message: $json.ntfyMessage, tags: $json.ntfyTags, priority: $json.ntfyPriority }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "b2000001-0001-4000-8000-000000000003",
+      "name": "ntfy Notify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Error workflow for GitOps remediation\\n\\nLink in **Homelab GitOps Remediation** → Settings → Error workflow.\\n\\nEnv: `NTFY_URL`, `NTFY_TOKEN` (optional) from `n8n-integration-credentials`.",
+        "height": 160,
+        "width": 420
+      },
+      "id": "b2000001-0001-4000-8000-000000000004",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error": {
+      "main": [
+        [
+          {
+            "node": "ntfy Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

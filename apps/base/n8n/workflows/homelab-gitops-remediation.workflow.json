@@ -13,7 +13,10 @@
       "name": "Webhook VMAlert",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 300],
+      "position": [
+        0,
+        300
+      ],
       "webhookId": "homelab-vmalert-remediation"
     },
     {
@@ -24,18 +27,28 @@
       "name": "Parse VM Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [260, 300]
+      "position": [
+        260,
+        300
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "id": "skip-check",
               "leftValue": "={{ $json.skip }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "true" }
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
             }
           ],
           "combinator": "and"
@@ -46,17 +59,23 @@
       "name": "Skip?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [520, 300]
+      "position": [
+        520,
+        300
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const alert = $('Parse VM Payload').first().json;\nconst base = ($env.LLM_BASE_URL || 'https://api.openai.com/v1').replace(/\\/$/, '');\nconst system = `Du bist ein Kubernetes GitOps Engineer. Antworte NUR mit gültigem JSON (kein Markdown, kein \\`\\`\\`):\n{\n  \"action\": \"patch|noop|needs_human\",\n  \"risk\": \"low|medium|high\",\n  \"summary_de\": \"string\",\n  \"target_file\": \"relativer Pfad unter gitops-homelab/\",\n  \"patch_yaml\": \"multi-line YAML\",\n  \"pr_title\": \"string\",\n  \"pr_body\": \"string (Markdown)\"\n}\nRegeln: nur gitops-homelab/ im Repo homelab-gitops; neue Dateien unter apps/base/<app>/patches/ bevorzugen; kein kubectl apply.`;\nconst user = `Alert: ${alert.alertname}\\nNamespace: ${alert.namespace}\\nPod: ${alert.pod}\\nContainer: ${alert.container}\\nError: ${alert.error}\\nSummary: ${alert.summary}\\nDescription: ${alert.description}`;\nconst res = await this.helpers.httpRequest({\n  method: 'POST',\n  url: `${base}/chat/completions`,\n  headers: {\n    Authorization: `Bearer ${$env.LLM_API_KEY}`,\n    'Content-Type': 'application/json',\n  },\n  body: {\n    model: 'gpt-4o-mini',\n    temperature: 0.1,\n    max_tokens: 2500,\n    messages: [\n      { role: 'system', content: system },\n      { role: 'user', content: user },\n    ],\n  },\n  json: true,\n});\nconst content = res?.choices?.[0]?.message?.content ?? '';\nreturn [{ json: { message: { content } } } }];"
+        "jsCode": "const alert = $('Parse VM Payload').first().json;\nconst base = ($env.LLM_BASE_URL || 'https://api.openai.com/v1').replace(/\\/$/, '');\nconst system = [\n  'Du bist ein Kubernetes GitOps Engineer. Antworte NUR mit gültigem JSON (kein Markdown, kein Code-Fence):',\n  '{',\n  '  \"action\": \"patch|noop|needs_human\",',\n  '  \"risk\": \"low|medium|high\",',\n  '  \"summary_de\": \"string\",',\n  '  \"target_file\": \"relativer Pfad unter gitops-homelab/\",',\n  '  \"patch_yaml\": \"multi-line YAML\",',\n  '  \"pr_title\": \"string\",',\n  '  \"pr_body\": \"string (Markdown)\"',\n  '}',\n  'Regeln: nur gitops-homelab/ im Repo homelab-gitops; neue Dateien unter apps/base/<app>/patches/ bevorzugen; kein kubectl apply.',\n].join('\\n');\nconst user = [\n  'Alert: ' + alert.alertname,\n  'Namespace: ' + alert.namespace,\n  'Pod: ' + alert.pod,\n  'Container: ' + alert.container,\n  'Error: ' + alert.error,\n  'Summary: ' + alert.summary,\n  'Description: ' + alert.description,\n].join('\\n');\nconst res = await this.helpers.httpRequest({\n  method: 'POST',\n  url: base + '/chat/completions',\n  headers: {\n    Authorization: 'Bearer ' + $env.LLM_API_KEY,\n    'Content-Type': 'application/json',\n  },\n  body: {\n    model: 'gpt-4o-mini',\n    temperature: 0.1,\n    max_tokens: 2500,\n    messages: [\n      { role: 'system', content: system },\n      { role: 'user', content: user },\n    ],\n  },\n  json: true,\n});\nconst content = res?.choices?.[0]?.message?.content ?? '';\nreturn [{ json: { message: { content } } }];\n"
       },
       "id": "a1000001-0001-4000-8000-000000000004",
       "name": "LLM Kustomize Patch",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [780, 420]
+      "position": [
+        780,
+        420
+      ]
     },
     {
       "parameters": {
@@ -66,18 +85,28 @@
       "name": "Plan PR",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1040, 420]
+      "position": [
+        1040,
+        420
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "id": "proceed",
               "leftValue": "={{ $json.proceed }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "true" }
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
             }
           ],
           "combinator": "and"
@@ -88,7 +117,10 @@
       "name": "Patch?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [1280, 420]
+      "position": [
+        1280,
+        420
+      ]
     },
     {
       "parameters": {
@@ -107,13 +139,18 @@
             }
           ]
         },
-        "options": { "timeout": 30000 }
+        "options": {
+          "timeout": 30000
+        }
       },
       "id": "a1000001-0001-4000-8000-000000000007",
       "name": "GitHub Get Base SHA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1520, 320]
+      "position": [
+        1520,
+        320
+      ]
     },
     {
       "parameters": {
@@ -135,14 +172,19 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"ref\":\"refs/heads/{{ $('Plan PR').item.json.branch }}\",\"sha\":\"{{ $json.object.sha }}\"}",
-        "options": { "timeout": 30000 }
+        "jsonBody": "={{ JSON.stringify({ ref: 'refs/heads/' + $('Plan PR').item.json.branch, sha: $json.object.sha }) }}",
+        "options": {
+          "timeout": 30000
+        }
       },
       "id": "a1000001-0001-4000-8000-000000000008",
       "name": "GitHub Create Branch",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1760, 320]
+      "position": [
+        1760,
+        320
+      ]
     },
     {
       "parameters": {
@@ -164,14 +206,19 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"message\":\"{{ $('Plan PR').item.json.commitMessage }}\",\"content\":\"{{ $('Plan PR').item.json.contentB64 }}\",\"branch\":\"{{ $('Plan PR').item.json.branch }}\"}",
-        "options": { "timeout": 30000 }
+        "jsonBody": "={{ JSON.stringify({ message: $('Plan PR').item.json.commitMessage, content: $('Plan PR').item.json.contentB64, branch: $('Plan PR').item.json.branch }) }}",
+        "options": {
+          "timeout": 30000
+        }
       },
       "id": "a1000001-0001-4000-8000-000000000009",
       "name": "GitHub Put File",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2000, 320]
+      "position": [
+        2000,
+        320
+      ]
     },
     {
       "parameters": {
@@ -193,14 +240,19 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"title\":\"{{ $('Plan PR').item.json.plan.pr_title || $('Plan PR').item.json.commitMessage }}\",\"head\":\"{{ $('Plan PR').item.json.branch }}\",\"base\":\"{{ $('Plan PR').item.json.base }}\",\"body\":\"{{ ($('Plan PR').item.json.plan.pr_body || $('Plan PR').item.json.plan.summary_de || '').replace(/\"/g, '\\\\\"') }}\\n\\n---\\nAuto-remediation for **{{ $('Plan PR').item.json.alertname }}** in `{{ $('Plan PR').item.json.namespace }}/{{ $('Plan PR').item.json.pod }}`.\"}",
-        "options": { "timeout": 30000 }
+        "jsonBody": "={{ JSON.stringify({ title: $('Plan PR').item.json.plan.pr_title || $('Plan PR').item.json.commitMessage, head: $('Plan PR').item.json.branch, base: $('Plan PR').item.json.base, body: ($('Plan PR').item.json.plan.pr_body || $('Plan PR').item.json.plan.summary_de || '') + '\\n\\n---\\nAuto-remediation for **' + $('Plan PR').item.json.alertname + '** in `' + $('Plan PR').item.json.namespace + '/' + $('Plan PR').item.json.pod + '`.' }) }}",
+        "options": {
+          "timeout": 30000
+        }
       },
       "id": "a1000001-0001-4000-8000-00000000000a",
       "name": "GitHub Open PR",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2240, 320]
+      "position": [
+        2240,
+        320
+      ]
     },
     {
       "parameters": {
@@ -212,30 +264,119 @@
       "name": "Sticky Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [1520, 520]
+      "position": [
+        1520,
+        520
+      ]
     }
   ],
   "connections": {
-    "Webhook VMAlert": { "main": [[{ "node": "Parse VM Payload", "type": "main", "index": 0 }]] },
-    "Parse VM Payload": { "main": [[{ "node": "Skip?", "type": "main", "index": 0 }]] },
+    "Webhook VMAlert": {
+      "main": [
+        [
+          {
+            "node": "Parse VM Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse VM Payload": {
+      "main": [
+        [
+          {
+            "node": "Skip?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Skip?": {
       "main": [
         [],
-        [{ "node": "LLM Kustomize Patch", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "LLM Kustomize Patch",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "LLM Kustomize Patch": { "main": [[{ "node": "Plan PR", "type": "main", "index": 0 }]] },
-    "Plan PR": { "main": [[{ "node": "Patch?", "type": "main", "index": 0 }]] },
+    "LLM Kustomize Patch": {
+      "main": [
+        [
+          {
+            "node": "Plan PR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan PR": {
+      "main": [
+        [
+          {
+            "node": "Patch?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Patch?": {
       "main": [
-        [{ "node": "GitHub Get Base SHA", "type": "main", "index": 0 }],
+        [
+          {
+            "node": "GitHub Get Base SHA",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     },
-    "GitHub Get Base SHA": { "main": [[{ "node": "GitHub Create Branch", "type": "main", "index": 0 }]] },
-    "GitHub Create Branch": { "main": [[{ "node": "GitHub Put File", "type": "main", "index": 0 }]] },
-    "GitHub Put File": { "main": [[{ "node": "GitHub Open PR", "type": "main", "index": 0 }]] }
+    "GitHub Get Base SHA": {
+      "main": [
+        [
+          {
+            "node": "GitHub Create Branch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Create Branch": {
+      "main": [
+        [
+          {
+            "node": "GitHub Put File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Put File": {
+      "main": [
+        [
+          {
+            "node": "GitHub Open PR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "meta": { "templateCredsSetupCompleted": true }
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
 }

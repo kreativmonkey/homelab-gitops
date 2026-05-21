@@ -57,6 +57,16 @@ Webhook (in-cluster): `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmal
    just n8n-bootstrap
    ```
 
+   If `kubectl exec` fails with `no route to host` on `100.96.x.x:10250`, your machine cannot reach
+   node/kubelet IPs (API works via `192.168.10.245`, exec does not). Either add Netbird routes
+   ([netbird-cluster-access.md](../netbird-cluster-access.md)) or use the API fallback:
+
+   ```bash
+   # n8n → Settings → API → Create API key
+   export N8N_API_KEY='n8n_api_…'
+   just n8n-bootstrap
+   ```
+
 ### GitHub token
 
 **Fine-grained** (empfohlen): Repository `homelab-gitops` → Permissions:
@@ -75,6 +85,20 @@ Token is read from Secret key `github-token` → pod env `GITHUB_TOKEN` (not sto
 3. `PUT /repos/{owner}/{repo}/contents/{path}` → YAML-Datei (base64)
 4. `POST /repos/{owner}/{repo}/pulls` → PR
 
+## Error notifications
+
+When the remediation workflow fails, n8n can run a linked **error workflow**:
+
+| File | Role |
+|------|------|
+| `homelab-gitops-remediation-error.workflow.json` | Error Trigger → format message → **ntfy** |
+
+1. Add `ntfy-url` and `ntfy-token` to SOPS secret `n8n-integration-credentials` (reuse Alertmanager `monitoring` topic token).
+2. `just n8n-bootstrap` with `N8N_API_KEY` links the error workflow in remediation settings.
+3. Without API key: after import, set **Settings → Error workflow** → *Homelab GitOps Remediation — Error Notify* → Save.
+
+Error workflows run only on **automatic** failures (not manual test runs in the editor).
+
 ## Safety
 
 - PR-Review vor Merge; Flux reconciled von GitHub (primary remote).
@@ -82,10 +106,37 @@ Token is read from Secret key `github-token` → pod env `GITHUB_TOKEN` (not sto
 
 ## Test
 
+### 1. Webhook erreichbar (von überall mit Ingress-Zugriff)
+
+```bash
+just n8n-test-webhook              # firing — voller Pfad (LLM → ggf. PR)
+just n8n-test-webhook scenario=resolved   # früh abbrechen (skip)
+just n8n-test-webhook scenario=skip       # falsches alertname
+```
+
+Erwartung: HTTP 200 und `{"message":"Workflow was started"}`.
+
+In-Cluster (z. B. vom Cluster-Netz):
+
 ```bash
 curl -sS -X POST "http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmalert" \
   -H 'Content-Type: application/json' \
-  -d '{"status":"firing","alerts":[{"labels":{"alertname":"KubePodCrashLoopBackOff","namespace":"default","pod":"demo","container":"app","homelab/auto_remediate":"true"},"annotations":{"summary":"test"}}]}'
+  -d '{"status":"firing","alerts":[{"labels":{"alertname":"KubePodCrashLoopBackOff","namespace":"default","pod":"demo","container":"app"},"annotations":{"summary":"test"}}]}'
 ```
 
-Prüfen: n8n Executions → https://github.com/kreativmonkey/homelab-gitops/pulls
+### 2. Ausführung in n8n prüfen
+
+1. https://n8n.cluster.f4mily.net → **Executions**
+2. Letzter Lauf öffnen:
+   - **resolved/skip:** Endet nach `Skip?` (grüner Pfad „true“ = skip)
+   - **firing:** Läuft durch `LLM Kustomize Patch` → `Plan PR` → ggf. GitHub-Nodes
+3. Fehler rot? Typisch: fehlender Workflow-Import (`just n8n-bootstrap`), leerer `LLM_API_KEY` / `GITHUB_TOKEN` im Pod:
+
+   ```bash
+   kubectl get secret -n ai-ops n8n-integration-credentials
+   # Keys: github-token, llm-api-key, llm-base-url (optional)
+   ```
+
+### 3. End-to-end (optional)
+
+Nach **firing**-Test: https://github.com/kreativmonkey/homelab-gitops/pulls — Branch `auto/remediate-*` nur wenn LLM `action: patch` liefert (Demo-Alert oft `noop` / `needs_human`).
