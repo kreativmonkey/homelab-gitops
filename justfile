@@ -70,6 +70,31 @@ sops-create name namespace +literals:
     sops --encrypt --in-place "$out"
     echo "Created and encrypted: $out"
 
+# Grafana ↔ Authentik OAuth (monitoring namespace + instructions for Authentik provider secret)
+grafana-authentik-oauth:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${SOPS_AGE_KEY_FILE:?Set SOPS_AGE_KEY_FILE to your age private key}"
+    client_id="homelab-grafana"
+    client_secret="$(openssl rand -base64 32 | tr -d '\n')"
+    dir="apps/base/monitoring/notifications"
+    cd "$dir"
+    kubectl create secret generic grafana-authentik-oauth \
+      --namespace monitoring \
+      --from-literal=client-id="$client_id" \
+      --from-literal=client-secret="$client_secret" \
+      --dry-run=client -o yaml >grafana-authentik-oauth.secret.yaml
+    sops --encrypt --in-place grafana-authentik-oauth.secret.yaml
+    echo "Created: $dir/grafana-authentik-oauth.secret.yaml"
+    echo ""
+    echo "Next:"
+    echo "  1. Uncomment or add this file in notifications/kustomization.yaml"
+    echo "  2. Commit, push, flux reconcile"
+    echo "  3. In Authentik → Provider for Grafana → set Client secret to:"
+    echo "     $client_secret"
+    echo ""
+    echo "See docs/integrations/grafana-authentik.md"
+
 # Encrypt a plaintext *.secret.yaml in place
 sops-encrypt file:
     #!/usr/bin/env bash
