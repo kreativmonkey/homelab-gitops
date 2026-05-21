@@ -192,7 +192,7 @@
     },
     {
       "parameters": {
-        "content": "## GitHub PAT (HTTP Header Auth)\n\nName: `GitHub PAT`\n- Header: `Authorization`\n- Value: `Bearer <github_pat_…>`\n\nScopes (classic): `repo`\\nFine-grained: Contents + Pull requests **Read and write** on `kreativmonkey/homelab-gitops`.\n\nRepo: https://github.com/kreativmonkey/homelab-gitops (paths under `gitops-homelab/`).\n\n## Test\n```bash\ncurl -sS -X POST http://n8n.ai-ops.svc.cluster.local:5678/webhook/vmalert \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"status\":\"firing\",\"alerts\":[{\"labels\":{\"alertname\":\"KubePodCrashLoopBackOff\",\"namespace\":\"default\",\"pod\":\"demo\",\"container\":\"app\",\"homelab/auto_remediate\":\"true\"},\"annotations\":{\"summary\":\"test\"}}]}'\n```",
+        "content": "## GitHub PAT (HTTP Header Auth)\n\nName: `GitHub PAT`\n- Header: `Authorization`\n- Value: `Bearer <github_pat_…>`\n\nScopes (classic): `repo`\\nFine-grained: Contents + Pull requests **Read and write** on `kreativmonkey/homelab-gitops`.\n\nRepo: https://github.com/kreativmonkey/homelab-gitops (paths under `gitops-homelab/`).\n\n## Test\n```bash\ncurl -sS -X POST http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmalert \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"status\":\"firing\",\"alerts\":[{\"labels\":{\"alertname\":\"KubePodCrashLoopBackOff\",\"namespace\":\"default\",\"pod\":\"demo\",\"container\":\"app\",\"homelab/auto_remediate\":\"true\"},\"annotations\":{\"summary\":\"test\"}}]}'\n```",
         "height": 380,
         "width": 440
       },
