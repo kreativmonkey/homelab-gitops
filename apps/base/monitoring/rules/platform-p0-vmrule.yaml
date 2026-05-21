@@ -1,0 +1,156 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: homelab-platform-p0
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.platform.cnpg
+      interval: 30s
+      rules:
+        - alert: CNPGClusterOffline
+          expr: |
+            (count(cnpg_collector_up{namespace="cnpg-system"}) or on() vector(0)) == 0
+          for: 5m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "CNPG: keine Metriken in cnpg-system"
+            description: "Der CNPG-Exporter liefert seit 5 Minuten keine Daten. Datenbank-Apps können betroffen sein."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/cnpg-cluster-offline.md"
+
+        - alert: CNPGClusterInstanceDown
+          expr: cnpg_collector_up{namespace="cnpg-system"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "CNPG-Instanz {{ $labels.pod }} offline"
+            description: "Pod {{ $labels.pod }} in {{ $labels.namespace }} meldet cnpg_collector_up=0."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/cnpg-cluster-offline.md"
+
+        - alert: CNPGBackupStale
+          expr: |
+            (
+              time() - cnpg_collector_last_available_backup_timestamp{namespace="cnpg-system"}
+            ) > 48 * 3600
+          for: 1h
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "CNPG-Backup veraltet: {{ $labels.cluster }}"
+            description: "Letztes verfügbares Backup für Cluster {{ $labels.cluster }} ist älter als 48 Stunden."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/cnpg-backup-stale.md"
+
+    - name: homelab.platform.velero
+      interval: 30s
+      rules:
+        - alert: VeleroBackupFailures
+          expr: increase(velero_backup_failure_total[1h]) > 0
+          for: 5m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "Velero-Backup fehlgeschlagen"
+            description: "In der letzten Stunde wurden fehlgeschlagene Velero-Backups gezählt."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/velero-backup.md"
+
+        - alert: VeleroBackupStale
+          expr: (time() - velero_backup_last_successful_timestamp) > 36 * 3600
+          for: 1h
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "Velero: kein erfolgreiches Backup seit 36h"
+            description: "Schedule {{ $labels.schedule }} — letzter Erfolg zu lange her."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/velero-backup.md"
+
+    - name: homelab.platform.nodes
+      interval: 30s
+      rules:
+        - alert: NodeMemoryCritical
+          expr: |
+            (
+              node_memory_MemAvailable_bytes
+              / node_memory_MemTotal_bytes
+            ) < 0.10
+          for: 10m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "Node {{ $labels.instance }}: Speicher kritisch (<10 % frei)"
+            description: "Verfügbarer RAM unter 10 % seit 10 Minuten."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/node-resources.md"
+
+        - alert: NodeDiskCritical
+          expr: |
+            (
+              node_filesystem_avail_bytes{fstype!~"tmpfs|overlay",mountpoint!=""}
+              / node_filesystem_size_bytes{fstype!~"tmpfs|overlay",mountpoint!=""}
+            ) < 0.10
+          for: 15m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "Node {{ $labels.instance }}: Disk {{ $labels.mountpoint }} <10 % frei"
+            description: "Filesystem fast voll — Longhorn/CNPG/VM-Daten prüfen."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/node-resources.md"
+
+    - name: homelab.platform.monitoring
+      interval: 30s
+      rules:
+        - alert: MonitoringVMAlertDown
+          expr: up{job=~".*vmalert.*"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "VMAlert scrape down ({{ $labels.job }})"
+            description: "Alert-Auswertung ausgefallen — es werden ggf. keine neuen Alerts erzeugt."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/monitoring-stack.md"
+
+        - alert: MonitoringAlertmanagerDown
+          expr: up{job=~".*alertmanager.*"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "Alertmanager scrape down ({{ $labels.job }})"
+            description: "Benachrichtigungen nach ntfy werden nicht zugestellt."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/monitoring-stack.md"
+
+        - alert: NtfyBridgeDown
+          expr: |
+            kube_deployment_spec_replicas{namespace="monitoring", deployment="ntfy-bridge"}
+            != kube_deployment_status_replicas_available{namespace="monitoring", deployment="ntfy-bridge"}
+          for: 2m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+            homelab/auto_triage: "true"
+          annotations:
+            summary: "ntfy-bridge nicht verfügbar"
+            description: "Alertmanager kann keine lesbaren ntfy-Nachrichten zustellen. Andere Alerts erscheinen erst in AM/Grafana bis die Bridge wieder läuft."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/monitoring-stack.md"

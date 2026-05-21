@@ -1,0 +1,382 @@
+{
+  "name": "Homelab GitOps Remediation (VM → LLM → GitHub PR)",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vmalert",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "a1000001-0001-4000-8000-000000000001",
+      "name": "Webhook VMAlert",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "homelab-vmalert-remediation"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ALLOW = new Set(['KubePodOOMKilled', 'KubePodCrashLoopBackOff']);\nconst body = $input.first().json.body ?? $input.first().json;\nif (body.status === 'resolved') {\n  return [{ json: { skip: true, reason: 'resolved', status: 'resolved' } }];\n}\nconst alerts = body.alerts || [];\nconst first = alerts[0] || {};\nconst labels = { ...(body.commonLabels || {}), ...(first.labels || {}) };\nconst annotations = { ...(body.commonAnnotations || {}), ...(first.annotations || {}) };\nconst alertname = labels.alertname || body.groupLabels?.alertname || '';\nif (!ALLOW.has(alertname)) {\n  return [{ json: { skip: true, reason: 'not_allowlisted', alertname } }];\n}\nconst namespace = labels.namespace || '';\nconst pod = labels.pod || labels.instance || '';\nconst container = labels.container || '';\nconst error = alertname === 'KubePodOOMKilled' ? 'OOMKilled' : 'CrashLoopBackOff';\nreturn [{\n  json: {\n    skip: false,\n    status: 'firing',\n    alertname,\n    namespace,\n    pod,\n    container,\n    error,\n    severity: labels.severity || 'critical',\n    summary: annotations.summary || '',\n    description: annotations.description || '',\n    runbookUrl: annotations.runbook_url || '',\n    fingerprint: first.fingerprint || '',\n    raw: body,\n  },\n}];"
+      },
+      "id": "a1000001-0001-4000-8000-000000000002",
+      "name": "Parse VM Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "skip-check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000001-0001-4000-8000-000000000003",
+      "name": "Skip?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const alert = $('Parse VM Payload').first().json;\nconst base = ($env.LLM_BASE_URL || 'https://api.openai.com/v1').replace(/\\/$/, '');\nconst system = [\n  'Du bist ein Kubernetes GitOps Engineer. Antworte NUR mit gültigem JSON (kein Markdown, kein Code-Fence):',\n  '{',\n  '  \"action\": \"patch|noop|needs_human\",',\n  '  \"risk\": \"low|medium|high\",',\n  '  \"summary_de\": \"string\",',\n  '  \"target_file\": \"relativer Pfad unter gitops-homelab/\",',\n  '  \"patch_yaml\": \"multi-line YAML\",',\n  '  \"pr_title\": \"string\",',\n  '  \"pr_body\": \"string (Markdown)\"',\n  '}',\n  'Regeln: nur gitops-homelab/ im Repo homelab-gitops; neue Dateien unter apps/base/<app>/patches/ bevorzugen; kein kubectl apply.',\n].join('\\n');\nconst user = [\n  'Alert: ' + alert.alertname,\n  'Namespace: ' + alert.namespace,\n  'Pod: ' + alert.pod,\n  'Container: ' + alert.container,\n  'Error: ' + alert.error,\n  'Summary: ' + alert.summary,\n  'Description: ' + alert.description,\n].join('\\n');\nconst res = await this.helpers.httpRequest({\n  method: 'POST',\n  url: base + '/chat/completions',\n  headers: {\n    Authorization: 'Bearer ' + $env.LLM_API_KEY,\n    'Content-Type': 'application/json',\n  },\n  body: {\n    model: 'gpt-4o-mini',\n    temperature: 0.1,\n    max_tokens: 2500,\n    messages: [\n      { role: 'system', content: system },\n      { role: 'user', content: user },\n    ],\n  },\n  json: true,\n});\nconst content = res?.choices?.[0]?.message?.content ?? '';\nreturn [{ json: { message: { content } } }];\n"
+      },
+      "id": "a1000001-0001-4000-8000-000000000004",
+      "name": "LLM Kustomize Patch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const alert = $('Parse VM Payload').first().json;\nconst api = ($env.GITHUB_API_URL || 'https://api.github.com').replace(/\\/$/, '');\nlet plan = {};\ntry {\n  const raw = $input.first().json.message?.content ?? $input.first().json.text ?? '';\n  const m = String(raw).match(/\\{[\\s\\S]*\\}/);\n  plan = m ? JSON.parse(m[0]) : { action: 'needs_human', summary_de: 'LLM nicht parsebar' };\n} catch (e) {\n  plan = { action: 'needs_human', summary_de: 'LLM parse error: ' + e.message };\n}\nif (plan.action !== 'patch' || !plan.patch_yaml || !plan.target_file) {\n  return [{ json: { ...alert, plan, proceed: false, api } }];\n}\nconst slug = `${alert.namespace}-${alert.pod}`.replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 40);\nconst branch = `auto/remediate-${slug}-${Date.now().toString(36)}`;\nconst owner = $env.GITHUB_REPO_OWNER || 'kreativmonkey';\nconst repo = $env.GITHUB_REPO_NAME || 'homelab-gitops';\nconst base = $env.GITHUB_DEFAULT_BRANCH || 'main';\nconst manifestsPath = $env.GITOPS_MANIFESTS_PATH || 'gitops-homelab';\nconst filePath = plan.target_file.startsWith(manifestsPath)\n  ? plan.target_file\n  : `${manifestsPath}/${plan.target_file.replace(/^\\/+/, '')}`;\nreturn [{\n  json: {\n    ...alert,\n    plan,\n    proceed: true,\n    api,\n    branch,\n    owner,\n    repo,\n    base,\n    filePath,\n    contentB64: Buffer.from(plan.patch_yaml, 'utf8').toString('base64'),\n    commitMessage: `fix(auto): ${alert.alertname} ${alert.namespace}/${alert.pod}`,\n    repoApi: `${api}/repos/${owner}/${repo}`,\n    githubAuth: `Bearer ${$env.GITHUB_TOKEN}`,\n  },\n}];"
+      },
+      "id": "a1000001-0001-4000-8000-000000000005",
+      "name": "Plan PR",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "proceed",
+              "leftValue": "={{ $json.proceed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000001-0001-4000-8000-000000000006",
+      "name": "Patch?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.repoApi }}/git/ref/heads/{{ $json.base }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Plan PR').item.json.githubAuth }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1000001-0001-4000-8000-000000000007",
+      "name": "GitHub Get Base SHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan PR').item.json.repoApi }}/git/refs",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Plan PR').item.json.githubAuth }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ ref: 'refs/heads/' + $('Plan PR').item.json.branch, sha: $json.object.sha }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1000001-0001-4000-8000-000000000008",
+      "name": "GitHub Create Branch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $('Plan PR').item.json.repoApi }}/contents/{{ encodeURIComponent($('Plan PR').item.json.filePath) }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Plan PR').item.json.githubAuth }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $('Plan PR').item.json.commitMessage, content: $('Plan PR').item.json.contentB64, branch: $('Plan PR').item.json.branch }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1000001-0001-4000-8000-000000000009",
+      "name": "GitHub Put File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan PR').item.json.repoApi }}/pulls",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Plan PR').item.json.githubAuth }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $('Plan PR').item.json.plan.pr_title || $('Plan PR').item.json.commitMessage, head: $('Plan PR').item.json.branch, base: $('Plan PR').item.json.base, body: ($('Plan PR').item.json.plan.pr_body || $('Plan PR').item.json.plan.summary_de || '') + '\\n\\n---\\nAuto-remediation for **' + $('Plan PR').item.json.alertname + '** in `' + $('Plan PR').item.json.namespace + '/' + $('Plan PR').item.json.pod + '`.' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1000001-0001-4000-8000-00000000000a",
+      "name": "GitHub Open PR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## GitOps Remediation (env-based)\n\nUses K8s secrets via `$env` (no n8n Credentials UI):\n- `LLM_API_KEY`, `LLM_BASE_URL`\n- `GITHUB_TOKEN`\n\nBootstrap: `just n8n-bootstrap` after deploy.",
+        "height": 200,
+        "width": 380
+      },
+      "id": "a1000001-0001-4000-8000-00000000000b",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        520
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook VMAlert": {
+      "main": [
+        [
+          {
+            "node": "Parse VM Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse VM Payload": {
+      "main": [
+        [
+          {
+            "node": "Skip?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "LLM Kustomize Patch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Kustomize Patch": {
+      "main": [
+        [
+          {
+            "node": "Plan PR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan PR": {
+      "main": [
+        [
+          {
+            "node": "Patch?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Patch?": {
+      "main": [
+        [
+          {
+            "node": "GitHub Get Base SHA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "GitHub Get Base SHA": {
+      "main": [
+        [
+          {
+            "node": "GitHub Create Branch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Create Branch": {
+      "main": [
+        [
+          {
+            "node": "GitHub Put File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Put File": {
+      "main": [
+        [
+          {
+            "node": "GitHub Open PR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

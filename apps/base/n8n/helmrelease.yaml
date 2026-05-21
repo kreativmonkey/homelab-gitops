@@ -1,0 +1,137 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: n8n
+  namespace: ai-ops
+spec:
+  interval: 1h
+  timeout: 15m
+  chart:
+    spec:
+      chart: n8n
+      version: "2.0.1"
+      sourceRef:
+        kind: HelmRepository
+        name: n8n-repo
+        namespace: flux-system
+  valuesFrom:
+    - kind: Secret
+      name: n8n-encryption-key
+      valuesKey: encryption-key
+      targetPath: main.secret.n8n.encryption_key
+  values:
+    image:
+      repository: n8nio/n8n
+      tag: "2.22.1"
+    # Service MUST NOT be named "n8n" — K8s injects N8N_PORT=tcp://… and breaks the listener (502).
+    # DNS: n8n-app.ai-ops.svc.cluster.local
+    fullnameOverride: n8n-app
+
+    ingress:
+      enabled: false
+
+    main:
+      config:
+        n8n:
+          # Public URL for editor links; WEBHOOK_URL must match reachable webhook base
+          host: n8n.cluster.f4mily.net
+          protocol: https
+          # Listen port is 5678 in-container; TLS terminates at ingress (do not set port: 443).
+          webhook_url: https://n8n.cluster.f4mily.net/
+          generic_timezone: Europe/Berlin
+          log_level: info
+          # SQLite embedded DB on PVC (homelab single-replica)
+          enforce_settings_file_permissions: false
+      persistence:
+        enabled: true
+        type: dynamic
+        # Cluster has longhorn (default longhorn-1); local-path is not installed.
+        storageClass: longhorn-1
+        accessModes:
+          - ReadWriteOnce
+        size: 10Gi
+      deploymentStrategy:
+        type: Recreate
+      replicaCount: 1
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        failureThreshold: 6
+      livenessProbe:
+        initialDelaySeconds: 60
+        periodSeconds: 20
+        failureThreshold: 6
+      resources:
+        requests:
+          cpu: 50m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+      service:
+        type: ClusterIP
+        port: 5678
+      # GitHub (primary) + LLM keys for GitOps remediation workflow (see workflows/)
+      extraEnv:
+        N8N_PORT:
+          value: "5678"
+        WEBHOOK_URL:
+          value: https://n8n.cluster.f4mily.net/
+        N8N_PROXY_HOPS:
+          value: "1"
+        # n8n 2.x: Code nodes use task runners; internal mode is OK for single-replica homelab.
+        N8N_RUNNERS_ENABLED:
+          value: "true"
+        N8N_RUNNERS_MODE:
+          value: internal
+        # GitOps remediation workflow reads $env in Code nodes (see workflows/).
+        N8N_BLOCK_ENV_ACCESS_IN_NODE:
+          value: "false"
+        # Public editor URL behind ingress TLS (required for OIDC redirect if licensed later).
+        N8N_EDITOR_BASE_URL:
+          value: https://n8n.cluster.f4mily.net/
+        GITHUB_API_URL:
+          value: https://api.github.com
+        GITHUB_REPO_OWNER:
+          value: kreativmonkey
+        GITHUB_REPO_NAME:
+          value: homelab-gitops
+        GITHUB_DEFAULT_BRANCH:
+          value: main
+        GITOPS_MANIFESTS_PATH:
+          value: gitops-homelab
+        GITHUB_TOKEN:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: github-token
+        LLM_API_KEY:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: llm-api-key
+        # Optional: override for Ollama (http://ollama.llm.svc:11434/v1)
+        LLM_BASE_URL:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: llm-base-url
+              optional: true
+        # Error workflow → ntfy (topic URL, optional Bearer — same token as Alertmanager monitoring)
+        NTFY_URL:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: ntfy-url
+              optional: true
+        NTFY_TOKEN:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: ntfy-token
+              optional: true
+
+    # Single-node homelab: no queue/redis split
+    worker:
+      enabled: false
+    webhook:
+      enabled: false

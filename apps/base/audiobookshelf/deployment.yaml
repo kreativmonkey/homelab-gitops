@@ -105,7 +105,6 @@ metadata:
     gethomepage.dev/icon: audiobookshelf.png
     gethomepage.dev/pod-selector: app=audiobookshelf
     # TLS: wildcard-f4mily-net-tls replicated from cert-manager (reflector).
-    # Do not use cert-manager.io/cluster-issuer — ingress-shim conflicts with reflector.
     nginx.org/client-max-body-size: "1000m"
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"

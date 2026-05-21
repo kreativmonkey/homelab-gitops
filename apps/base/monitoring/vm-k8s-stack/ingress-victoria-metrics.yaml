@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/group: Cluster Management
     gethomepage.dev/icon: victoriametrics.png
     gethomepage.dev/app: vmsingle
-    cert-manager.io/cluster-issuer: letsencrypt-production
+    # TLS: wildcard-cluster-f4mily-net-tls via reflector (no cluster-issuer).
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
   labels:
@@ -20,7 +20,7 @@ spec:
   tls:
     - hosts:
         - metrics.cluster.f4mily.net
-      secretName: victoria-metrics-tls
+      secretName: wildcard-cluster-f4mily-net-tls
   rules:
     - host: metrics.cluster.f4mily.net
       http:

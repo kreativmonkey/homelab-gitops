@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ntfy-bridge
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: ntfy-bridge
+    app.kubernetes.io/part-of: homelab-monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ntfy-bridge
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ntfy-bridge
+    spec:
+      priorityClassName: homelab-infrastructure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bridge
+          # slim (not alpine): includes CA bundle for https://ntfy.f4mily.net
+          image: docker.io/library/python:3.14-slim-bookworm
+          command: ["python3", "/app/bridge.py"]
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: HTTP_ADDRESS
+              value: "0.0.0.0"
+            - name: HTTP_PORT
+              value: "8080"
+            - name: NTFY_URL
+              value: "https://ntfy.f4mily.net/monitoring"
+            - name: NTFY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: alertmanager-ntfy-credentials
+                  key: token
+          volumeMounts:
+            - name: app
+              mountPath: /app
+              readOnly: true
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+      volumes:
+        - name: app
+          configMap:
+            name: ntfy-bridge
+            defaultMode: 0444

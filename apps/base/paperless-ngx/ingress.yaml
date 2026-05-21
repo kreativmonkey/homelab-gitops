@@ -10,7 +10,6 @@ metadata:
     gethomepage.dev/group: Office
     gethomepage.dev/icon: paperless-ngx.png
     gethomepage.dev/app: paperless-ngx
-    cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:

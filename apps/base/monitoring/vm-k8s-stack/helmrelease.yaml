@@ -15,6 +15,9 @@ spec:
         name: victoriametrics-repo
         namespace: flux-system
   values:
+    global:
+      clusterLabel: cluster
+
     # ============================================
     # VMSINGLE - Storage
     # ============================================
@@ -81,9 +84,6 @@ spec:
     vmalert:
       enabled: true
       spec:
-        # No alertmanager configured - send alerts to blackhole
-        extraArgs:
-          notifier.blackhole: "true"
         resources:
           requests:
             cpu: 10m
@@ -92,10 +92,95 @@ spec:
             memory: 256Mi
 
     # ============================================
-    # ALERTMANAGER - Disabled for now
+    # ALERTMANAGER - ntfy via homelab-monitoring topic
     # ============================================
     alertmanager:
-      enabled: false
+      enabled: true
+      # Short name: default generates StatefulSet labels >63 chars (pod create fails)
+      name: vm-am
+      spec:
+        replicaCount: 1
+        secrets:
+          - alertmanager-ntfy-credentials
+          # alertmanager-n8n-webhook: add after `just sops-create alertmanager-n8n-webhook` (see template)
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+      config:
+        global:
+          resolve_timeout: 5m
+        route:
+          # Drop anything that does not match a child route (info, Watchdog, operator noise, …)
+          receiver: blackhole
+          group_by: ["alertname", "namespace", "severity", "cluster"]
+          group_wait: 2m
+          group_interval: 10m
+          repeat_interval: 24h
+          routes:
+            # Bypass bridge when it is down (JSON to ntfy — only this alert gets through)
+            - matchers:
+                - alertname="NtfyBridgeDown"
+              receiver: ntfy-emergency
+              repeat_interval: 3h
+            # OOM / CrashLoop → in-cluster n8n GitOps remediation (ai-ops)
+            - matchers:
+                - alertname=~"KubePodOOMKilled|KubePodCrashLoopBackOff"
+                - homelab/auto_remediate="true"
+              receiver: n8n-remediation
+              group_wait: 30s
+              repeat_interval: 12h
+              continue: true
+            # n8n KI-Triage: enable after alertmanager-n8n-webhook secret exists (template in notifications/)
+            # - matchers:
+            #     - homelab/owner="platform"
+            #     - severity=~"critical|warning"
+            #   receiver: n8n-triage
+            #   continue: true
+            - matchers:
+                - severity=critical
+              receiver: ntfy-monitoring
+              repeat_interval: 6h
+            - matchers:
+                - severity=warning
+              receiver: ntfy-monitoring
+              repeat_interval: 24h
+        inhibit_rules:
+          - source_matchers:
+              - severity="critical"
+            target_matchers:
+              - severity=~"warning|info"
+            equal: ["alertname", "namespace", "cluster"]
+          - source_matchers:
+              - alertname="NodeMemoryCritical"
+            target_matchers:
+              - alertname="NodeMemoryHigh"
+            equal: ["instance", "cluster"]
+        receivers:
+          - name: ntfy-monitoring
+            webhook_configs:
+              - url: http://ntfy-bridge.monitoring.svc.cluster.local:8080/
+                send_resolved: true
+          - name: ntfy-emergency
+            webhook_configs:
+              - url: https://ntfy.f4mily.net/monitoring
+                send_resolved: true
+                http_config:
+                  authorization:
+                    type: Bearer
+                    credentials_file: /etc/vm/secrets/alertmanager-ntfy-credentials/token
+          # - name: n8n-triage
+          #   webhook_configs:
+          #     - url_file: /etc/vm/secrets/alertmanager-n8n-webhook/url
+          #       send_resolved: true
+          # Closed-loop GitOps: VMRule OOM/CrashLoop → n8n workflow /webhook/vmalert
+          - name: n8n-remediation
+            webhook_configs:
+              - url: http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmalert
+                send_resolved: true
+          - name: blackhole
 
     # ============================================
     # NODE EXPORTER
@@ -115,8 +200,9 @@ spec:
     defaultDashboards:
       enabled: true
 
+    # Chart defaults (~100+ rules) are too noisy for a homelab; use platform P0 VMRules only.
     defaultRules:
-      enabled: true
+      enabled: false
 
     # ============================================
     # GRAFANA
@@ -191,6 +277,40 @@ spec:
 
       ingress:
         enabled: false
+
+      # Generic OAuth via Authentik (login.f4mily.net, application slug: grafana)
+      # Requires Secret grafana-authentik-oauth — create with: just grafana-authentik-oauth
+      envValueFrom:
+        GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
+          secretKeyRef:
+            name: grafana-authentik-oauth
+            key: client-id
+        GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+          secretKeyRef:
+            name: grafana-authentik-oauth
+            key: client-secret
+      grafana.ini:
+        server:
+          root_url: https://grafana.cluster.f4mily.net
+        users:
+          auto_assign_org: true
+          auto_assign_org_role: Viewer
+        auth:
+          signout_redirect_url: https://login.f4mily.net/application/o/grafana/end-session/
+        auth.generic_oauth:
+          enabled: true
+          name: Authentik
+          scopes: openid profile email entitlements
+          auth_url: https://login.f4mily.net/application/o/grafana/authorize/
+          token_url: https://login.f4mily.net/application/o/grafana/token/
+          api_url: https://login.f4mily.net/application/o/grafana/userinfo/
+          allow_sign_up: true
+          use_pkce: true
+          role_attribute_path: >-
+            contains(entitlements[*], 'Grafana Admins') && 'Admin' ||
+            contains(entitlements[*], 'Grafana Editors') && 'Editor' ||
+            'Viewer'
+          allow_assign_grafana_admin: true
 
       podAnnotations:
         backup.velero.io/backup-volumes: grafana-storage

@@ -54,7 +54,8 @@ resources:
   - ../../base/homer
   - ../../base/kite
   - ../../base/sterling-pdf
-  - ../../base/monitoring/vm-k8s-stack
+  - ../../base/monitoring
+  - ../../base/n8n
 
 # ============================================================================
 # REPLACEMENTS (cluster-config → per-app ingress hosts & TLS settings)
@@ -277,6 +278,29 @@ replacements:
         fieldPaths:
           - spec.values.ingress.hosts.0.host
           - spec.values.ingress.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_n8n
+    targets:
+      - select: {kind: Ingress, name: n8n}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+      - select: {kind: HelmRelease, name: n8n}
+        fieldPaths:
+          - spec.values.main.config.n8n.host
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.url_n8n_webhook
+    targets:
+      - select: {kind: HelmRelease, name: n8n}
+        fieldPaths:
+          - spec.values.main.config.n8n.webhook_url
+          - spec.values.main.extraEnv.WEBHOOK_URL.value
 
   # -------- TLS secret names ----------------------------------------------
   - source:

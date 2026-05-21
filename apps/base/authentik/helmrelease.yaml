@@ -51,6 +51,9 @@ spec:
         port: 5432
         name: authentik
         user: authentik
+    blueprints:
+      configMaps:
+        - authentik-grafana-blueprint
     server:
       ingress:
         enabled: false

@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ntfy-bridge
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: ntfy-bridge
+    app.kubernetes.io/part-of: homelab-monitoring
+data:
+  bridge.py: |
+    #!/usr/bin/env python3
+    """Alertmanager webhook → human-readable ntfy messages."""
+    import json
+    import os
+    import urllib.error
+    import urllib.request
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    NTFY_URL = os.environ["NTFY_URL"]
+    NTFY_TOKEN = os.environ.get("NTFY_TOKEN", "")
+    LISTEN = os.environ.get("HTTP_ADDRESS", "0.0.0.0")
+    PORT = int(os.environ.get("HTTP_PORT", "8080"))
+
+    PRIORITY = {
+        "critical": "urgent",
+        "warning": "high",
+        "info": "default",
+    }
+
+    def severity(data: dict) -> str:
+        labels = data.get("commonLabels") or {}
+        if labels.get("severity"):
+            return labels["severity"]
+        alerts = data.get("alerts") or []
+        if alerts:
+            return (alerts[0].get("labels") or {}).get("severity", "warning")
+        return "warning"
+
+    def format_notification(data: dict) -> tuple[str, str, str]:
+        status = data.get("status", "firing")
+        alerts = data.get("alerts") or []
+        group = data.get("groupLabels") or {}
+        common = data.get("commonAnnotations") or {}
+
+        alertname = group.get("alertname") or ""
+        if not alertname and alerts:
+            alertname = (alerts[0].get("labels") or {}).get("alertname", "Alert")
+
+        if status == "resolved":
+            title = f"[OK] {alertname}"
+            priority = "low"
+        else:
+            count = len(alerts)
+            title = f"[FIRING] {alertname}" + (f" ({count})" if count > 1 else "")
+            priority = PRIORITY.get(severity(data), "default")
+
+        lines: list[str] = []
+        summary = common.get("summary")
+        if summary:
+            lines.append(summary)
+            lines.append("")
+
+        for alert in alerts[:8]:
+            labels = alert.get("labels") or {}
+            ann = alert.get("annotations") or {}
+            name = labels.get("alertname", alertname)
+            line_summary = ann.get("summary") or ann.get("description") or ""
+            ns = labels.get("namespace", "")
+            inst = labels.get("instance") or labels.get("pod") or ""
+            ctx = " / ".join(x for x in (ns, inst) if x)
+            prefix = "• "
+            if ctx:
+                lines.append(f"{prefix}{name} [{ctx}]")
+            else:
+                lines.append(f"{prefix}{name}")
+            if line_summary and line_summary != summary:
+                lines.append(f"  {line_summary}")
+
+        if len(alerts) > 8:
+            lines.append(f"… +{len(alerts) - 8} weitere Alerts")
+
+        runbook = common.get("runbook_url")
+        if runbook:
+            lines.append("")
+            lines.append(runbook)
+
+        message = "\n".join(lines).strip() or title
+        return title, message, priority
+
+    def post_ntfy(title: str, message: str, priority: str) -> None:
+        req = urllib.request.Request(NTFY_URL, data=message.encode("utf-8"), method="POST")
+        req.add_header("Title", title[:250])
+        req.add_header("Priority", priority)
+        req.add_header("Content-Type", "text/plain; charset=utf-8")
+        if NTFY_TOKEN:
+            req.add_header("Authorization", f"Bearer {NTFY_TOKEN}")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            if resp.status >= 300:
+                raise urllib.error.HTTPError(NTFY_URL, resp.status, resp.reason, resp.headers, None)
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, fmt, *args):  # noqa: D102
+            print(fmt % args)
+
+        def do_GET(self):  # noqa: N802
+            if self.path in ("/", "/healthz"):
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b"ok")
+            else:
+                self.send_response(404)
+                self.end_headers()
+
+        def do_POST(self):  # noqa: N802
+            if self.path not in ("/", "/alerts", "/webhook"):
+                self.send_response(404)
+                self.end_headers()
+                return
+            length = int(self.headers.get("Content-Length", 0))
+            try:
+                data = json.loads(self.rfile.read(length))
+                title, message, priority = format_notification(data)
+                post_ntfy(title, message, priority)
+            except Exception as exc:  # noqa: BLE001
+                print(f"error: {exc!r}")
+                body = f"error: {exc}".encode("utf-8")
+                self.send_response(500)
+                self.send_header("Content-Type", "text/plain")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            self.send_response(200)
+            self.end_headers()
+
+    if __name__ == "__main__":
+        print(f"listening on {LISTEN}:{PORT}, ntfy → {NTFY_URL}")
+        HTTPServer((LISTEN, PORT), Handler).serve_forever()

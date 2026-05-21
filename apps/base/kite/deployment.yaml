@@ -16,11 +16,18 @@ metadata:
     kustomize.toolkit.fluxcd.io/depends-on: cert-manager.io/Certificate/cert-manager/wildcard-f4mily-net
 spec:
   interval: 1h
+  timeout: 15m
   targetNamespace: kite
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
   chart:
     spec:
       chart: kite
-      version: "0.8.1"
+      version: "0.12.2"
       sourceRef:
         kind: HelmRepository
         name: kite-repo
@@ -30,9 +37,7 @@ spec:
     # Recreate strategy required for RWO volumes
     strategy:
       type: Recreate
-    image:
-      repository: ghcr.io/kite-org/kite
-      tag: "v0.12.2"
+    # Image tag defaults to chart appVersion (v0.12.2) — do not override via Renovate helm-values
     service:
       port: 8080
     host: https://kite.cluster.f4mily.net
@@ -47,8 +52,6 @@ spec:
         gethomepage.dev/group: Cluster Management
         gethomepage.dev/icon: kubernetes.png
         gethomepage.dev/app: kite
-        cert-manager.io/cluster-issuer: letsencrypt-production
-        cert-manager.io/uses-release-name: "true"
         nginx.org/ssl-redirect: "false"
         nginx.org/redirect-to-https: "true"
       hosts:
@@ -66,6 +69,7 @@ spec:
         persistence:
           pvc:
             enabled: true
+            # Must match existing PVC storageClassName (immutable after bind). New installs: longhorn-1 is fine.
             storageClass: longhorn
             accessModes:
               - ReadWriteOnce
