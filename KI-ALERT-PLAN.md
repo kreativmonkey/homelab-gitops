@@ -106,6 +106,7 @@ Siehe [`docs/integrations/grafana-authentik.md`](docs/integrations/grafana-authe
 | Alertmanager: Default → blackhole, nur critical/warning → ntfy | ✅ |
 | längere `group_wait` / `repeat_interval` | ✅ |
 | ntfy-Bridge (`apps/base/monitoring/ntfy-bridge/`) | ✅ |
+| NtfyBridgeDown + Notfall-Receiver (direkt ntfy, JSON) | ✅ |
 | cert-manager / external-dns ServiceMonitors | ⬜ |
 | Goloom / kritische Apps (up, 5xx) | ⬜ |
 
