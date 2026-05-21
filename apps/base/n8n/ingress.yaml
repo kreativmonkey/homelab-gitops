@@ -31,6 +31,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: n8n
+                name: n8n-app
                 port:
-                  number: 5678
+                  name: http

@@ -20,8 +20,9 @@ spec:
       valuesKey: encryption-key
       targetPath: main.secret.n8n.encryption_key
   values:
-    # Stable Service DNS: n8n.ai-ops.svc.cluster.local
-    fullnameOverride: n8n
+    # Service MUST NOT be named "n8n" — K8s injects N8N_PORT=tcp://… and breaks the listener (502).
+    # DNS: n8n-app.ai-ops.svc.cluster.local
+    fullnameOverride: n8n-app
 
     ingress:
       enabled: false
@@ -32,7 +33,7 @@ spec:
           # Public URL for editor links; WEBHOOK_URL must match reachable webhook base
           host: n8n.cluster.f4mily.net
           protocol: https
-          port: 443
+          # Listen port is 5678 in-container; TLS terminates at ingress (do not set port: 443).
           webhook_url: https://n8n.cluster.f4mily.net/
           generic_timezone: Europe/Berlin
           log_level: info
@@ -48,10 +49,18 @@ spec:
       deploymentStrategy:
         type: Recreate
       replicaCount: 1
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        failureThreshold: 6
+      livenessProbe:
+        initialDelaySeconds: 60
+        periodSeconds: 20
+        failureThreshold: 6
       resources:
         requests:
           cpu: 50m
-          memory: 256Mi
+          memory: 512Mi
         limits:
           memory: 1Gi
       service:
@@ -59,6 +68,8 @@ spec:
         port: 5678
       # GitHub (primary) + LLM keys for GitOps remediation workflow (see workflows/)
       extraEnv:
+        N8N_PORT:
+          value: "5678"
         WEBHOOK_URL:
           value: https://n8n.cluster.f4mily.net/
         N8N_PROXY_HOPS:
