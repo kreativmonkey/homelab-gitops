@@ -4,34 +4,36 @@ metadata:
   name: homer
   namespace: homer
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    # TLS: reflected wildcards — no cluster-issuer (ingress-shim conflicts with reflector).
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
   ingressClassName: nginx
   tls:
-  - hosts:
-    - homer.cluster.f4mily.net
-    - f4mily.net
-    secretName: homer-tls
+    - hosts:
+        - homer.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
+    - hosts:
+        - f4mily.net
+      secretName: wildcard-f4mily-net-tls
   rules:
-  - host: homer.cluster.f4mily.net
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: homer
-            port:
-              number: 80
-  - host: f4mily.net
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: homer
-            port:
-              number: 80
+    - host: homer.cluster.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homer
+                port:
+                  number: 80
+    - host: f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homer
+                port:
+                  number: 80
