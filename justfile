@@ -141,3 +141,16 @@ cnpg-db-credential secret_name username password:
     cd infrastructure/overlays/main/database-clusters/credentials
     just sops-create "{{secret_name}}" cnpg-system \
       "username={{username}}" "password={{password}}"
+
+# Import GitOps remediation workflow into running n8n (uses K8s env secrets, no UI credentials)
+n8n-bootstrap:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${KUBECONFIG:?Set KUBECONFIG (e.g. homelab-infrastructure/talos/kubeconfig)}"
+    wf="apps/base/n8n/workflows/homelab-gitops-remediation.workflow.json"
+    pod="$(kubectl get pod -n ai-ops -l app.kubernetes.io/instance=n8n-app -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || \
+      kubectl get pod -n ai-ops -l app.kubernetes.io/name=n8n -o jsonpath='{.items[0].metadata.name}')"
+    [[ -n "$pod" ]] || { echo "error: no n8n pod in ai-ops"; exit 1; }
+    kubectl cp "$wf" "ai-ops/${pod}:/tmp/homelab-gitops-remediation.workflow.json"
+    kubectl exec -n ai-ops "$pod" -- n8n import:workflow --input=/tmp/homelab-gitops-remediation.workflow.json
+    echo "Workflow imported and set active in JSON. Open https://n8n.cluster.f4mily.net → verify Webhook /webhook/vmalert"
