@@ -47,6 +47,17 @@ kubectl get deploy,po -n monitoring -l app.kubernetes.io/name=ntfy-bridge
 kubectl rollout restart deployment/ntfy-bridge -n monitoring
 ```
 
+## vmsingle CrashLoop (`read-only file system` / `flock.lock`)
+
+VictoriaMetrics needs exclusive RW access to `/victoria-metrics-data`. If the pod loops with `read-only file system`:
+
+```bash
+kubectl delete pod -n monitoring -l app.kubernetes.io/name=vmsingle
+kubectl wait -n monitoring --for=condition=ready pod -l app.kubernetes.io/name=vmsingle --timeout=120s
+```
+
+If it persists: Longhorn UI → volume for `vmsingle-*` PVC → check health; last resort detach/reattach volume or restore from backup (metrics gap).
+
 ## Flux
 
 ```bash
