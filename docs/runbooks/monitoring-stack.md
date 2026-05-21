@@ -15,9 +15,11 @@ kubectl logs -n monitoring -l app.kubernetes.io/name=vmalertmanager --tail=50
 
 ## ntfy delivery
 
-- Secret `alertmanager-ntfy-credentials` must exist in `monitoring`
-- Topic URL: `https://ntfy.f4mily.net/monitoring`
-- Test publish (replace token locally): `curl -H "Authorization: Bearer $TOKEN" -d "test" https://ntfy.f4mily.net/monitoring`
+Alertmanager → `ntfy-bridge` (ClusterIP) → `https://ntfy.f4mily.net/monitoring` (lesbare Titel/Texte).
+
+- Secret `alertmanager-ntfy-credentials` (key `token`) — nur für die Bridge
+- Test Bridge: `kubectl port-forward -n monitoring svc/ntfy-bridge 8080:8080` und AM-Webhook POST oder Test-Alert feuern
+- Test ntfy direkt: `curl -H "Authorization: Bearer $TOKEN" -d "test" https://ntfy.f4mily.net/monitoring`
 
 ## Flux
 

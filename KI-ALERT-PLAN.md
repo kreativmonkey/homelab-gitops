@@ -105,7 +105,7 @@ Siehe [`docs/integrations/grafana-authentik.md`](docs/integrations/grafana-authe
 | `defaultRules.enabled: false` (nur P0-VMRules) | ✅ |
 | Alertmanager: Default → blackhole, nur critical/warning → ntfy | ✅ |
 | längere `group_wait` / `repeat_interval` | ✅ |
-| ntfy-Nachrichten formatieren (Bridge statt AM-JSON, Menschen) | ⬜ |
+| ntfy-Bridge (`apps/base/monitoring/ntfy-bridge/`) | ✅ |
 | cert-manager / external-dns ServiceMonitors | ⬜ |
 | Goloom / kritische Apps (up, 5xx) | ⬜ |
 
