@@ -74,8 +74,34 @@
   ],
   "packageRules": [
     {
+      "description": "Kite: bump Helm chart via flux only (appVersion sets container image)",
+      "matchFileNames": [
+        "apps/base/kite/**"
+      ],
       "matchManagers": [
         "flux"
+      ],
+      "groupName": "kite",
+      "groupSlug": "kite",
+      "minimumReleaseAge": "3 days",
+      "automerge": false
+    },
+    {
+      "description": "Do not let helm-values override kite image tag out of sync with chart",
+      "matchFileNames": [
+        "apps/base/kite/**"
+      ],
+      "matchManagers": [
+        "helm-values"
+      ],
+      "enabled": false
+    },
+    {
+      "matchManagers": [
+        "flux"
+      ],
+      "matchFileNames": [
+        "!apps/base/kite/**"
       ],
       "groupName": "flux helm releases",
       "groupSlug": "flux-helm-releases",
@@ -85,6 +111,9 @@
     {
       "matchManagers": [
         "helm-values"
+      ],
+      "matchFileNames": [
+        "!apps/base/kite/**"
       ],
       "groupName": "helm chart versions",
       "groupSlug": "helm-chart-versions",
