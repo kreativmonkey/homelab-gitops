@@ -42,7 +42,8 @@ spec:
       persistence:
         enabled: true
         type: dynamic
-        storageClass: local-path
+        # Cluster has longhorn (default longhorn-1); local-path is not installed.
+        storageClass: longhorn-1
         accessModes:
           - ReadWriteOnce
         size: 10Gi
