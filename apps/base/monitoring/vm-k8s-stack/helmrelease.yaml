@@ -100,6 +100,8 @@ spec:
       name: vm-am
       spec:
         replicaCount: 1
+        secrets:
+          - alertmanager-ntfy-credentials
         resources:
           requests:
             cpu: 10m
@@ -117,6 +119,11 @@ spec:
           group_interval: 10m
           repeat_interval: 24h
           routes:
+            # Bypass bridge when it is down (JSON to ntfy — only this alert gets through)
+            - matchers:
+                - alertname="NtfyBridgeDown"
+              receiver: ntfy-emergency
+              repeat_interval: 3h
             - matchers:
                 - severity=critical
               receiver: ntfy-monitoring
@@ -141,6 +148,14 @@ spec:
             webhook_configs:
               - url: http://ntfy-bridge.monitoring.svc.cluster.local:8080/
                 send_resolved: true
+          - name: ntfy-emergency
+            webhook_configs:
+              - url: https://ntfy.f4mily.net/monitoring
+                send_resolved: true
+                http_config:
+                  authorization:
+                    type: Bearer
+                    credentials_file: /etc/vm/secrets/alertmanager-ntfy-credentials/token
           - name: blackhole
 
     # ============================================
