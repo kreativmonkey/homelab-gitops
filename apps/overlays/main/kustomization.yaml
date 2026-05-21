@@ -54,7 +54,7 @@ resources:
   - ../../base/homer
   - ../../base/kite
   - ../../base/sterling-pdf
-  - ../../base/monitoring/vm-k8s-stack
+  - ../../base/monitoring
 
 # ============================================================================
 # REPLACEMENTS (cluster-config → per-app ingress hosts & TLS settings)
