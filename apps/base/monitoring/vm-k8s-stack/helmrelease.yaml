@@ -112,22 +112,19 @@ spec:
         global:
           resolve_timeout: 5m
         route:
-          receiver: ntfy-monitoring
+          # Drop anything that does not match a child route (info, Watchdog, operator noise, …)
+          receiver: blackhole
           group_by: ["alertname", "namespace", "severity", "cluster"]
-          group_wait: 30s
-          group_interval: 5m
-          repeat_interval: 12h
+          group_wait: 2m
+          group_interval: 10m
+          repeat_interval: 24h
           routes:
             - matchers:
                 - severity=critical
               receiver: ntfy-monitoring
-              repeat_interval: 3h
+              repeat_interval: 6h
             - matchers:
                 - severity=warning
-              receiver: ntfy-monitoring
-              repeat_interval: 12h
-            - matchers:
-                - severity=info
               receiver: ntfy-monitoring
               repeat_interval: 24h
         inhibit_rules:
@@ -137,10 +134,10 @@ spec:
               - severity=~"warning|info"
             equal: ["alertname", "namespace", "cluster"]
           - source_matchers:
-              - alertname="KubeNodeNotReady"
+              - alertname="NodeMemoryCritical"
             target_matchers:
-              - alertname=~"KubePod.*|KubeDeployment.*|KubeStatefulSet.*"
-            equal: ["node"]
+              - alertname="NodeMemoryHigh"
+            equal: ["instance", "cluster"]
         receivers:
           - name: ntfy-monitoring
             webhook_configs:
@@ -170,50 +167,9 @@ spec:
     defaultDashboards:
       enabled: true
 
+    # Chart defaults (~100+ rules) are too noisy for a homelab; use platform P0 VMRules only.
     defaultRules:
-      enabled: true
-      # Homelab: reduce noise from control-plane rules that often do not scrape on K3s/Talos
-      groups:
-        etcd:
-          create: false
-        kubeScheduler:
-          create: false
-        kubeProxy:
-          create: false
-        kubernetesSystemControllerManager:
-          create: false
-        kubernetesSystemScheduler:
-          create: false
-        k8sContainerCpuLimits:
-          create: false
-        k8sContainerCpuRequests:
-          create: false
-        k8sContainerCpuUsageSecondsTotal:
-          create: false
-        k8sContainerMemoryLimits:
-          create: false
-        k8sContainerMemoryRequests:
-          create: false
-        k8sContainerMemoryRss:
-          create: false
-        k8sContainerMemoryCache:
-          create: false
-        k8sContainerMemoryWorkingSetBytes:
-          create: false
-        k8sContainerMemorySwap:
-          create: false
-        k8sPodOwner:
-          create: false
-        k8sContainerResource:
-          create: false
-      rule:
-        spec:
-          labels:
-            cluster: homelab
-      alerting:
-        spec:
-          labels:
-            cluster: homelab
+      enabled: false
 
     # ============================================
     # GRAFANA
