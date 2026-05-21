@@ -15,6 +15,9 @@ spec:
         name: victoriametrics-repo
         namespace: flux-system
   values:
+    global:
+      clusterLabel: cluster
+
     # ============================================
     # VMSINGLE - Storage
     # ============================================
@@ -81,9 +84,6 @@ spec:
     vmalert:
       enabled: true
       spec:
-        # No alertmanager configured - send alerts to blackhole
-        extraArgs:
-          notifier.blackhole: "true"
         resources:
           requests:
             cpu: 10m
@@ -92,10 +92,63 @@ spec:
             memory: 256Mi
 
     # ============================================
-    # ALERTMANAGER - Disabled for now
+    # ALERTMANAGER - ntfy via homelab-monitoring topic
     # ============================================
     alertmanager:
-      enabled: false
+      enabled: true
+      spec:
+        replicaCount: 1
+        secrets:
+          - alertmanager-ntfy-credentials
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+      config:
+        global:
+          resolve_timeout: 5m
+        route:
+          receiver: ntfy-monitoring
+          group_by: ["alertname", "namespace", "severity", "cluster"]
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 12h
+          routes:
+            - matchers:
+                - severity=critical
+              receiver: ntfy-monitoring
+              repeat_interval: 3h
+            - matchers:
+                - severity=warning
+              receiver: ntfy-monitoring
+              repeat_interval: 12h
+            - matchers:
+                - severity=info
+              receiver: ntfy-monitoring
+              repeat_interval: 24h
+        inhibit_rules:
+          - source_matchers:
+              - severity="critical"
+            target_matchers:
+              - severity=~"warning|info"
+            equal: ["alertname", "namespace", "cluster"]
+          - source_matchers:
+              - alertname="KubeNodeNotReady"
+            target_matchers:
+              - alertname=~"KubePod.*|KubeDeployment.*|KubeStatefulSet.*"
+            equal: ["node"]
+        receivers:
+          - name: ntfy-monitoring
+            webhook_configs:
+              - url: https://ntfy.f4mily.net/monitoring
+                send_resolved: true
+                http_config:
+                  authorization:
+                    type: Bearer
+                    credentials_file: /etc/vm/secrets/alertmanager-ntfy-credentials/token
+          - name: blackhole
 
     # ============================================
     # NODE EXPORTER
@@ -117,6 +170,48 @@ spec:
 
     defaultRules:
       enabled: true
+      # Homelab: reduce noise from control-plane rules that often do not scrape on K3s/Talos
+      groups:
+        etcd:
+          create: false
+        kubeScheduler:
+          create: false
+        kubeProxy:
+          create: false
+        kubernetesSystemControllerManager:
+          create: false
+        kubernetesSystemScheduler:
+          create: false
+        k8sContainerCpuLimits:
+          create: false
+        k8sContainerCpuRequests:
+          create: false
+        k8sContainerCpuUsageSecondsTotal:
+          create: false
+        k8sContainerMemoryLimits:
+          create: false
+        k8sContainerMemoryRequests:
+          create: false
+        k8sContainerMemoryRss:
+          create: false
+        k8sContainerMemoryCache:
+          create: false
+        k8sContainerMemoryWorkingSetBytes:
+          create: false
+        k8sContainerMemorySwap:
+          create: false
+        k8sPodOwner:
+          create: false
+        k8sContainerResource:
+          create: false
+      rule:
+        spec:
+          labels:
+            cluster: homelab
+      alerting:
+        spec:
+          labels:
+            cluster: homelab
 
     # ============================================
     # GRAFANA
