@@ -98,14 +98,16 @@ Siehe [`docs/integrations/grafana-authentik.md`](docs/integrations/grafana-authe
 
 ---
 
-### Phase 5 — App-Alerts & Metriken (offen)
+### Phase 5 — Lärm reduzieren & Lesbarkeit (in Arbeit)
 
 | Task | Status |
 |------|--------|
+| `defaultRules.enabled: false` (nur P0-VMRules) | ✅ |
+| Alertmanager: Default → blackhole, nur critical/warning → ntfy | ✅ |
+| längere `group_wait` / `repeat_interval` | ✅ |
+| ntfy-Nachrichten formatieren (Bridge statt AM-JSON, Menschen) | ⬜ |
 | cert-manager / external-dns ServiceMonitors | ⬜ |
-| CNPG PodMonitor → VM scrape verifizieren | ⬜ |
 | Goloom / kritische Apps (up, 5xx) | ⬜ |
-| ntfy-Nachrichten formatieren (Bridge statt AM-JSON) | ⬜ |
 
 ---
 
