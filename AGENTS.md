@@ -32,6 +32,13 @@ Regeln zur Manifest-Generierung:
 Implementiere einen zentralen CloudNativePG Cluster in `infrastructure/`. 
 Für jede Applikation in `apps/`, die PostgreSQL benötigt, wird kein eigener Pod gestartet. Stattdessen wird über das CloudNativePG Manifest `Cluster` (oder entsprechende Bootstrap-Skripte/Jobs) eine dedizierte Datenbank und ein User im zentralen Cluster provisioniert. 
 
+# OBSERVABILITY & ALERTING
+- Stack: VictoriaMetrics k8s-stack (`apps/base/monitoring/vm-k8s-stack/`)
+- Notifications: Alertmanager → ntfy topic `monitoring` on `ntfy.f4mily.net`; token in SOPS `apps/base/monitoring/notifications/alertmanager-ntfy-credentials.secret.yaml`
+- Platform rules: `apps/base/monitoring/rules/`; runbooks: `docs/runbooks/`
+- Progress tracker: [`KI-ALERT-PLAN.md`](KI-ALERT-PLAN.md)
+- OpenCode agents (`.opencode/agents/`) maintain Git manifests; they do not receive cluster webhooks
+
 # AUTOMATISIERUNG, TESTING & DEPENDENCY MANAGEMENT
 Das Setup muss wartungsarm und Update-sicher sein.
 
