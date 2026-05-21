@@ -48,9 +48,14 @@ Webhook (in-cluster): `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmal
      llm-base-url='https://api.openai.com/v1'
    ```
 
-2. Uncomment both `*.secret.yaml` in `kustomization.yaml`.
-3. Import `apps/base/n8n/workflows/homelab-gitops-remediation.workflow.json`.
-4. n8n credential **GitHub PAT**: Header `Authorization` = `Bearer <token>`.
+2. Ensure both `*.secret.yaml` are listed in `kustomization.yaml`.
+3. Flux reconcile; n8n image is pinned in HelmRelease (`n8nio/n8n:1.123.46`).
+4. Import workflow (uses pod env — **no** n8n Credentials UI for GitOps flow):
+
+   ```bash
+   export KUBECONFIG=../homelab-infrastructure/talos/kubeconfig
+   just n8n-bootstrap
+   ```
 
 ### GitHub token
 
@@ -60,6 +65,8 @@ Webhook (in-cluster): `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmal
 - Pull requests: Read and write
 
 **Classic**: Scope `repo`.
+
+Token is read from Secret key `github-token` → pod env `GITHUB_TOKEN` (not stored in n8n credential store).
 
 ## Workflow (GitHub REST)
 

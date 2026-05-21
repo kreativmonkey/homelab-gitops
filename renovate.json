@@ -49,6 +49,19 @@
     },
     {
       "customType": "regex",
+      "description": "n8n container image tag in HelmRelease",
+      "managerFilePatterns": [
+        "/apps/base/n8n/helmrelease\\.yaml$/"
+      ],
+      "matchStrings": [
+        "tag:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "n8nio/n8n",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
       "description": "CI workflow action versions (Forgejo and GitHub)",
       "managerFilePatterns": [
         "/^\\.(forgejo|github)/workflows/.*\\.ya?ml$/"
