@@ -7,7 +7,7 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: pgAdmin
     gethomepage.dev/description: PostgreSQL admin
-    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/group: Cluster Management
     gethomepage.dev/icon: pgadmin.png
     gethomepage.dev/app: pgadmin4
     # TLS: wildcard-cluster-f4mily-net-tls replicated from cert-manager (reflector).
