@@ -7,7 +7,7 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: Grafana
     gethomepage.dev/description: Cluster dashboards
-    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/group: Cluster Management
     gethomepage.dev/app: grafana
     gethomepage.dev/icon: grafana.png
     cert-manager.io/cluster-issuer: letsencrypt-production

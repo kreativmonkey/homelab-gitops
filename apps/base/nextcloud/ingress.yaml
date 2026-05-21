@@ -6,6 +6,7 @@ metadata:
   annotations:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: Nextcloud
+    gethomepage.dev/app: nextcloud
     gethomepage.dev/description: File sharing
     gethomepage.dev/group: Office
     gethomepage.dev/icon: nextcloud.png

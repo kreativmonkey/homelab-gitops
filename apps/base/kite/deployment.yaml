@@ -44,7 +44,7 @@ spec:
         gethomepage.dev/enabled: "true"
         gethomepage.dev/name: Kite
         gethomepage.dev/description: Kubernetes dashboard
-        gethomepage.dev/group: Infrastructure
+        gethomepage.dev/group: Cluster Management
         gethomepage.dev/icon: kubernetes.png
         gethomepage.dev/app: kite
         cert-manager.io/cluster-issuer: letsencrypt-production
