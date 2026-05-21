@@ -4,6 +4,17 @@
 
 `MonitoringVMAlertDown` or `MonitoringAlertmanagerDown`.
 
+## Alertmanager stuck `expanding` / no notifications
+
+If `alertmanager-n8n-webhook` is listed under `spec.secrets` but the Secret does not exist, Alertmanager never becomes ready and **all** routes (including vmalert → ntfy) stall.
+
+```bash
+kubectl get secret -n monitoring alertmanager-n8n-webhook
+kubectl get vmalertmanager -n monitoring vm-am -o yaml | grep -A2 updateStatus
+```
+
+Fix: either create the secret (`apps/base/monitoring/notifications/alertmanager-n8n-webhook.secret.yaml.template`) and uncomment the `n8n-triage` route in `vm-k8s-stack/helmrelease.yaml`, or keep triage disabled (GitOps default) so only `n8n-remediation` (in-cluster URL, no extra secret) and ntfy routes apply.
+
 ## Checks
 
 ```bash
