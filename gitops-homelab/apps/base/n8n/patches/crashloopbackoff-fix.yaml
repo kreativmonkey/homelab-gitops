@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n-test
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+      - name: app
+        image: n8n:latest
+        env:
+        - name: N8N_HOST
+          value: 'n8n-test'
+        - name: N8N_PORT
+          value: '5678'
+        - name: N8N_PROTOCOL
+          value: 'http'
+        resources:
+          limits:
+            memory: '512Mi'
+            cpu: '500m'
+          requests:
+            memory: '256Mi'
+            cpu: '250m'
