@@ -116,6 +116,19 @@ spec:
               name: n8n-integration-credentials
               key: llm-base-url
               optional: true
+        # Error workflow → ntfy (topic URL, optional Bearer — same token as Alertmanager monitoring)
+        NTFY_URL:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: ntfy-url
+              optional: true
+        NTFY_TOKEN:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: ntfy-token
+              optional: true
 
     # Single-node homelab: no queue/redis split
     worker:
