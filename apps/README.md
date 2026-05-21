@@ -24,9 +24,10 @@ enable/disable, hostname changes, base-domain migration, adding new apps.
 ## Conventions
 
 - Each app lives in **its own namespace** (name = directory name).
-- Ingresses **always** specify `ingressClassName: nginx`,
-  `cert-manager.io/cluster-issuer`, and a wildcard TLS secret
-  (`wildcard-f4mily-net-tls` or `wildcard-cluster-f4mily-net-tls`).
+- Ingresses **always** specify `ingressClassName: nginx` and a reflected
+  wildcard TLS secret (`wildcard-f4mily-net-tls` or `wildcard-cluster-f4mily-net-tls`).
+  **Do not** set `cert-manager.io/cluster-issuer` on Ingresses — central
+  `Certificate` CRs + Reflector issue TLS; ingress-shim would conflict.
 - Pod security: `runAsNonRoot`, `allowPrivilegeEscalation: false`,
   explicit `runAsUser`. See `apps/base/audiobookshelf/deployment.yaml` for
   a reference.
