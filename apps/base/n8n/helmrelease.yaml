@@ -22,7 +22,7 @@ spec:
   values:
     image:
       repository: n8nio/n8n
-      tag: "2.21.2"
+      tag: "2.21.7"
     # Service MUST NOT be named "n8n" — K8s injects N8N_PORT=tcp://… and breaks the listener (502).
     # DNS: n8n-app.ai-ops.svc.cluster.local
     fullnameOverride: n8n-app
@@ -78,6 +78,17 @@ spec:
           value: https://n8n.cluster.f4mily.net/
         N8N_PROXY_HOPS:
           value: "1"
+        # n8n 2.x: Code nodes use task runners; internal mode is OK for single-replica homelab.
+        N8N_RUNNERS_ENABLED:
+          value: "true"
+        N8N_RUNNERS_MODE:
+          value: internal
+        # GitOps remediation workflow reads $env in Code nodes (see workflows/).
+        N8N_BLOCK_ENV_ACCESS_IN_NODE:
+          value: "false"
+        # Public editor URL behind ingress TLS (required for OIDC redirect if licensed later).
+        N8N_EDITOR_BASE_URL:
+          value: https://n8n.cluster.f4mily.net/
         GITHUB_API_URL:
           value: https://api.github.com
         GITHUB_REPO_OWNER:

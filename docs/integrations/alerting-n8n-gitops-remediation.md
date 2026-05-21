@@ -49,7 +49,7 @@ Webhook (in-cluster): `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmal
    ```
 
 2. Ensure both `*.secret.yaml` are listed in `kustomization.yaml`.
-3. Flux reconcile; n8n image is pinned in HelmRelease (`n8nio/n8n:1.123.46`).
+3. Flux reconcile; n8n image is pinned in HelmRelease (`n8nio/n8n:2.21.7`). See [n8n-auth.md](n8n-auth.md) for UI OAuth vs webhooks.
 4. Import workflow (uses pod env — **no** n8n Credentials UI for GitOps flow):
 
    ```bash
