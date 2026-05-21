@@ -3,5 +3,6 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - authentik-secret-key.secret.yaml
+  - blueprints/grafana-oauth.configmap.yaml
   - helmrelease.yaml
   - ingress.yaml

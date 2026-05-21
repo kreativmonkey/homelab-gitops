@@ -84,6 +84,20 @@ Runbooks für alle P0-Alerts angelegt.
 
 ---
 
+### Grafana ↔ Authentik (2026-05-21)
+
+| Task | Status |
+|------|--------|
+| Grafana Generic OAuth in HelmRelease | ✅ |
+| Authentik Blueprint (App + Provider) | ✅ |
+| SOPS `grafana-authentik-oauth` | ✅ (lokal erzeugt — committen) |
+| Entitlements in Authentik UI binden | ⬜ manuell |
+| Provider `client_secret` mit SOPS abgleichen | ⬜ manuell |
+
+Siehe [`docs/integrations/grafana-authentik.md`](docs/integrations/grafana-authentik.md).
+
+---
+
 ### Phase 5 — App-Alerts & Metriken (offen)
 
 | Task | Status |
