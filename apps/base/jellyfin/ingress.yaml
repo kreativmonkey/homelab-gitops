@@ -10,7 +10,6 @@ metadata:
     gethomepage.dev/group: Medien
     gethomepage.dev/icon: jellyfin.png
     gethomepage.dev/pod-selector: app=jellyfin
-    cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:

@@ -9,7 +9,6 @@ metadata:
     gethomepage.dev/description: PCM
     gethomepage.dev/group: Development
     gethomepage.dev/icon: mdi-tune-vertical
-    cert-manager.io/cluster-issuer: letsencrypt-production
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
