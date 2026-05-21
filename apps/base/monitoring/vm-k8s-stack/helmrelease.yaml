@@ -287,6 +287,40 @@ spec:
       ingress:
         enabled: false
 
+      # Generic OAuth via Authentik (login.f4mily.net, application slug: grafana)
+      # Requires Secret grafana-authentik-oauth — create with: just grafana-authentik-oauth
+      envValueFrom:
+        GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
+          secretKeyRef:
+            name: grafana-authentik-oauth
+            key: client-id
+        GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+          secretKeyRef:
+            name: grafana-authentik-oauth
+            key: client-secret
+      grafana.ini:
+        server:
+          root_url: https://grafana.cluster.f4mily.net
+        users:
+          auto_assign_org: true
+          auto_assign_org_role: Viewer
+        auth:
+          signout_redirect_url: https://login.f4mily.net/application/o/grafana/end-session/
+        auth.generic_oauth:
+          enabled: true
+          name: Authentik
+          scopes: openid profile email entitlements
+          auth_url: https://login.f4mily.net/application/o/grafana/authorize/
+          token_url: https://login.f4mily.net/application/o/grafana/token/
+          api_url: https://login.f4mily.net/application/o/grafana/userinfo/
+          allow_sign_up: true
+          use_pkce: true
+          role_attribute_path: >-
+            contains(entitlements[*], 'Grafana Admins') && 'Admin' ||
+            contains(entitlements[*], 'Grafana Editors') && 'Editor' ||
+            'Viewer'
+          allow_assign_grafana_admin: true
+
       podAnnotations:
         backup.velero.io/backup-volumes: grafana-storage
 
