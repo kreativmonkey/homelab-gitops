@@ -33,10 +33,23 @@
         "/\\.ya?ml$/"
       ],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n[^\\n]*?[\"']?(?<currentValue>[A-Za-z0-9][^\\s\"':]*)[\"']?\\s*(?:#.*)?$",
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n(?:[^\\n]*\\n)*?\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*(?:#.*)?$",
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n[^\\n]*?:\\s*[\"']?[^:\\s\"']+:(?<currentValue>[^\"'\\s]+)[\"']?\\s*(?:#.*)?$"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Immich shared image.tag (values.image.tag — avoids false match on redis/bitnami tags)",
+      "managerFilePatterns": [
+        "/apps/base/immich/helmrelease\\.yaml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=docker depName=ghcr\\.io/immich-app/immich-server[^\\n]*\\n\\s+tag:\\s*[\"']?(?<currentValue>v[^\\s\"']+)[\"']?"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "ghcr.io/immich-app/immich-server",
+      "versioningTemplate": "semver"
     },
     {
       "customType": "regex",
