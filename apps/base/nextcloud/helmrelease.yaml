@@ -94,6 +94,14 @@ spec:
       host: nextcloud.cluster.f4mily.net
       trustedDomains:
         - nextcloud.cluster.f4mily.net
+      # Required so the chart mounts defaultConfigs (autoconfig.php reads POSTGRES_*).
+      configs:
+        cluster.config.php: |-
+          <?php
+          $CONFIG = array(
+            'overwritehost' => 'nextcloud.cluster.f4mily.net',
+            'overwriteprotocol' => 'https',
+          );
       extraEnv:
         - name: TZ
           value: Europe/Berlin
