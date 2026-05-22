@@ -7,7 +7,8 @@ resources:
   - paperless-db-credentials.secret.yaml
   - goloom-db-credentials.secret.yaml
   - teslamate-db-credentials.secret.yaml
-  - linkwarden-db-credentials.secret.yaml
+  # linkwarden disabled in apps catalog — no linkwarden namespace
+  # - linkwarden-db-credentials.secret.yaml
   - tandoor-db-credentials.secret.yaml
 patches:
   - target:
@@ -70,16 +71,6 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: teslamate
-  - target:
-      kind: Secret
-      name: linkwarden-db-credentials
-    patch: |
-      - op: replace
-        path: /metadata/name
-        value: homelab-postgres-linkwarden
-      - op: replace
-        path: /metadata/namespace
-        value: linkwarden
   - target:
       kind: Secret
       name: tandoor-db-credentials
