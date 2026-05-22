@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watchyourlan-config
+  namespace: watchyourlan
+data:
+  # Talos/node LAN interfaces to scan (space-separated). Adjust per node if discovery fails.
+  IFACES: "eno1 eno2 eth0"
+  TZ: "Europe/Berlin"
+  PORT: "8840"

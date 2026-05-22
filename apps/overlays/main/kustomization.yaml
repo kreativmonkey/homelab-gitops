@@ -24,7 +24,7 @@ resources:
   - ../../base/audiobookshelf
   - ../../base/jellyfin
   - ../../base/kavita
-  - ../../base/tandoor             # wip: ingress only, no workload
+  - ../../base/tandoor
   - ../../base/paperless-ngx
   - ../../base/immich
 
@@ -32,18 +32,18 @@ resources:
   - ../../base/netbird
   # - ../../base/backrest            # wip: ingress only, no workload
   - ../../base/searxng
-  - ../../base/uptime-kuma         # wip: ingress only, no workload
-  - ../../base/unifi-controller    # wip: ingress only, no workload
+  - ../../base/uptime-kuma
+  - ../../base/unifi-controller
 
   # --- Cloud & Management -----------------------------------------------
   - ../../base/nextcloud
-  - ../../base/linkwarden          # wip: ingress only, no workload
+  - ../../base/linkwarden
   - ../../base/authentik
   - ../../base/homepage
 
   # --- Network Monitoring -----------------------------------------------
   # - ../../base/speedtest-tracker   # wip: ingress only, no workload
-  - ../../base/watchyourlan        # wip: ingress only, no workload
+  - ../../base/watchyourlan
 
   # --- Development / Misc -----------------------------------------------
   - ../../base/teslamate

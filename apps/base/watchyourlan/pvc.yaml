@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: watchyourlan-data
+  namespace: watchyourlan
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn-1
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,63 @@
+# Talos OS upgrade Plan for Rancher System Upgrade Controller.
+# Opt-in: label nodes with `talos.dev/upgrade=true` (see README in repo docs / cluster-access).
+#
+# Installer image must match homelab-infrastructure/talos (main.tf machine.install.image):
+# factory.talos.dev/nocloud-installer/<talos_schematic_id>:<talos_version>
+# Schematic ID: homelab-infrastructure/talos/cluster.auto.tfvars → talos_schematic_id
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: talos
+  namespace: system-upgrade
+  labels:
+    app.kubernetes.io/name: system-upgrade-controller
+    app.kubernetes.io/component: talos-upgrade
+spec:
+  # One node at a time — safe for stacked control-plane + K3s workloads.
+  concurrency: 1
+  exclusive: true
+  serviceAccountName: system-upgrade
+  # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
+  version: v1.13.2
+  nodeSelector:
+    matchLabels:
+      talos.dev/upgrade: "true"
+  cordon: true
+  drain:
+    force: true
+    ignoreDaemonSets: true
+    deleteLocalData: true
+    timeout: 600
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/etcd
+      operator: Exists
+      effect: NoExecute
+    - key: CriticalAddonsOnly
+      operator: Exists
+  upgrade:
+    # Runner: talosctl talks to local apid via Unix socket (Talos has no SSH/shell).
+    image: ghcr.io/siderolabs/talosctl
+    command:
+      - /bin/sh
+      - -ec
+    args:
+      - |
+        set -euo pipefail
+        ENDPOINT="unix:///host/system/run/apid/apid.sock"
+        # Keep in sync with talos_schematic_id in homelab-infrastructure/talos/cluster.auto.tfvars
+        INSTALLER_IMAGE="factory.talos.dev/nocloud-installer/10f9392d7091b30abf573524649756e5bc894f653af525836e9ab0297f301fc2:${SYSTEM_UPGRADE_PLAN_LATEST_VERSION}"
+        exec talosctl -e "${ENDPOINT}" upgrade \
+          --image="${INSTALLER_IMAGE}" \
+          --wait=false \
+          --timeout=15m
+    securityContext:
+      privileged: true
+    volumes:
+      # Explicit apid socket mount (SUC also mounts host / at /host; this documents Talos API access).
+      - name: apid-sock
+        source: /system/run/apid
+        destination: /host/system/run/apid

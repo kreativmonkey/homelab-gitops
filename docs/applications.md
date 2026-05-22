@@ -60,16 +60,16 @@ here so it is obvious what is **planned** but not deployed:
 
 | App                | Status | Reason                                    |
 |--------------------|--------|-------------------------------------------|
-| tandoor            | wip    | ingress only, missing HelmRelease         |
+| tandoor            | on     | Deployment + CNPG + NFS media/static        |
 | netbird            | on     | DaemonSet (hostNetwork), routing to cluster |
 | backrest           | wip    | ingress only, missing HelmRelease         |
 | searxng            | on     | Deployment + ingress at search.f4mily.net |
-| uptime-kuma        | wip    | ingress only, missing Deployment          |
-| unifi-controller   | wip    | ingress only, missing HelmRelease         |
+| uptime-kuma        | on     | Deployment + Longhorn PVC                 |
+| unifi-controller   | on     | linuxserver + MongoDB, NodePort inform    |
 | nextcloud          | on     | HelmRelease + CNPG + NFS at cluster domain  |
-| linkwarden         | wip    | ingress only, missing HelmRelease         |
+| linkwarden         | on     | Deployment + Meilisearch + CNPG           |
 | speedtest-tracker  | wip    | ingress only, missing Deployment          |
-| watchyourlan       | wip    | ingress only, missing Deployment          |
+| watchyourlan       | on     | DaemonSet (hostNetwork), scan via IFACES  |
 | teslamate          | on     | Deployment, Mosquitto, CNPG, teslamate.cluster.f4mily.net |
 | goloom             | on     | Deployment, CNPG PostgreSQL, goloom.cluster.f4mily.net |
 | pcm                | wip    | ingress only, missing HelmRelease         |
