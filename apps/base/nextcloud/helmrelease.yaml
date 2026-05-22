@@ -102,6 +102,28 @@ spec:
             'overwritehost' => 'nextcloud.cluster.f4mily.net',
             'overwriteprotocol' => 'https',
           );
+      extraInitContainers:
+        - name: data-perms
+          image: docker.io/library/nextcloud:33.0.3-apache
+          securityContext:
+            runAsUser: 0
+          command:
+            - /bin/sh
+            - -ec
+            - chown -R 33:33 /var/www/html /var/www/html/data /var/www/html/config /var/www/custom_apps || true
+          volumeMounts:
+            - name: nextcloud-main
+              mountPath: /var/www/html
+              subPath: docker/nextcloud/html
+            - name: nextcloud-main
+              mountPath: /var/www/html/config
+              subPath: docker/nextcloud/config
+            - name: nextcloud-main
+              mountPath: /var/www/html/data
+              subPath: docker/nextcloud/data
+            - name: nextcloud-main
+              mountPath: /var/www/custom_apps
+              subPath: docker/nextcloud/custom_apps
       extraEnv:
         - name: TZ
           value: Europe/Berlin
