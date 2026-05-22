@@ -23,7 +23,7 @@ kubectl get secret -n paperless-ngx homelab-postgres-paperless
 Per app on the Docker host:
 
 ```bash
-docker exec -t <postgres_container> pg_dump -U <user> -Fc <dbname> > /backup/<app>.dump
+docker exec <postgres_container> pg_dump -U <user> -Fc <dbname> > /backup/<app>.dump
 ```
 
 ## 3. Data import into CNPG

@@ -302,6 +302,8 @@ replacements:
         fieldPaths: [spec.values.ingress.tls.0.secretName]
       - select: {kind: Ingress, name: searxng}
         fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: immich}
+        fieldPaths: [spec.tls.0.secretName]
 
   - source:
       kind: ConfigMap
@@ -309,8 +311,6 @@ replacements:
       fieldPath: data.clusterTlsSecret
     targets:
       - select: {kind: Ingress, name: authentik}
-        fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: immich}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: tandoor}
         fieldPaths: [spec.tls.0.secretName]

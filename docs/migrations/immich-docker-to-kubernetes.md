@@ -18,7 +18,7 @@ PVCs).
 | Redis | `immich_redis` (Valkey 8) | In-cluster Redis (Bitnami legacy image, **no persistence**) |
 | Library | `/mnt/truenas/Media/Bilder` → `/usr/src/app/upload` | PVC `immich-library` → NFS `Media` + `subPath: Bilder` |
 | Fotos | `/mnt/truenas/Media/Fotos` → `/fotos` | PVC `immich-fotos` → NFS `Media` + `subPath: Fotos` |
-| Ingress | Traefik `immich.f4mily.net` | NGINX `immich.cluster.f4mily.net` (cutover → `immich.f4mily.net`) |
+| Ingress | Traefik `immich.f4mily.net` | NGINX `immich.f4mily.net` |
 | Power Tools | `immich-power-tools` (optional) | Not deployed on cluster yet |
 
 Photos and videos **do not need to be copied** if the cluster NFS PVs point at the
@@ -77,7 +77,8 @@ docker exec immich_postgres pg_isready -U "${DB_USERNAME:-postgres}"
 BACKUP_DIR="/backup/immich-migration-$(date +%Y%m%d)"
 mkdir -p "$BACKUP_DIR"
 
-docker exec -t immich_postgres pg_dump \
+# No "-t" on docker exec — a TTY corrupts binary custom-format dumps (pg_restore segfault / EOF).
+docker exec immich_postgres pg_dump \
   -U "${DB_USERNAME:-postgres}" \
   -Fc \
   --no-owner \
@@ -97,7 +98,7 @@ Using container names from `Migration/Immich/compose.yml`:
 ### Plain SQL (alternative)
 
 ```bash
-docker exec -t immich_postgres pg_dump \
+docker exec immich_postgres pg_dump \
   -U "${DB_USERNAME:-postgres}" \
   -Fp \
   --no-owner \
@@ -165,13 +166,35 @@ role `immich`.
 
 ## Phase 4 — Database import into CNPG
 
-Port-forward the primary:
+### Recommended: plain SQL (`immich.sql`)
+
+Avoids `pg_restore` segfaults on corrupted or cross-version custom dumps. From the
+repo workstation (NodePort `immich-postgres-restore` on control-plane LAN IP, port
+`30432` — remove after migration):
+
+```bash
+Migration/Immich/scripts/restore-to-cnpg.sh /backup/immich-migration-YYYYMMDD/immich.sql
+```
+
+Or manually:
+
+```bash
+export PGPASSWORD="$(kubectl get secret -n immich homelab-postgres-immich -o jsonpath='{.data.password}' | base64 -d)"
+nix shell nixpkgs#postgresql_16 --command psql \
+  -h 192.168.10.43 -p 30432 -U immich -d immich -v ON_ERROR_STOP=1 \
+  -f /backup/immich-migration-YYYYMMDD/immich.sql
+```
+
+### Alternative: custom format (`pg_restore`)
+
+Only if `pg_restore -l immich.dump | wc -l` reports **hundreds+** lines (not `0` or
+segfault). **Never** use `docker exec -t` when creating the dump (see Phase 2).
+
+Port-forward (if kubelet/exec from your machine works):
 
 ```bash
 kubectl port-forward -n cnpg-system svc/immich-postgres-rw 15432:5432
 ```
-
-In another terminal (credentials from cluster secret):
 
 ```bash
 export PGPASSWORD="$(
@@ -188,21 +211,14 @@ pg_restore \
   -p 15432 \
   -U "$PGUSER" \
   -d immich \
-  --clean \
-  --if-exists \
   --no-owner \
   --no-acl \
   /backup/immich-migration-YYYYMMDD/immich.dump
 ```
 
-**PG 14 → 16:** use a `pg_restore` client from PostgreSQL 16+ (included in
-`nix develop`). Harmless errors about missing roles or extensions often appear;
-fix missing extensions with:
-
-```bash
-kubectl exec -n cnpg-system immich-postgres-1 -- \
-  psql -U postgres -d immich -c '\dx'
-```
+**PG 14 → 16:** use a `pg_restore` client from PostgreSQL 16+ (e.g. `nix shell
+nixpkgs#postgresql_16`). Extensions on `immich-postgres` must already include
+`vector`, `vchord`, `cube`, `earthdistance` before import.
 
 Post-restore checks:
 
@@ -224,7 +240,7 @@ kubectl -n immich logs deployment/immich-server --tail=80
 
 Smoke test (before public DNS):
 
-- https://immich.cluster.f4mily.net — login with migrated users
+- https://immich.f4mily.net — login with migrated users
 - Library scan: Admin → Library → Scan (if assets exist on NFS but counts look wrong)
 
 ## Phase 6 — DNS cutover
@@ -255,6 +271,16 @@ docker compose down
 
 Production runs `immich-power-tools` with API key and DB access. Not part of the
 cluster Helm release. Re-deploy separately or omit until Immich on cluster is stable.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---------|--------|-----|
+| `pg_restore` exit **139** (segfault) | Corrupt `-Fc` dump (often `docker exec -t`) | Re-run Phase 2 **without** `-t`; prefer `immich.sql` + Phase 4 SQL import |
+| `pg_restore -l` → **0** lines | Same | New dump; verify `pg_restore -l … \| wc -l` ≫ 0 before upload |
+| Millions of `\r` / `\x1b` in dump | TTY on `docker exec -t` | Use `Migration/Immich/scripts/backup-db.sh` |
+| `kubectl logs` / `exec` fails | Kubelet on node IPs unreachable from laptop | Use NodePort + `psql` from LAN, or in-cluster Jobs writing status to table `_restore_status` |
+| Job `Pending` (memory) | Control-plane RAM full | Delete failed restore Jobs; import via workstation `psql` only |
 
 ## Related docs
 
