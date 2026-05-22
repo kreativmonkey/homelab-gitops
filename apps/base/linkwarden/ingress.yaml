@@ -9,6 +9,7 @@ metadata:
     gethomepage.dev/description: Bookmarks
     gethomepage.dev/group: Office
     gethomepage.dev/icon: linkwarden.png
+    gethomepage.dev/app: linkwarden
     gethomepage.dev/pod-selector: app=linkwarden
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"

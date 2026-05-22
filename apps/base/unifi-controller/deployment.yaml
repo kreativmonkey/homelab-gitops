@@ -1,0 +1,202 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unifi-mongo
+  namespace: unifi-controller
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: unifi-mongo
+  template:
+    metadata:
+      labels:
+        app: unifi-mongo
+    spec:
+      containers:
+        - name: mongo
+          image: docker.io/mongo:7.0.18
+          ports:
+            - containerPort: 27017
+              name: mongo
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: root
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: unifi-app
+                  key: MONGO_INITDB_ROOT_PASSWORD
+            - name: MONGO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: unifi-app
+                  key: MONGO_USER
+            - name: MONGO_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: unifi-app
+                  key: MONGO_PASS
+            - name: MONGO_DBNAME
+              value: unifi
+            - name: MONGO_AUTHSOURCE
+              value: admin
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: unifi-mongo-data
+        - name: init
+          configMap:
+            name: unifi-mongo-init
+            defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-mongo
+  namespace: unifi-controller
+spec:
+  ports:
+    - port: 27017
+      targetPort: mongo
+      name: mongo
+  selector:
+    app: unifi-mongo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unifi-controller
+  namespace: unifi-controller
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: unifi-controller
+  template:
+    metadata:
+      labels:
+        app: unifi-controller
+        app.kubernetes.io/name: unifi-controller
+    spec:
+      initContainers:
+        - name: wait-mongo
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z unifi-mongo 27017; do
+                echo "waiting for mongo..."
+                sleep 2
+              done
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        - name: unifi-controller
+          image: lscr.io/linuxserver/unifi-network-application:8.6.9
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8443
+              name: https
+            - containerPort: 8080
+              name: inform
+            - containerPort: 3478
+              protocol: UDP
+              name: stun
+            - containerPort: 10001
+              protocol: UDP
+              name: ap-discovery
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Berlin
+            - name: MEM_LIMIT
+              value: "1024"
+            - name: MEM_STARTUP
+              value: "1024"
+            - name: MONGO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: unifi-app
+                  key: MONGO_USER
+            - name: MONGO_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: unifi-app
+                  key: MONGO_PASS
+            - name: MONGO_HOST
+              value: unifi-mongo
+            - name: MONGO_PORT
+              value: "27017"
+            - name: MONGO_DBNAME
+              value: unifi
+            - name: MONGO_AUTHSOURCE
+              value: admin
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: true
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: unifi-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-controller
+  namespace: unifi-controller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8443
+      targetPort: https
+      name: https
+  selector:
+    app: unifi-controller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-controller-inform
+  namespace: unifi-controller
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: inform
+      nodePort: 30080
+      name: inform
+  selector:
+    app: unifi-controller

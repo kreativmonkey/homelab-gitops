@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: watchyourlan
+  namespace: watchyourlan
+spec:
+  selector:
+    matchLabels:
+      app: watchyourlan
+  template:
+    metadata:
+      labels:
+        app: watchyourlan
+        app.kubernetes.io/name: watchyourlan
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      tolerations:
+        - operator: Exists
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: watchyourlan
+          image: docker.io/aceberg/watchyourlan:2.1.4
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: watchyourlan-config
+          volumeMounts:
+            - name: data
+              mountPath: /data/WatchYourLAN
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_RAW
+                - NET_ADMIN
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: watchyourlan-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: watchyourlan
+  namespace: watchyourlan
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8840
+      name: http
+  selector:
+    app: watchyourlan

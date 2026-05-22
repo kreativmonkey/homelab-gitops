@@ -396,3 +396,51 @@ spec:
   claimRef:
     name: nextcloud-data
     namespace: nextcloud
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-tandoor-static
+  labels:
+    app: tandoor
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media
+    server: 192.168.10.94
+  claimRef:
+    name: tandoor-static
+    namespace: tandoor
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-tandoor-media
+  labels:
+    app: tandoor
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media
+    server: 192.168.10.94
+  claimRef:
+    name: tandoor-media
+    namespace: tandoor

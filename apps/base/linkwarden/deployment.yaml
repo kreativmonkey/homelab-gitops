@@ -1,0 +1,199 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meilisearch
+  namespace: linkwarden
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: meilisearch
+  template:
+    metadata:
+      labels:
+        app: meilisearch
+    spec:
+      containers:
+        - name: meilisearch
+          image: docker.io/getmeili/meilisearch:v1.12.8
+          ports:
+            - containerPort: 7700
+              name: http
+          env:
+            - name: MEILI_NO_ANALYTICS
+              value: "true"
+            - name: MEILI_ENV
+              value: production
+            - name: MEILI_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: linkwarden-app
+                  key: MEILI_MASTER_KEY
+          volumeMounts:
+            - name: data
+              mountPath: /meili_data
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: linkwarden-meili-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meilisearch
+  namespace: linkwarden
+spec:
+  ports:
+    - port: 7700
+      targetPort: http
+      name: http
+  selector:
+    app: meilisearch
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwarden
+  namespace: linkwarden
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-linkwarden
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: linkwarden
+  template:
+    metadata:
+      labels:
+        app: linkwarden
+        app.kubernetes.io/name: linkwarden
+    spec:
+      initContainers:
+        - name: wait-meilisearch
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z meilisearch 7700; do
+                echo "waiting for meilisearch..."
+                sleep 2
+              done
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        - name: linkwarden
+          image: ghcr.io/linkwarden/linkwarden:v2.13.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: TZ
+              value: Europe/Berlin
+            - name: NEXTAUTH_URL
+              value: https://linkwarden.f4mily.net/api/v1/auth
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: linkwarden-app
+                  key: NEXTAUTH_SECRET
+            - name: MEILI_HOST
+              value: http://meilisearch:7700
+            - name: MEILI_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: linkwarden-app
+                  key: MEILI_MASTER_KEY
+            - name: NEXT_PUBLIC_AUTHENTIK_ENABLED
+              value: "true"
+            - name: AUTHENTIK_CUSTOM_NAME
+              value: Authentik
+            - name: AUTHENTIK_ISSUER
+              value: https://login.f4mily.net/application/o/linkwarden
+            - name: AUTHENTIK_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: linkwarden-app
+                  key: AUTHENTIK_CLIENT_ID
+            - name: AUTHENTIK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: linkwarden-app
+                  key: AUTHENTIK_CLIENT_SECRET
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-linkwarden
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-linkwarden
+                  key: password
+            - name: DATABASE_URL
+              value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@homelab-postgres-rw.cnpg-system.svc.cluster.local:5432/linkwarden
+          volumeMounts:
+            - name: data
+              mountPath: /data/data
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: linkwarden-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: linkwarden
+  namespace: linkwarden
+spec:
+  ports:
+    - port: 3000
+      targetPort: http
+      name: http
+  selector:
+    app: linkwarden

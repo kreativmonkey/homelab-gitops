@@ -6,5 +6,6 @@ resources:
   - network/external-dns
   - network/ingress
   - metrics-server
+  - system-upgrade-controller
   - backup
   - database
