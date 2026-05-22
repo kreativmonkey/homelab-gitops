@@ -38,7 +38,7 @@ resources:
 
   # --- Cloud & Management -----------------------------------------------
   - ../../base/nextcloud
-  - ../../base/linkwarden
+  # - ../../base/linkwarden          # disabled: temporarily removed from catalog
   - ../../base/authentik
   - ../../base/homepage
 
@@ -173,16 +173,6 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
-      fieldPath: data.host_linkwarden
-    targets:
-      - select: {kind: Ingress, name: linkwarden}
-        fieldPaths:
-          - spec.rules.0.host
-          - spec.tls.0.hosts.0
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
       fieldPath: data.host_watchyourlan
     targets:
       - select: {kind: Ingress, name: watchyourlan}
@@ -308,8 +298,6 @@ replacements:
       - select: {kind: Ingress, name: searxng}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: tandoor}
-        fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: linkwarden}
         fieldPaths: [spec.tls.0.secretName]
 
   - source:
