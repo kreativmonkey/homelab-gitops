@@ -76,6 +76,15 @@ DR patches include `cnpg.io/skipEmptyWalArchiveCheck: enabled` when reusing the 
 | PVCs stuck `longhorn-1 not found` | `storageclass.yaml` not in `infra-storage` kustomization | Fixed in `infrastructure/base/storage/kustomization.yaml` |
 | Paperless `secret paperless-ngx not found` | App secret not in Git | `apps/overlays/main/paperless-ngx.secret.yaml` (SOPS) |
 | UI unreachable via VIP `.245` | Ingress uses `hostNetwork` on node IPs | Use `https://<node-ip>` or DNS to `.41`/`.42`/`.43`, not API VIP |
+| `infra-storage` fails on StorageClass `longhorn` | Git must not redefine Helm-owned SC | Only `storageclass-longhorn-1.yaml` in kustomize |
+
+## Reach apps after rebuild
+
+Ingress NGINX runs as **hostNetwork DaemonSet** on every control-plane node. The API VIP (`192.168.10.245`) is **not** the ingress endpoint.
+
+- Open apps via node IP, e.g. `https://192.168.10.41` with Host header `home.f4mily.net`, or
+- Point DNS for `*.f4mily.net` at `192.168.10.41` (or `.42`/`.43`), not `.245`.
+- TLS: `wildcard-f4mily.net` cert must be Ready (`kubectl get certificate -n cert-manager`).
 
 ## Validate full stack
 
