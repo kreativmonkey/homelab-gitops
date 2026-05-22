@@ -14,7 +14,6 @@ spec:
         app: searxng
         app.kubernetes.io/name: searxng
     spec:
-      # Avoid K8s injecting SEARXNG_PORT=tcp://... (breaks Granian bind).
       enableServiceLinks: false
       securityContext:
         fsGroup: 977
@@ -24,23 +23,27 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       initContainers:
-        - name: copy-config
-          image: busybox:1.37
+        - name: bootstrap-config
+          image: docker.io/searxng/searxng:2025.2.7-739822f70
+          imagePullPolicy: IfNotPresent
           command:
-            - sh
-            - -c
+            - /bin/sh
+            - -ec
             - |
-              cp /config/settings.yml /etc/searxng/settings.yml
-              cp /config/limiter.toml /etc/searxng/limiter.toml
+              cp -a /etc/searxng/. /mnt/etc/searxng/
+              cp /config/settings.yml /mnt/etc/searxng/settings.yml
           securityContext:
+            runAsUser: 977
+            runAsGroup: 977
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
           volumeMounts:
+            - name: etc-searxng
+              mountPath: /mnt/etc/searxng
             - name: config-source
               mountPath: /config
-            - name: config
-              mountPath: /etc/searxng
+              readOnly: true
       containers:
         - name: searxng
           image: docker.io/searxng/searxng:2025.2.7-739822f70
@@ -91,11 +94,12 @@ spec:
             limits:
               memory: 512Mi
           volumeMounts:
-            - name: config
+            - name: etc-searxng
               mountPath: /etc/searxng
       volumes:
+        - name: etc-searxng
+          emptyDir: {}
         - name: config-source
           configMap:
             name: searxng-settings
-        - name: config
-          emptyDir: {}
+            defaultMode: 0644
