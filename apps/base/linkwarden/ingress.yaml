@@ -7,8 +7,9 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: Linkwarden
     gethomepage.dev/description: Bookmarks
-    gethomepage.dev/group: Cloud & Auth
+    gethomepage.dev/group: Office
     gethomepage.dev/icon: linkwarden.png
+    gethomepage.dev/pod-selector: app=linkwarden
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:

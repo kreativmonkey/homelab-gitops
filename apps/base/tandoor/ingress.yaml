@@ -9,6 +9,7 @@ metadata:
     gethomepage.dev/description: Recipes
     gethomepage.dev/group: Medien
     gethomepage.dev/icon: tandoor-recipes.png
+    gethomepage.dev/pod-selector: app=tandoor
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
