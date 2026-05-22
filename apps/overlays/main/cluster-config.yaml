@@ -46,7 +46,7 @@ data:
   # Staging on cluster wildcard before moving production DNS:
   host_authentik: authentik.cluster.f4mily.net
   host_homepage: home.f4mily.net
-  host_immich: immich.cluster.f4mily.net
+  host_immich: immich.f4mily.net
   host_jellyfin: jellyfin.f4mily.net
   host_kavita: books.f4mily.net
   host_paperless: paperless.f4mily.net
