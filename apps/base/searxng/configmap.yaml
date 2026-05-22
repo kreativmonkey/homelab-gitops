@@ -6,21 +6,9 @@ metadata:
 data:
   settings.yml: |
     use_default_settings: true
-    general:
-      instance_name: "search"
     server:
-      port: 8080
-      bind_address: "0.0.0.0"
       limiter: false
-      image_proxy: false
-      public_instance: true
-    redis:
-      url: false
-    search:
-      safe_search: 0
-      autocomplete: ""
-      formats:
-        - html
+      bind_address: "0.0.0.0"
   limiter.toml: |
     [botdetection]
 
