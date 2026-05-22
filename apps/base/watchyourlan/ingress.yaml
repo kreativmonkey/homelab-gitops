@@ -9,6 +9,7 @@ metadata:
     gethomepage.dev/description: LAN discovery
     gethomepage.dev/group: Infrastructure
     gethomepage.dev/icon: watchyourlan.png
+    gethomepage.dev/pod-selector: app=watchyourlan
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
