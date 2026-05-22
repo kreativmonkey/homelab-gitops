@@ -173,6 +173,9 @@ When migrating an app from Longhorn → NFS, you must first delete the
 existing `Bound` PVC. PVC specs (storageClassName, accessModes,
 volumeName) are **immutable**. See `docs/migrations/nfs-migration.md`.
 
+**Immich (Docker → cluster):** `docs/migrations/immich-docker-to-kubernetes.md` — production
+compose reference in repo root `Migration/Immich/`.
+
 ## 5. Reconciliation cheat sheet
 
 ```bash
