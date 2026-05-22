@@ -19,6 +19,7 @@ resources:
   # --- Cross-cutting (databases & secrets for apps in this overlay) -----
   - databases
   - db-secrets
+  - paperless-ngx.secret.yaml
 
   # --- Media & Documents ------------------------------------------------
   - ../../base/audiobookshelf
