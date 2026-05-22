@@ -91,9 +91,9 @@ spec:
         type: Recreate
     startupProbe:
       enabled: true
-      initialDelaySeconds: 60
-      periodSeconds: 15
-      failureThreshold: 120
+      initialDelaySeconds: 120
+      periodSeconds: 20
+      failureThreshold: 180
     livenessProbe:
       initialDelaySeconds: 60
       failureThreshold: 6

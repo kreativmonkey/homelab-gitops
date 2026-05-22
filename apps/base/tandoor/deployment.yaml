@@ -28,6 +28,9 @@ spec:
             - containerPort: 8080
               name: http
           env:
+            # boot.sh nginx template: listen ${TANDOOR_PORT} (default 80 binds wrong on k8s)
+            - name: TANDOOR_PORT
+              value: "8080"
             - name: TZ
               value: Europe/Berlin
             - name: SECRET_KEY
