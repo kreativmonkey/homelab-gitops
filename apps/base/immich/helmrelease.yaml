@@ -53,16 +53,16 @@ spec:
       DB_HOSTNAME: immich-postgres-rw.cnpg-system.svc.cluster.local
       DB_PORT: "5432"
       DB_DATABASE_NAME: immich
-      # v1.119 supports pgvector or pgvecto.rs only; VectorChord needs Immich v2+.
-      DB_VECTOR_EXTENSION: pgvector
+      # VectorChord on immich-postgres; omit DB_VECTOR_EXTENSION so Immich auto-detects vchord.
+    # Shared tag for immich-server + immich-machine-learning (chart 0.9.x).
+    image:
+      # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server versioning=semver
+      tag: v2.7.5
     immich:
       persistence:
         library:
           existingClaim: immich-library
     server:
-      image:
-        # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
-        tag: v1.119.0
       persistence:
         library:
           subPath: Bilder

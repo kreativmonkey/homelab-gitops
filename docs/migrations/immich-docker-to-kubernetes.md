@@ -12,7 +12,7 @@ PVCs).
 
 | Component | Docker (production) | Kubernetes (homelab) |
 |-----------|---------------------|----------------------|
-| App | `immich_server` — `ghcr.io/immich-app/immich-server:release` | Helm chart `immich` — image tag `v1.119.0` (pin in `helmrelease.yaml`) |
+| App | `immich_server` — `ghcr.io/immich-app/immich-server:release` (prod: **v2.7.5**) | Helm chart `immich` — shared `values.image.tag` (e.g. `v2.7.5` in `helmrelease.yaml`) |
 | ML | `immich_machine_learning` | Chart subchart `machine-learning` |
 | DB | `immich_postgres` — `ghcr.io/immich-app/postgres:14-vectorchord…` | CNPG `immich-postgres` — `ghcr.io/tensorchord/cloudnative-vectorchord:16.9-0.4.3` |
 | Redis | `immich_redis` (Valkey 8) | In-cluster Redis (Bitnami legacy image, **no persistence**) |
@@ -34,19 +34,18 @@ migrated; Redis is ephemeral.
 - [ ] NFS PVCs bound: `immich-library`, `immich-fotos` in namespace `immich`.
 - [ ] Dev shell: `nix develop` (provides `kubectl`, `pg_restore`, `flux`).
 - [ ] Maintenance window (Immich offline for DB export/import).
-- [ ] **Version check:** align production Immich tag with cluster `helmrelease.yaml`
-  (`server.image.tag`). Production uses `:release`; cluster pins `v1.119.0`.
-  Major version skew can break schema restore — note prod version before cutover:
+- [ ] **Version check:** align production Immich tag with cluster `values.image.tag` in
+  `helmrelease.yaml`. Production uses `:release` (currently **v2.7.5**); cluster should
+  match before DB restore. Note prod version before cutover:
 
 ```bash
 docker inspect immich_server --format '{{.Config.Image}}'
 docker exec immich_server immich-admin version 2>/dev/null || true
 ```
 
-- [ ] **Vector extension:** production Postgres image ships VectorChord; cluster
-  Helm sets `DB_VECTOR_EXTENSION: pgvector` for Immich **v1.119**. After restore,
-  verify `\dx` and Immich startup logs. Upgrading to Immich v2+ may require
-  `DB_VECTOR_EXTENSION` / chart changes — see
+- [ ] **Vector extension:** production and cluster use VectorChord on `immich-postgres`.
+  Do **not** set `DB_VECTOR_EXTENSION=pgvector` on v2.x — Immich auto-detects `vchord`.
+  Verify `\dx` and startup logs after restore — see
   [Immich: pre-existing Postgres](https://docs.immich.app/administration/postgres-standalone).
 
 ## Phase 1 — Stop writes on Docker (production host)
