@@ -6,6 +6,8 @@ resources:
   - teslamate-app.secret.yaml
   - mosquitto.yaml
   - deployment.yaml
+  - deployment-grafana.yaml
   - service.yaml
+  - service-grafana.yaml
   - ingress.yaml
   - ingress-grafana.yaml
