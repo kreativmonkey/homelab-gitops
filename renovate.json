@@ -14,62 +14,41 @@
     "enabled": true
   },
   "helm-values": {
-    "enabled": true,
     "managerFilePatterns": [
-      "/\\.yaml$/",
-      "/\\.yml$/"
+      "/(^|/)helmrelease\\.ya?ml$/",
+      "/(^|/)values\\.ya?ml$/"
+    ]
+  },
+  "kubernetes": {
+    "managerFilePatterns": [
+      "/(^|/)deployment\\.ya?ml$/",
+      "/(^|/)helmrelease\\.ya?ml$/"
     ]
   },
   "customManagers": [
     {
       "customType": "regex",
-      "description": "CloudNativePG PostgreSQL image in Cluster CR",
+      "description": "Generic '# renovate: datasource=X depName=Y [versioning=Z] [extractVersion=R]' marker — covers tag-only fields (tag: vX) AND fully-qualified image refs (imageName: repo:tag, value: \"repo:tag\")",
       "managerFilePatterns": [
-        "/infrastructure/overlays/.*/database-clusters/.*\\.yaml$/"
+        "/\\.ya?ml$/"
       ],
       "matchStrings": [
-        "imageName:\\s*ghcr\\.io/cloudnative-pg/postgresql:(?<currentValue>[^\\s]+)"
-      ],
-      "datasourceTemplate": "docker",
-      "depNameTemplate": "ghcr.io/cloudnative-pg/postgresql",
-      "versioningTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "description": "CNPG operator image tag in HelmRelease values",
-      "managerFilePatterns": [
-        "/infrastructure/.*/database/cnpg/helmrelease\\.yaml$/"
-      ],
-      "matchStrings": [
-        "tag:\\s*\"(?<currentValue>[^\"]+)\""
-      ],
-      "datasourceTemplate": "docker",
-      "depNameTemplate": "ghcr.io/cloudnative-pg/cloudnative-pg",
-      "versioningTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "description": "n8n container image tag in HelmRelease",
-      "managerFilePatterns": [
-        "/apps/base/n8n/helmrelease\\.yaml$/"
-      ],
-      "matchStrings": [
-        "tag:\\s*\"(?<currentValue>[^\"]+)\""
-      ],
-      "datasourceTemplate": "docker",
-      "depNameTemplate": "n8nio/n8n",
-      "versioningTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "description": "Talos version in System Upgrade Controller Plan",
-      "managerFilePatterns": [
-        "/infrastructure/overlays/main/system-upgrade-controller/talos-plan\\.yaml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)( versioning=(?<versioning>[^\\s]+))?\\s+version:\\s*(?<currentValue>v[^\\s]+)"
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n[^\\n]*?[\"']?(?<currentValue>[A-Za-z0-9][^\\s\"':]*)[\"']?\\s*(?:#.*)?$",
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n[^\\n]*?:\\s*[\"']?[^:\\s\"']+:(?<currentValue>[^\"'\\s]+)[\"']?\\s*(?:#.*)?$"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "VictoriaMetrics operator env-var images (`- name: VM_*_IMAGE` followed by `value: \"repo:tag\"`)",
+      "managerFilePatterns": [
+        "/(^|/)apps/base/monitoring/vm-k8s-stack/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "- name:\\s+VM_\\S+_IMAGE\\s*\\n\\s*value:\\s*[\"']?(?<depName>[^:\"'\\s]+):(?<currentValue>[^\"'\\s]+)[\"']?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "loose"
     },
     {
       "customType": "regex",
@@ -108,6 +87,7 @@
       "enabled": false
     },
     {
+      "description": "Group all flux Helm chart bumps (except kite)",
       "matchManagers": [
         "flux"
       ],
@@ -120,14 +100,35 @@
       "automerge": false
     },
     {
+      "description": "Group all helm-values image bumps (except kite)",
       "matchManagers": [
         "helm-values"
       ],
       "matchFileNames": [
         "!apps/base/kite/**"
       ],
-      "groupName": "helm chart versions",
-      "groupSlug": "helm-chart-versions",
+      "groupName": "helm chart values",
+      "groupSlug": "helm-chart-values",
+      "minimumReleaseAge": "7 days",
+      "automerge": false
+    },
+    {
+      "description": "Group raw kubernetes Deployment image bumps",
+      "matchManagers": [
+        "kubernetes"
+      ],
+      "groupName": "kubernetes deployments",
+      "groupSlug": "kubernetes-deployments",
+      "minimumReleaseAge": "7 days",
+      "automerge": false
+    },
+    {
+      "description": "Group renovate marker bumps (custom.regex)",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "groupName": "renovate markers",
+      "groupSlug": "renovate-markers",
       "minimumReleaseAge": "7 days",
       "automerge": false
     },
@@ -140,11 +141,12 @@
       "automerge": true
     },
     {
-      "description": "Group Talos SUC Plan with other Talos release bumps",
-      "matchManagers": ["custom.regex"],
-      "matchDepNames": ["siderolabs/talos"],
-      "matchFileNames": [
-        "infrastructure/overlays/main/system-upgrade-controller/**"
+      "description": "Talos SUC Plan + Talos terraform inputs grouped",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDepNames": [
+        "siderolabs/talos"
       ],
       "groupName": "talos linux",
       "automerge": false
@@ -153,6 +155,7 @@
       "description": "Auto-merge patch updates for low-risk dashboards",
       "matchManagers": [
         "flux",
+        "kubernetes",
         "docker"
       ],
       "matchUpdateTypes": [
