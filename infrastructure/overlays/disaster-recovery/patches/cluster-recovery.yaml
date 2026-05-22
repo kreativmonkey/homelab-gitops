@@ -4,6 +4,9 @@ kind: Cluster
 metadata:
   name: homelab-postgres
   namespace: cnpg-system
+  annotations:
+    # Restore into same S3 prefix/serverName as production backups (see cnpg-s3-dr.md)
+    cnpg.io/skipEmptyWalArchiveCheck: enabled
 spec:
   bootstrap:
     recovery:
