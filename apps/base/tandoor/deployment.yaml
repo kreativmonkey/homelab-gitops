@@ -76,6 +76,9 @@ spec:
             httpGet:
               path: /
               port: http
+              httpHeaders:
+                - name: Host
+                  value: rezepte.f4mily.net
             initialDelaySeconds: 180
             failureThreshold: 90
             periodSeconds: 10
@@ -83,12 +86,18 @@ spec:
             httpGet:
               path: /
               port: http
+              httpHeaders:
+                - name: Host
+                  value: rezepte.f4mily.net
             initialDelaySeconds: 60
             periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /
               port: http
+              httpHeaders:
+                - name: Host
+                  value: rezepte.f4mily.net
             initialDelaySeconds: 20
             periodSeconds: 10
           resources:
