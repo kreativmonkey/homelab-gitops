@@ -67,7 +67,7 @@ here so it is obvious what is **planned** but not deployed:
 | uptime-kuma        | off    | removed from catalog (DR test)            |
 | unifi-controller   | off    | removed from catalog (DR test)            |
 | nextcloud          | on     | HelmRelease + CNPG + NFS at cluster domain  |
-| linkwarden         | on     | Deployment + Meilisearch + CNPG           |
+| linkwarden         | off    | temporarily removed from catalog          |
 | speedtest-tracker  | wip    | ingress only, missing Deployment          |
 | watchyourlan       | on     | DaemonSet (hostNetwork), scan via IFACES  |
 | teslamate          | on     | Deployment, Mosquitto, CNPG, teslamate.cluster.f4mily.net |
