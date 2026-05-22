@@ -25,6 +25,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: searxng
+                name: searxng-web
                 port:
                   number: 8080
