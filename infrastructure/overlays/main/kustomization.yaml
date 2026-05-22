@@ -6,3 +6,4 @@ resources:
   - ../../base/network/certificates
   - database-clusters
   - pgadmin
+  - system-upgrade-controller
