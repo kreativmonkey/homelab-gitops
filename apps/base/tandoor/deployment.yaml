@@ -19,7 +19,7 @@ spec:
         app.kubernetes.io/name: tandoor
     spec:
       securityContext:
-        fsGroup: 65534
+        fsGroup: 0
       containers:
         - name: tandoor
           image: docker.io/vabene1111/recipes:2.6.9
@@ -97,8 +97,11 @@ spec:
             limits:
               memory: 2Gi
           securityContext:
-            allowPrivilegeEscalation: false
+            runAsUser: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: true
             capabilities:
+              add: ["CHOWN", "DAC_OVERRIDE", "SETGID", "SETUID"]
               drop: ["ALL"]
       volumes:
         - name: static
