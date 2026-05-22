@@ -54,6 +54,8 @@ spec:
     phpClientHttpsFix:
       enabled: true
       protocol: https
+    internalDatabase:
+      enabled: false
     mariadb:
       enabled: false
     postgresql:
@@ -63,6 +65,11 @@ spec:
       type: postgresql
       host: homelab-postgres-rw.cnpg-system.svc.cluster.local
       database: nextcloud
+      existingSecret:
+        enabled: true
+        secretName: homelab-postgres-nextcloud
+        usernameKey: username
+        passwordKey: password
     redis:
       enabled: true
       architecture: standalone
@@ -79,6 +86,11 @@ spec:
       enabled: true
       existingClaim: nextcloud-data
     nextcloud:
+      existingSecret:
+        enabled: true
+        secretName: nextcloud-admin
+        usernameKey: username
+        passwordKey: password
       host: nextcloud.cluster.f4mily.net
       trustedDomains:
         - nextcloud.cluster.f4mily.net
