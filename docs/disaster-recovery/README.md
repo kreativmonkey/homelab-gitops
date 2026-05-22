@@ -73,6 +73,9 @@ DR patches include `cnpg.io/skipEmptyWalArchiveCheck: enabled` when reusing the 
 | Flux on old commit | Source is **GitHub**, not Forgejo | `git push origin main` |
 | Apps not deploying | `infra-base` not Ready | Fix SUC + reconcile; apps need not wait for all ACME certs |
 | Apps dry-run VMRule/VMServiceScrape | VM operator CRDs not installed yet | Rules in `apps-monitoring-rules` Kustomization (after `apps`) |
+| PVCs stuck `longhorn-1 not found` | `storageclass.yaml` not in `infra-storage` kustomization | Fixed in `infrastructure/base/storage/kustomization.yaml` |
+| Paperless `secret paperless-ngx not found` | App secret not in Git | `apps/overlays/main/paperless-ngx.secret.yaml` (SOPS) |
+| UI unreachable via VIP `.245` | Ingress uses `hostNetwork` on node IPs | Use `https://<node-ip>` or DNS to `.41`/`.42`/`.43`, not API VIP |
 
 ## Validate full stack
 
