@@ -151,9 +151,10 @@ git commit -am "feat: …" && git push
 flux reconcile kustomization apps --with-source   # optional, otherwise 1h interval
 ```
 
-### Disaster recovery (Postgres only)
+### Disaster recovery
 
-Documented in [`docs/disaster-recovery/cnpg-s3-dr.md`](./docs/disaster-recovery/cnpg-s3-dr.md).
+Full runbook: [`docs/disaster-recovery/README.md`](./docs/disaster-recovery/README.md).  
+CNPG S3 restore: [`docs/disaster-recovery/cnpg-s3-dr.md`](./docs/disaster-recovery/cnpg-s3-dr.md).
 Short version: the central PostgreSQL cluster is continuously backed up
 to S3 (Garage) via Barman. The `disaster-recovery` overlay rehydrates
 the cluster from S3 on a fresh deploy.
