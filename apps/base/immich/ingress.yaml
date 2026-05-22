@@ -12,7 +12,7 @@ metadata:
     gethomepage.dev/app: server
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
-    nginx.org/proxy-body-size: "0"
+    nginx.org/client-max-body-size: "0"
 spec:
   ingressClassName: nginx
   tls:
