@@ -21,11 +21,6 @@ data:
       autocomplete: ""
       formats:
         - html
-    engines:
-      - name: duckduckgo
-        disabled: true
-      - name: google
-        disabled: true
   limiter.toml: |
     [botdetection]
 
