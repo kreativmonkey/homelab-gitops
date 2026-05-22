@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/description: Bookmarks
     gethomepage.dev/group: Office
     gethomepage.dev/icon: linkwarden.png
-    gethomepage.dev/pod-selector: app=linkwarden
+    gethomepage.dev/ping: linkwarden.f4mily.net
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:

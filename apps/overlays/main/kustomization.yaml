@@ -32,8 +32,8 @@ resources:
   - ../../base/netbird
   # - ../../base/backrest            # wip: ingress only, no workload
   - ../../base/searxng
-  - ../../base/uptime-kuma         # wip: ingress only, no workload
-  - ../../base/unifi-controller    # wip: ingress only, no workload
+  # - ../../base/uptime-kuma         # wip: no backend — 502 until workload or external Service
+  # - ../../base/unifi-controller    # wip: no backend — 502 until workload or external Service
 
   # --- Cloud & Management -----------------------------------------------
   - ../../base/nextcloud
@@ -43,7 +43,7 @@ resources:
 
   # --- Network Monitoring -----------------------------------------------
   # - ../../base/speedtest-tracker   # wip: ingress only, no workload
-  - ../../base/watchyourlan        # wip: ingress only, no workload
+  # - ../../base/watchyourlan        # wip: no backend — 502 until workload or external Service
 
   # --- Development / Misc -----------------------------------------------
   - ../../base/teslamate
