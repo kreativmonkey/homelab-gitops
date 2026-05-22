@@ -1,13 +1,10 @@
-# Single instance with hostNetwork (LAN scan). DaemonSet + RWO PVC cannot schedule on 3 nodes.
+# hostNetwork for LAN scans; DaemonSet so ingress on any node reaches a local :8840 instance.
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: watchyourlan
   namespace: watchyourlan
 spec:
-  replicas: 1
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: watchyourlan
@@ -48,5 +45,4 @@ spec:
               memory: 256Mi
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: watchyourlan-data
+          emptyDir: {}

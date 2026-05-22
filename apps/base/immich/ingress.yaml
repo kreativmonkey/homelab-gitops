@@ -17,10 +17,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - immich.f4mily.net
-      secretName: wildcard-f4mily-net-tls
+        - immich.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
   rules:
-    - host: immich.f4mily.net
+    - host: immich.cluster.f4mily.net
       http:
         paths:
           - path: /
