@@ -1,0 +1,11 @@
+# Upstream v0.19+ uses strategy Recreate. After DR / SSA, stale rollingUpdate can remain
+# on the live Deployment and fail server-side apply — replace strategy wholesale.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-upgrade-controller
+  namespace: system-upgrade
+spec:
+  strategy:
+    $patch: replace
+    type: Recreate

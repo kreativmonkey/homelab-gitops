@@ -26,6 +26,10 @@ kubectl get backup -n cnpg-system
 
 ## Disaster recovery (full cluster rebuild)
 
+> **Full runbook** (Talos reset, Flux bootstrap, pitfalls): [README.md](README.md)
+
+**Flux** reconciles from `https://github.com/kreativmonkey/homelab-gitops` branch `main`. Push DR commits to **GitHub** before `flux reconcile source git flux-system`.
+
 ### 1. Suspend app reconciliation (recommended)
 
 ```bash
