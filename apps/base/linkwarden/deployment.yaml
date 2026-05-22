@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: meilisearch
-          image: docker.io/getmeili/meilisearch:v1.12.8
+          image: docker.io/getmeili/meilisearch:v1.43.1
           ports:
             - containerPort: 7700
               name: http
