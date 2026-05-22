@@ -32,8 +32,8 @@ resources:
   - ../../base/netbird
   # - ../../base/backrest            # wip: ingress only, no workload
   - ../../base/searxng
-  - ../../base/uptime-kuma
-  - ../../base/unifi-controller
+  # - ../../base/uptime-kuma         # disabled: dropped from catalog (DR test)
+  # - ../../base/unifi-controller    # disabled: dropped from catalog (DR test)
 
   # --- Cloud & Management -----------------------------------------------
   - ../../base/nextcloud
@@ -175,26 +175,6 @@ replacements:
       fieldPath: data.host_linkwarden
     targets:
       - select: {kind: Ingress, name: linkwarden}
-        fieldPaths:
-          - spec.rules.0.host
-          - spec.tls.0.hosts.0
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.host_uptime_kuma
-    targets:
-      - select: {kind: Ingress, name: uptime-kuma}
-        fieldPaths:
-          - spec.rules.0.host
-          - spec.tls.0.hosts.0
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.host_unifi_controller
-    targets:
-      - select: {kind: Ingress, name: unifi-controller}
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
@@ -347,10 +327,6 @@ replacements:
       - select: {kind: Ingress, name: victoria-metrics}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: n8n}
-        fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: uptime-kuma}
-        fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: unifi-controller}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: watchyourlan}
         fieldPaths: [spec.tls.0.secretName]
