@@ -42,27 +42,32 @@ pg_restore -h localhost -U authentik -d authentik --clean --if-exists /backup/au
 
 Use credentials from the app namespace secret `homelab-postgres-<app>`.
 
-## 4. Immich: VectorChord (dedicated cluster)
+## 4. Immich: dedicated cluster (`immich-postgres`)
 
-Immich v1.119+ requires **VectorChord** (`vchord`) and `earthdistance` on PostgreSQL 16+, not the stock CNPG image on `homelab-postgres`. The homelab is still in a **test phase**: there is no production Immich database to migrate. Flux provisions an empty `immich` database; photos live on **NFS** (`immich-library` / `immich-fotos` PVCs) and Immich will re-index the library on first run.
+Immich uses **VectorChord** on PostgreSQL 16+ (`immich-postgres`), not `homelab-postgres`.
+Production data lives in Docker (`Migration/Immich/compose.yml`).
 
-Sections 2–3 (Docker `pg_dump` / `pg_restore`) do **not** apply to Immich.
+**Full procedure (dump from `immich_postgres`, restore to CNPG, NFS library, DNS cutover):**
+[immich-docker-to-kubernetes.md](immich-docker-to-kubernetes.md).
 
-After Flux reconciles `immich-postgres` and the `Database` CR `homelab-postgres-immich`:
+Generic sections 2–3 below use `homelab-postgres-rw`; for Immich use
+`immich-postgres-rw` and credentials from `homelab-postgres-immich` in namespace `immich`.
+
+Verify target extensions after Flux reconciles:
 
 ```bash
 kubectl get cluster -n cnpg-system immich-postgres
 kubectl exec -n cnpg-system immich-postgres-1 -- psql -U postgres -d immich -c '\dx'
 ```
 
-Expect `cube`, `vchord`, and `earthdistance`. If the cluster was recreated, delete any stale `immich` database on `homelab-postgres` manually only when you no longer need it for experiments.
+Expect `vector`, `cube`, `vchord`, and `earthdistance`.
 
 ## 5. Application-specific notes
 
 | App | URL | Notes |
 |-----|-----|-------|
 | Authentik | https://login.f4mily.net | Set `secret-key` via `just sops-edit apps/base/authentik/authentik-secret-key.secret.yaml` (see `.template`) |
-| Immich | https://immich.f4mily.net | Library on NFS (`subPath` Bilder/Fotos); empty DB is fine — run admin setup / library scan after deploy |
+| Immich | https://immich.f4mily.net | See [immich-docker-to-kubernetes.md](immich-docker-to-kubernetes.md); library on NFS (`subPath` Bilder/Fotos) |
 | Paperless | https://paperless.f4mily.net | Copy `media`/`data` volumes; re-run consumer after DB import |
 
 ## 6. Cutover
