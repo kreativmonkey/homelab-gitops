@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unifi-config
+  namespace: unifi-controller
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn-1
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unifi-mongo-data
+  namespace: unifi-controller
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn-1
+  resources:
+    requests:
+      storage: 20Gi

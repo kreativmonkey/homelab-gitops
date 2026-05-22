@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tandoor
+  namespace: tandoor
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-tandoor
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: tandoor
+  template:
+    metadata:
+      labels:
+        app: tandoor
+        app.kubernetes.io/name: tandoor
+    spec:
+      securityContext:
+        fsGroup: 65534
+      containers:
+        - name: tandoor
+          image: docker.io/vabene1111/recipes:2.3.5
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: TZ
+              value: Europe/Berlin
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tandoor-app
+                  key: SECRET_KEY
+            - name: DB_ENGINE
+              value: django.db.backends.postgresql
+            - name: POSTGRES_HOST
+              value: homelab-postgres-rw.cnpg-system.svc.cluster.local
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DB
+              value: tandoor
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-tandoor
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-tandoor
+                  key: password
+            - name: ALLOWED_HOSTS
+              value: rezepte.f4mily.net,localhost,127.0.0.1
+            - name: SOCIAL_PROVIDERS
+              value: allauth.socialaccount.providers.openid_connect
+            - name: SOCIALACCOUNT_PROVIDERS
+              valueFrom:
+                secretKeyRef:
+                  name: tandoor-app
+                  key: SOCIALACCOUNT_PROVIDERS
+          volumeMounts:
+            - name: static
+              mountPath: /opt/recipes/staticfiles
+              subPath: docker/tandoor/staticfiles
+            - name: media
+              mountPath: /opt/recipes/mediafiles
+              subPath: docker/tandoor/mediafiles
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: static
+          persistentVolumeClaim:
+            claimName: tandoor-static
+        - name: media
+          persistentVolumeClaim:
+            claimName: tandoor-media
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tandoor
+  namespace: tandoor
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+  selector:
+    app: tandoor
