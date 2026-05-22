@@ -1,9 +1,13 @@
+# Single instance with hostNetwork (LAN scan). DaemonSet + RWO PVC cannot schedule on 3 nodes.
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   name: watchyourlan
   namespace: watchyourlan
 spec:
+  replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: watchyourlan
@@ -46,17 +50,3 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: watchyourlan-data
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: watchyourlan
-  namespace: watchyourlan
-spec:
-  type: ClusterIP
-  ports:
-    - port: 80
-      targetPort: 8840
-      name: http
-  selector:
-    app: watchyourlan

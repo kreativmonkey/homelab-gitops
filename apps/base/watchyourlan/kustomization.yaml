@@ -4,5 +4,5 @@ resources:
   - namespace.yaml
   - configmap.yaml
   - pvc.yaml
-  - daemonset.yaml
+  - deployment.yaml
   - ingress.yaml
