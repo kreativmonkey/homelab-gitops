@@ -13,7 +13,9 @@ data:
       bind_address: "0.0.0.0"
       limiter: false
       image_proxy: false
-    # valkey optional when limiter is off; avoids healthz 500 if botdetection cannot connect
+      public_instance: true
+    redis:
+      url: false
     search:
       safe_search: 0
       autocomplete: ""

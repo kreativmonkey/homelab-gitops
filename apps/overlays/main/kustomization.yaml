@@ -173,6 +173,15 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.tandoor_allowed_hosts
+    targets:
+      - select: {kind: Deployment, name: tandoor}
+        fieldPaths:
+          - spec.template.spec.containers.0.env.[name=ALLOWED_HOSTS].value
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.host_watchyourlan
     targets:
       - select: {kind: Ingress, name: watchyourlan}
@@ -281,11 +290,7 @@ replacements:
     targets:
       - select: {kind: Ingress, name: audiobookshelf}
         fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: authentik}
-        fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: homepage}
-        fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: immich}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: jellyfin}
         fieldPaths: [spec.tls.0.secretName]
@@ -297,14 +302,18 @@ replacements:
         fieldPaths: [spec.values.ingress.tls.0.secretName]
       - select: {kind: Ingress, name: searxng}
         fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: tandoor}
-        fieldPaths: [spec.tls.0.secretName]
 
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
       fieldPath: data.clusterTlsSecret
     targets:
+      - select: {kind: Ingress, name: authentik}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: immich}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: tandoor}
+        fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: goloom}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: teslamate}

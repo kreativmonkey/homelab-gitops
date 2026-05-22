@@ -57,7 +57,7 @@ spec:
                   name: homelab-postgres-tandoor
                   key: password
             - name: ALLOWED_HOSTS
-              value: rezepte.f4mily.net,localhost,127.0.0.1
+              value: tandoor.cluster.f4mily.net,localhost,127.0.0.1
             - name: SOCIAL_PROVIDERS
               value: allauth.socialaccount.providers.openid_connect
             - name: SOCIALACCOUNT_PROVIDERS
@@ -78,7 +78,7 @@ spec:
               port: http
               httpHeaders:
                 - name: Host
-                  value: rezepte.f4mily.net
+                  value: tandoor.cluster.f4mily.net
             initialDelaySeconds: 180
             failureThreshold: 90
             periodSeconds: 10
@@ -88,7 +88,7 @@ spec:
               port: http
               httpHeaders:
                 - name: Host
-                  value: rezepte.f4mily.net
+                  value: tandoor.cluster.f4mily.net
             initialDelaySeconds: 60
             periodSeconds: 30
           readinessProbe:
@@ -97,7 +97,7 @@ spec:
               port: http
               httpHeaders:
                 - name: Host
-                  value: rezepte.f4mily.net
+                  value: tandoor.cluster.f4mily.net
             initialDelaySeconds: 20
             periodSeconds: 10
           resources:
