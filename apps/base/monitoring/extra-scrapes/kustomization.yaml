@@ -1,0 +1,6 @@
+# VMServiceScrapes that depend on VictoriaMetrics operator CRDs (installed by vm-k8s-stack).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - velero-vmservicescrape.yaml
+  - nginx-ingress-vmservicescrape.yaml
