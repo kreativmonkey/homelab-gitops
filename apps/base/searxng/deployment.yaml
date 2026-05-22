@@ -23,24 +23,6 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-      initContainers:
-        - name: copy-config
-          image: busybox:1.37
-          command:
-            - sh
-            - -c
-            - |
-              cp /config/settings.yml /etc/searxng/settings.yml
-              cp /config/limiter.toml /etc/searxng/limiter.toml
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-          volumeMounts:
-            - name: config-source
-              mountPath: /config
-            - name: config
-              mountPath: /etc/searxng
       containers:
         - name: searxng
           image: docker.io/searxng/searxng:2025.2.7-739822f70
@@ -90,12 +72,3 @@ spec:
               memory: 128Mi
             limits:
               memory: 512Mi
-          volumeMounts:
-            - name: config
-              mountPath: /etc/searxng
-      volumes:
-        - name: config-source
-          configMap:
-            name: searxng-settings
-        - name: config
-          emptyDir: {}
