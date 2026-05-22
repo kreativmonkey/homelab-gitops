@@ -81,20 +81,16 @@ spec:
             periodSeconds: 5
             failureThreshold: 60
           livenessProbe:
-            httpGet:
-              path: /healthz
+            tcpSocket:
               port: http
             initialDelaySeconds: 90
             periodSeconds: 30
-            timeoutSeconds: 5
             failureThreshold: 5
           readinessProbe:
-            httpGet:
-              path: /healthz
+            tcpSocket:
               port: http
             initialDelaySeconds: 10
             periodSeconds: 10
-            timeoutSeconds: 5
             failureThreshold: 6
           resources:
             requests:
