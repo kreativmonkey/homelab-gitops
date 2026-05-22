@@ -14,6 +14,8 @@ spec:
         app: searxng
         app.kubernetes.io/name: searxng
     spec:
+      # Avoid K8s injecting SEARXNG_PORT=tcp://... (breaks Granian bind).
+      enableServiceLinks: false
       securityContext:
         fsGroup: 977
         runAsUser: 977
@@ -44,6 +46,10 @@ spec:
           image: docker.io/searxng/searxng:2025.2.7-739822f70
           imagePullPolicy: IfNotPresent
           env:
+            - name: GRANIAN_HOST
+              value: "0.0.0.0"
+            - name: GRANIAN_PORT
+              value: "8080"
             - name: SEARXNG_BASE_URL
               value: "https://search.f4mily.net/"
             - name: SEARXNG_SECRET
