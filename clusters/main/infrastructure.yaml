@@ -97,7 +97,8 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  wait: true
+  # ACME DNS-01 (wildcard-f4mily-net) can stay InProgress for a long time after DR; do not block apps.
+  wait: false
   decryption:
     provider: sops
     secretRef:
