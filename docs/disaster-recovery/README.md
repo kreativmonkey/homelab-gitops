@@ -72,6 +72,7 @@ DR patches include `cnpg.io/skipEmptyWalArchiveCheck: enabled` when reusing the 
 | `infra-main` stuck on Certificate | DNS-01 propagation after DR | `infra-main` uses `wait: false`; check `kubectl get challenge -n cert-manager` |
 | Flux on old commit | Source is **GitHub**, not Forgejo | `git push origin main` |
 | Apps not deploying | `infra-base` not Ready | Fix SUC + reconcile; apps need not wait for all ACME certs |
+| Apps dry-run VMRule/VMServiceScrape | VM operator CRDs not installed yet | Rules in `apps-monitoring-rules` Kustomization (after `apps`) |
 
 ## Validate full stack
 

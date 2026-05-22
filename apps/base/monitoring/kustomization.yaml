@@ -5,4 +5,4 @@ resources:
   - extra-scrapes
   - notifications
   - ntfy-bridge
-  - rules
+  # VMRule CRDs: separate Flux Kustomization apps-monitoring-rules (after vm operator)
