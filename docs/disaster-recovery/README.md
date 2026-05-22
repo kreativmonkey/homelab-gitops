@@ -67,8 +67,11 @@ DR patches include `cnpg.io/skipEmptyWalArchiveCheck: enabled` when reusing the 
 | `infra-base` stuck on SUC Deployment | Upstream SUC ≥0.19 uses `strategy: Recreate`; stale `rollingUpdate` after SSA | `patch-deployment-strategy.yaml` |
 | `infra-base` stuck on VMServiceScrape | VM operator CRDs not installed yet | Scrapes under `apps/base/monitoring/extra-scrapes/` |
 | pgadmin `CreateContainerConfigError` | Secret not in kustomization | Enable `pgadmin-credentials.secret.yaml` |
+| pgadmin HelmRelease `Failed` but pod Running | Stale install timeout during DR | `flux reconcile helmrelease pgadmin -n cnpg-system --reset` |
+| SUC Deployment invalid (Recreate + rollingUpdate) | SSA merge after DR | Delete Deployment once, or apply `patch-deployment-strategy.yaml` |
+| `infra-main` stuck on Certificate | DNS-01 propagation after DR | `infra-main` uses `wait: false`; check `kubectl get challenge -n cert-manager` |
 | Flux on old commit | Source is **GitHub**, not Forgejo | `git push origin main` |
-| Apps not deploying | `infra-main` / `infra-base` not Ready | Fix infra chain first |
+| Apps not deploying | `infra-base` not Ready | Fix SUC + reconcile; apps need not wait for all ACME certs |
 
 ## Validate full stack
 
