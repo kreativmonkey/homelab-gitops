@@ -62,6 +62,17 @@
     },
     {
       "customType": "regex",
+      "description": "Talos version in System Upgrade Controller Plan",
+      "managerFilePatterns": [
+        "/infrastructure/overlays/main/system-upgrade-controller/talos-plan\\.yaml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)( versioning=(?<versioning>[^\\s]+))?\\s+version:\\s*(?<currentValue>v[^\\s]+)"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
       "description": "CI workflow action versions (Forgejo and GitHub)",
       "managerFilePatterns": [
         "/^\\.(forgejo|github)/workflows/.*\\.ya?ml$/"
@@ -127,6 +138,16 @@
       ],
       "groupName": "nix packages",
       "automerge": true
+    },
+    {
+      "description": "Group Talos SUC Plan with other Talos release bumps",
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["siderolabs/talos"],
+      "matchFileNames": [
+        "infrastructure/overlays/main/system-upgrade-controller/**"
+      ],
+      "groupName": "talos linux",
+      "automerge": false
     },
     {
       "description": "Auto-merge patch updates for low-risk dashboards",
