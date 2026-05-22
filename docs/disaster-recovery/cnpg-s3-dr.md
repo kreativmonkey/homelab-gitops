@@ -53,6 +53,10 @@ The DR overlay applies recovery patches for both clusters:
 
 Each injects `bootstrap.recovery` from its S3 prefix under `cnpg-backups/`.
 
+When restoring clusters with the **same name** into the **same S3 prefix** as production backups, CNPG requires
+`cnpg.io/skipEmptyWalArchiveCheck: enabled` on the Cluster (included in the DR patches). Without it, recovery pods fail with
+`Expected empty archive`.
+
 ### 3. Wait for CNPG recovery
 
 ```bash
