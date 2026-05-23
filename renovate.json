@@ -140,6 +140,7 @@
         "!apps/base/kite/**",
         "!apps/base/authentik/**"
       ],
+      "groupName": "flux helm releases",
       "groupSlug": "flux-helm-releases",
       "minimumReleaseAge": "7 days",
       "automerge": false
