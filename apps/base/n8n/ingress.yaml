@@ -16,7 +16,10 @@ metadata:
     nginx.org/redirect-to-https: "true"
     # Webhook POST bodies can be large (full AM payload + LLM context)
     nginx.org/client-max-body-size: "10m"
-    nginx.org/proxy-read-timeout: "300s"
+    # Editor uses WebSocket push (/rest/push) — required for live workflow UI
+    nginx.org/websocket-services: "n8n-app"
+    nginx.org/proxy-read-timeout: "3600s"
+    nginx.org/proxy-send-timeout: "3600s"
 spec:
   ingressClassName: nginx
   tls:
