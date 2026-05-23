@@ -19,6 +19,9 @@ validate:
 validate-full:
     ./scripts/ci/validate.sh
 
+renovate-audit:
+    ./scripts/ci/renovate-audit.sh
+
 lint:
     yamllint -c .yamllint.yml clusters infrastructure apps .forgejo/workflows .github/workflows
 
