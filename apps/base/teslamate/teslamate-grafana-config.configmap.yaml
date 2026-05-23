@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: teslamate-grafana-config
+  namespace: teslamate
+data:
+  OAUTH_URL: https://login.f4mily.net
+  GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
+  GF_AUTH_GENERIC_OAUTH_NAME: authentik
+  GF_AUTH_GENERIC_OAUTH_SCOPES: openid profile email groups
+  GF_AUTH_GENERIC_OAUTH_AUTH_URL: https://login.f4mily.net/application/o/authorize/
+  GF_AUTH_GENERIC_OAUTH_TOKEN_URL: https://login.f4mily.net/application/o/token/
+  GF_AUTH_GENERIC_OAUTH_API_URL: https://login.f4mily.net/application/o/userinfo/
+  GF_AUTH_SIGNOUT_REDIRECT_URL: https://login.f4mily.net/application/o/tesla-grafana/end-session/
+  GF_AUTH_OAUTH_AUTO_LOGIN: "true"
+  GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: contains(groups[*], 'teslaAdmin') && 'Admin' || contains(groups[*], 'teslaViewer') && 'Editor' || 'Viewer'
+  GF_SERVER_SERVE_FROM_SUB_PATH: "false"

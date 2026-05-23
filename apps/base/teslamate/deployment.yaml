@@ -53,6 +53,10 @@ spec:
               value: homelab-postgres-rw.cnpg-system.svc.cluster.local
             - name: DATABASE_PORT
               value: "5432"
+            - name: CHECK_ORIGIN
+              value: "false"
+            - name: VIRTUAL_HOST
+              value: teslamate.cluster.f4mily.net
           livenessProbe:
             httpGet:
               path: /
