@@ -17,9 +17,6 @@ metadata:
     nginx.org/websocket-services: "teslamate,teslamate-grafana"
     nginx.org/proxy-read-timeout: "3600s"
     nginx.org/proxy-send-timeout: "3600s"
-    # Strip /grafana prefix before forwarding to teslamate-grafana (GF_SERVER_SERVE_FROM_SUB_PATH).
-    nginx.org/path-regex: case_insensitive
-    nginx.org/rewrites: serviceName=teslamate-grafana rewrite=/$1
 spec:
   ingressClassName: nginx
   tls:
@@ -30,7 +27,7 @@ spec:
     - host: teslamate.f4mily.net
       http:
         paths:
-          - path: /grafana(/|$)(.*)
+          - path: /grafana
             pathType: Prefix
             backend:
               service:
