@@ -7,10 +7,7 @@
     "enabled": true
   },
   "kustomize": {
-    "enabled": true,
-    "fileMatch": [
-      "(^|/)kustomization\\.ya?ml$"
-    ]
+    "enabled": true
   },
   "lockFileMaintenance": {
     "enabled": true,
@@ -18,24 +15,24 @@
   },
   "flux": {
     "enabled": true,
-    "fileMatch": [
+    "managerFilePatterns": [
       "\\.ya?ml$"
     ]
   },
   "helm-values": {
     "enabled": true,
-    "fileMatch": [
+    "managerFilePatterns": [
       "(^|/)helmrelease\\.ya?ml$",
       "(^|/)values\\.ya?ml$"
     ]
   },
   "kubernetes": {
     "enabled": true,
-    "fileMatch": [
-      "/(^|/)(deployment|daemonset|statefulset|job|cronjob)\\.ya?ml$",
-      "/(^|/)apps/.+\\.ya?ml$",
-      "/(^|/)infrastructure/.+\\.ya?ml$",
-      "/(^|/)clusters/.+\\.ya?ml$"
+    "managerFilePatterns": [
+      "(^|/)(deployment|daemonset|statefulset|job|cronjob)\\.ya?ml$",
+      "(^|/)apps/.+\\.ya?ml$",
+      "(^|/)infrastructure/.+\\.ya?ml$",
+      "(^|/)clusters/.+\\.ya?ml$"
     ]
   },
   "customManagers": [
