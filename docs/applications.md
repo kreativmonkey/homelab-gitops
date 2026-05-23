@@ -71,6 +71,7 @@ here so it is obvious what is **planned** but not deployed:
 | speedtest-tracker  | wip    | ingress only, missing Deployment          |
 | watchyourlan       | on     | DaemonSet (hostNetwork), scan via IFACES  |
 | teslamate          | on     | Deployment, Mosquitto, CNPG, teslamate.f4mily.net (/grafana/) |
+| authentik          | on     | HelmRelease, CNPG, login.f4mily.net (production IdP)            |
 | goloom             | on     | Deployment, CNPG PostgreSQL, goloom.cluster.f4mily.net |
 | pcm                | wip    | ingress only, missing HelmRelease         |
 
