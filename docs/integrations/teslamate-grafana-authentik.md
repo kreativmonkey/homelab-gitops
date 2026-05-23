@@ -1,6 +1,8 @@
 # TeslaMate Grafana ↔ Authentik
 
-OAuth for `teslamate-grafana` uses Authentik at `https://login.f4mily.net` (application slug **`tesla-grafana`**).
+OAuth for TeslaMate Grafana uses Authentik at `https://login.f4mily.net` (application slug **`tesla-grafana`**).
+
+Grafana is served at **`https://teslamate.f4mily.net/grafana/`** (subpath on the TeslaMate ingress).
 
 ## GitOps
 
@@ -10,7 +12,7 @@ OAuth for `teslamate-grafana` uses Authentik at `https://login.f4mily.net` (appl
 
 After first Flux reconcile, set the **Provider for TeslaMate Grafana** client secret in Authentik to match `teslamate-grafana-oauth` (same value as production if you migrated the OAuth app).
 
-Redirect URI: `https://teslamate-grafana.cluster.f4mily.net/login/generic_oauth`
+Redirect URI: `https://teslamate.f4mily.net/grafana/login/generic_oauth`
 
 ## MQTT (Home Assistant)
 
