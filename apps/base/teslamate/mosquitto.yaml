@@ -24,11 +24,14 @@ spec:
           args:
             - mosquitto
             - -c
-            - /mosquitto-no-auth.conf
+            - /mosquitto/config/mosquitto.conf
           ports:
             - containerPort: 1883
               name: mqtt
           volumeMounts:
+            - name: mosquitto-config
+              mountPath: /mosquitto/config
+              readOnly: true
             - name: mosquitto-data
               mountPath: /mosquitto/data
             - name: mosquitto-log
@@ -46,6 +49,9 @@ spec:
             capabilities:
               drop: ["ALL"]
       volumes:
+        - name: mosquitto-config
+          configMap:
+            name: mosquitto-config
         - name: mosquitto-data
           emptyDir: {}
         - name: mosquitto-log

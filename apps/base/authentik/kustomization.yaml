@@ -4,5 +4,6 @@ resources:
   - namespace.yaml
   - authentik-secret-key.secret.yaml
   - blueprints/grafana-oauth.configmap.yaml
+  - blueprints/teslamate-grafana-oauth.configmap.yaml
   - helmrelease.yaml
   - ingress.yaml
