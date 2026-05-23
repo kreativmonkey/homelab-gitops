@@ -163,6 +163,7 @@
       "groupName": "authentik",
       "groupSlug": "authentik",
       "minimumReleaseAge": "7 days",
+      "allowedVersions": "2026.2.*",
       "automerge": false
     },
     {
