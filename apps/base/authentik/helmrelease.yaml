@@ -11,7 +11,8 @@ spec:
   chart:
     spec:
       chart: authentik
-      version: "2024.10.5"
+      # renovate: datasource=helm registryUrl=https://charts.goauthentik.io depName=authentik
+      version: "2025.12.4"
       sourceRef:
         kind: HelmRepository
         name: authentik-repo
@@ -36,8 +37,6 @@ spec:
       architecture: standalone
       auth:
         enabled: false
-      # Bitnami moved their images off Docker Hub in 2025; pin to the legacy
-      # mirror to keep `bitnami/redis` references working.
       image:
         registry: docker.io
         repository: bitnamilegacy/redis
@@ -51,19 +50,49 @@ spec:
         port: 5432
         name: authentik
         user: authentik
+      email:
+        host: mail.f4mily.net
+        port: 465
+        username: authentik@f4mily.net
+        use_ssl: true
+        from: authentik@f4mily.net
+        timeout: 10
+      error_reporting:
+        enabled: true
+    # Production DB is authoritative — do not overlay GitOps OAuth blueprints.
     blueprints:
-      configMaps:
-        - authentik-grafana-blueprint
-        - authentik-teslamate-grafana-blueprint
+      configMaps: []
     server:
       ingress:
         enabled: false
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        - name: media-init
+          # renovate: datasource=docker depName=docker.io/library/busybox
+          image: docker.io/library/busybox:1.36
+          command:
+            - sh
+            - -c
+            - mkdir -p /media/public/application-icons && chown -R 1000:1000 /media
+          volumeMounts:
+            - name: media
+              mountPath: /media
+          securityContext:
+            runAsUser: 0
       resources:
         requests:
           cpu: 25m
           memory: 256Mi
         limits:
           memory: 1Gi
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: authentik-media
+      volumeMounts:
+        - name: media
+          mountPath: /media
     worker:
       resources:
         requests:
