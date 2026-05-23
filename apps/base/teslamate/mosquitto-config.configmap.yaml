@@ -1,0 +1,12 @@
+# Production Docker stack used mosquitto -c /mosquitto-no-auth.conf (plain MQTT 1883).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: teslamate
+data:
+  mosquitto.conf: |
+    listener 1883
+    allow_anonymous true
+    persistence true
+    persistence_location /mosquitto/data/
