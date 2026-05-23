@@ -54,6 +54,7 @@ spec:
     blueprints:
       configMaps:
         - authentik-grafana-blueprint
+        - authentik-teslamate-grafana-blueprint
     server:
       ingress:
         enabled: false

@@ -28,6 +28,9 @@ spec:
           ports:
             - containerPort: 3000
               name: http
+          envFrom:
+            - configMapRef:
+                name: teslamate-grafana-config
           env:
             - name: DATABASE_USER
               valueFrom:
@@ -45,6 +48,20 @@ spec:
               value: homelab-postgres-rw.cnpg-system.svc.cluster.local
             - name: DATABASE_PORT
               value: "5432"
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: teslamate-grafana-oauth
+                  key: client-id
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: teslamate-grafana-oauth
+                  key: client-secret
+            - name: GF_SERVER_DOMAIN
+              value: teslamate-grafana.cluster.f4mily.net
+            - name: GF_SERVER_ROOT_URL
+              value: https://teslamate-grafana.cluster.f4mily.net/
           livenessProbe:
             httpGet:
               path: /api/health
