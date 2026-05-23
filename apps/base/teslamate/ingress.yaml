@@ -13,6 +13,10 @@ metadata:
     gethomepage.dev/pod-selector: app=teslamate
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
+    # Phoenix LiveView (/live/websocket)
+    nginx.org/websocket-services: "teslamate"
+    nginx.org/proxy-read-timeout: "3600s"
+    nginx.org/proxy-send-timeout: "3600s"
 spec:
   ingressClassName: nginx
   tls:
