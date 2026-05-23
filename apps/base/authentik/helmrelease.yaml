@@ -11,8 +11,9 @@ spec:
   chart:
     spec:
       chart: authentik
+      # Upgrade path: 2025.12.4 → 2026.2.x (see docs/migrations/authentik-upgrade-2026.md)
       # renovate: datasource=helm registryUrl=https://charts.goauthentik.io depName=authentik
-      version: "2026.5.0"
+      version: "2026.2.3"
       sourceRef:
         kind: HelmRepository
         name: authentik-repo
@@ -65,6 +66,8 @@ spec:
     server:
       ingress:
         enabled: false
+      deploymentStrategy:
+        type: Recreate
       securityContext:
         fsGroup: 1000
       initContainers:
@@ -74,10 +77,10 @@ spec:
           command:
             - sh
             - -c
-            - mkdir -p /media/public/application-icons && chown -R 1000:1000 /media
+            - mkdir -p /data/media/public/application-icons && chown -R 1000:1000 /data
           volumeMounts:
-            - name: media
-              mountPath: /media
+            - name: data
+              mountPath: /data
           securityContext:
             runAsUser: 0
       resources:
@@ -87,12 +90,12 @@ spec:
         limits:
           memory: 1Gi
       volumes:
-        - name: media
+        - name: data
           persistentVolumeClaim:
             claimName: authentik-media
       volumeMounts:
-        - name: media
-          mountPath: /media
+        - name: data
+          mountPath: /data
     worker:
       resources:
         requests:

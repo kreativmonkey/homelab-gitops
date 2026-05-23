@@ -1,0 +1,61 @@
+# One-shot Job: move legacy /media layout → /data/media (Authentik 2026.2+).
+# Apply BEFORE upgrading Helm chart to 2026.2.x (server scaled to 0):
+#
+#   kubectl scale deploy -n authentik authentik-server authentik-worker --replicas=0
+#   kubectl apply -f apps/base/authentik/media-migrate-job.yaml
+#   kubectl wait -n authentik --for=condition=complete job/authentik-media-migrate --timeout=300s
+#   kubectl delete job -n authentik authentik-media-migrate --ignore-not-found
+#
+# Not in kustomization.yaml — manual pre-upgrade step only.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: authentik-media-migrate
+  namespace: authentik
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: migrate
+          image: docker.io/library/busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              echo "Checking PVC layout on /data (authentik-media)..."
+              if [ -d /data/media/public ] || [ -f /data/media/.keep ]; then
+                echo "Already migrated (/data/media exists)."
+                exit 0
+              fi
+              if [ -d /data/public ] || [ -d /data/private ]; then
+                echo "Legacy root layout detected — moving to /data/media/"
+                mkdir -p /data/media
+                for item in /data/*; do
+                  base=$(basename "$item")
+                  case "$base" in
+                    media|lost+found) continue ;;
+                  esac
+                  mv "$item" /data/media/
+                done
+                chown -R 1000:1000 /data/media
+                echo "Done."
+                exit 0
+              fi
+              echo "Fresh PVC — creating /data/media/public/application-icons"
+              mkdir -p /data/media/public/application-icons
+              chown -R 1000:1000 /data/media
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: authentik-media
