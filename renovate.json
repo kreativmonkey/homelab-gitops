@@ -16,23 +16,20 @@
   "flux": {
     "enabled": true,
     "managerFilePatterns": [
-      "\\.ya?ml$"
+      "/(^|/).+\\.ya?ml$/"
     ]
   },
   "helm-values": {
     "enabled": true,
     "managerFilePatterns": [
-      "(^|/)helmrelease\\.ya?ml$",
-      "(^|/)values\\.ya?ml$"
+      "/(^|/).+/helmrelease\\.ya?ml$/",
+      "/(^|/).+/values\\.ya?ml$/"
     ]
   },
   "kubernetes": {
     "enabled": true,
     "managerFilePatterns": [
-      "(^|/)(deployment|daemonset|statefulset|job|cronjob)\\.ya?ml$",
-      "(^|/)apps/.+\\.ya?ml$",
-      "(^|/)infrastructure/.+\\.ya?ml$",
-      "(^|/)clusters/.+\\.ya?ml$"
+      "/(^|/).+/(deployment|daemonset|statefulset|job|cronjob)\\.ya?ml$/"
     ]
   },
   "customManagers": [
@@ -40,7 +37,7 @@
       "customType": "regex",
       "description": "Generic '# renovate: datasource=X depName=Y [versioning=Z] [extractVersion=R]' marker — covers tag-only fields (tag: vX) AND fully-qualified image refs (imageName: repo:tag, value: \"repo:tag\")",
       "managerFilePatterns": [
-        "/\\.ya?ml$/"
+        "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n(?:[^\\n]*\\n)*?\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*(?:#.*)?$",
@@ -53,7 +50,7 @@
       "customType": "regex",
       "description": "Generic '# renovate: datasource=X depName=Y' marker for version fields",
       "managerFilePatterns": [
-        "/\\.ya?ml$/"
+        "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*version:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*(?:#.*)?$",
@@ -65,12 +62,25 @@
       "customType": "regex",
       "description": "Generic '# renovate: datasource=X depName=Y' marker for list items with @version",
       "managerFilePatterns": [
-        "/\\.ya?ml$/"
+        "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*-\\s+[^@\\s]+@(?<currentValue>[^\\s#]+)"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Grafana VictoriaMetrics plugin (plugin id != GitHub repo name)",
+      "managerFilePatterns": [
+        "/apps/base/monitoring/vm-k8s-stack/helmrelease\\.yaml$/"
+      ],
+      "matchStrings": [
+        "\\s*-\\s+victoriametrics-metrics-datasource@(?<currentValue>[^\\s#]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "VictoriaMetrics/victoriametrics-datasource",
+      "versioningTemplate": "semver"
     },
     {
       "customType": "regex",
