@@ -321,14 +321,14 @@ replacements:
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: teslamate}
         fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: authentik}
+        fieldPaths: [spec.tls.0.secretName]
 
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
       fieldPath: data.clusterTlsSecret
     targets:
-      - select: {kind: Ingress, name: authentik}
-        fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: tandoor}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: goloom}
