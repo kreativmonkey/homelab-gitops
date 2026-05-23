@@ -6,6 +6,9 @@
   "nix": {
     "enabled": true
   },
+  "kustomize": {
+    "enabled": true
+  },
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true
@@ -20,9 +23,11 @@
     ]
   },
   "kubernetes": {
-    "managerFilePatterns": [
-      "/(^|/)deployment\\.ya?ml$/",
-      "/(^|/)helmrelease\\.ya?ml$/"
+    "fileMatch": [
+      "/(^|/)(deployment|daemonset|statefulset|job|cronjob)\\.ya?ml$/",
+      "/(^|/)apps/.+\\.ya?ml$/",
+      "/(^|/)infrastructure/.+\\.ya?ml$/",
+      "/(^|/)clusters/.+\\.ya?ml$/"
     ]
   },
   "customManagers": [
@@ -34,9 +39,34 @@
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n(?:[^\\n]*\\n)*?\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*(?:#.*)?$",
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n[^\\n]*?:\\s*[\"']?[^:\\s\"']+:(?<currentValue>[^\"'\\s]+)[\"']?\\s*(?:#.*)?$"
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n[^\\n]*?:\\s*[\"']?[^:\\s\"']+:(?<currentValue>[^\"'\\s]+)[\"']?\\s*(?:#.*)?$",
+        "\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*$"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Generic '# renovate: datasource=X depName=Y' marker for version fields",
+      "managerFilePatterns": [
+        "/\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*version:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*(?:#.*)?$",
+        "\\s*version:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*$"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Grafana plugins in Helm values",
+      "managerFilePatterns": [
+        "/(^|/)helmrelease\\.ya?ml$/",
+        "/(^|/)values\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "-\\s+(?<depName>[^@\\s]+)@(?<currentValue>[^\\s#]+)"
+      ],
+      "datasourceTemplate": "grafana-plugin"
     },
     {
       "customType": "regex",

@@ -16,6 +16,9 @@ KUBECONFORM_ARGS=(
 
 log() { printf '\n==> %s\n' "$*"; }
 
+log "Stage 0: Renovate Dependency Audit"
+./scripts/ci/renovate-audit.sh
+
 log "Stage 1: YAML lint (yamllint)"
 yamllint -c .yamllint.yml \
   clusters infrastructure apps \
