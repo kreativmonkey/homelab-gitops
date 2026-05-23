@@ -59,7 +59,7 @@ spec:
             - name: CHECK_ORIGIN
               value: "false"
             - name: VIRTUAL_HOST
-              value: teslamate.cluster.f4mily.net
+              value: teslamate.f4mily.net
           livenessProbe:
             httpGet:
               path: /

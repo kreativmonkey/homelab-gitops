@@ -70,7 +70,7 @@ here so it is obvious what is **planned** but not deployed:
 | linkwarden         | off    | temporarily removed from catalog          |
 | speedtest-tracker  | wip    | ingress only, missing Deployment          |
 | watchyourlan       | on     | DaemonSet (hostNetwork), scan via IFACES  |
-| teslamate          | on     | Deployment, Mosquitto, CNPG, teslamate.cluster.f4mily.net |
+| teslamate          | on     | Deployment, Mosquitto, CNPG, teslamate.f4mily.net (/grafana/) |
 | goloom             | on     | Deployment, CNPG PostgreSQL, goloom.cluster.f4mily.net |
 | pcm                | wip    | ingress only, missing HelmRelease         |
 
