@@ -63,12 +63,15 @@ psql -h "$NODE_IP" -p 30433 -U authentik -d authentik \
 
 ## Phase 3 — Secret key and media
 
-**Secret key** (required — decrypts stored credentials):
+**Secret key** (required — decrypts stored credentials; must be ASCII, same as Docker production):
 
 ```bash
-just sops-edit apps/base/authentik/authentik-secret-key.secret.yaml
-# Set secret-key to production AUTHENTIK_SECRET_KEY from compose-stack.yml
+cd apps/base/authentik
+just sops-create authentik-secret-key authentik \
+  secret-key='<AUTHENTIK_SECRET_KEY from Migration/authentik/compose-stack.yml>'
 ```
+
+See also: [authentik-upgrade-2026.md](./authentik-upgrade-2026.md) for version upgrades.
 
 **Media** (icons, uploads):
 
