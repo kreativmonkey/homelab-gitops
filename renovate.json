@@ -7,35 +7,43 @@
     "enabled": true
   },
   "kustomize": {
-    "enabled": true
+    "enabled": true,
+    "fileMatch": [
+      "(^|/)kustomization\\.ya?ml$"
+    ]
   },
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true
   },
   "flux": {
-    "enabled": true
+    "enabled": true,
+    "fileMatch": [
+      "\\.ya?ml$"
+    ]
   },
   "helm-values": {
-    "managerFilePatterns": [
-      "/(^|/)helmrelease\\.ya?ml$/",
-      "/(^|/)values\\.ya?ml$/"
+    "enabled": true,
+    "fileMatch": [
+      "(^|/)helmrelease\\.ya?ml$",
+      "(^|/)values\\.ya?ml$"
     ]
   },
   "kubernetes": {
-    "managerFilePatterns": [
-      "//(^|/)(deployment|daemonset|statefulset|job|cronjob)\\.ya?ml$//",
-      "//(^|/)apps/.+\\.ya?ml$//",
-      "//(^|/)infrastructure/.+\\.ya?ml$//",
-      "//(^|/)clusters/.+\\.ya?ml$//"
+    "enabled": true,
+    "fileMatch": [
+      "/(^|/)(deployment|daemonset|statefulset|job|cronjob)\\.ya?ml$",
+      "/(^|/)apps/.+\\.ya?ml$",
+      "/(^|/)infrastructure/.+\\.ya?ml$",
+      "/(^|/)clusters/.+\\.ya?ml$"
     ]
   },
   "customManagers": [
     {
       "customType": "regex",
       "description": "Generic '# renovate: datasource=X depName=Y [versioning=Z] [extractVersion=R]' marker — covers tag-only fields (tag: vX) AND fully-qualified image refs (imageName: repo:tag, value: \"repo:tag\")",
-      "managerFilePatterns": [
-        "/\\.ya?ml$/"
+      "fileMatch": [
+        "\\.ya?ml$"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n(?:[^\\n]*\\n)*?\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*(?:#.*)?$",
@@ -47,8 +55,8 @@
     {
       "customType": "regex",
       "description": "Generic '# renovate: datasource=X depName=Y' marker for version fields",
-      "managerFilePatterns": [
-        "/\\.ya?ml$/"
+      "fileMatch": [
+        "\\.ya?ml$"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*version:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*(?:#.*)?$",
@@ -58,21 +66,20 @@
     },
     {
       "customType": "regex",
-      "description": "Grafana plugins in Helm values",
-      "managerFilePatterns": [
-        "/(^|/)helmrelease\\.ya?ml$/",
-        "/(^|/)values\\.ya?ml$/"
+      "description": "Generic '# renovate: datasource=X depName=Y' marker for list items with @version",
+      "fileMatch": [
+        "\\.ya?ml$"
       ],
       "matchStrings": [
-        "-\\s+(?<depName>[^@\\s]+)@(?<currentValue>[^\\s#]+)"
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*-\\s+[^@\\s]+@(?<currentValue>[^\\s#]+)"
       ],
-      "datasourceTemplate": "grafana-plugin"
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
     {
       "customType": "regex",
       "description": "Immich shared image.tag (values.image.tag — avoids false match on redis/bitnami tags)",
-      "managerFilePatterns": [
-        "/apps/base/immich/helmrelease\\.yaml$/"
+      "fileMatch": [
+        "apps/base/immich/helmrelease\\.yaml$"
       ],
       "matchStrings": [
         "# renovate: datasource=docker depName=ghcr\\.io/immich-app/immich-server[^\\n]*\\n\\s+tag:\\s*[\"']?(?<currentValue>v[^\\s\"']+)[\"']?"
@@ -84,8 +91,8 @@
     {
       "customType": "regex",
       "description": "VictoriaMetrics operator env-var images (`- name: VM_*_IMAGE` followed by `value: \"repo:tag\"`)",
-      "managerFilePatterns": [
-        "/(^|/)apps/base/monitoring/vm-k8s-stack/.*\\.ya?ml$/"
+      "fileMatch": [
+        "(^|/)apps/base/monitoring/vm-k8s-stack/.*\\.ya?ml$"
       ],
       "matchStrings": [
         "- name:\\s+VM_\\S+_IMAGE\\s*\\n\\s*value:\\s*[\"']?(?<depName>[^:\"'\\s]+):(?<currentValue>[^\"'\\s]+)[\"']?"
@@ -96,8 +103,8 @@
     {
       "customType": "regex",
       "description": "Authentik Helm chart (CalVer YYYY.MM.P on charts.goauthentik.io)",
-      "managerFilePatterns": [
-        "/apps/base/authentik/helmrelease\\.yaml$/"
+      "fileMatch": [
+        "apps/base/authentik/helmrelease\\.yaml$"
       ],
       "matchStrings": [
         "# renovate: datasource=helm registryUrl=https://charts\\.goauthentik\\.io depName=authentik\\s*\\n\\s+version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
@@ -110,8 +117,8 @@
     {
       "customType": "regex",
       "description": "CI workflow action versions (Forgejo and GitHub)",
-      "managerFilePatterns": [
-        "/^\\.(forgejo|github)/workflows/.*\\.ya?ml$/"
+      "fileMatch": [
+        "^\\.(forgejo|github)/workflows/.*\\.ya?ml$"
       ],
       "matchStrings": [
         "uses:\\s*(?:https://github\\.com/)?(?<depName>[^@\\s/]+/[^@\\s]+)@(?<currentValue>[^\\s#]+)"
