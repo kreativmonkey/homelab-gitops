@@ -8,11 +8,8 @@ releases** (e.g. do not jump 2025.12 → 2026.5 without passing 2026.2).
 
 | Step | Chart / image | Notes |
 |------|---------------|-------|
-| Current | `2025.12.4` | Stable baseline after Docker→K8s migration |
-| Next | `2026.2.x` (latest patch) | Required intermediate major; read [2026.2 release notes](https://docs.goauthentik.io/releases/2026.2/) |
-| Later | `2026.4.x` / `2026.5.x` | Only after 2026.2.x is healthy |
-
-Renovate is limited to `2026.2.x` until 2026.2 is verified; then bump allowedVersions for 2026.4+ separately.
+| Current | `2026.2.3` | Stable after 2025.12 → 2026.2 upgrade |
+| Next | `2026.5.x` (latest patch) | Required next major; read [2026.5 release notes](https://docs.goauthentik.io/releases/2026.5/) |
 
 ## Pre-flight checklist
 
