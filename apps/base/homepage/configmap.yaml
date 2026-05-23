@@ -12,7 +12,9 @@ data:
     ---
     title: "Homelab Dashboard"
     language: "de"
-    showStats: true
+    # Eager stats fire ~2×N parallel /api/kubernetes/* calls; intermittent 500 responses
+    # ({error: ...} without stats) crash Homepage v1.13.1 (stats.cpuLimit). Stats on click still work.
+    showStats: false
     statusStyle: dot
   kubernetes.yaml: |
     mode: cluster
