@@ -52,6 +52,8 @@ data:
   host_paperless: paperless.f4mily.net
   host_sterling_pdf: pdf.f4mily.net
   host_searxng: search.f4mily.net
+  host_teslamate: teslamate.f4mily.net
+  url_teslamate_grafana: https://teslamate.f4mily.net/grafana/
   host_tandoor: tandoor.cluster.f4mily.net
   # Comma-separated Django ALLOWED_HOSTS (host + local debugging).
   tandoor_allowed_hosts: tandoor.cluster.f4mily.net,localhost,127.0.0.1
@@ -64,7 +66,6 @@ data:
   host_grafana: grafana.cluster.f4mily.net
   host_victoria_metrics: metrics.cluster.f4mily.net
   host_kite: kite.cluster.f4mily.net
-  host_teslamate: teslamate.cluster.f4mily.net
   host_n8n: n8n.cluster.f4mily.net
   host_uptime_kuma: uptime-kuma.cluster.f4mily.net
   host_unifi_controller: unifi-controller.cluster.f4mily.net

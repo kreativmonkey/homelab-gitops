@@ -58,10 +58,6 @@ spec:
                 secretKeyRef:
                   name: teslamate-grafana-oauth
                   key: client-secret
-            - name: GF_SERVER_DOMAIN
-              value: teslamate-grafana.cluster.f4mily.net
-            - name: GF_SERVER_ROOT_URL
-              value: https://teslamate-grafana.cluster.f4mily.net/
           livenessProbe:
             httpGet:
               path: /api/health
