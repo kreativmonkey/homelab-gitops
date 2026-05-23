@@ -13,6 +13,10 @@ metadata:
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
     nginx.org/client-max-body-size: "0"
+    # Socket.IO (/api/socket.io) for live server status and uploads
+    nginx.org/websocket-services: "immich-server"
+    nginx.org/proxy-read-timeout: "3600s"
+    nginx.org/proxy-send-timeout: "3600s"
 spec:
   ingressClassName: nginx
   tls:
