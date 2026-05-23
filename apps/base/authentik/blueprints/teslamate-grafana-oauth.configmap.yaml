@@ -28,9 +28,9 @@ data:
           signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
           redirect_uris:
             - matching_mode: strict
-              url: https://teslamate-grafana.cluster.f4mily.net/login/generic_oauth
+              url: https://teslamate.f4mily.net/grafana/login/generic_oauth
           post_logout_redirect_uris:
-            - https://teslamate-grafana.cluster.f4mily.net/logout
+            - https://teslamate.f4mily.net/grafana/logout
           property_mappings:
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
@@ -43,5 +43,5 @@ data:
           name: TeslaMate Grafana
           slug: tesla-grafana
           provider: !KeyOf teslamate-grafana-provider
-          launch_url: https://teslamate-grafana.cluster.f4mily.net
-          meta_launch_url: https://teslamate-grafana.cluster.f4mily.net
+          launch_url: https://teslamate.f4mily.net/grafana/
+          meta_launch_url: https://teslamate.f4mily.net/grafana/

@@ -14,4 +14,3 @@ resources:
   - service.yaml
   - service-grafana.yaml
   - ingress.yaml
-  - ingress-grafana.yaml
