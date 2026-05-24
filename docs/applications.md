@@ -164,12 +164,9 @@ Then `just validate` and commit.
 
 ## 4. Storage strategy reminder
 
-- `longhorn` / `longhorn-1` — RWO block storage for databases, configs,
-  small state. `longhorn-1` is the cluster default (single replica).
-- `nfs-media-static` — RWX network storage backed by TrueNAS at
-  192.168.10.94. **Manually-defined PVs** in
-  `infrastructure/base/storage/pv-nfs.yaml` with a `claimRef` to the
-  intended app namespace.
+- `truenas-iscsi` — default **RWO block** on TrueNAS M.2 (democratic-csi). Replaces Longhorn for DBs and app state.
+- `longhorn` / `longhorn-1` — **deprecated**; remove after `docs/migrations/longhorn-to-truenas-iscsi.md`.
+- `nfs-media-static` — RWX on TrueNAS (`192.168.10.94`). Static PVs in `infrastructure/base/storage/pv-nfs.yaml`.
 
 When migrating an app from Longhorn → NFS, you must first delete the
 existing `Bound` PVC. PVC specs (storageClassName, accessModes,

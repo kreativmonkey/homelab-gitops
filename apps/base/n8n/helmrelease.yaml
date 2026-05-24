@@ -45,8 +45,8 @@ spec:
       persistence:
         enabled: true
         type: dynamic
-        # Cluster has longhorn (default longhorn-1); local-path is not installed.
-        storageClass: longhorn-1
+        # Default block storage: truenas-iscsi (TrueNAS iSCSI via democratic-csi).
+        storageClass: truenas-iscsi
         accessModes:
           - ReadWriteOnce
         size: 10Gi

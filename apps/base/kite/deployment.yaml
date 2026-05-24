@@ -70,7 +70,7 @@ spec:
           pvc:
             enabled: true
             # Must match existing PVC storageClassName (immutable after bind). New installs: longhorn-1 is fine.
-            storageClass: longhorn
+            storageClass: truenas-iscsi
             accessModes:
               - ReadWriteOnce
             size: 1Gi

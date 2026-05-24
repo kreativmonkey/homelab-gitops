@@ -55,4 +55,4 @@ spec:
     persistentVolume:
       enabled: true
       size: 1Gi
-      storageClass: longhorn
+      storageClass: truenas-iscsi

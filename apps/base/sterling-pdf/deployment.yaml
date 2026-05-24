@@ -59,7 +59,7 @@ spec:
       externalPort: 8080
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: truenas-iscsi
       accessMode: ReadWriteOnce
       size: 8Gi
       path: /configs

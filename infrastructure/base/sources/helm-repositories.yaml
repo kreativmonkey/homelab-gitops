@@ -20,6 +20,15 @@ spec:
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
+  name: democratic-csi-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://democratic-csi.github.io/charts
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
   name: longhorn-repo
   namespace: flux-system
 spec:
