@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: cert-manager
-      version: "v1.14.4"
+      version: "v1.20.2"
       sourceRef:
         kind: HelmRepository
         name: jetstack-repo
@@ -44,7 +44,7 @@ spec:
   chart:
     spec:
       chart: cert-manager-webhook-hetzner
-      version: "0.6.5"
+      version: "0.7.0"
       sourceRef:
         kind: HelmRepository
         name: hetzner-webhook-repo
