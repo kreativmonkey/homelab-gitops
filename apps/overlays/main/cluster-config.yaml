@@ -43,6 +43,7 @@ data:
   # ---------------------------------------------------------------------
   # Public-facing apps (covered by *.f4mily.net wildcard):
   host_audiobookshelf: audible.f4mily.net
+  host_forgejo: git.f4mily.net
   # Staging on cluster wildcard before moving production DNS:
   host_authentik: login.f4mily.net
   host_homepage: home.f4mily.net
