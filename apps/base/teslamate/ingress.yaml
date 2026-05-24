@@ -7,6 +7,7 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: Teslamate
     gethomepage.dev/description: Tesla logging (Grafana at /grafana/)
+    gethomepage.dev/href: "https://teslamate.f4mily.net/"
     gethomepage.dev/group: Energy
     gethomepage.dev/icon: teslamate.png
     gethomepage.dev/app: teslamate

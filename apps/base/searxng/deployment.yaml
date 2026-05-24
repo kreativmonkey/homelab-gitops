@@ -76,13 +76,15 @@ spec:
             periodSeconds: 5
             failureThreshold: 60
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /
               port: http
             initialDelaySeconds: 90
             periodSeconds: 30
             failureThreshold: 5
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /
               port: http
             initialDelaySeconds: 10
             periodSeconds: 10
