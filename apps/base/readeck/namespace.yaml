@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: readeck
+  labels:
+    app.kubernetes.io/name: readeck
+    app.kubernetes.io/part-of: homelab-apps

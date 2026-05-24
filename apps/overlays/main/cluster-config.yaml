@@ -59,6 +59,8 @@ data:
   # Comma-separated Django ALLOWED_HOSTS (host + local debugging).
   tandoor_allowed_hosts: tandoor.cluster.f4mily.net,localhost,127.0.0.1
   host_linkwarden: linkwarden.f4mily.net
+  host_readeck: readeck.f4mily.net
+  url_readeck: https://readeck.f4mily.net
 
   # Cluster-internal apps (covered by *.cluster.f4mily.net wildcard):
   host_goloom: goloom.cluster.f4mily.net

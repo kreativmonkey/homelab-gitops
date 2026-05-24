@@ -68,6 +68,7 @@ here so it is obvious what is **planned** but not deployed:
 | unifi-controller   | off    | removed from catalog (DR test)            |
 | nextcloud          | on     | HelmRelease + CNPG + NFS at cluster domain  |
 | linkwarden         | off    | temporarily removed from catalog          |
+| readeck            | on     | Deployment, SQLite on iSCSI, readeck.f4mily.net |
 | speedtest-tracker  | wip    | ingress only, missing Deployment          |
 | watchyourlan       | on     | DaemonSet (hostNetwork), scan via IFACES  |
 | teslamate          | on     | Deployment, Mosquitto, CNPG, teslamate.f4mily.net (/grafana/) |

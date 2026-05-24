@@ -40,6 +40,7 @@ resources:
   - ../../base/forgejo
   - ../../base/nextcloud
   # - ../../base/linkwarden          # disabled: temporarily removed from catalog
+  - ../../base/readeck
   - ../../base/authentik
   - ../../base/homepage
 
@@ -150,6 +151,34 @@ replacements:
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_readeck
+    targets:
+      - select: {kind: Ingress, name: readeck}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.url_readeck
+    targets:
+      - select: {kind: Deployment, name: readeck}
+        fieldPaths:
+          - spec.template.spec.containers.[name=readeck].env.[name=READECK_SERVER_BASE_URL].value
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_readeck
+    targets:
+      - select: {kind: Deployment, name: readeck}
+        fieldPaths:
+          - spec.template.spec.containers.[name=readeck].env.[name=READECK_ALLOWED_HOSTS].value
 
   - source:
       kind: ConfigMap
@@ -325,6 +354,8 @@ replacements:
       - select: {kind: Ingress, name: kavita}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: paperless}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: readeck}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: HelmRelease, name: sterling-pdf}
         fieldPaths: [spec.values.ingress.tls.0.secretName]
