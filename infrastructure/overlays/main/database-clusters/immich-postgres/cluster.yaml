@@ -26,7 +26,7 @@ spec:
       effective_cache_size: 512MB
 
   storage:
-    storageClass: longhorn
+    storageClass: truenas-iscsi
     size: 10Gi
 
   resources:
