@@ -72,7 +72,7 @@ here so it is obvious what is **planned** but not deployed:
 | watchyourlan       | on     | DaemonSet (hostNetwork), scan via IFACES  |
 | teslamate          | on     | Deployment, Mosquitto, CNPG, teslamate.f4mily.net (/grafana/) |
 | authentik          | on     | HelmRelease, CNPG, login.f4mily.net (production IdP)            |
-| forgejo            | on     | Deployment, NFS, git.f4mily.net (Git + CI), SSH :22/:2222       |
+| forgejo            | on     | Deployment, NFS, git.f4mily.net (Git + CI + Renovate CronJob), SSH :22/:2222 |
 | goloom             | on     | Deployment, CNPG PostgreSQL, goloom.cluster.f4mily.net |
 | pcm                | wip    | ingress only, missing HelmRelease         |
 
