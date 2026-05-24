@@ -9,7 +9,6 @@ spec:
     includedNamespaces:
       - default
       - monitoring
-      - longhorn-system
       - external-dns
       - ingress-nginx
       - cnpg-system

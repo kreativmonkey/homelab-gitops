@@ -165,7 +165,6 @@ Then `just validate` and commit.
 ## 4. Storage strategy reminder
 
 - `truenas-iscsi` — default **RWO block** on TrueNAS M.2 (democratic-csi). Replaces Longhorn for DBs and app state.
-- `longhorn` / `longhorn-1` — **deprecated**; remove after `docs/migrations/longhorn-to-truenas-iscsi.md`.
 - `nfs-media-static` — RWX on TrueNAS (`192.168.10.94`). Static PVs in `infrastructure/base/storage/pv-nfs.yaml`.
 
 When migrating an app from Longhorn → NFS, you must first delete the
