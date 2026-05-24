@@ -113,14 +113,17 @@ Do **not** only change `storageClass` in Git on a running cluster.
 
 ## Decommission Longhorn
 
+**Done (2026-05-24):** all PVCs migrated; Longhorn removed from Git and cluster.
+
 When no PVCs use `longhorn` / `longhorn-1`:
 
 ```bash
 kubectl get pvc -A -o custom-columns=NS:.metadata.namespace,NAME:.metadata.name,SC:.spec.storageClassName | grep longhorn || true
-flux suspend helmrelease longhorn -n longhorn-system
+kubectl patch settings.longhorn.io deleting-confirmation-flag -n longhorn-system --type merge -p '{"value":"true"}'
+kubectl delete helmrelease longhorn -n longhorn-system
 ```
 
-Remove from Git: `longhorn.yaml`, `storageclass-longhorn-1.yaml`, Longhorn ingress; optional: drop Talos `/var/lib/longhorn` disk in OpenTofu (separate change).
+Remove from Git: `longhorn.yaml`, `storageclass-longhorn-1.yaml`, Longhorn ingress, `longhorn-repo`, `longhorn-system` namespace; optional: drop Talos `/var/lib/longhorn` disk in OpenTofu (separate change).
 
 ## Rollback
 
