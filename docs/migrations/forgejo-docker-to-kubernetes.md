@@ -39,6 +39,31 @@ On the NAS (or from a host with both CephFS and NFS access):
 rsync -avH --delete /mnt/cephfs/forgejo/ /mnt/truenas/Media/docker/forgejo/
 ```
 
+If CephFS is not mounted locally, use the repo export under `Migration/forgejo/`
+(`git/` + `gitea/` only) and copy via a cluster Job on **talos-cp2** (the only
+node reachable for `kubectl cp` / `exec` from the operator workstation in this
+setup):
+
+```bash
+tar -C Migration/forgejo -czf /tmp/forgejo-data.tar.gz git gitea
+split -b 100M /tmp/forgejo-data.tar.gz /tmp/forgejo-part-
+
+# Scale forgejo Deployment to 0, then run migrate-data.job.yaml (nodeSelector: cp2)
+kubectl apply -f apps/base/forgejo/migrate-data.job.yaml
+POD=$(kubectl get pod -n forgejo -l job-name=forgejo-data-migrate -o jsonpath='{.items[0].metadata.name}')
+for f in /tmp/forgejo-part-*; do kubectl cp "$f" forgejo/$POD:/tmp/$(basename "$f"); done
+kubectl exec -n forgejo "$POD" -- sh -c 'cat /tmp/forgejo-part-* > /tmp/forgejo-data.tar.gz && tar -xzf /tmp/forgejo-data.tar.gz -C /mnt/docker/forgejo'
+
+# Fix ownership (tar via root job leaves root-owned files → s6 lock error)
+kubectl apply -f apps/base/forgejo/fix-perms.job.yaml
+kubectl wait -n forgejo job/forgejo-fix-perms --for=condition=complete --timeout=600s
+kubectl delete job -n forgejo forgejo-data-migrate forgejo-fix-perms
+```
+
+**Important:** Do **not** set `runAsUser`/`runAsGroup` on the Forgejo container.
+The image drops privileges via s6; forcing UID 1000 causes
+`s6-svscan: unable to open .s6-svscan/lock: Permission denied`.
+
 Verify layout (must match container mount `/data`):
 
 ```text
