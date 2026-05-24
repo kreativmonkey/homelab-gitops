@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: forgejo-fix-perms
+  namespace: forgejo
+spec:
+  ttlSecondsAfterFinished: 120
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: talos-cp2
+      restartPolicy: Never
+      containers:
+        - name: fix
+          image: busybox:1.37
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+            - |
+              set -eux
+              rm -rf /mnt/docker/forgejo/.s6-svscan
+              chown -R 1000:1000 /mnt/docker/forgejo
+              chmod -R u+rwX,g+rwX /mnt/docker/forgejo
+          volumeMounts:
+            - name: media
+              mountPath: /mnt
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: forgejo-data
