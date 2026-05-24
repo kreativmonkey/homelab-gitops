@@ -201,13 +201,26 @@ n8n-bootstrap url="https://n8n.cluster.f4mily.net":
 
     _bootstrap_via_kubectl() {
       local pod="$1"
-      kubectl cp "$wf_err" "ai-ops/${pod}:/tmp/homelab-gitops-remediation-error.workflow.json"
-      kubectl cp "$wf_main" "ai-ops/${pod}:/tmp/homelab-gitops-remediation.workflow.json"
-      kubectl exec -n ai-ops "$pod" -- n8n import:workflow --input=/tmp/homelab-gitops-remediation-error.workflow.json
-      kubectl exec -n ai-ops "$pod" -- n8n import:workflow --input=/tmp/homelab-gitops-remediation.workflow.json
-      echo "Workflows imported via kubectl."
-      echo "Link manually: {{url}} → Homelab GitOps Remediation → Settings → Error workflow →"
-      echo "  «Homelab GitOps Remediation — Error Notify» → Save → Publish remediation workflow"
+      local user_id err_id main_id tmpdir
+      tmpdir="$(mktemp -d)"
+      trap 'rm -rf "$tmpdir"' RETURN
+      user_id="$(kubectl run sqlite-n8n-bootstrap --rm -i --restart=Never -n ai-ops --image=alpine:3.21 \
+        --overrides='{"spec":{"containers":[{"name":"s","image":"alpine:3.21","command":["sh","-c","apk add -q sqlite && sqlite3 /data/database.sqlite \"SELECT id FROM user LIMIT 1;\""],"volumeMounts":[{"name":"d","mountPath":"/data"}]}],"volumes":[{"name":"d","persistentVolumeClaim":{"claimName":"n8n-app"}}]}}' 2>/dev/null | tail -1)"
+      [[ -n "$user_id" && "$user_id" != *Error* ]] || { echo "error: could not read n8n user id (complete owner setup in UI first)"; return 1; }
+      jq --arg id "$(uuidgen)" '. + {id: $id}' "$wf_err" > "${tmpdir}/err.json"
+      jq --arg id "$(uuidgen)" '. + {id: $id}' "$wf_main" > "${tmpdir}/main.json"
+      kubectl cp "${tmpdir}/err.json" "ai-ops/${pod}:/tmp/homelab-gitops-remediation-error.workflow.json"
+      kubectl cp "${tmpdir}/main.json" "ai-ops/${pod}:/tmp/homelab-gitops-remediation.workflow.json"
+      kubectl exec -n ai-ops "$pod" -- n8n import:workflow --input=/tmp/homelab-gitops-remediation-error.workflow.json --userId="$user_id"
+      main_id="$(kubectl exec -n ai-ops "$pod" -- n8n import:workflow --input=/tmp/homelab-gitops-remediation.workflow.json --userId="$user_id" 2>&1 | sed -n 's/.*id=\([^ ]*\).*/\1/p' || true)"
+      err_id="$(kubectl exec -n ai-ops "$pod" -- n8n list:workflow 2>/dev/null | rg 'Error Notify' | cut -d'|' -f1 || true)"
+      main_id="$(kubectl exec -n ai-ops "$pod" -- n8n list:workflow 2>/dev/null | rg 'GitHub PR' | cut -d'|' -f1 || true)"
+      [[ -n "$main_id" ]] && kubectl exec -n ai-ops "$pod" -- n8n publish:workflow --id="$main_id"
+      kubectl rollout restart deploy/n8n-app -n ai-ops
+      kubectl rollout status deploy/n8n-app -n ai-ops --timeout=5m
+      echo "Workflows imported via kubectl (userId=${user_id})."
+      echo "Link error workflow in UI if needed: {{url}} → Homelab GitOps Remediation → Settings → Error workflow"
+      echo "Webhook: {{url}}/webhook/vmalert"
     }
 
     pod="$(kubectl get pod -n ai-ops -l app.kubernetes.io/instance=n8n-app -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || \
