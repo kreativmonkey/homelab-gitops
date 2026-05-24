@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - longhorn.yaml
   - storageclass-longhorn-1.yaml
+  - democratic-csi
   - ingress.yaml
   - nfs-storageclass.yaml
   - pv-nfs.yaml

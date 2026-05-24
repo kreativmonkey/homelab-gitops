@@ -4,7 +4,7 @@ metadata:
   name: cnpg
   namespace: cnpg-system
   annotations:
-    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/longhorn-system/longhorn
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/democratic-csi/democratic-csi-iscsi
 spec:
   interval: 1h
   targetNamespace: cnpg-system
