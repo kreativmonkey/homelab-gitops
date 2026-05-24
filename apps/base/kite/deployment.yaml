@@ -69,7 +69,7 @@ spec:
         persistence:
           pvc:
             enabled: true
-            # Must match existing PVC storageClassName (immutable after bind). New installs: longhorn-1 is fine.
+            # PVC storageClassName is immutable after bind; migrate data before changing SC in Git.
             storageClass: truenas-iscsi
             accessModes:
               - ReadWriteOnce
