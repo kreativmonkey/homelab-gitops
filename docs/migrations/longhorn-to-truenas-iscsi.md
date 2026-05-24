@@ -74,13 +74,13 @@ PVC `storageClassName` is **immutable**. Each workload: backup → stop → dele
 | Phase | Workload | PVC / notes |
 |-------|----------|-------------|
 | 1 | Test | ad-hoc 1Gi PVC — **done** (`default/truenas-iscsi-test`) |
-| 2 | `renovate-data`, `forgejo-runner-data` | small, low risk |
-| 3 | `kite-kite-storage`, `sterling-pdf`, `authentik-media` | stop app, copy or accept empty |
-| 4 | `vm-k8s-stack` (Grafana + VMSingle) | metrics gap OK briefly; no longhorn snapshots |
-| 5 | `pgadmin` | after DB stable |
-| 6 | **`homelab-postgres`** | Barman backup → new cluster/PVC on `truenas-iscsi` or pg_dump restore |
-| 7 | **`immich-postgres`** | same as CNPG DR runbook |
-| 8 | Remaining `longhorn-1` apps (n8n, linkwarden, …) | per `docs/migrations/nfs-migration.md` pattern |
+| 2 | `renovate-data`, `forgejo-runner-data` | **done** (renovate was faulted → empty volume) |
+| 3 | `kite-kite-storage`, `sterling-pdf`, `authentik-media` | **done** (rsync via migrate job) |
+| 4 | `vm-k8s-stack` (Grafana + VMSingle) | **done** |
+| 5 | `pgadmin` | **done** |
+| 6 | **`homelab-postgres`** | **done** (Barman recovery → `truenas-iscsi`) |
+| 7 | **`immich-postgres`** | **done** (Barman recovery) |
+| 8 | `n8n-app`, orphan `immich-restore-work` | **done** |
 
 ### Example: generic RWO app PVC
 
@@ -100,11 +100,16 @@ flux resume helmrelease -n "$NS" "$APP" 2>/dev/null || kubectl -n "$NS" scale de
 
 Do **not** only change `storageClass` in Git on a running cluster.
 
-1. Verify Barman backups: `kubectl get backup -n cnpg-system`
-2. `flux suspend kustomization apps -n flux-system`
-3. Scale down consumers (authentik, paperless, …)
-4. Backup / export or use CNPG recovery to new PVC on `truenas-iscsi`
-5. See `docs/disaster-recovery/cnpg-s3-dr.md`
+1. Verify Barman backups: `kubectl get backup.postgresql.cnpg.io -n cnpg-system`
+2. `flux suspend kustomization apps infra-main -n flux-system`
+3. On-demand backup: `Backup` CR per cluster (optional if daily backup is recent)
+4. Scale down consumers (authentik, immich, paperless, …)
+5. `kubectl delete cluster <name> -n cnpg-system --wait`
+6. `./scripts/force-delete-pvc.sh cnpg-system <name>-1`
+7. Merge main `cluster.yaml` + DR `patches/cluster-recovery*.yaml` (see `scripts/` — `kubectl patch --local` fails on Cluster CR) and `kubectl apply`
+8. `kubectl wait --for=condition=Ready cluster/<name> -n cnpg-system --timeout=45m`
+9. `flux resume kustomization apps infra-main -n flux-system`
+10. See `docs/disaster-recovery/cnpg-s3-dr.md`
 
 ## Decommission Longhorn
 
