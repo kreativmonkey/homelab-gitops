@@ -77,6 +77,8 @@ DR patches include `cnpg.io/skipEmptyWalArchiveCheck: enabled` when reusing the 
 | Paperless `secret paperless-ngx not found` | App secret not in Git | `apps/overlays/main/paperless-ngx.secret.yaml` (SOPS) |
 | UI unreachable via VIP `.245` | Ingress uses `hostNetwork` on node IPs | Use `https://<node-ip>` or DNS to `.41`/`.42`/`.43`, not API VIP |
 | `infra-storage` fails on StorageClass `longhorn` | Git must not redefine Helm-owned SC | Only `storageclass-longhorn-1.yaml` in kustomize |
+| Longhorn HelmRelease `FailedUpgradePreCheck` (1.6→1.11) | Longhorn allows one minor version per upgrade | [longhorn-upgrade.md](../runbooks/longhorn-upgrade.md) — staged `scripts/longhorn-staged-upgrade.sh` |
+| Longhorn/Velero pre-upgrade hook `no route to host` (10.96.0.1:443) on cp1/cp3 | Hook Job scheduled on node without working service CNI/API path | `kubectl cordon talos-cp1 talos-cp3`, delete failed hook Job, retry upgrade |
 
 ## Reach apps after rebuild
 
