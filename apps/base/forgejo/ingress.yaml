@@ -7,7 +7,7 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: Forgejo
     gethomepage.dev/description: Git hosting & CI
-    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/group: Tools
     gethomepage.dev/icon: forgejo.png
     gethomepage.dev/pod-selector: app=forgejo
     nginx.org/ssl-redirect: "false"
