@@ -86,6 +86,8 @@ spec:
     persistence:
       enabled: true
       existingClaim: nextcloud-data
+      # Chart uses persistence.subPath for datadir only; nextcloud.persistence.subPath covers html/config.
+      subPath: docker/nextcloud
     nextcloud:
       existingSecret:
         enabled: true

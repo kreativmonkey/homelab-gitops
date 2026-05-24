@@ -54,6 +54,8 @@ spec:
     envs:
       - name: DOCKER_ENABLE_SECURITY
         value: "false"
+      - name: SECURITY_ENABLELOGIN
+        value: "false"
     service:
       type: ClusterIP
       externalPort: 8080
