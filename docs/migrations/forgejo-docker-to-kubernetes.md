@@ -20,7 +20,7 @@ TransportServer).
 | HTTP | Traefik `git.f4mily.net:443` | Ingress `git.f4mily.net` (NGINX, wildcard TLS) |
 | Git SSH | Host port `2222` → container `:22` | TransportServer on ingress nodes `:22` and `:2222` → `forgejo-ssh:22` |
 | Runner | Docker Swarm `act-runner` | Optional Deployment `forgejo-runner` + DinD (enable after SOPS secret) |
-| Renovate | Sidecar container | Not deployed on cluster (keep external or add later) |
+| Renovate | Sidecar `renovate/renovate` + `renovate-config.js` | CronJob `renovate` (every 4h), ConfigMap + SOPS credentials |
 
 ## Prerequisites
 
@@ -133,7 +133,34 @@ sops -e -i apps/base/forgejo/forgejo-runner-register.secret.yaml
 Alternatively copy existing runner state from `Migration/forgejo/runner/data/.runner`
 into the runner PVC before first start (skip registration token).
 
-## Phase 5 — Cutover & decommission Docker
+## Phase 5 — Renovate bot
+
+Production Compose sidecar (`renovate/renovate`) used:
+
+- `RENOVATE_PLATFORM=forgejo`
+- `RENOVATE_ENDPOINT=http://server:3000/api/v1`
+- Forgejo PAT + GitHub.com PAT (for datasource lookups)
+- `/mnt/cephfs/renovate/renovate-config.js` → replaced by `renovate-config` ConfigMap
+- `/mnt/cephfs/renovate/data` → PVC `renovate-data` (Longhorn, cache only — optional to migrate)
+
+1. Copy tokens from `Migration/forgejo/.env` (never commit):
+   ```bash
+   cp apps/base/forgejo/renovate-credentials.secret.yaml.template \
+      apps/base/forgejo/renovate-credentials.secret.yaml
+   # edit RENOVATE_TOKEN + RENOVATE_GITHUB_COM_TOKEN
+   sops -e -i apps/base/forgejo/renovate-credentials.secret.yaml
+   ```
+2. Uncomment in `apps/base/forgejo/kustomization.yaml`:
+   ```yaml
+   - renovate-credentials.secret.yaml
+   ```
+3. Commit, reconcile, trigger a run:
+   ```bash
+   kubectl create job -n forgejo renovate-manual --from=cronjob/renovate
+   kubectl logs -n forgejo job/renovate-manual -f
+   ```
+
+## Phase 6 — Cutover & decommission Docker
 
 1. Stop Docker Compose stack on the old host.
 2. Confirm CI (`/.forgejo/workflows/`) and `git push` via SSH work against cluster.
