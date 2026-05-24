@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: forgejo
+  namespace: forgejo
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Forgejo
+    gethomepage.dev/description: Git hosting & CI
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: forgejo.png
+    gethomepage.dev/pod-selector: app=forgejo
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+    nginx.org/websocket-services: "forgejo-app"
+    nginx.org/proxy-read-timeout: "3600s"
+    nginx.org/proxy-send-timeout: "3600s"
+    nginx.org/client-max-body-size: "0"
+    nginx.org/proxy-body-size: "0"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - git.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: git.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: forgejo-app
+                port:
+                  number: 3000
