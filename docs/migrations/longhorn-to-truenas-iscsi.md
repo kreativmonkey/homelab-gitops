@@ -80,7 +80,7 @@ PVC `storageClassName` is **immutable**. Each workload: backup → stop → dele
 | 5 | `pgadmin` | **done** |
 | 6 | **`homelab-postgres`** | **done** (Barman recovery → `truenas-iscsi`) |
 | 7 | **`immich-postgres`** | **done** (Barman recovery) |
-| 8 | `n8n-app`, orphan `immich-restore-work` | **done** |
+| 8 | `n8n-app`, orphan `immich-restore-work` | **done** — after cutover run `just n8n-bootstrap` (SQLite DB not rsync'd; workflows live in Git) |
 
 ### Example: generic RWO app PVC
 
