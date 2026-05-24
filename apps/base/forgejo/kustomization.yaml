@@ -11,5 +11,4 @@ resources:
   - transportserver.yaml
   - renovate-config.configmap.yaml
   - renovate-cronjob.yaml
-  # Enable after SOPS-encrypting renovate-credentials.secret.yaml (see migration runbook).
-  # - renovate-credentials.secret.yaml
+  - renovate-credentials.secret.yaml
