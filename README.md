@@ -13,7 +13,7 @@ This repository is the **Single Source of Truth** for my Kubernetes homelab. It 
 | **Secrets** | [SOPS](https://github.com/getsops/sops) + [age](https://github.com/FiloSottile/age) | Encrypted GitOps secrets (In-repo encryption) |
 | **OS & K8s** | [Talos Linux](https://www.talos.dev/) | Immutable, RAM-based, API-managed OS |
 | **GitOps** | [FluxCD](https://fluxcd.io/) | Reconciles Git state to Cluster state |
-| **Storage (Fast)** | [Longhorn](https://longhorn.io/) | Distributed Block Storage for DBs/State |
+| **Storage (Fast)** | TrueNAS iSCSI (democratic-csi) | RWO block storage for DBs/State |
 | **Storage (Mass)** | NFS (External NAS) | Persistent storage for media and archives |
 | **Networking** | Nginx Ingress / [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) | Ingress control and Cloudflare DNS sync |
 | **Security** | [cert-manager](https://github.com/cert-manager/cert-manager) | Automated TLS via Let's Encrypt (DNS-01) |
