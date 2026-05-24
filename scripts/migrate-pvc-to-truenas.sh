@@ -7,8 +7,9 @@ NS="${1:?namespace}"
 PVC="${2:?pvc name}"
 SIZE="${3:-}"
 SC="truenas-iscsi"
-MIG="${PVC}-migrate-${MIG_ID:-$(date +%s)}"
-JOB_ID="${MIG_ID:-$(date +%s)}"
+MIG_ID="${MIG_ID:-$(date +%s)}"
+MIG="${PVC}-m-${MIG_ID}"
+JOB_ID="${MIG_ID}"
 
 if [[ -z "${KUBECONFIG:-}" ]]; then
   echo "Set KUBECONFIG" >&2
@@ -82,7 +83,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: migrate-${PVC}-${JOB_ID}
+  name: mig-${JOB_ID}
   namespace: ${NS}
 spec:
   ttlSecondsAfterFinished: 600
@@ -115,10 +116,22 @@ spec:
             claimName: ${MIG}
 EOF
 
-kubectl wait --for=condition=complete "job/migrate-${PVC}-${JOB_ID}" -n "$NS" --timeout=30m
+kubectl wait --for=condition=complete "job/mig-${JOB_ID}" -n "$NS" --timeout=30m
 
 echo "==> [$NS/$PVC] replace PVC"
-kubectl delete pvc -n "$NS" "$PVC" --wait=true
+kubectl delete pvc -n "$NS" "$PVC" --wait=false
+for _ in $(seq 1 90); do
+  if ! kubectl get pvc -n "$NS" "$PVC" &>/dev/null; then
+    break
+  fi
+  phase="$(kubectl get pvc -n "$NS" "$PVC" -o jsonpath='{.status.phase}' 2>/dev/null || echo gone)"
+  [[ "$phase" == "Terminating" ]] && bash "$(dirname "$0")/force-delete-pvc.sh" "$NS" "$PVC"
+  sleep 5
+done
+if kubectl get pvc -n "$NS" "$PVC" &>/dev/null; then
+  echo "ERROR: PVC $NS/$PVC still exists after delete" >&2
+  exit 1
+fi
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -140,7 +153,7 @@ kubectl apply -f - <<EOF
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: migrate-${PVC}-restore-${JOB_ID}
+  name: mig-r-${JOB_ID}
   namespace: ${NS}
 spec:
   ttlSecondsAfterFinished: 600
@@ -172,9 +185,9 @@ spec:
             claimName: ${PVC}
 EOF
 
-kubectl wait --for=condition=complete "job/migrate-${PVC}-restore-${JOB_ID}" -n "$NS" --timeout=30m
+kubectl wait --for=condition=complete "job/mig-r-${JOB_ID}" -n "$NS" --timeout=30m
 kubectl delete pvc -n "$NS" "$MIG" --wait=false
-kubectl delete job -n "$NS" "migrate-${PVC}-${JOB_ID}" "migrate-${PVC}-restore-${JOB_ID}" --ignore-not-found
+kubectl delete job -n "$NS" "mig-${JOB_ID}" "mig-r-${JOB_ID}" --ignore-not-found
 
 echo "==> [$NS/$PVC] scale up"
 kubectl get cronjob -n "$NS" -o name 2>/dev/null | while read -r cj; do
