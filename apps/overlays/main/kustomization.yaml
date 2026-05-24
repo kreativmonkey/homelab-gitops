@@ -37,6 +37,7 @@ resources:
   # - ../../base/unifi-controller    # disabled: dropped from catalog (DR test)
 
   # --- Cloud & Management -----------------------------------------------
+  - ../../base/forgejo
   - ../../base/nextcloud
   # - ../../base/linkwarden          # disabled: temporarily removed from catalog
   - ../../base/authentik
@@ -76,6 +77,16 @@ replacements:
       fieldPath: data.host_audiobookshelf
     targets:
       - select: {kind: Ingress, name: audiobookshelf}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_forgejo
+    targets:
+      - select: {kind: Ingress, name: forgejo}
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
@@ -304,6 +315,8 @@ replacements:
       fieldPath: data.publicTlsSecret
     targets:
       - select: {kind: Ingress, name: audiobookshelf}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: forgejo}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: homepage}
         fieldPaths: [spec.tls.0.secretName]

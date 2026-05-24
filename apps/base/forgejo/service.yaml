@@ -1,0 +1,30 @@
+# HTTP service name avoids K8s env injection (FORGEJO_PORT) on the app pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo-app
+  namespace: forgejo
+spec:
+  type: ClusterIP
+  selector:
+    app: forgejo
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo-ssh
+  namespace: forgejo
+spec:
+  type: ClusterIP
+  selector:
+    app: forgejo
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: ssh
+      protocol: TCP
