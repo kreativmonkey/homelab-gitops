@@ -9,6 +9,8 @@ metadata:
     gethomepage.dev/description: Identity Provider
     gethomepage.dev/group: Tools
     gethomepage.dev/icon: authentik.png
+    # Only the server serves the Ingress; worker shares app.kubernetes.io/name=authentik.
+    gethomepage.dev/pod-selector: app.kubernetes.io/component=server
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
