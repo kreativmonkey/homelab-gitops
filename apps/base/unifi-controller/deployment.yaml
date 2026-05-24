@@ -97,7 +97,7 @@ spec:
     spec:
       initContainers:
         - name: wait-mongo
-          image: busybox:1.37
+          image: busybox:1.38
           command:
             - sh
             - -c
