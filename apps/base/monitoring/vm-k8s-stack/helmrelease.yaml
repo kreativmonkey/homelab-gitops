@@ -26,7 +26,7 @@ spec:
       spec:
         retentionPeriod: "1"
         storage:
-          storageClassName: longhorn
+          storageClassName: truenas-iscsi
           resources:
             requests:
               storage: 20Gi
@@ -222,7 +222,7 @@ spec:
       # Persistence - reuse existing PVC
       persistence:
         enabled: true
-        storageClassName: longhorn
+        storageClassName: truenas-iscsi
         size: 2Gi
 
       # Security context
