@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: renovate-config
+  namespace: forgejo
+data:
+  config.js: |
+    /** @type {import('renovate').RenovateConfig} */
+    module.exports = {
+      platform: 'forgejo',
+      endpoint: 'http://forgejo-app.forgejo.svc.cluster.local:3000/api/v1/',
+      token: process.env.RENOVATE_TOKEN,
+      hostRules: [
+        {
+          matchHost: 'github.com',
+          token: process.env.RENOVATE_GITHUB_COM_TOKEN,
+        },
+        {
+          matchHost: 'api.github.com',
+          token: process.env.RENOVATE_GITHUB_COM_TOKEN,
+        },
+      ],
+      autodiscover: true,
+      autodiscoverFilter: ['homelab/*', 'Homelab/*', 'kreativmonkey/*', 'diyon/*'],
+      gitAuthor: 'Renovate Bot <renovate@f4mily.net>',
+      onboarding: true,
+      onboardingConfig: {
+        extends: ['config:recommended', ':dependencyDashboard'],
+      },
+      timezone: 'Europe/Berlin',
+      persistRepoData: true,
+    };
