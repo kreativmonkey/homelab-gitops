@@ -9,6 +9,7 @@ metadata:
     gethomepage.dev/description: Privacy search
     gethomepage.dev/group: Tools
     gethomepage.dev/icon: searxng.png
+    gethomepage.dev/pod-selector: app=searxng
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
