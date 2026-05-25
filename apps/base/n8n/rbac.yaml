@@ -1,0 +1,31 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: n8n-cluster-tool
+  labels:
+    app.kubernetes.io/name: n8n
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events", "services", "namespaces", "configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: n8n-cluster-tool
+  labels:
+    app.kubernetes.io/name: n8n
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: n8n-cluster-tool
+subjects:
+  - kind: ServiceAccount
+    name: n8n-app
+    namespace: ai-ops
