@@ -7,3 +7,6 @@ resources:
   - deployment.yaml
   - service.yaml
   - ingress.yaml
+  - image-automation.yaml
+  - image-update-automation.yaml
+  - vmservicescrape.yaml

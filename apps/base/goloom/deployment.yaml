@@ -18,9 +18,11 @@ spec:
         app: goloom
         app.kubernetes.io/name: goloom
     spec:
+      # imagePullSecrets:
+      #   - name: goloom-registry
       containers:
         - name: goloom
-          image: git.f4mily.net/kreativmonkey/goloon:latest
+          image: git.f4mily.net/kreativmonkey/goloon:latest # {"$imagepolicy": "goloom:goloom"}
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
