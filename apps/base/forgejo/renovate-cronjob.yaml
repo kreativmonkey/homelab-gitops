@@ -19,7 +19,7 @@ spec:
           containers:
             - name: renovate
               # renovate: datasource=docker depName=renovate/renovate versioning=semver
-              image: renovate/renovate:40.46.0
+              image: renovate/renovate:40.49.0
               env:
                 - name: TZ
                   value: Europe/Berlin
