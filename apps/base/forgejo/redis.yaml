@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo-redis
+  namespace: forgejo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forgejo-redis
+  template:
+    metadata:
+      labels:
+        app: forgejo-redis
+    spec:
+      containers:
+        - name: redis
+          image: docker.io/bitnami/redis:7.4
+          env:
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "yes"
+          ports:
+            - containerPort: 6379
+              name: redis
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo-redis
+  namespace: forgejo
+spec:
+  selector:
+    app: forgejo-redis
+  ports:
+    - port: 6379
+      targetPort: redis

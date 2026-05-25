@@ -4,6 +4,7 @@ resources:
   - namespace.yaml
   - pvc.yaml
   - deployment.yaml
+  - redis.yaml
   # Runner: enable after SOPS-encrypting forgejo-runner-register.secret.yaml (see docs/migrations/forgejo-docker-to-kubernetes.md).
   # - runner-deployment.yaml
   - service.yaml
