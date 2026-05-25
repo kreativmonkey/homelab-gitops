@@ -197,9 +197,9 @@ spec:
     resources:
       requests:
         cpu: 50m
-        memory: 512Mi
+        memory: 128Mi
       limits:
-        memory: 4Gi
+        memory: 1Gi
     podSecurityContext:
       fsGroup: 33
     cronjob:
