@@ -20,7 +20,7 @@ spec:
             severity: critical
             cluster: homelab
             homelab/owner: platform
-            homelab/auto_remediate: "true"
+            homelab_auto_remediate: "true"
           annotations:
             summary: "OOMKilled: {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }})"
             description: "Container {{ $labels.container }} in pod {{ $labels.pod }} was terminated with OOMKilled. Consider memory limits/requests or workload scaling."
@@ -28,12 +28,12 @@ spec:
 
         - alert: KubePodCrashLoopBackOff
           expr: kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} == 1
-          for: 5m
+          for: 2m
           labels:
             severity: critical
             cluster: homelab
             homelab/owner: platform
-            homelab/auto_remediate: "true"
+            homelab_auto_remediate: "true"
           annotations:
             summary: "CrashLoopBackOff: {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }})"
             description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is in CrashLoopBackOff for at least 5 minutes."
