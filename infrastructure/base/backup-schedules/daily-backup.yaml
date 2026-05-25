@@ -12,6 +12,7 @@ spec:
       - external-dns
       - ingress-nginx
       - cnpg-system
+      - goloom
     excludedResources:
       - events
       - events.events.k8s.io
