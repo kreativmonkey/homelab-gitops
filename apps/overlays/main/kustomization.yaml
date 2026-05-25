@@ -180,6 +180,11 @@ replacements:
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
+      - select: {kind: Deployment, name: tandoor}
+        fieldPaths:
+          - spec.template.spec.containers.0.startupProbe.httpGet.httpHeaders.[name=Host].value
+          - spec.template.spec.containers.0.livenessProbe.httpGet.httpHeaders.[name=Host].value
+          - spec.template.spec.containers.0.readinessProbe.httpGet.httpHeaders.[name=Host].value
 
   - source:
       kind: ConfigMap

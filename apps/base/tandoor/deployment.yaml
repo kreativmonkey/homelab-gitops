@@ -57,7 +57,41 @@ spec:
                   name: homelab-postgres-tandoor
                   key: password
             - name: ALLOWED_HOSTS
-              value: tandoor.cluster.f4mily.net,localhost,127.0.0.1
+              value: rezepte.f4mily.net,localhost,127.0.0.1
+            - name: STATIC_CDN
+              value: "1"
+            - name: EMAIL_HOST
+              value: mail.f4mily.net
+            - name: EMAIL_PORT
+              value: "465"
+            - name: EMAIL_USE_TLS
+              value: "1"
+            - name: EMAIL_USE_SSL
+              value: "0"
+            - name: DEFAULT_FROM_EMAIL
+              value: tandoor@f4mily.net
+            - name: EMAIL_HOST_USER
+              valueFrom:
+                secretKeyRef:
+                  name: tandoor-app
+                  key: EMAIL_HOST_USER
+                  optional: true
+            - name: EMAIL_HOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tandoor-app
+                  key: EMAIL_HOST_PASSWORD
+                  optional: true
+            - name: AI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tandoor-app
+                  key: AI_API_KEY
+                  optional: true
+            - name: AI_MODEL_NAME
+              value: openai/gpt-4o
+            - name: AI_RATELIMIT
+              value: 60/hour
             - name: SOCIAL_PROVIDERS
               value: allauth.socialaccount.providers.openid_connect
             - name: SOCIALACCOUNT_PROVIDERS
@@ -78,7 +112,7 @@ spec:
               port: http
               httpHeaders:
                 - name: Host
-                  value: tandoor.cluster.f4mily.net
+                  value: rezepte.f4mily.net
             initialDelaySeconds: 180
             failureThreshold: 90
             periodSeconds: 10
@@ -88,7 +122,7 @@ spec:
               port: http
               httpHeaders:
                 - name: Host
-                  value: tandoor.cluster.f4mily.net
+                  value: rezepte.f4mily.net
             initialDelaySeconds: 60
             periodSeconds: 30
           readinessProbe:
@@ -97,15 +131,15 @@ spec:
               port: http
               httpHeaders:
                 - name: Host
-                  value: tandoor.cluster.f4mily.net
+                  value: rezepte.f4mily.net
             initialDelaySeconds: 20
             periodSeconds: 10
           resources:
             requests:
-              cpu: 50m
-              memory: 512Mi
+              cpu: 100m
+              memory: 768Mi
             limits:
-              memory: 2Gi
+              memory: 3Gi
           securityContext:
             runAsUser: 0
             runAsNonRoot: false

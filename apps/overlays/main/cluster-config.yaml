@@ -55,9 +55,9 @@ data:
   host_searxng: search.f4mily.net
   host_teslamate: teslamate.f4mily.net
   url_teslamate_grafana: https://teslamate.f4mily.net/grafana/
-  host_tandoor: tandoor.cluster.f4mily.net
-  # Comma-separated Django ALLOWED_HOSTS (host + local debugging).
-  tandoor_allowed_hosts: tandoor.cluster.f4mily.net,localhost,127.0.0.1
+  host_tandoor: rezepte.f4mily.net
+  # Comma-separated Django ALLOWED_HOSTS (public host + local debugging).
+  tandoor_allowed_hosts: rezepte.f4mily.net,localhost,127.0.0.1
   host_linkwarden: linkwarden.f4mily.net
 
   # Cluster-internal apps (covered by *.cluster.f4mily.net wildcard):

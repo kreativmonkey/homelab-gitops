@@ -69,6 +69,7 @@ Expect `vector`, `cube`, `vchord`, and `earthdistance`.
 | Authentik | https://login.f4mily.net | Set `secret-key` via `just sops-edit apps/base/authentik/authentik-secret-key.secret.yaml` (see `.template`) |
 | Immich | https://immich.f4mily.net | See [immich-docker-to-kubernetes.md](immich-docker-to-kubernetes.md); library on NFS (`subPath` Bilder/Fotos) |
 | Paperless | https://paperless.f4mily.net | Copy `media`/`data` volumes; re-run consumer after DB import |
+| Tandoor | https://rezepte.f4mily.net | See [tandoor-docker-to-kubernetes.md](tandoor-docker-to-kubernetes.md); NFS static/media + CNPG `tandoor` |
 
 ## 6. Cutover
 
