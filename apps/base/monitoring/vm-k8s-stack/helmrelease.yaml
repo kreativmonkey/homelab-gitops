@@ -125,10 +125,10 @@ spec:
                 - alertname="NtfyBridgeDown"
               receiver: ntfy-emergency
               repeat_interval: 3h
-            # OOM / CrashLoop → in-cluster n8n GitOps remediation (ai-ops)
+            # OOM / CrashLoop → in-cluster n8n GitOps remediation (ai-ops).
+            # Match alertname only — label homelab/auto_remediate breaks AM routing (slash in key).
             - matchers:
-                - alertname=~"KubePodOOMKilled|KubePodCrashLoopBackOff"
-                - homelab/auto_remediate="true"
+                - alertname=~"KubePodOOMKilled|KubePodCrashLoopBackOff|KubePodCrashLooping"
               receiver: n8n-remediation
               group_wait: 30s
               repeat_interval: 12h

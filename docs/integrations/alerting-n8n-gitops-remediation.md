@@ -102,7 +102,8 @@ Error workflows run only on **automatic** failures (not manual test runs in the 
 ## Safety
 
 - PR-Review vor Merge; Flux reconciled von GitHub (primary remote).
-- Allowlist: nur `KubePodOOMKilled` / `KubePodCrashLoopBackOff`.
+- Allowlist: `KubePodOOMKilled`, `KubePodCrashLoopBackOff`, `KubePodCrashLooping`.
+- Alertmanager route matched nur `alertname` (Label `homelab/auto_remediate` mit Slash bricht AM-Matcher).
 
 ## Test
 
