@@ -22,7 +22,7 @@ spec:
       containers:
         - name: forgejo
           # renovate: datasource=docker depName=codeberg.org/forgejo/forgejo versioning=semver
-          image: codeberg.org/forgejo/forgejo:15.2.0
+          image: codeberg.org/forgejo/forgejo:15.0.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
