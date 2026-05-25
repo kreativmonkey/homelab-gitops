@@ -17,6 +17,7 @@ Migrate the production Tandoor stack (Docker Compose on CephFS) to the homelab c
 | Static | `/mnt/cephfs/tandoor/staticfiles` | PVC `tandoor-static` → NFS `Media` + `subPath: docker/tandoor/staticfiles` |
 | Media | `/mnt/cephfs/tandoor/mediafiles` | PVC `tandoor-media` → NFS `Media` + `subPath: docker/tandoor/mediafiles` |
 | Ingress | Traefik `recipes.f4mily.net` | NGINX `rezepte.f4mily.net` (wildcard TLS) |
+| CSRF | `ALLOWED_HOSTS` only (Traefik TLS) | `CSRF_TRUSTED_ORIGINS=https://rezepte.f4mily.net`, `ALLAUTH_TRUSTED_PROXY_COUNT=2` |
 | Auth | Authentik OIDC | Same (`SOCIALACCOUNT_PROVIDERS` in SOPS `tandoor-app`) |
 
 ## Prerequisites

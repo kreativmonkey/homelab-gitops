@@ -198,6 +198,15 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.url_tandoor
+    targets:
+      - select: {kind: Deployment, name: tandoor}
+        fieldPaths:
+          - spec.template.spec.containers.0.env.[name=CSRF_TRUSTED_ORIGINS].value
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.host_watchyourlan
     targets:
       - select: {kind: Ingress, name: watchyourlan}
