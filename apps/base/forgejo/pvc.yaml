@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: renovate-data
+  namespace: forgejo
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-media-static
+  resources:
+    requests:
+      storage: 50Gi

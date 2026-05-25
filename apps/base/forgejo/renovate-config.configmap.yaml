@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: renovate-config
+  namespace: forgejo
+data:
+  renovate-config.js: |
+    module.exports = {
+      platform: "forgejo",
+      endpoint: "http://server:3000/api/v1",
+      logLevel: "debug",
+      timezone: "Europe/Berlin",
+      autodiscover: true,
+      autodiscoverFilter: ["homelab", "kreativmonkey"],
+      hostRules: [
+        {
+          hostName: "github.com",
+          token: "{{ secrets.RENOVATE_GITHUB_COM_TOKEN }}"
+        }
+      ],
+      schedule: ["at 3:00 am on monday"],
+      prTitle: "deps: Update {{depName}} to {{newVersion}}",
+      prBody: "Updates {{depName}} from `{{currentVersion}}` to `{{newVersion}}`."
+    };
