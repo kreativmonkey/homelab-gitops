@@ -46,6 +46,22 @@ Der **Reverse Proxy** nutzt dafür **keine** eigene Source-Gruppe `netbird-proxy
 - **Kubernetes-API:** `https://192.168.10.245:6443` (über Route zum LAN)
 - **Ingress-Apps:** `*.f4mily.net` / `*.cluster.f4mily.net` → DNS zeigt auf `192.168.10.245` (siehe `homelab-infrastructure/dns/servers.tf`)
 
+## Kubelet-Node-IP (100.96.x.x vs. LAN)
+
+Netbird legt auf dem Host eine **100.96.0.0/16**-Adresse an. Ohne Filter wählt der
+Kubelet diese als `InternalIP` — dann schlagen **metrics-server**, `kubectl exec`,
+`port-forward` und Scrapes fehl (`no route to host` auf `:10250`), weil die
+Control-Plane die Mesh-IP statt `192.168.10.41`–`.43` nutzt.
+
+**Fix (Talos):** `machine.kubelet.nodeIP.validSubnets: [192.168.10.0/24]` in
+`homelab-infrastructure/talos/main.tf` (und per `talosctl patch machineconfig` auf
+bestehenden Nodes). Netbird-Mesh bleibt unverändert; nur die bei Kubernetes
+gemeldete Node-Adresse ist die LAN-IP.
+
+```bash
+kubectl get nodes -o wide   # INTERNAL-IP sollte 192.168.10.x sein, nicht 100.96.x.x
+```
+
 ## Prüfen
 
 ```bash

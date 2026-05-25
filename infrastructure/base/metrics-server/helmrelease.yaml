@@ -15,7 +15,8 @@ spec:
         name: metrics-server-repo
         namespace: flux-system
   values:
-    # Talos/kubelet often uses self-signed certs; required for metrics API.
+    # Talos/kubelet uses self-signed certs; required for metrics API.
+    # InternalIP must be LAN (Talos kubelet.nodeIP.validSubnets), not Netbird 100.96.x.x.
     args:
       - --kubelet-insecure-tls
       - --kubelet-preferred-address-types=InternalIP,Hostname,ExternalIP
