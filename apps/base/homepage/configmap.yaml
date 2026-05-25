@@ -16,10 +16,24 @@ data:
     # ({error: ...} without stats) crash Homepage v1.13.1 (stats.cpuLimit). Stats on click still work.
     showStats: false
     statusStyle: dot
+    # Cache settings to reduce API server load.
+    cache:
+      kubernetes: 60
   kubernetes.yaml: |
     mode: cluster
-    # Ingresses with gethomepage.dev/* annotations are auto-discovered.
-    # Use gethomepage.dev/pod-selector when pods use app= not app.kubernetes.io/name=.
+    # Filter namespaces to reduce object count and API pressure.
+    namespaces:
+      - default
+      - monitoring
+      - ingress-nginx
+      - cnpg-system
+      - homepage
+      - authentik
+      - forgejo
+      - goloom
+      - tandoor
+      - n8n
+    # Enable Ingress discovery.
     ingress: true
   services.yaml: |
     ---
@@ -139,5 +153,7 @@ data:
           cpu: false
           memory: false
           showLabel: false
+        # Increase timeout for Kubernetes API calls.
+        timeout: 10000
   bookmarks.yaml: |
     ---
