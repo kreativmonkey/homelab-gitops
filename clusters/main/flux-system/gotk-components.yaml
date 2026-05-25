@@ -2583,10 +2583,10 @@ spec:
             port: http
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 200m
+            memory: 512Mi
           requests:
-            cpu: 50m
+            cpu: 25m
             memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
@@ -3407,10 +3407,10 @@ spec:
             port: healthz
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 200m
+            memory: 512Mi
           requests:
-            cpu: 100m
+            cpu: 25m
             memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
@@ -4963,10 +4963,10 @@ spec:
             port: healthz
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 200m
+            memory: 512Mi
           requests:
-            cpu: 100m
+            cpu: 25m
             memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
@@ -6409,10 +6409,10 @@ spec:
             port: healthz
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 200m
+            memory: 512Mi
           requests:
-            cpu: 100m
+            cpu: 25m
             memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
@@ -7716,10 +7716,10 @@ spec:
             port: healthz
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 200m
+            memory: 512Mi
           requests:
-            cpu: 100m
+            cpu: 25m
             memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
@@ -8654,10 +8654,10 @@ spec:
             port: healthz
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 200m
+            memory: 512Mi
           requests:
-            cpu: 100m
+            cpu: 25m
             memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
