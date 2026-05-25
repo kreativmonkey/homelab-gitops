@@ -225,11 +225,19 @@ spec:
         storageClassName: truenas-iscsi
         size: 2Gi
 
-      # Security context
+      # Align securityContext with podSecurityContext: chart init-chown uses
+      # securityContext.runAsUser (default 472), not podSecurityContext — mismatch
+      # caused CrashLoop (init chown 472, main container UID 1000).
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       podSecurityContext:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
+      initChownData:
+        enabled: false
 
       containerSecurityContext:
         allowPrivilegeEscalation: false
@@ -244,12 +252,16 @@ spec:
           emptyDir: {}
         - name: plugins-dir
           emptyDir: {}
+        - name: logs
+          emptyDir: {}
 
       extraVolumeMounts:
         - name: tmp
           mountPath: /tmp
         - name: plugins-dir
           mountPath: /var/lib/grafana/plugins
+        - name: logs
+          mountPath: /var/log/grafana
 
       # Native VictoriaMetrics datasource plugin
       # Pin to 0.22.0 - 0.23.x requires Grafana >=11.6.11 (not yet available in charts)
@@ -316,13 +328,12 @@ spec:
       podAnnotations:
         backup.velero.io/backup-volumes: grafana-storage
 
-      # Sidecar watches for dashboard configmaps (chart handles datasource natively)
+      # Sidecar watches dashboard ConfigMaps only; defaultDatasources below
+      # provisions VM datasource — enabling the datasource sidecar duplicates
+      # provisioning and prevented Grafana from starting (exit 1 ~2s).
       sidecar:
         datasources:
-          enabled: true
-          initDatasources: false
-          label: grafana_datasource
-          labelValue: "1"
+          enabled: false
         dashboards:
           enabled: true
           label: grafana_dashboard
