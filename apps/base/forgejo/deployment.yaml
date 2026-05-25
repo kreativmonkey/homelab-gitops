@@ -44,6 +44,9 @@ spec:
               value: redis
             - name: GITEA__session__PROVIDER_CONFIG
               value: redis://forgejo-redis:6379/0
+            # Reduce SQLite lock waits under concurrent git/runner load
+            - name: GITEA__database__SQLITE_TIMEOUT
+              value: "5000"
           # Do not set runAsUser/runAsGroup — the Forgejo image drops privileges via s6.
           securityContext:
             allowPrivilegeEscalation: false
@@ -54,20 +57,29 @@ spec:
             limits:
               cpu: 500m
               memory: 2Gi
-          livenessProbe:
+          # Liveness: TCP only — /api/healthz pings SQLite and can take 20s+ under load.
+          startupProbe:
             httpGet:
               path: /api/healthz
               port: http
-            initialDelaySeconds: 60
-            periodSeconds: 30
+            periodSeconds: 10
+            failureThreshold: 30
             timeoutSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
           readinessProbe:
             httpGet:
               path: /api/healthz
               port: http
-            initialDelaySeconds: 15
-            periodSeconds: 10
-            timeoutSeconds: 5
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 30
+            failureThreshold: 5
           volumeMounts:
             - name: data
               mountPath: /data
