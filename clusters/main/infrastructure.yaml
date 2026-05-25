@@ -96,7 +96,7 @@ spec:
   timeout: 10m
   dependsOn:
     - name: infra-base
-  path: ./infrastructure/overlays/main
+  path: ./infrastructure/overlays/disaster-recovery
   prune: true
   sourceRef:
     kind: GitRepository
