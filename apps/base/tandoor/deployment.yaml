@@ -55,6 +55,12 @@ spec:
                   key: password
             - name: ALLOWED_HOSTS
               value: rezepte.f4mily.net,localhost,127.0.0.1
+            # Django 4+ requires HTTPS origins when TLS terminates at ingress
+            - name: CSRF_TRUSTED_ORIGINS
+              value: https://rezepte.f4mily.net
+            # Container nginx + cluster ingress nginx
+            - name: ALLAUTH_TRUSTED_PROXY_COUNT
+              value: "2"
             - name: SOCIAL_PROVIDERS
               value: allauth.socialaccount.providers.openid_connect
             - name: SOCIALACCOUNT_PROVIDERS
