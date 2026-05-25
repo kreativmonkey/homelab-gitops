@@ -4,4 +4,4 @@ resources:
   - vm-k8s-stack
   - notifications
   - ntfy-bridge
-  - rules
+  # VMRule CRDs: separate Flux Kustomization apps-monitoring-rules (after vm operator)

@@ -1,0 +1,20 @@
+# Temporary LAN access for pg_dump/psql migrations (workstation → CNPG).
+# homelab-postgres: 30433 — immich-postgres uses 30432 (separate Service if needed).
+# Remove or leave in place when not migrating; restrict via firewall if exposed beyond LAN.
+apiVersion: v1
+kind: Service
+metadata:
+  name: homelab-postgres-restore
+  namespace: cnpg-system
+  labels:
+    app.kubernetes.io/component: migration-restore
+spec:
+  type: NodePort
+  selector:
+    cnpg.io/cluster: homelab-postgres
+    cnpg.io/instanceRole: primary
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      nodePort: 30433

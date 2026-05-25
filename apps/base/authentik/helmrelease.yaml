@@ -11,7 +11,9 @@ spec:
   chart:
     spec:
       chart: authentik
-      version: "2024.10.5"
+      # Upgrade path: 2026.2.3 → 2026.5.x (see docs/migrations/authentik-upgrade-2026.md)
+      # renovate: datasource=helm registryUrl=https://charts.goauthentik.io depName=authentik
+      version: "2026.5.0"
       sourceRef:
         kind: HelmRepository
         name: authentik-repo
@@ -36,8 +38,6 @@ spec:
       architecture: standalone
       auth:
         enabled: false
-      # Bitnami moved their images off Docker Hub in 2025; pin to the legacy
-      # mirror to keep `bitnami/redis` references working.
       image:
         registry: docker.io
         repository: bitnamilegacy/redis
@@ -51,18 +51,51 @@ spec:
         port: 5432
         name: authentik
         user: authentik
+      email:
+        host: mail.f4mily.net
+        port: 465
+        username: authentik@f4mily.net
+        use_ssl: true
+        from: authentik@f4mily.net
+        timeout: 10
+      error_reporting:
+        enabled: true
+    # Production DB is authoritative — do not overlay GitOps OAuth blueprints.
     blueprints:
-      configMaps:
-        - authentik-grafana-blueprint
+      configMaps: []
     server:
       ingress:
         enabled: false
+      deploymentStrategy:
+        type: Recreate
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        - name: media-init
+          # renovate: datasource=docker depName=docker.io/library/busybox
+          image: docker.io/library/busybox:1.38
+          command:
+            - sh
+            - -c
+            - mkdir -p /data/media/public/application-icons && chown -R 1000:1000 /data
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          securityContext:
+            runAsUser: 0
       resources:
         requests:
           cpu: 25m
           memory: 256Mi
         limits:
           memory: 1Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: authentik-media
+      volumeMounts:
+        - name: data
+          mountPath: /data
     worker:
       resources:
         requests:

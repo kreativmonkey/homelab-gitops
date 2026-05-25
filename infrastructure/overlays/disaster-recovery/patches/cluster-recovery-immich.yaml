@@ -4,6 +4,8 @@ kind: Cluster
 metadata:
   name: immich-postgres
   namespace: cnpg-system
+  annotations:
+    cnpg.io/skipEmptyWalArchiveCheck: enabled
 spec:
   bootstrap:
     recovery:

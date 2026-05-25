@@ -54,12 +54,14 @@ spec:
     envs:
       - name: DOCKER_ENABLE_SECURITY
         value: "false"
+      - name: SECURITY_ENABLELOGIN
+        value: "false"
     service:
       type: ClusterIP
       externalPort: 8080
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: truenas-iscsi
       accessMode: ReadWriteOnce
       size: 8Gi
       path: /configs

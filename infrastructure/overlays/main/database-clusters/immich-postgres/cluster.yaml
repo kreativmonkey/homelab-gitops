@@ -13,6 +13,7 @@ metadata:
     kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/cnpg-system/cnpg
 spec:
   description: "Immich PostgreSQL with VectorChord"
+  # renovate: datasource=docker depName=ghcr.io/tensorchord/cloudnative-vectorchord versioning=loose
   imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16.9-0.4.3
   instances: 1
 
@@ -25,7 +26,7 @@ spec:
       effective_cache_size: 512MB
 
   storage:
-    storageClass: longhorn
+    storageClass: truenas-iscsi
     size: 10Gi
 
   resources:

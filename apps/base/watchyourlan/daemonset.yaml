@@ -1,3 +1,4 @@
+# hostNetwork for LAN scans; DaemonSet so ingress on any node reaches a local :8840 instance.
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -44,19 +45,4 @@ spec:
               memory: 256Mi
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: watchyourlan-data
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: watchyourlan
-  namespace: watchyourlan
-spec:
-  type: ClusterIP
-  ports:
-    - port: 80
-      targetPort: 8840
-      name: http
-  selector:
-    app: watchyourlan
+          emptyDir: {}

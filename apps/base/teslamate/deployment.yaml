@@ -23,20 +23,23 @@ spec:
           type: RuntimeDefault
       containers:
         - name: teslamate
-          image: docker.io/teslamate/teslamate:latest
-          imagePullPolicy: Always
+          # Pin version (DB already on 3.x migrations); bump via Renovate, not :latest.
+          image: docker.io/teslamate/teslamate:3.0.0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000
               name: http
+          # Load ENCRYPTION_KEY from file so the value is never treated as a path (keys may start with "/").
+          command:
+            - /bin/dash
+            - -ec
+            - |
+              export ENCRYPTION_KEY="$(tr -d '\n\r' </etc/teslamate/encryption_key)"
+              exec tini -- /entrypoint.sh bin/teslamate start
           envFrom:
             - configMapRef:
                 name: teslamate-config
           env:
-            - name: ENCRYPTION_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: teslamate-app
-                  key: ENCRYPTION_KEY
             - name: DATABASE_USER
               valueFrom:
                 secretKeyRef:
@@ -53,6 +56,10 @@ spec:
               value: homelab-postgres-rw.cnpg-system.svc.cluster.local
             - name: DATABASE_PORT
               value: "5432"
+            - name: CHECK_ORIGIN
+              value: "false"
+            - name: VIRTUAL_HOST
+              value: teslamate.f4mily.net
           livenessProbe:
             httpGet:
               path: /
@@ -79,9 +86,22 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
+            runAsNonRoot: true
+            runAsUser: 10000
+            runAsGroup: 10001
           volumeMounts:
             - name: import
               mountPath: /opt/app/import
+            - name: encryption-key
+              mountPath: /etc/teslamate
+              readOnly: true
       volumes:
         - name: import
           emptyDir: {}
+        - name: encryption-key
+          secret:
+            secretName: teslamate-app
+            items:
+              - key: ENCRYPTION_KEY
+                path: encryption_key
+            # defaultMode 0644: readable by container user (nonroot 10000); 0400 would be root-only.

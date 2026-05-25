@@ -113,7 +113,7 @@ spec:
               httpHeaders:
                 - name: Host
                   value: rezepte.f4mily.net
-            initialDelaySeconds: 120
+            initialDelaySeconds: 180
             failureThreshold: 90
             periodSeconds: 10
           livenessProbe:

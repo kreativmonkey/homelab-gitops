@@ -11,13 +11,24 @@ spec:
   chart:
     spec:
       chart: nginx-ingress
-      version: "2.5.0"
+      version: "2.5.3"
       sourceRef:
         kind: HelmRepository
         name: nginx-ingress-oci
         namespace: flux-system
   values:
     controller:
+      enableCustomResources: true
+      globalConfiguration:
+        create: true
+        spec:
+          listeners:
+            - name: forgejo-ssh-22
+              port: 22
+              protocol: TCP
+            - name: forgejo-ssh-2222
+              port: 2222
+              protocol: TCP
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       kind: daemonset

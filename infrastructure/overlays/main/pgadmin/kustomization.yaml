@@ -3,5 +3,4 @@ kind: Kustomization
 resources:
   - helmrelease.yaml
   - ingress.yaml
-  # Enable after: just pgadmin-credentials admin@example.com 'your-password'
-  # - pgadmin-credentials.secret.yaml
+  - pgadmin-credentials.secret.yaml

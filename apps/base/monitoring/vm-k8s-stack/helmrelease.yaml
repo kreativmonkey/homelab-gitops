@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: victoria-metrics-k8s-stack
-      version: "0.72.5"
+      version: "0.79.1"
       sourceRef:
         kind: HelmRepository
         name: victoriametrics-repo
@@ -26,7 +26,7 @@ spec:
       spec:
         retentionPeriod: "1"
         storage:
-          storageClassName: longhorn
+          storageClassName: truenas-iscsi
           resources:
             requests:
               storage: 20Gi
@@ -222,7 +222,7 @@ spec:
       # Persistence - reuse existing PVC
       persistence:
         enabled: true
-        storageClassName: longhorn
+        storageClassName: truenas-iscsi
         size: 2Gi
 
       # Security context
@@ -254,7 +254,8 @@ spec:
       # Native VictoriaMetrics datasource plugin
       # Pin to 0.22.0 - 0.23.x requires Grafana >=11.6.11 (not yet available in charts)
       plugins:
-        - victoriametrics-metrics-datasource@0.22.0
+        # renovate: datasource=github-releases depName=VictoriaMetrics/victoriametrics-datasource
+        - victoriametrics-metrics-datasource@0.24.0
 
       priorityClassName: homelab-infrastructure
 

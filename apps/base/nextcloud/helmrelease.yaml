@@ -46,6 +46,7 @@ spec:
       security:
         allowInsecureImages: true
     image:
+      # renovate: datasource=docker depName=docker.io/library/nextcloud
       tag: 33.0.3-apache
     ingress:
       enabled: false
@@ -54,6 +55,8 @@ spec:
     phpClientHttpsFix:
       enabled: true
       protocol: https
+    internalDatabase:
+      enabled: false
     mariadb:
       enabled: false
     postgresql:
@@ -63,6 +66,11 @@ spec:
       type: postgresql
       host: homelab-postgres-rw.cnpg-system.svc.cluster.local
       database: nextcloud
+      existingSecret:
+        enabled: true
+        secretName: homelab-postgres-nextcloud
+        usernameKey: username
+        passwordKey: password
     redis:
       enabled: true
       architecture: standalone
@@ -78,10 +86,96 @@ spec:
     persistence:
       enabled: true
       existingClaim: nextcloud-data
+      # Chart uses persistence.subPath for datadir only; nextcloud.persistence.subPath covers html/config.
+      subPath: docker/nextcloud
     nextcloud:
+      existingSecret:
+        enabled: true
+        secretName: nextcloud-admin
+        usernameKey: username
+        passwordKey: password
       host: nextcloud.cluster.f4mily.net
       trustedDomains:
         - nextcloud.cluster.f4mily.net
+      # Required so the chart mounts defaultConfigs (autoconfig.php reads POSTGRES_*).
+      configs:
+        cluster.config.php: |-
+          <?php
+          $CONFIG = array(
+            'overwritehost' => 'nextcloud.cluster.f4mily.net',
+            'overwriteprotocol' => 'https',
+          );
+      extraInitContainers:
+        - name: data-perms
+          image: docker.io/library/nextcloud:33.0.3-apache
+          securityContext:
+            runAsUser: 0
+          command:
+            - /bin/sh
+            - -ec
+            - chown -R 33:33 /var/www/html /var/www/html/data /var/www/html/config /var/www/custom_apps || true
+          volumeMounts:
+            - name: nextcloud-main
+              mountPath: /var/www/html
+              subPath: docker/nextcloud/html
+            - name: nextcloud-main
+              mountPath: /var/www/html/config
+              subPath: docker/nextcloud/config
+            - name: nextcloud-main
+              mountPath: /var/www/html/data
+              subPath: docker/nextcloud/data
+            - name: nextcloud-main
+              mountPath: /var/www/custom_apps
+              subPath: docker/nextcloud/custom_apps
+        - name: occ-db-sync
+          image: docker.io/library/nextcloud:33.0.3-apache
+          securityContext:
+            runAsUser: 33
+            runAsGroup: 33
+          env:
+            - name: POSTGRES_HOST
+              value: homelab-postgres-rw.cnpg-system.svc.cluster.local
+            - name: POSTGRES_DB
+              value: nextcloud
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-nextcloud
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-nextcloud
+                  key: password
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              set -e
+              cd /var/www/html
+              if [ ! -f config/config.php ]; then exit 0; fi
+              php occ config:system:set dbtype --value=pgsql
+              php occ config:system:set dbhost --value="${POSTGRES_HOST}"
+              php occ config:system:set dbname --value="${POSTGRES_DB}"
+              php occ config:system:set dbuser --value="${POSTGRES_USER}"
+              php occ config:system:set dbpassword --value="${POSTGRES_PASSWORD}"
+              php occ config:system:set redis host --value=nextcloud-redis-master
+              php occ config:system:set redis port --value=6379
+              php occ maintenance:mode --off || true
+              php occ status
+          volumeMounts:
+            - name: nextcloud-main
+              mountPath: /var/www/html
+              subPath: docker/nextcloud/html
+            - name: nextcloud-main
+              mountPath: /var/www/html/config
+              subPath: docker/nextcloud/config
+            - name: nextcloud-main
+              mountPath: /var/www/html/data
+              subPath: docker/nextcloud/data
+            - name: nextcloud-main
+              mountPath: /var/www/custom_apps
+              subPath: docker/nextcloud/custom_apps
       extraEnv:
         - name: TZ
           value: Europe/Berlin
@@ -91,9 +185,9 @@ spec:
         type: Recreate
     startupProbe:
       enabled: true
-      initialDelaySeconds: 60
-      periodSeconds: 15
-      failureThreshold: 120
+      initialDelaySeconds: 120
+      periodSeconds: 20
+      failureThreshold: 180
     livenessProbe:
       initialDelaySeconds: 60
       failureThreshold: 6

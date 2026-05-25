@@ -3,9 +3,14 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - configmap.yaml
+  - teslamate-grafana-config.configmap.yaml
+  - teslamate-grafana-oauth.secret.yaml
   - teslamate-app.secret.yaml
+  - mosquitto-config.configmap.yaml
   - mosquitto.yaml
+  - mosquitto-external-service.yaml
   - deployment.yaml
+  - deployment-grafana.yaml
   - service.yaml
+  - service-grafana.yaml
   - ingress.yaml
-  - ingress-grafana.yaml

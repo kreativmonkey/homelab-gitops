@@ -26,6 +26,10 @@ kubectl get backup -n cnpg-system
 
 ## Disaster recovery (full cluster rebuild)
 
+> **Full runbook** (Talos reset, Flux bootstrap, pitfalls): [README.md](README.md)
+
+**Flux** reconciles from `https://github.com/kreativmonkey/homelab-gitops` branch `main`. Push DR commits to **GitHub** before `flux reconcile source git flux-system`.
+
 ### 1. Suspend app reconciliation (recommended)
 
 ```bash
@@ -52,6 +56,10 @@ The DR overlay applies recovery patches for both clusters:
 - [`patches/cluster-recovery-immich.yaml`](../../infrastructure/overlays/disaster-recovery/patches/cluster-recovery-immich.yaml) — `immich-postgres`
 
 Each injects `bootstrap.recovery` from its S3 prefix under `cnpg-backups/`.
+
+When restoring clusters with the **same name** into the **same S3 prefix** as production backups, CNPG requires
+`cnpg.io/skipEmptyWalArchiveCheck: enabled` on the Cluster (included in the DR patches). Without it, recovery pods fail with
+`Expected empty archive`.
 
 ### 3. Wait for CNPG recovery
 
