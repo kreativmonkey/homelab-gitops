@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: readeck
+  namespace: readeck
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: readeck
+  template:
+    metadata:
+      labels:
+        app: readeck
+        app.kubernetes.io/name: readeck
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: readeck
+          # renovate: datasource=docker depName=codeberg.org/readeck/readeck
+          image: codeberg.org/readeck/readeck:0.22.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: TZ
+              value: Europe/Berlin
+            - name: READECK_LOG_LEVEL
+              value: info
+            - name: READECK_LOG_FORMAT
+              value: text
+            - name: READECK_SERVER_HOST
+              value: "0.0.0.0"
+            - name: READECK_SERVER_PORT
+              value: "8000"
+            - name: READECK_SERVER_BASE_URL
+              value: https://readeck.f4mily.net
+            - name: READECK_ALLOWED_HOSTS
+              value: readeck.f4mily.net
+            - name: READECK_DATABASE_SOURCE
+              value: /readeck/db.sqlite3
+          volumeMounts:
+            - name: data
+              mountPath: /readeck
+          startupProbe:
+            exec:
+              command:
+                - /bin/readeck
+                - healthcheck
+                - -config
+                - /readeck/config.toml
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            exec:
+              command:
+                - /bin/readeck
+                - healthcheck
+                - -config
+                - /readeck/config.toml
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 25m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: readeck-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: readeck
+  namespace: readeck
+spec:
+  ports:
+    - port: 8000
+      targetPort: http
+      name: http
+  selector:
+    app: readeck
