@@ -181,5 +181,3 @@ data:
           showLabel: false
         # Increase timeout for Kubernetes API calls.
         timeout: 10000
-  bookmarks.yaml: |
-    ---
