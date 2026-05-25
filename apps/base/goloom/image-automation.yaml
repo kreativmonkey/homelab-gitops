@@ -1,0 +1,20 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: goloom
+  namespace: goloom
+spec:
+  image: git.f4mily.net/kreativmonkey/goloon # renovate: datasource=docker
+  interval: 1h
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: goloom
+  namespace: goloom
+spec:
+  imageRepositoryRef:
+    name: goloom
+  policy:
+    semver:
+      range: '>=1.0.0'
