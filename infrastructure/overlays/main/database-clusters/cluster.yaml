@@ -104,3 +104,8 @@ spec:
         login: true
         passwordSecret:
           name: goloom-db-credentials
+      - name: forgejo
+        ensure: present
+        login: true
+        passwordSecret:
+          name: forgejo-db-credentials

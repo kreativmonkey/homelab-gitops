@@ -36,15 +36,24 @@ spec:
               value: "1000"
             - name: USER_GID
               value: "1000"
+            - name: GITEA__cache__ADAPTER
+              value: redis
+            - name: GITEA__cache__HOST
+              value: redis://forgejo-redis:6379/0
+            - name: GITEA__session__PROVIDER
+              value: redis
+            - name: GITEA__session__PROVIDER_CONFIG
+              value: redis://forgejo-redis:6379/0
           # Do not set runAsUser/runAsGroup — the Forgejo image drops privileges via s6.
           securityContext:
             allowPrivilegeEscalation: false
           resources:
             requests:
-              cpu: 100m
-              memory: 512Mi
+              cpu: 500m
+              memory: 1Gi
             limits:
-              memory: 2Gi
+              cpu: "2"
+              memory: 4Gi
           livenessProbe:
             httpGet:
               path: /api/healthz
