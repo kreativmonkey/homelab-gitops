@@ -35,6 +35,17 @@ data:
       - n8n
     # Enable Ingress discovery.
     ingress: true
+  bookmarks.yaml: |
+    ---
+    - Develope:
+        - Gitops Homelab:
+            - abbr: GH
+            href: https://github.com/kreativmonkey/homelab-gitops
+    - Social:
+        - Jit.social:
+            - icon: mastodon.png
+            href: https://jit.social
+            description: Radiotux und Binärgewitter
   services.yaml: |
     ---
     - Infrastructure:
@@ -44,14 +55,29 @@ data:
             external: true
             description: Network Firewall & Router
             ping: https://opnsense.f4mily.net
-
+        - Adguard Home:
+            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/adguard.png
+            href: "http://192.168.10.1:3000"
+            external: true
+            description: Network-wide Ad Blocker
         - Proxmox VE:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/proxmox.png
             href: "https://192.168.10.5:8006"
             external: true
             description: Virtualization Platform
             ping: https://192.168.10.5:8006
-
+        - Truenas Scale:
+            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/truenas.png
+            href: "http://192.168.10.94"
+            external: true
+            description: Network Attached Storage
+            ping: http://192.168.10.94"
+        - Garage S3 Controller:
+            icon: mdi-garage
+            href: "http://192.168.10.94:30186"
+            external: true
+            description: Garage S3 Controller
+            ping: http://192.168.10.94:30186
         - FritzBox:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/fritzbox.png
             href: "http://192.168.10.158"
