@@ -6,46 +6,6 @@ metadata:
 data:
   settings.yml: |
     use_default_settings: true
-    general:
-      instance_name: "search"
     server:
-      port: 8080
+      limiter: false
       bind_address: "0.0.0.0"
-      limiter: true
-      image_proxy: false
-    valkey:
-      url: valkey://valkey:6379/0
-    search:
-      safe_search: 0
-      autocomplete: ""
-      formats:
-        - html
-    engines:
-      - name: duckduckgo
-        disabled: true
-      - name: google
-        disabled: true
-  limiter.toml: |
-    [botdetection]
-
-    ipv4_prefix = 32
-    ipv6_prefix = 48
-
-    trusted_proxies = [
-      '127.0.0.0/8',
-      '::1',
-      '10.0.0.0/8',
-      '172.16.0.0/12',
-      '192.168.0.0/16',
-    ]
-
-    [botdetection.ip_limit]
-    filter_link_local = false
-    link_token = false
-
-    [botdetection.ip_lists]
-
-    pass_ip = [
-      '192.168.10.0/24',
-      '10.0.0.0/8',
-    ]

@@ -43,6 +43,8 @@ data:
   # ---------------------------------------------------------------------
   # Public-facing apps (covered by *.f4mily.net wildcard):
   host_audiobookshelf: audible.f4mily.net
+  host_forgejo: git.f4mily.net
+  # Staging on cluster wildcard before moving production DNS:
   host_authentik: login.f4mily.net
   host_homepage: home.f4mily.net
   host_immich: immich.f4mily.net
@@ -51,7 +53,13 @@ data:
   host_paperless: paperless.f4mily.net
   host_sterling_pdf: pdf.f4mily.net
   host_searxng: search.f4mily.net
+  host_teslamate: teslamate.f4mily.net
+  url_teslamate_grafana: https://teslamate.f4mily.net/grafana/
   host_tandoor: rezepte.f4mily.net
+  # Public URL (scheme required for Django CSRF_TRUSTED_ORIGINS behind TLS ingress).
+  url_tandoor: https://rezepte.f4mily.net
+  # Comma-separated Django ALLOWED_HOSTS (public host + local debugging).
+  tandoor_allowed_hosts: rezepte.f4mily.net,localhost,127.0.0.1
   host_linkwarden: linkwarden.f4mily.net
 
   # Cluster-internal apps (covered by *.cluster.f4mily.net wildcard):
@@ -61,7 +69,6 @@ data:
   host_grafana: grafana.cluster.f4mily.net
   host_victoria_metrics: metrics.cluster.f4mily.net
   host_kite: kite.cluster.f4mily.net
-  host_teslamate: teslamate.cluster.f4mily.net
   host_n8n: n8n.cluster.f4mily.net
   host_uptime_kuma: uptime-kuma.cluster.f4mily.net
   host_unifi_controller: unifi-controller.cluster.f4mily.net

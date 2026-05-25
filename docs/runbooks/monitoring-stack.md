@@ -24,6 +24,32 @@ kubectl logs -n monitoring -l app.kubernetes.io/name=vmalert --tail=50
 kubectl logs -n monitoring -l app.kubernetes.io/name=vmalertmanager --tail=50
 ```
 
+## n8n CrashLoop / OOM remediation
+
+VMAlert fires → Alertmanager receiver `n8n-remediation` → `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmalert`.
+
+**Symptom:** ntfy zeigt CrashLoop, aber n8n **Executions** bleiben leer.
+
+**Häufige Ursachen:**
+
+| Ursache | Prüfung / Fix |
+|---------|----------------|
+| Route matcht nicht | `alertmanager_notifications_total{receiver="n8n-remediation"}` sollte >0 sein nach Alert |
+| Workflow nicht importiert | `just n8n-bootstrap` (oder `N8N_API_KEY` + API-Import) |
+| Webhook-Test | `just n8n-test-webhook` → `{"message":"Workflow was started"}` |
+
+```bash
+# Metrik (über metrics.cluster.f4mily.net oder Port-Forward)
+curl -sk --resolve metrics.cluster.f4mily.net:443:192.168.10.41 \
+  'https://metrics.cluster.f4mily.net/api/v1/query?query=sum(alertmanager_notifications_total{receiver="n8n-remediation"})'
+```
+
+Nach GitOps-Änderung an `vm-k8s-stack/helmrelease.yaml`:
+
+```bash
+flux reconcile helmrelease vm-k8s-stack -n monitoring
+```
+
 ## ntfy delivery
 
 Alertmanager → `ntfy-bridge` (ClusterIP) → `https://ntfy.f4mily.net/monitoring` (lesbare Titel/Texte).

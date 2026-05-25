@@ -60,17 +60,19 @@ here so it is obvious what is **planned** but not deployed:
 
 | App                | Status | Reason                                    |
 |--------------------|--------|-------------------------------------------|
-| tandoor            | on     | Deployment + CNPG + NFS media/static        |
+| tandoor            | on     | https://rezepte.f4mily.net — see [tandoor-docker-to-kubernetes.md](migrations/tandoor-docker-to-kubernetes.md) |
 | netbird            | on     | DaemonSet (hostNetwork), routing to cluster |
 | backrest           | wip    | ingress only, missing HelmRelease         |
 | searxng            | on     | Deployment + ingress at search.f4mily.net |
 | uptime-kuma        | off    | removed from catalog (DR test)            |
 | unifi-controller   | off    | removed from catalog (DR test)            |
 | nextcloud          | on     | HelmRelease + CNPG + NFS at cluster domain  |
-| linkwarden         | on     | Deployment + Meilisearch + CNPG           |
+| linkwarden         | off    | temporarily removed from catalog          |
 | speedtest-tracker  | wip    | ingress only, missing Deployment          |
 | watchyourlan       | on     | DaemonSet (hostNetwork), scan via IFACES  |
-| teslamate          | on     | Deployment, Mosquitto, CNPG, teslamate.cluster.f4mily.net |
+| teslamate          | on     | Deployment, Mosquitto, CNPG, teslamate.f4mily.net (/grafana/) |
+| authentik          | on     | HelmRelease, CNPG, login.f4mily.net (production IdP)            |
+| forgejo            | on     | Deployment, NFS, git.f4mily.net (Git + CI + Renovate CronJob), SSH :22/:2222 |
 | goloom             | on     | Deployment, CNPG PostgreSQL, goloom.cluster.f4mily.net |
 | pcm                | wip    | ingress only, missing HelmRelease         |
 
@@ -162,16 +164,18 @@ Then `just validate` and commit.
 
 ## 4. Storage strategy reminder
 
-- `longhorn` / `longhorn-1` — RWO block storage for databases, configs,
-  small state. `longhorn-1` is the cluster default (single replica).
-- `nfs-media-static` — RWX network storage backed by TrueNAS at
-  192.168.10.94. **Manually-defined PVs** in
-  `infrastructure/base/storage/pv-nfs.yaml` with a `claimRef` to the
-  intended app namespace.
+- `truenas-iscsi` — default **RWO block** on TrueNAS M.2 (democratic-csi). Replaces Longhorn for DBs and app state.
+- `nfs-media-static` — RWX on TrueNAS (`192.168.10.94`). Static PVs in `infrastructure/base/storage/pv-nfs.yaml`.
 
 When migrating an app from Longhorn → NFS, you must first delete the
 existing `Bound` PVC. PVC specs (storageClassName, accessModes,
 volumeName) are **immutable**. See `docs/migrations/nfs-migration.md`.
+
+**Immich (Docker → cluster):** `docs/migrations/immich-docker-to-kubernetes.md` — production
+compose reference in repo root `Migration/Immich/`.
+
+**Forgejo (Docker → cluster):** `docs/migrations/forgejo-docker-to-kubernetes.md` — production
+compose reference in repo root `Migration/forgejo/`.
 
 ## 5. Reconciliation cheat sheet
 

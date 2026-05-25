@@ -112,6 +112,9 @@ spec:
                     memory: 64Mi
                   limits:
                     memory: 256Mi
+              - op: replace
+                path: /spec/replicas
+                value: 1
   chart:
     spec:
       chart: paperless-ngx

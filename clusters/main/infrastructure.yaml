@@ -35,6 +35,10 @@ spec:
     name: flux-system
   wait: true
   timeout: 5m
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -97,7 +101,8 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  wait: true
+  # ACME DNS-01 (wildcard-f4mily-net) can stay InProgress for a long time after DR; do not block apps.
+  wait: false
   decryption:
     provider: sops
     secretRef:

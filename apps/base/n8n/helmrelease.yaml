@@ -22,7 +22,7 @@ spec:
   values:
     image:
       repository: n8nio/n8n
-      tag: "2.22.1"
+      tag: "2.22.2"
     # Service MUST NOT be named "n8n" — K8s injects N8N_PORT=tcp://… and breaks the listener (502).
     # DNS: n8n-app.ai-ops.svc.cluster.local
     fullnameOverride: n8n-app
@@ -45,8 +45,8 @@ spec:
       persistence:
         enabled: true
         type: dynamic
-        # Cluster has longhorn (default longhorn-1); local-path is not installed.
-        storageClass: longhorn-1
+        # Default block storage: truenas-iscsi (TrueNAS iSCSI via democratic-csi).
+        storageClass: truenas-iscsi
         accessModes:
           - ReadWriteOnce
         size: 10Gi

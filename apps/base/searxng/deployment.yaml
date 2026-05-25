@@ -14,6 +14,7 @@ spec:
         app: searxng
         app.kubernetes.io/name: searxng
     spec:
+      enableServiceLinks: false
       securityContext:
         fsGroup: 977
         runAsUser: 977
@@ -22,42 +23,36 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       initContainers:
-        - name: wait-valkey
-          image: busybox:1.37
+        - name: bootstrap-config
+          image: docker.io/searxng/searxng:2025.2.7-739822f70
+          imagePullPolicy: IfNotPresent
           command:
-            - sh
-            - -c
+            - /bin/sh
+            - -ec
             - |
-              until nc -z valkey 6379; do
-                echo "waiting for valkey..."
-                sleep 2
-              done
+              cp -a /etc/searxng/. /mnt/etc/searxng/
+              cp /config/settings.yml /mnt/etc/searxng/settings.yml
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-        - name: copy-config
-          image: busybox:1.37
-          command:
-            - sh
-            - -c
-            - |
-              cp /config/settings.yml /etc/searxng/settings.yml
-              cp /config/limiter.toml /etc/searxng/limiter.toml
-          securityContext:
+            runAsUser: 977
+            runAsGroup: 977
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
           volumeMounts:
+            - name: etc-searxng
+              mountPath: /mnt/etc/searxng
             - name: config-source
               mountPath: /config
-            - name: config
-              mountPath: /etc/searxng
+              readOnly: true
       containers:
         - name: searxng
           image: docker.io/searxng/searxng:2025.2.7-739822f70
           imagePullPolicy: IfNotPresent
           env:
+            - name: GRANIAN_HOST
+              value: "0.0.0.0"
+            - name: GRANIAN_PORT
+              value: "8080"
             - name: SEARXNG_BASE_URL
               value: "https://search.f4mily.net/"
             - name: SEARXNG_SECRET
@@ -75,27 +70,24 @@ spec:
             capabilities:
               drop: ["ALL"]
           startupProbe:
-            httpGet:
-              path: /healthz
+            tcpSocket:
               port: 8080
             initialDelaySeconds: 15
-            periodSeconds: 10
-            failureThreshold: 30
+            periodSeconds: 5
+            failureThreshold: 60
           livenessProbe:
             httpGet:
-              path: /healthz
+              path: /
               port: http
             initialDelaySeconds: 90
             periodSeconds: 30
-            timeoutSeconds: 5
             failureThreshold: 5
           readinessProbe:
             httpGet:
-              path: /healthz
+              path: /
               port: http
             initialDelaySeconds: 10
             periodSeconds: 10
-            timeoutSeconds: 5
             failureThreshold: 6
           resources:
             requests:
@@ -104,11 +96,12 @@ spec:
             limits:
               memory: 512Mi
           volumeMounts:
-            - name: config
+            - name: etc-searxng
               mountPath: /etc/searxng
       volumes:
+        - name: etc-searxng
+          emptyDir: {}
         - name: config-source
           configMap:
             name: searxng-settings
-        - name: config
-          emptyDir: {}
+            defaultMode: 0644

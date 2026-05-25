@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo-runner
+  namespace: forgejo
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: forgejo-runner
+  template:
+    metadata:
+      labels:
+        app: forgejo-runner
+        app.kubernetes.io/name: forgejo-runner
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: runner
+          # renovate: datasource=docker depName=codeberg.org/forgejo/runner versioning=semver
+          image: codeberg.org/forgejo/runner:6.2.2
+          env:
+            - name: DOCKER_HOST
+              value: tcp://127.0.0.1:2375
+            - name: GITEA_INSTANCE_URL
+              value: http://forgejo-app.forgejo.svc.cluster.local:3000
+            - name: GITEA_RUNNER_REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-runner-register
+                  key: token
+          volumeMounts:
+            - name: runner-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 1Gi
+        - name: dind
+          # renovate: datasource=docker depName=docker.io/library/docker
+          image: docker.io/library/docker:27-dind
+          securityContext:
+            privileged: true
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          volumeMounts:
+            - name: dind-storage
+              mountPath: /var/lib/docker
+      volumes:
+        - name: runner-data
+          persistentVolumeClaim:
+            claimName: forgejo-runner-data
+        - name: dind-storage
+          emptyDir: {}

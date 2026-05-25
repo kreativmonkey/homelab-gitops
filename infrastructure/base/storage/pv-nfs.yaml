@@ -444,3 +444,27 @@ spec:
   claimRef:
     name: tandoor-media
     namespace: tandoor
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-forgejo-data
+  labels:
+    app: forgejo
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 200Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media
+    server: 192.168.10.94
+  claimRef:
+    name: forgejo-data
+    namespace: forgejo

@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo
+  namespace: forgejo
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: forgejo
+  template:
+    metadata:
+      labels:
+        app: forgejo
+        app.kubernetes.io/name: forgejo
+    spec:
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: forgejo
+          # renovate: datasource=docker depName=codeberg.org/forgejo/forgejo versioning=semver
+          image: codeberg.org/forgejo/forgejo:15.0.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+            - containerPort: 22
+              name: ssh
+          env:
+            - name: TZ
+              value: Europe/Berlin
+            - name: USER_UID
+              value: "1000"
+            - name: USER_GID
+              value: "1000"
+          # Do not set runAsUser/runAsGroup — the Forgejo image drops privileges via s6.
+          securityContext:
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              subPath: docker/forgejo
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: forgejo-data

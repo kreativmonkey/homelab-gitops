@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-worker
+  namespace: authentik
+spec:
+  template:
+    spec:
+      containers:
+        - name: worker
+          image: authentik/worker:2026.2.2 # Downgrade to a stable version

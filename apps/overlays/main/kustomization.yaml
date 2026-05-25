@@ -19,6 +19,7 @@ resources:
   # --- Cross-cutting (databases & secrets for apps in this overlay) -----
   - databases
   - db-secrets
+  - paperless-ngx.secret.yaml
 
   # --- Media & Documents ------------------------------------------------
   - ../../base/audiobookshelf
@@ -36,8 +37,9 @@ resources:
   # - ../../base/unifi-controller    # disabled: dropped from catalog (DR test)
 
   # --- Cloud & Management -----------------------------------------------
+  - ../../base/forgejo
   - ../../base/nextcloud
-  - ../../base/linkwarden
+  # - ../../base/linkwarden          # disabled: temporarily removed from catalog
   - ../../base/authentik
   - ../../base/homepage
 
@@ -75,6 +77,16 @@ replacements:
       fieldPath: data.host_audiobookshelf
     targets:
       - select: {kind: Ingress, name: audiobookshelf}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_forgejo
+    targets:
+      - select: {kind: Ingress, name: forgejo}
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
@@ -168,16 +180,29 @@ replacements:
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
+      - select: {kind: Deployment, name: tandoor}
+        fieldPaths:
+          - spec.template.spec.containers.0.startupProbe.httpGet.httpHeaders.[name=Host].value
+          - spec.template.spec.containers.0.livenessProbe.httpGet.httpHeaders.[name=Host].value
+          - spec.template.spec.containers.0.readinessProbe.httpGet.httpHeaders.[name=Host].value
 
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
-      fieldPath: data.host_linkwarden
+      fieldPath: data.tandoor_allowed_hosts
     targets:
-      - select: {kind: Ingress, name: linkwarden}
+      - select: {kind: Deployment, name: tandoor}
         fieldPaths:
-          - spec.rules.0.host
-          - spec.tls.0.hosts.0
+          - spec.template.spec.containers.0.env.[name=ALLOWED_HOSTS].value
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.url_tandoor
+    targets:
+      - select: {kind: Deployment, name: tandoor}
+        fieldPaths:
+          - spec.template.spec.containers.0.env.[name=CSRF_TRUSTED_ORIGINS].value
 
   - source:
       kind: ConfigMap
@@ -208,6 +233,21 @@ replacements:
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
+      - select: {kind: Deployment, name: teslamate}
+        fieldPaths:
+          - spec.template.spec.containers.[name=teslamate].env.[name=VIRTUAL_HOST].value
+      - select: {kind: ConfigMap, name: teslamate-grafana-config}
+        fieldPaths:
+          - data.GF_SERVER_DOMAIN
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.url_teslamate_grafana
+    targets:
+      - select: {kind: ConfigMap, name: teslamate-grafana-config}
+        fieldPaths:
+          - data.GF_SERVER_ROOT_URL
 
   - source:
       kind: ConfigMap
@@ -290,11 +330,9 @@ replacements:
     targets:
       - select: {kind: Ingress, name: audiobookshelf}
         fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: authentik}
+      - select: {kind: Ingress, name: forgejo}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: homepage}
-        fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: immich}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: jellyfin}
         fieldPaths: [spec.tls.0.secretName]
@@ -306,9 +344,11 @@ replacements:
         fieldPaths: [spec.values.ingress.tls.0.secretName]
       - select: {kind: Ingress, name: searxng}
         fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: tandoor}
+      - select: {kind: Ingress, name: immich}
         fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: linkwarden}
+      - select: {kind: Ingress, name: teslamate}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: authentik}
         fieldPaths: [spec.tls.0.secretName]
 
   - source:
@@ -316,9 +356,9 @@ replacements:
       name: homelab-cluster-config
       fieldPath: data.clusterTlsSecret
     targets:
-      - select: {kind: Ingress, name: goloom}
+      - select: {kind: Ingress, name: tandoor}
         fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: teslamate}
+      - select: {kind: Ingress, name: goloom}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: nextcloud}
         fieldPaths: [spec.tls.0.secretName]

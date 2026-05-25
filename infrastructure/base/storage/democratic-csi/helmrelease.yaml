@@ -1,0 +1,56 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: democratic-csi-iscsi
+  namespace: democratic-csi
+spec:
+  interval: 1h
+  timeout: 15m
+  targetNamespace: democratic-csi
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: democratic-csi
+      version: "0.15.1"
+      sourceRef:
+        kind: HelmRepository
+        name: democratic-csi-repo
+        namespace: flux-system
+  values:
+    csiDriver:
+      name: truenas-iscsi
+    driver:
+      config:
+        driver: freenas-api-iscsi
+      existingConfigSecret: truenas-iscsi-driver-config
+    controller:
+      driver:
+        image:
+          tag: next
+    node:
+      hostPID: true
+      driver:
+        image:
+          tag: next
+        extraEnv:
+          - name: ISCSIADM_HOST_STRATEGY
+            value: nsenter
+          - name: ISCSIADM_HOST_PATH
+            value: /usr/local/sbin/iscsiadm
+        iscsiDirHostPath: /var/iscsi
+        iscsiDirHostPathType: ""
+    storageClasses:
+      - name: truenas-iscsi
+        defaultClass: true
+        reclaimPolicy: Delete
+        volumeBindingMode: Immediate
+        allowVolumeExpansion: true
+        parameters:
+          detachedVolumesFromSnapshots: "false"
+          fsType: ext4
+    # VolumeSnapshotClass requires snapshot.storage.k8s.io CRDs (not installed yet).
