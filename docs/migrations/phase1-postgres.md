@@ -64,6 +64,7 @@ Expect `cube`, `vchord`, and `earthdistance`. If the cluster was recreated, dele
 | Authentik | https://login.f4mily.net | Set `secret-key` via `just sops-edit apps/base/authentik/authentik-secret-key.secret.yaml` (see `.template`) |
 | Immich | https://immich.f4mily.net | Library on NFS (`subPath` Bilder/Fotos); empty DB is fine — run admin setup / library scan after deploy |
 | Paperless | https://paperless.f4mily.net | Copy `media`/`data` volumes; re-run consumer after DB import |
+| Tandoor | https://rezepte.f4mily.net | See [tandoor-docker-to-kubernetes.md](tandoor-docker-to-kubernetes.md); NFS static/media + CNPG `tandoor` |
 
 ## 6. Cutover
 

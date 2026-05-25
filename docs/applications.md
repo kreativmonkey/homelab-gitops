@@ -60,7 +60,7 @@ here so it is obvious what is **planned** but not deployed:
 
 | App                | Status | Reason                                    |
 |--------------------|--------|-------------------------------------------|
-| tandoor            | on     | Deployment + CNPG + NFS media/static        |
+| tandoor            | on     | https://rezepte.f4mily.net — see [tandoor-docker-to-kubernetes.md](migrations/tandoor-docker-to-kubernetes.md) |
 | netbird            | on     | DaemonSet (hostNetwork), routing to cluster |
 | backrest           | wip    | ingress only, missing HelmRelease         |
 | searxng            | on     | Deployment + ingress at search.f4mily.net |

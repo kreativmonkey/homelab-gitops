@@ -19,15 +19,18 @@ spec:
         app.kubernetes.io/name: tandoor
     spec:
       securityContext:
-        fsGroup: 65534
+        fsGroup: 0
       containers:
         - name: tandoor
-          image: docker.io/vabene1111/recipes:2.3.5
+          image: docker.io/vabene1111/recipes:2.6.9
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               name: http
           env:
+            # boot.sh nginx template: listen ${TANDOOR_PORT} (default 80 binds wrong on k8s)
+            - name: TANDOOR_PORT
+              value: "8080"
             - name: TZ
               value: Europe/Berlin
             - name: SECRET_KEY
@@ -55,6 +58,40 @@ spec:
                   key: password
             - name: ALLOWED_HOSTS
               value: rezepte.f4mily.net,localhost,127.0.0.1
+            - name: STATIC_CDN
+              value: "1"
+            - name: EMAIL_HOST
+              value: mail.f4mily.net
+            - name: EMAIL_PORT
+              value: "465"
+            - name: EMAIL_USE_TLS
+              value: "1"
+            - name: EMAIL_USE_SSL
+              value: "0"
+            - name: DEFAULT_FROM_EMAIL
+              value: tandoor@f4mily.net
+            - name: EMAIL_HOST_USER
+              valueFrom:
+                secretKeyRef:
+                  name: tandoor-app
+                  key: EMAIL_HOST_USER
+                  optional: true
+            - name: EMAIL_HOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tandoor-app
+                  key: EMAIL_HOST_PASSWORD
+                  optional: true
+            - name: AI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tandoor-app
+                  key: AI_API_KEY
+                  optional: true
+            - name: AI_MODEL_NAME
+              value: openai/gpt-4o
+            - name: AI_RATELIMIT
+              value: 60/hour
             - name: SOCIAL_PROVIDERS
               value: allauth.socialaccount.providers.openid_connect
             - name: SOCIALACCOUNT_PROVIDERS
@@ -73,29 +110,42 @@ spec:
             httpGet:
               path: /
               port: http
-            failureThreshold: 60
+              httpHeaders:
+                - name: Host
+                  value: rezepte.f4mily.net
+            initialDelaySeconds: 120
+            failureThreshold: 90
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /
               port: http
+              httpHeaders:
+                - name: Host
+                  value: rezepte.f4mily.net
             initialDelaySeconds: 60
             periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /
               port: http
+              httpHeaders:
+                - name: Host
+                  value: rezepte.f4mily.net
             initialDelaySeconds: 20
             periodSeconds: 10
           resources:
             requests:
-              cpu: 50m
-              memory: 512Mi
+              cpu: 100m
+              memory: 768Mi
             limits:
-              memory: 2Gi
+              memory: 3Gi
           securityContext:
-            allowPrivilegeEscalation: false
+            runAsUser: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: true
             capabilities:
+              add: ["CHOWN", "DAC_OVERRIDE", "SETGID", "SETUID"]
               drop: ["ALL"]
       volumes:
         - name: static
