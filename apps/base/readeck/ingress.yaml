@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: readeck
+  namespace: readeck
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Readeck
+    gethomepage.dev/description: Read-it-later bookmarks
+    gethomepage.dev/group: Office
+    gethomepage.dev/icon: readeck.png
+    gethomepage.dev/app: readeck
+    gethomepage.dev/pod-selector: app=readeck
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - readeck.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: readeck.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: readeck
+                port:
+                  number: 8000
