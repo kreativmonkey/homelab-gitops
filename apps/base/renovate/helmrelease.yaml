@@ -27,6 +27,7 @@ spec:
       tag: "40.49.0"
 
     renovate:
+      configEnableHelmTpl: true
       config: |
         {
           "platform": "forgejo",
@@ -46,7 +47,7 @@ spec:
               "token": "{{ .Env.RENOVATE_GITHUB_COM_TOKEN }}"
             },
             {
-              "matchHost: "api.github.com",
+              "matchHost": "api.github.com",
               "token": "{{ .Env.RENOVATE_GITHUB_COM_TOKEN }}"
             }
           ]
