@@ -40,12 +40,12 @@ data:
     - Develope:
         - Gitops Homelab:
             - abbr: GH
-            href: https://github.com/kreativmonkey/homelab-gitops
+              href: https://github.com/kreativmonkey/homelab-gitops
     - Social:
         - Jit.social:
             - icon: mastodon.png
-            href: https://jit.social
-            description: Radiotux und Binärgewitter
+              href: https://jit.social
+              description: Radiotux und Binärgewitter
   services.yaml: |
     ---
     - Infrastructure:
