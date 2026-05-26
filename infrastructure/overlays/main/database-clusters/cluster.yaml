@@ -109,3 +109,13 @@ spec:
         login: true
         passwordSecret:
           name: forgejo-db-credentials
+      - name: sparkyfitness
+        ensure: present
+        login: true
+        passwordSecret:
+          name: sparkyfitness-db-credentials
+      - name: sparkyfitness_app
+        ensure: present
+        login: true
+        passwordSecret:
+          name: sparkyfitness-app-db-credentials
