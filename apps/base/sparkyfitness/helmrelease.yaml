@@ -1,0 +1,106 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: sparkyfitness
+  namespace: sparkyfitness
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-sparkyfitness
+spec:
+  interval: 1h
+  timeout: 15m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: helm/chart
+      sourceRef:
+        kind: GitRepository
+        name: sparkyfitness-chart
+        namespace: flux-system
+  valuesFrom:
+    - kind: Secret
+      name: sparkyfitness-app-values
+      valuesKey: SPARKY_FITNESS_API_ENCRYPTION_KEY
+      targetPath: server.secrets.apiEncryptionKey
+    - kind: Secret
+      name: sparkyfitness-app-values
+      valuesKey: BETTER_AUTH_SECRET
+      targetPath: server.secrets.betterAuthSecret
+    - kind: Secret
+      name: sparkyfitness-app-values
+      valuesKey: SPARKY_FITNESS_OIDC_CLIENT_ID
+      targetPath: config.oidc.secrets.clientId
+    - kind: Secret
+      name: sparkyfitness-app-values
+      valuesKey: SPARKY_FITNESS_OIDC_CLIENT_SECRET
+      targetPath: config.oidc.secrets.clientSecret
+    - kind: Secret
+      name: sparkyfitness-app-values
+      valuesKey: SPARKY_FITNESS_DB_PASSWORD
+      targetPath: externalDatabase.auth.password
+    - kind: Secret
+      name: sparkyfitness-app-values
+      valuesKey: SPARKY_FITNESS_APP_DB_PASSWORD
+      targetPath: server.appDatabase.password
+  values:
+    # Public GHCR app images require auth; Docker Hub mirrors match upstream split server/frontend.
+    global:
+      imageRegistry: docker.io
+    postgresql:
+      enabled: false
+    externalDatabase:
+      host: homelab-postgres-rw.cnpg-system.svc.cluster.local
+      port: 5432
+      database: sparkyfitness
+      auth:
+        username: sparkyfitness
+    server:
+      replicas: 1
+      image:
+        # renovate: datasource=docker depName=codewithcj/sparkyfitness_server versioning=semver
+        repository: codewithcj/sparkyfitness_server
+        tag: v0.16.6.3
+      secrets:
+        generate: false
+      appDatabase:
+        username: sparkyfitness_app
+      persistence:
+        uploads:
+          storageClass: truenas-iscsi
+          size: 10Gi
+        backup:
+          storageClass: truenas-iscsi
+          size: 5Gi
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
+    frontend:
+      image:
+        # renovate: datasource=docker depName=codewithcj/sparkyfitness versioning=semver
+        repository: codewithcj/sparkyfitness
+        tag: v0.16.6.3
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+    config:
+      timezone: Europe/Berlin
+      oidc:
+        enabled: true
+        providerSlug: authentik
+        providerName: Authentik
+        issuerUrl: https://login.f4mily.net/application/o/sparkyfitness/
+        autoRegister: true
+    ingress:
+      enabled: false
+    databaseBackup:
+      enabled: false
