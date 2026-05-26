@@ -9,6 +9,7 @@ metadata:
     gethomepage.dev/description: Fitness Tracking
     gethomepage.dev/group: Health
     gethomepage.dev/icon: mdi-dumbbell
+    gethomepage.dev/pod-selector: app=sparkyfitness-frontend
     nginx.org/client-max-body-size: "50m"
 spec:
   ingressClassName: nginx

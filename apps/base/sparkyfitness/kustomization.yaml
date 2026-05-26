@@ -3,7 +3,8 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - pvc.yaml
-  - deployment.yaml
+  - deployment-server.yaml
+  - deployment-frontend.yaml
   - service.yaml
   - ingress.yaml
   - sparkyfitness-app.secret.yaml
