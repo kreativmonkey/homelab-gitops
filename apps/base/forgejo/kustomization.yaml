@@ -10,6 +10,6 @@ resources:
   - service.yaml
   - ingress.yaml
   - transportserver.yaml
-  - renovate-config.configmap.yaml
-  - renovate-cronjob.yaml
-  - renovate-credentials.secret.yaml
+  # - renovate-config.configmap.yaml
+  # - renovate-cronjob.yaml
+  # - renovate-credentials.secret.yaml
