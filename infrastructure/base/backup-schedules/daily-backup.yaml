@@ -13,6 +13,24 @@ spec:
       - ingress-nginx
       - cnpg-system
       - goloom
+      - sparkyfitness
+      - n8n
+      - authentik
+      - forgejo
+      - nextcloud
+      - paperless-ngx
+      - tandoor
+      - immich
+      - jellyfin
+      - kavita
+      - linkwarden
+      - sterling-pdf
+      - searxng
+      - speedtest-tracker
+      - teslamate
+      - unifi-controller
+      - uptime-kuma
+      - watchyourlan
     excludedResources:
       - events
       - events.events.k8s.io

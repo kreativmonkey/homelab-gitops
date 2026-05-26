@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sparkyfitness
+  namespace: sparkyfitness
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sparkyfitness
+  template:
+    metadata:
+      labels:
+        app: sparkyfitness
+    spec:
+      containers:
+        - name: sparkyfitness
+          # renovate: datasource=docker depName=ghcr.io/codewithcj/sparkyfitness versioning=semver
+          image: ghcr.io/codewithcj/sparkyfitness:v0.16.6.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: TZ
+              value: Europe/Berlin
+            - name: NODE_ENV
+              value: production
+            - name: SPARKY_FITNESS_FRONTEND_URL
+              value: https://fitness.f4mily.net
+            # Database
+            - name: SPARKY_FITNESS_DB_HOST
+              value: homelab-postgres-rw.cnpg-system.svc.cluster.local
+            - name: SPARKY_FITNESS_DB_PORT
+              value: "5432"
+            - name: SPARKY_FITNESS_DB_NAME
+              value: sparkyfitness
+            - name: SPARKY_FITNESS_DB_USER
+              value: sparkyfitness
+            - name: SPARKY_FITNESS_APP_DB_USER
+              value: sparkyfitness_app
+            - name: SPARKY_FITNESS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sparkyfitness-db-credentials
+                  key: password
+            - name: SPARKY_FITNESS_APP_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sparkyfitness-app-db-credentials
+                  key: password
+            # Storage
+            - name: SERVER_UPLOADS_PATH
+              value: /app/data/uploads
+            - name: SERVER_BACKUP_PATH
+              value: /app/data/backups
+            # OIDC (Authentik)
+            - name: SPARKY_FITNESS_OIDC_AUTH_ENABLED
+              value: "true"
+            - name: SPARKY_FITNESS_OIDC_ISSUER_URL
+              value: https://login.f4mily.net/application/o/sparkyfitness/
+            - name: SPARKY_FITNESS_OIDC_PROVIDER_SLUG
+              value: authentik
+            - name: SPARKY_FITNESS_OIDC_AUTO_REGISTER
+              value: "true"
+          envFrom:
+            - secretRef:
+                name: sparkyfitness-app
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sparkyfitness-data

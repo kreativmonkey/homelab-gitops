@@ -42,6 +42,7 @@ resources:
   - ../../base/nextcloud
   # - ../../base/linkwarden          # disabled: temporarily removed from catalog
   - ../../base/readeck
+  - ../../base/sparkyfitness
   - ../../base/authentik
   - ../../base/homepage
 
