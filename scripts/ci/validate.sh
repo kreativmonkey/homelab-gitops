@@ -73,12 +73,19 @@ while IFS= read -r -d '' file; do
   log "helm template: $release_name ($chart@$version)"
   helm repo add "ci-${repo_name}" "$repo_url" --force-update >/dev/null 2>&1 || true
   helm repo update "ci-${repo_name}" >/dev/null 2>&1 || helm repo update >/dev/null
+  
+  # Extract values to a temporary file for better template rendering
+  VALUES_FILE=$(mktemp)
+  yq -r '.spec.values // {}' "$file" > "$VALUES_FILE"
+
   if ! helm template "$release_name" "ci-${repo_name}/${chart}" \
     --version "$version" \
     --namespace "$release_ns" \
+    -f "$VALUES_FILE" \
     | kubeconform "${KUBECONFORM_ARGS[@]}" -summary -output text -; then
     echo "WARN: helm template/kubeconform failed for $release_name"
   fi
+  rm -f "$VALUES_FILE"
 done < <(find infrastructure apps -name helmrelease.yaml -print0 2>/dev/null)
 
 log "Stage 3: kind cluster server-side dry-run"
