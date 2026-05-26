@@ -5,7 +5,9 @@ metadata:
   namespace: searxng
 spec:
   replicas: 1
+  # Recreate + RWO PVC; $patch: replace drops stale rollingUpdate after SSA merge.
   strategy:
+    $patch: replace
     type: Recreate
   selector:
     matchLabels:
