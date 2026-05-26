@@ -9,4 +9,5 @@ resources:
   - linkwarden.yaml
   - teslamate.yaml
   - goloom.yaml
+  - forgejo.yaml
   - sparkyfitness.yaml

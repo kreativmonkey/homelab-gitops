@@ -38,6 +38,7 @@ resources:
 
   # --- Cloud & Management -----------------------------------------------
   - ../../base/forgejo
+  - ../../base/renovate
   - ../../base/nextcloud
   # - ../../base/linkwarden          # disabled: temporarily removed from catalog
   - ../../base/readeck
@@ -166,6 +167,16 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.host_sparkyfitness
+    targets:
+      - select: {kind: Ingress, name: sparkyfitness}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.url_readeck
     targets:
       - select: {kind: Deployment, name: readeck}
@@ -200,6 +211,15 @@ replacements:
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.url_searxng
+    targets:
+      - select: {kind: Deployment, name: searxng}
+        fieldPaths:
+          - spec.template.spec.containers.[name=searxng].env.[name=SEARXNG_BASE_URL].value
 
   - source:
       kind: ConfigMap

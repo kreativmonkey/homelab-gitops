@@ -30,6 +30,11 @@ spec:
     ingress:
       enabled: false
 
+    serviceAccount:
+      create: true
+      name: n8n-app
+      automountServiceAccountToken: true
+
     main:
       config:
         n8n:
