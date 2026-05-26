@@ -5,6 +5,10 @@ metadata:
   namespace: searxng
 spec:
   replicas: 1
+  # Recreate + RWO PVC; $patch: replace drops stale rollingUpdate after SSA merge.
+  strategy:
+    $patch: replace
+    type: Recreate
   selector:
     matchLabels:
       app: searxng
@@ -30,8 +34,12 @@ spec:
             - /bin/sh
             - -ec
             - |
-              cp -a /etc/searxng/. /mnt/etc/searxng/
-              cp /config/settings.yml /mnt/etc/searxng/settings.yml
+              set -e
+              DEST=/mnt/etc/searxng
+              if [ ! -f "${DEST}/settings.yml" ]; then
+                cp -a /etc/searxng/. "${DEST}/"
+              fi
+              cp /config/settings.yml "${DEST}/settings.yml"
           securityContext:
             runAsUser: 977
             runAsGroup: 977
@@ -100,7 +108,8 @@ spec:
               mountPath: /etc/searxng
       volumes:
         - name: etc-searxng
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: searxng-config
         - name: config-source
           configMap:
             name: searxng-settings

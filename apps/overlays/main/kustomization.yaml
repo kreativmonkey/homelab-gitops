@@ -204,6 +204,15 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.url_searxng
+    targets:
+      - select: {kind: Deployment, name: searxng}
+        fieldPaths:
+          - spec.template.spec.containers.[name=searxng].env.[name=SEARXNG_BASE_URL].value
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.host_tandoor
     targets:
       - select: {kind: Ingress, name: tandoor}

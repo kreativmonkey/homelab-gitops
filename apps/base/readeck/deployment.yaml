@@ -41,7 +41,7 @@ spec:
             - name: READECK_ALLOWED_HOSTS
               value: readeck.f4mily.net
             - name: READECK_DATABASE_SOURCE
-              value: /readeck/db.sqlite3
+              value: sqlite3:/readeck/db.sqlite3
           volumeMounts:
             - name: data
               mountPath: /readeck

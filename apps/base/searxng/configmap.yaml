@@ -4,8 +4,18 @@ metadata:
   name: searxng-settings
   namespace: searxng
 data:
+  # Instance config (GitOps). Applied on every pod start.
+  # UI preferences from /preferences are browser cookies (signed with SEARXNG_SECRET);
+  # put lasting defaults here or in settings.local.yml on the PVC (see deployment init).
   settings.yml: |
     use_default_settings: true
     server:
       limiter: false
       bind_address: "0.0.0.0"
+    general:
+      instance_name: "SearXNG"
+    ui:
+      default_theme: simple
+    search:
+      safe_search: 0
+      default_lang: "de-DE"
