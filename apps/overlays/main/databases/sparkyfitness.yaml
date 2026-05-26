@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: homelab-postgres-sparkyfitness
+  namespace: cnpg-system
+spec:
+  name: sparkyfitness
+  owner: sparkyfitness
+  cluster:
+    name: homelab-postgres
