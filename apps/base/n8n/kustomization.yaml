@@ -7,3 +7,4 @@ resources:
   - n8n-integration-credentials.secret.yaml
   - helmrelease.yaml
   - ingress.yaml
+  - rbac.yaml

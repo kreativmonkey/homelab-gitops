@@ -15,7 +15,7 @@ TransportServer).
 | Component | Docker (production) | Kubernetes (homelab) |
 |-----------|---------------------|----------------------|
 | App | `codeberg.org/forgejo/forgejo:15` | Deployment `forgejo` — pin in `deployment.yaml` |
-| DB | SQLite (`/data/gitea/gitea.db`) | Same file on NFS PVC (no CNPG) |
+| DB | SQLite (`/data/gitea/gitea.db`) | **PostgreSQL** on `homelab-postgres` (DB `forgejo`, CNPG role `forgejo`) |
 | Data | `/mnt/cephfs/forgejo` → `/data` | PVC `forgejo-data` → NFS `Media` + `subPath: docker/forgejo` |
 | HTTP | Traefik `git.f4mily.net:443` | Ingress `git.f4mily.net` (NGINX, wildcard TLS) |
 | Git SSH | Host port `2222` → container `:22` | TransportServer on ingress nodes `:22` and `:2222` → `forgejo-ssh:22` |
