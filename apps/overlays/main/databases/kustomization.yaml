@@ -10,3 +10,4 @@ resources:
   - teslamate.yaml
   - goloom.yaml
   - forgejo.yaml
+  - sparkyfitness.yaml
