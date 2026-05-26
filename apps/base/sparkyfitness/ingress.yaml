@@ -1,3 +1,5 @@
+# Routing per upstream Helm chart: /api and /uploads → server, / → frontend.
+# See https://codewithcj.github.io/SparkyFitness/install/kubernetes
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -21,6 +23,20 @@ spec:
     - host: fitness.f4mily.net
       http:
         paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: sparkyfitness-server
+                port:
+                  number: 3010
+          - path: /uploads
+            pathType: Prefix
+            backend:
+              service:
+                name: sparkyfitness-server
+                port:
+                  number: 3010
           - path: /
             pathType: Prefix
             backend:
