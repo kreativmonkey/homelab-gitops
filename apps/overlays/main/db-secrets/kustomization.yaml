@@ -6,6 +6,7 @@ resources:
   - nextcloud-db-credentials.secret.yaml
   - paperless-db-credentials.secret.yaml
   - goloom-db-credentials.secret.yaml
+  - forgejo-db-credentials.secret.yaml
   - teslamate-db-credentials.secret.yaml
   # linkwarden disabled in apps catalog — no linkwarden namespace
   # - linkwarden-db-credentials.secret.yaml
@@ -81,3 +82,13 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: tandoor
+  - target:
+      kind: Secret
+      name: forgejo-db-credentials
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: homelab-postgres-forgejo
+      - op: replace
+        path: /metadata/namespace
+        value: forgejo
