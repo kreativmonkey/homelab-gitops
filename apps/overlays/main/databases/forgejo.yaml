@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: homelab-postgres-forgejo
+  namespace: cnpg-system
+spec:
+  name: forgejo
+  owner: forgejo
+  cluster:
+    name: homelab-postgres

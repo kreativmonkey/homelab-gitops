@@ -1,5 +1,4 @@
-# Routing per upstream Helm chart: /api and /uploads → server, / → frontend.
-# See https://codewithcj.github.io/SparkyFitness/install/kubernetes
+# /api and /uploads → server; / → frontend (chart service names).
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -11,7 +10,9 @@ metadata:
     gethomepage.dev/description: Fitness Tracking
     gethomepage.dev/group: Health
     gethomepage.dev/icon: mdi-dumbbell
-    gethomepage.dev/pod-selector: app=sparkyfitness-frontend
+    gethomepage.dev/pod-selector: app.kubernetes.io/component=frontend,app.kubernetes.io/instance=sparkyfitness
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
     nginx.org/client-max-body-size: "50m"
 spec:
   ingressClassName: nginx
@@ -41,6 +42,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: sparkyfitness
+                name: sparkyfitness-frontend
                 port:
                   number: 80

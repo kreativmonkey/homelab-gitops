@@ -53,6 +53,7 @@ data:
   host_paperless: paperless.f4mily.net
   host_sterling_pdf: pdf.f4mily.net
   host_searxng: search.f4mily.net
+  url_searxng: https://search.f4mily.net/
   host_teslamate: teslamate.f4mily.net
   url_teslamate_grafana: https://teslamate.f4mily.net/grafana/
   host_tandoor: rezepte.f4mily.net
@@ -63,6 +64,7 @@ data:
   host_linkwarden: linkwarden.f4mily.net
   host_readeck: readeck.f4mily.net
   url_readeck: https://readeck.f4mily.net
+  host_sparkyfitness: fitness.f4mily.net
 
   # Cluster-internal apps (covered by *.cluster.f4mily.net wildcard):
   host_goloom: goloom.cluster.f4mily.net

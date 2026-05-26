@@ -1,0 +1,11 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: sparkyfitness-chart
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://github.com/CodeWithCJ/SparkyFitness
+  ref:
+    # renovate: datasource=github-releases depName=CodeWithCJ/SparkyFitness versioning=semver
+    tag: v0.16.6.3

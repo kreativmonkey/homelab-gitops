@@ -137,9 +137,9 @@ spec:
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
-  name: nextcloud-repo
+  name: renovate-repo
   namespace: flux-system
 spec:
   interval: 24h
-  url: https://nextcloud.github.io/helm
+  url: https://docs.renovatebot.com/helm-charts
 

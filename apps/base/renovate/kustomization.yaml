@@ -2,7 +2,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - namespace.yaml
-  - gitrepository.yaml
   - helmrelease.yaml
-  - ingress.yaml
-  - sparkyfitness-app-values.secret.yaml
+  - renovate-credentials.secret.yaml
