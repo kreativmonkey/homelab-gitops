@@ -38,6 +38,7 @@ resources:
 
   # --- Cloud & Management -----------------------------------------------
   - ../../base/forgejo
+  - ../../base/renovate
   - ../../base/nextcloud
   # - ../../base/linkwarden          # disabled: temporarily removed from catalog
   - ../../base/readeck
