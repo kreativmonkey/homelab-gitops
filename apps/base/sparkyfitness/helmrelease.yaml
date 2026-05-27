@@ -101,8 +101,8 @@ spec:
         enabled: true
         providerSlug: authentik
         providerName: Authentik
-        # Authentik application slug must match path segment (discovery: …/application/o/sparkyfitness/).
-        issuerUrl: https://login.f4mily.net/application/o/sparkyfitness/
+        # Authentik application slug is sparky-fitness (hyphen) — not sparkyfitness.
+        issuerUrl: https://login.f4mily.net/application/o/sparky-fitness/
         # https://codewithcj.github.io/SparkyFitness/administration/oauth-authentication
         scope: openid profile email
         logoUrl: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/authentik.svg
