@@ -17,7 +17,9 @@ spec:
 
   postgresql:
     parameters:
-      max_connections: "50"
+      # Shared by many apps (Authentik, TeslaMate, SparkyFitness, …). 50 was exhausted
+      # (SparkyFitness alone: owner + app + Better Auth pools up to ~30 per replica).
+      max_connections: "100"
       shared_buffers: 64MB
       effective_cache_size: 256MB
 
