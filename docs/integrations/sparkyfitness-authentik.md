@@ -8,7 +8,7 @@ GitOps sets server env via Helm (`apps/base/sparkyfitness/helmrelease.yaml`) and
 
 | Setting | GitOps value |
 |---------|----------------|
-| Issuer URL | `https://login.f4mily.net/application/o/sparkyfitness/` |
+| Issuer URL | `https://login.f4mily.net/application/o/sparky-fitness/` (Authentik app slug) |
 | Client ID / secret | `sparkyfitness-app-values` → Helm `valuesFrom` |
 | Scope | `openid profile email` ([upstream docs](https://codewithcj.github.io/SparkyFitness/administration/oauth-authentication)) |
 | Provider slug / name | `authentik` / `Authentik` |
@@ -21,7 +21,7 @@ GitOps sets server env via Helm (`apps/base/sparkyfitness/helmrelease.yaml`) and
 
 ## Checklist (Authentik admin)
 
-1. **Application** slug `sparkyfitness`, provider type OAuth2/OIDC.
+1. **Application** slug **`sparky-fitness`** (with hyphen), provider type OAuth2/OIDC.
 2. **Redirect URI** (strict) — must match Better Auth, not the legacy `oidc-callback` path from older docs:
 
    ```text
@@ -38,7 +38,7 @@ GitOps sets server env via Helm (`apps/base/sparkyfitness/helmrelease.yaml`) and
 
 ```bash
 # Discovery (from a host that reaches login.f4mily.net)
-curl -sS https://login.f4mily.net/application/o/sparkyfitness/.well-known/openid-configuration | jq .issuer
+curl -sS https://login.f4mily.net/application/o/sparky-fitness/.well-known/openid-configuration | jq .issuer
 
 # Server env (after Flux reconcile)
 kubectl -n sparkyfitness exec deploy/sparkyfitness-server -- env | grep SPARKY_FITNESS_OIDC
