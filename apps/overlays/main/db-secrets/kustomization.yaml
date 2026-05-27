@@ -7,6 +7,8 @@ resources:
   - paperless-db-credentials.secret.yaml
   - goloom-db-credentials.secret.yaml
   - forgejo-db-credentials.secret.yaml
+  - sparkyfitness-db-credentials.secret.yaml
+  - sparkyfitness-app-db-credentials.secret.yaml
   - teslamate-db-credentials.secret.yaml
   # linkwarden disabled in apps catalog — no linkwarden namespace
   # - linkwarden-db-credentials.secret.yaml
@@ -92,3 +94,23 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: forgejo
+  - target:
+      kind: Secret
+      name: sparkyfitness-db-credentials
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: homelab-postgres-sparkyfitness
+      - op: replace
+        path: /metadata/namespace
+        value: sparkyfitness
+  - target:
+      kind: Secret
+      name: sparkyfitness-app-db-credentials
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: homelab-postgres-sparkyfitness-app
+      - op: replace
+        path: /metadata/namespace
+        value: sparkyfitness

@@ -112,6 +112,8 @@ spec:
       - name: sparkyfitness
         ensure: present
         login: true
+        # Migrations grant pg_stat_statements_reset and manage roles/extensions on first start.
+        superuser: true
         passwordSecret:
           name: sparkyfitness-db-credentials
       - name: sparkyfitness_app
