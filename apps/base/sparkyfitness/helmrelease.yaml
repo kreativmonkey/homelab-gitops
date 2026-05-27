@@ -92,12 +92,16 @@ spec:
       # Chart ingress is disabled; without this Better Auth defaults to localhost:3004 → Invalid origin.
       frontendUrl: https://fitness.f4mily.net
       timezone: Europe/Berlin
+      # Chart default forceEmailLogin=true keeps email login even when OIDC is on — disable for SSO-only.
+      forceEmailLogin: false
+      disableEmailLogin: true
       oidc:
         enabled: true
         providerSlug: authentik
         providerName: Authentik
         issuerUrl: https://login.f4mily.net/application/o/sparkyfitness/
         autoRegister: true
+        autoRedirect: true
     ingress:
       enabled: false
     databaseBackup:
