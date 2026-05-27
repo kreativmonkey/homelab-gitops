@@ -99,9 +99,15 @@ spec:
         enabled: true
         providerSlug: authentik
         providerName: Authentik
+        # Authentik application slug must match path segment (discovery: …/application/o/sparkyfitness/).
         issuerUrl: https://login.f4mily.net/application/o/sparkyfitness/
+        # https://codewithcj.github.io/SparkyFitness/administration/oauth-authentication
+        scope: openid profile email
+        logoUrl: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/authentik.svg
         autoRegister: true
         autoRedirect: true
+        # Better Auth SSO callback (register in Authentik redirect URIs):
+        # https://fitness.f4mily.net/api/auth/sso/callback/authentik
     ingress:
       enabled: false
     databaseBackup:
