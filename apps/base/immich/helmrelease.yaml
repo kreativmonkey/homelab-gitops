@@ -28,49 +28,57 @@ spec:
     - kind: Secret
       name: homelab-postgres-immich
       valuesKey: username
-      targetPath: env.DB_USERNAME
+      targetPath: controllers.main.containers.main.env.DB_USERNAME
     - kind: Secret
       name: homelab-postgres-immich
       valuesKey: password
-      targetPath: env.DB_PASSWORD
+      targetPath: controllers.main.containers.main.env.DB_PASSWORD
   values:
-    global:
-      security:
-        allowInsecureImages: true
-    postgresql:
-      enabled: false
-    redis:
-      enabled: true
-      # Bitnami moved images off docker.io/bitnami; chart default breaks without legacy mirror.
-      image:
-        registry: docker.io
-        repository: bitnamilegacy/redis
-        tag: 8.2.1-debian-12-r0
-      master:
-        persistence:
-          enabled: false
-    env:
-      DB_HOSTNAME: immich-postgres-rw.cnpg-system.svc.cluster.local
-      DB_PORT: "5432"
-      DB_DATABASE_NAME: immich
-      # VectorChord on immich-postgres; omit DB_VECTOR_EXTENSION so Immich auto-detects vchord.
-    # Shared tag for immich-server + immich-machine-learning (chart 0.9.x).
-    image:
-      # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server versioning=semver
-      tag: v2.7.5
     immich:
       persistence:
         library:
           existingClaim: immich-library
-    server:
+    # Chart 0.12+: bundled postgresql/redis subcharts removed; use valkey + external CNPG.
+    valkey:
+      enabled: true
       persistence:
-        library:
+        data:
+          enabled: true
+          type: emptyDir
+          accessMode: ReadWriteOnce
+    controllers:
+      main:
+        containers:
+          main:
+            env:
+              DB_HOSTNAME: immich-postgres-rw.cnpg-system.svc.cluster.local
+              DB_PORT: "5432"
+              DB_DATABASE_NAME: immich
+              # VectorChord on immich-postgres; omit DB_VECTOR_EXTENSION so Immich auto-detects vchord.
+            image:
+              # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server versioning=semver
+              tag: v2.7.5
+    server:
+      controllers:
+        main:
+          containers:
+            main:
+              image:
+                repository: ghcr.io/immich-app/immich-server
+                # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server versioning=semver
+                tag: v2.7.5
+      persistence:
+        data:
+          accessMode: ReadWriteOnce
           subPath: Bilder
         fotos:
           enabled: true
-          mountPath: /fotos
+          type: persistentVolumeClaim
           existingClaim: immich-fotos
+          accessMode: ReadWriteOnce
           subPath: Fotos
+          globalMounts:
+            - path: /fotos
       ingress:
         main:
           enabled: false
@@ -82,6 +90,19 @@ spec:
           memory: 1536Mi
     machine-learning:
       enabled: true
+      controllers:
+        main:
+          containers:
+            main:
+              image:
+                repository: ghcr.io/immich-app/immich-machine-learning
+                # renovate: datasource=docker depName=ghcr.io/immich-app/immich-machine-learning versioning=semver
+                tag: v2.7.5
+      persistence:
+        cache:
+          enabled: true
+          type: emptyDir
+          accessMode: ReadWriteMany
       resources:
         requests:
           cpu: 200m
