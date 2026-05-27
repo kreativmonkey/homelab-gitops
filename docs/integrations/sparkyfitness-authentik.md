@@ -13,6 +13,7 @@ GitOps sets server env via Helm (`apps/base/sparkyfitness/helmrelease.yaml`) and
 | Scope | `openid profile email` ([upstream docs](https://codewithcj.github.io/SparkyFitness/administration/oauth-authentication)) |
 | Provider slug / name | `authentik` / `Authentik` |
 | Public frontend URL | `https://fitness.f4mily.net` (`config.frontendUrl`) |
+| Extra trusted origins | `https://login.f4mily.net` (`config.extraTrustedOrigins` — required for OIDC discovery) |
 | OIDC logo | jsDelivr Authentik icon (`config.oidc.logoUrl`) |
 | Auto-register | `true` |
 | Email/password login | disabled (`disableEmailLogin`, `forceEmailLogin: false`) |
