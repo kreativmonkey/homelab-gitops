@@ -110,6 +110,20 @@ spec:
         autoRedirect: true
         # Better Auth SSO callback (register in Authentik redirect URIs):
         # https://fitness.f4mily.net/api/auth/sso/callback/authentik
+      garmin:
+        enabled: true
+        isChinaRegion: false
+    garmin:
+      # Docker Hub image uses underscore (not chart default sparkyfitness-garmin).
+      image:
+        repository: codewithcj/sparkyfitness_garmin
+        tag: v0.16.6.3
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
     ingress:
       enabled: false
     databaseBackup:
