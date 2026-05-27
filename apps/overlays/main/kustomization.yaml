@@ -41,6 +41,7 @@ resources:
   - ../../base/renovate
   - ../../base/nextcloud
   # - ../../base/linkwarden          # disabled: temporarily removed from catalog
+  - ../../base/linkding
   - ../../base/readeck
   - ../../base/sparkyfitness
   - ../../base/authentik
@@ -150,6 +151,16 @@ replacements:
       fieldPath: data.host_paperless
     targets:
       - select: {kind: Ingress, name: paperless}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_linkding
+    targets:
+      - select: {kind: Ingress, name: linkding}
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
@@ -398,6 +409,8 @@ replacements:
       - select: {kind: Ingress, name: kavita}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: paperless}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: linkding}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: readeck}
         fieldPaths: [spec.tls.0.secretName]
