@@ -89,6 +89,8 @@ spec:
         limits:
           memory: 256Mi
     config:
+      # Chart ingress is disabled; without this Better Auth defaults to localhost:3004 → Invalid origin.
+      frontendUrl: https://fitness.f4mily.net
       timezone: Europe/Berlin
       oidc:
         enabled: true
