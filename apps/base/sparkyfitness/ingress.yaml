@@ -44,4 +44,4 @@ spec:
               service:
                 name: sparkyfitness-frontend
                 port:
-                  number: 80
+                  number: 8080

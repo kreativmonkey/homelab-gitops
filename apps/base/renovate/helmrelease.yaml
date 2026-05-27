@@ -27,7 +27,7 @@ spec:
       tag: "40.49.0"
 
     renovate:
-      configEnableHelmTpl: true
+      # GitHub token via RENOVATE_GITHUB_COM_TOKEN in renovate-credentials (existingSecret).
       config: |
         {
           "platform": "forgejo",
@@ -40,17 +40,7 @@ spec:
             "extends": ["config:recommended", ":dependencyDashboard"]
           },
           "timezone": "Europe/Berlin",
-          "persistRepoData": true,
-          "hostRules": [
-            {
-              "matchHost": "github.com",
-              "token": "{{ .Env.RENOVATE_GITHUB_COM_TOKEN }}"
-            },
-            {
-              "matchHost": "api.github.com",
-              "token": "{{ .Env.RENOVATE_GITHUB_COM_TOKEN }}"
-            }
-          ]
+          "persistRepoData": true
         }
 
       persistence:
