@@ -109,6 +109,8 @@ spec:
             'trusted_proxies' => array('127.0.0.1', '10.0.0.0/8'),
             'forwarded_for_headers' => array('HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP'),
             'maintenance_window_start' => 2,
+            'default_phone_region' => 'DE',
+            'serverid' => 1,
           );
       # Shared TrueNAS export: files are UID 1000 from Docker (PUID). Run non-root as 1000 so
       # rsync skips --chown (nextcloud/docker#1344) and writes match existing ownership.
@@ -233,9 +235,11 @@ spec:
               php occ config:system:set forwarded_for_headers 0 --value="HTTP_X_FORWARDED_FOR"
               php occ config:system:set forwarded_for_headers 1 --value="HTTP_X_REAL_IP"
               php occ config:system:set maintenance_window_start --value=2 --type=integer
+              php occ config:system:set default_phone_region --value=DE
+              php occ config:system:set serverid --value=1 --type=integer
               # NFS atomic writes leave dot-prefixed temp files (integrity EXTRA_FILE)
               find /var/www/html/dist /var/www/html/core/dist -maxdepth 1 -type f -name '.*.*' -delete 2>/dev/null || true
-              find /var/www/html/apps/weather_status/img/met.no.icons -maxdepth 1 -type f -name '.*.*' -delete 2>/dev/null || true
+              find /var/www/html/apps -path '*/img/*' -type f -name '.*.*' -delete 2>/dev/null || true
               php occ maintenance:update:htaccess --no-interaction
               MARKER=/var/www/html/data/.occ-mime-repair-done
               if [ ! -f "${MARKER}" ]; then
