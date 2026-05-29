@@ -113,7 +113,28 @@ spec:
         runAsNonRoot: true
       podSecurityContext:
         fsGroup: 33
+      # Non-root cannot create redis-session.ini in image-owned conf.d (nextcloud/helm#187).
+      extraVolumes:
+        - name: php-confd
+          emptyDir: {}
+      extraVolumeMounts:
+        - name: php-confd
+          mountPath: /usr/local/etc/php/conf.d/redis-session.ini
+          subPath: redis-session.ini
       extraInitContainers:
+        - name: create-redis-session-ini
+          image: docker.io/library/busybox:1.36
+          securityContext:
+            runAsUser: 33
+            runAsGroup: 33
+            runAsNonRoot: true
+          command:
+            - sh
+            - -c
+            - touch /mnt/redis-session.ini
+          volumeMounts:
+            - name: php-confd
+              mountPath: /mnt
         - name: occ-db-sync
           image: docker.io/library/nextcloud:33.0.3-apache
           securityContext:
