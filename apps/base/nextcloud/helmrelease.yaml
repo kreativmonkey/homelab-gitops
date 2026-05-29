@@ -106,6 +106,9 @@ spec:
             'overwriteprotocol' => 'https',
             'overwrite.cli.url' => 'https://nc.f4mily.net',
             'allow_local_remote_servers' => true,
+            'trusted_proxies' => array('127.0.0.1', '10.0.0.0/8'),
+            'forwarded_for_headers' => array('HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP'),
+            'maintenance_window_start' => 2,
           );
       # Shared TrueNAS export: files are UID 1000 from Docker (PUID). Run non-root as 1000 so
       # rsync skips --chown (nextcloud/docker#1344) and writes match existing ownership.
@@ -225,7 +228,20 @@ spec:
               php occ config:system:set overwriteprotocol --value=https
               php occ config:system:set overwrite.cli.url --value="https://${NEXTCLOUD_PUBLIC_HOST}"
               php occ config:system:set trusted_domains 0 --value="${NEXTCLOUD_PUBLIC_HOST}"
+              php occ config:system:set trusted_proxies 0 --value="127.0.0.1"
+              php occ config:system:set trusted_proxies 1 --value="10.0.0.0/8"
+              php occ config:system:set forwarded_for_headers 0 --value="HTTP_X_FORWARDED_FOR"
+              php occ config:system:set forwarded_for_headers 1 --value="HTTP_X_REAL_IP"
+              php occ config:system:set maintenance_window_start --value=2 --type=integer
+              # NFS atomic writes leave dot-prefixed temp files (integrity EXTRA_FILE)
+              find /var/www/html/core/dist -maxdepth 1 -type f -name '.*.*' -delete 2>/dev/null || true
+              find /var/www/html/apps/weather_status/img/met.no.icons -maxdepth 1 -type f -name '.*.*' -delete 2>/dev/null || true
               php occ maintenance:update:htaccess --no-interaction
+              MARKER=/var/www/html/data/.occ-mime-repair-done
+              if [ ! -f "${MARKER}" ]; then
+                echo "occ-db-sync: running one-time MIME type repair (expensive)"
+                php occ maintenance:repair --include-expensive --no-interaction && touch "${MARKER}"
+              fi
               php occ maintenance:mode --off || true
               php occ status
           volumeMounts:
