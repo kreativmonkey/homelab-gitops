@@ -276,10 +276,12 @@ spec:
                 --clientid="${OIDC_CLIENT_ID}" \
                 --clientsecret="${OIDC_CLIENT_SECRET}" \
                 --discoveryuri="https://login.f4mily.net/application/o/nextcloud/.well-known/openid-configuration" \
-                --scope="openid profile email" \
+                --scope="openid profile email groups" \
                 --mapping-uid=sub \
                 --mapping-display-name=name \
                 --mapping-email=email \
+                --mapping-groups=groups \
+                --group-provisioning=1 \
                 --unique-uid=0
               php occ config:app:set --value=0 user_oidc allow_multiple_user_backends
               php occ config:app:set user_oidc login_button_text --value="Authentik"
