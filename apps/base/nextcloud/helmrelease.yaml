@@ -94,17 +94,17 @@ spec:
         secretName: nextcloud-admin
         usernameKey: username
         passwordKey: password
-      host: nextcloud.cluster.f4mily.net
+      host: nc.f4mily.net
       trustedDomains:
-        - nextcloud.cluster.f4mily.net
+        - nc.f4mily.net
       # Required so the chart mounts defaultConfigs (autoconfig.php reads POSTGRES_*).
       configs:
         cluster.config.php: |-
           <?php
           $CONFIG = array(
-            'overwritehost' => 'nextcloud.cluster.f4mily.net',
+            'overwritehost' => 'nc.f4mily.net',
             'overwriteprotocol' => 'https',
-            'overwrite.cli.url' => 'https://nextcloud.cluster.f4mily.net',
+            'overwrite.cli.url' => 'https://nc.f4mily.net',
             'allow_local_remote_servers' => true,
           );
       # Shared TrueNAS export: files are UID 1000 from Docker (PUID). Run non-root as 1000 so
@@ -186,6 +186,8 @@ spec:
                 secretKeyRef:
                   name: nextcloud-admin
                   key: password
+            - name: NEXTCLOUD_PUBLIC_HOST
+              value: nc.f4mily.net
           command:
             - /bin/sh
             - -ec
@@ -219,7 +221,10 @@ spec:
               php occ config:system:set dbpassword --value="${POSTGRES_PASSWORD}"
               php occ config:system:set redis host --value=nextcloud-redis-master
               php occ config:system:set redis port --value=6379
-              php occ config:system:set overwrite.cli.url --value="https://nextcloud.cluster.f4mily.net"
+              php occ config:system:set overwritehost --value="${NEXTCLOUD_PUBLIC_HOST}"
+              php occ config:system:set overwriteprotocol --value=https
+              php occ config:system:set overwrite.cli.url --value="https://${NEXTCLOUD_PUBLIC_HOST}"
+              php occ config:system:set trusted_domains 0 --value="${NEXTCLOUD_PUBLIC_HOST}"
               php occ maintenance:update:htaccess --no-interaction
               php occ maintenance:mode --off || true
               php occ status

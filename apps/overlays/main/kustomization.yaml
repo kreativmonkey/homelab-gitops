@@ -328,6 +328,11 @@ replacements:
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
+      - select: {kind: HelmRelease, name: nextcloud}
+        fieldPaths:
+          - spec.values.nextcloud.host
+          - spec.values.nextcloud.trustedDomains.0
+          - spec.values.nextcloud.extraInitContainers.2.env.[name=NEXTCLOUD_PUBLIC_HOST].value
 
   - source:
       kind: ConfigMap
@@ -424,6 +429,8 @@ replacements:
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: authentik}
         fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: nextcloud}
+        fieldPaths: [spec.tls.0.secretName]
 
   - source:
       kind: ConfigMap
@@ -433,8 +440,6 @@ replacements:
       - select: {kind: Ingress, name: tandoor}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: goloom}
-        fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: nextcloud}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: grafana}
         fieldPaths: [spec.tls.0.secretName]
