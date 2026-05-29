@@ -1,0 +1,38 @@
+# Reference blueprint — apply manually in Authentik (production DB is authoritative; not loaded by Helm).
+# Or recreate the provider using docs/integrations/nextcloud-authentik.md
+---
+version: 1
+metadata:
+  name: Homelab Nextcloud OIDC
+  labels:
+    blueprints.goauthentik.io/description: OAuth2 provider and application for Nextcloud
+entries:
+  - model: authentik_providers_oauth2.oauth2provider
+    id: nextcloud-provider
+    identifiers:
+      name: Provider for Nextcloud
+    attrs:
+      name: Provider for Nextcloud
+      client_type: confidential
+      client_id: homelab-nextcloud
+      client_secret: homelab-nextcloud-change-me
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+      sub_mode: user_uuid
+      redirect_uris:
+        - matching_mode: strict
+          url: https://nextcloud.cluster.f4mily.net/apps/user_oidc/code
+      property_mappings:
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+  - model: authentik_core.application
+    identifiers:
+      slug: nextcloud
+    attrs:
+      name: Nextcloud
+      slug: nextcloud
+      provider: !KeyOf nextcloud-provider
+      launch_url: https://nextcloud.cluster.f4mily.net
+      meta_launch_url: https://nextcloud.cluster.f4mily.net
