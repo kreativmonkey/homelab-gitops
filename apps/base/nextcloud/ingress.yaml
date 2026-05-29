@@ -13,6 +13,10 @@ metadata:
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
     nginx.org/proxy-body-size: "0"
+    nginx.org/hsts: "true"
+    nginx.org/hsts-max-age: "15552000"
+    nginx.org/hsts-include-subdomains: "true"
+    nginx.org/hsts-behind-proxy: "true"
 spec:
   ingressClassName: nginx
   tls:
