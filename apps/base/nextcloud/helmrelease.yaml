@@ -105,14 +105,14 @@ spec:
             'overwritehost' => 'nextcloud.cluster.f4mily.net',
             'overwriteprotocol' => 'https',
           );
-      # NFS export is shared with other apps — do not chown on the server. Run as www-data so
-      # the image entrypoint skips rsync --chown (see nextcloud/docker#1344).
+      # Shared TrueNAS export: files are UID 1000 from Docker (PUID). Run non-root as 1000 so
+      # rsync skips --chown (nextcloud/docker#1344) and writes match existing ownership.
       securityContext:
-        runAsUser: 33
-        runAsGroup: 33
+        runAsUser: 1000
+        runAsGroup: 1000
         runAsNonRoot: true
       podSecurityContext:
-        fsGroup: 33
+        fsGroup: 1000
       # Non-root cannot create redis-session.ini in image-owned conf.d (nextcloud/helm#187).
       extraVolumes:
         - name: php-confd
@@ -125,8 +125,8 @@ spec:
         - name: create-redis-session-ini
           image: docker.io/library/busybox:1.36
           securityContext:
-            runAsUser: 33
-            runAsGroup: 33
+            runAsUser: 1000
+            runAsGroup: 1000
             runAsNonRoot: true
           command:
             - sh
@@ -135,11 +135,30 @@ spec:
           volumeMounts:
             - name: php-confd
               mountPath: /mnt
+        # Existing NFS tree from Docker: avoid multi-hour rsync when code is already present.
+        - name: bootstrap-skip-rsync
+          image: docker.io/library/nextcloud:33.0.3-apache
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              if [ -f /var/www/html/index.php ] && [ -f /var/www/html/occ ] && [ ! -f /var/www/html/version.php ]; then
+                cp -a /usr/src/nextcloud/version.php /var/www/html/version.php
+                echo "bootstrap: placed version.php (skip entrypoint rsync on NFS)"
+              fi
+          volumeMounts:
+            - name: nextcloud-main
+              mountPath: /var/www/html
+              subPath: docker/nextcloud/html
         - name: occ-db-sync
           image: docker.io/library/nextcloud:33.0.3-apache
           securityContext:
-            runAsUser: 33
-            runAsGroup: 33
+            runAsUser: 1000
+            runAsGroup: 1000
           env:
             - name: POSTGRES_HOST
               value: homelab-postgres-rw.cnpg-system.svc.cluster.local
@@ -155,13 +174,38 @@ spec:
                 secretKeyRef:
                   name: homelab-postgres-nextcloud
                   key: password
+            - name: NEXTCLOUD_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-admin
+                  key: username
+            - name: NEXTCLOUD_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-admin
+                  key: password
           command:
             - /bin/sh
             - -ec
             - |
               set -e
               cd /var/www/html
-              if [ ! -f config/config.php ]; then exit 0; fi
+              if [ ! -f config/config.php ]; then
+                if [ ! -f version.php ]; then
+                  echo "occ-db-sync: no config.php and no version.php — skip (entrypoint will install)"
+                  exit 0
+                fi
+                echo "occ-db-sync: running maintenance:install (missing config.php)"
+                php occ maintenance:install -n \
+                  --admin-user "${NEXTCLOUD_ADMIN_USER}" \
+                  --admin-pass "${NEXTCLOUD_ADMIN_PASSWORD}" \
+                  --data-dir /var/www/html/data \
+                  --database pgsql \
+                  --database-host "${POSTGRES_HOST}" \
+                  --database-name "${POSTGRES_DB}" \
+                  --database-user "${POSTGRES_USER}" \
+                  --database-pass "${POSTGRES_PASSWORD}"
+              fi
               php occ config:system:set dbtype --value=pgsql
               php occ config:system:set dbhost --value="${POSTGRES_HOST}"
               php occ config:system:set dbname --value="${POSTGRES_DB}"
@@ -213,6 +257,6 @@ spec:
       # crond sidecar requires root; use CronJob with same UID as the app pod.
       type: cronjob
       securityContext:
-        runAsUser: 33
-        runAsGroup: 33
+        runAsUser: 1000
+        runAsGroup: 1000
         runAsNonRoot: true
