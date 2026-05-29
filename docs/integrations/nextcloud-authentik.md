@@ -32,6 +32,8 @@ Create **Applications → Application** with provider **OAuth2/OIDC**:
 | Client ID | `homelab-nextcloud` (same as SOPS `client-id`) |
 | Client secret | Same as SOPS `client-secret` |
 | Redirect URIs (strict) | `https://nextcloud.cluster.f4mily.net/apps/user_oidc/code` |
+
+If Nextcloud still sends `/index.php/apps/user_oidc/code`, pretty URLs are not active (wrong `overwrite.cli.url` or stale `.htaccess` on NFS). GitOps runs `occ maintenance:update:htaccess` on deploy; you can also add the `index.php` URI in Authentik as fallback.
 | Signing key | authentik Self-signed Certificate (default) |
 | Subject mode | Based on the User's UUID |
 | Scopes | `openid`, `profile`, `email` |
