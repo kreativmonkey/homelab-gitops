@@ -191,6 +191,10 @@ spec:
             - |
               set -e
               cd /var/www/html
+              mkdir -p /var/www/html/data
+              if [ ! -f /var/www/html/data/.ncdata ]; then
+                printf '# Nextcloud data directory\n' > /var/www/html/data/.ncdata
+              fi
               if [ ! -f config/config.php ]; then
                 if [ ! -f version.php ]; then
                   echo "occ-db-sync: no config.php and no version.php — skip (entrypoint will install)"
@@ -253,6 +257,10 @@ spec:
             - |
               set -e
               cd /var/www/html
+              mkdir -p /var/www/html/data
+              if [ ! -f /var/www/html/data/.ncdata ]; then
+                printf '# Nextcloud data directory\n' > /var/www/html/data/.ncdata
+              fi
               test -f config/config.php || exit 0
               php occ app:install user_oidc 2>/dev/null || true
               php occ app:enable user_oidc
@@ -280,6 +288,9 @@ spec:
             - name: nextcloud-main
               mountPath: /var/www/html/config
               subPath: docker/nextcloud/config
+            - name: nextcloud-main
+              mountPath: /var/www/html/data
+              subPath: docker/nextcloud/data
       extraEnv:
         - name: TZ
           value: Europe/Berlin
