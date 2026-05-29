@@ -105,28 +105,15 @@ spec:
             'overwritehost' => 'nextcloud.cluster.f4mily.net',
             'overwriteprotocol' => 'https',
           );
+      # NFS export is shared with other apps — do not chown on the server. Run as www-data so
+      # the image entrypoint skips rsync --chown (see nextcloud/docker#1344).
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 33
+        runAsNonRoot: true
+      podSecurityContext:
+        fsGroup: 33
       extraInitContainers:
-        - name: data-perms
-          image: docker.io/library/nextcloud:33.0.3-apache
-          securityContext:
-            runAsUser: 0
-          command:
-            - /bin/sh
-            - -ec
-            - chown -R 33:33 /var/www/html /var/www/html/data /var/www/html/config /var/www/custom_apps || true
-          volumeMounts:
-            - name: nextcloud-main
-              mountPath: /var/www/html
-              subPath: docker/nextcloud/html
-            - name: nextcloud-main
-              mountPath: /var/www/html/config
-              subPath: docker/nextcloud/config
-            - name: nextcloud-main
-              mountPath: /var/www/html/data
-              subPath: docker/nextcloud/data
-            - name: nextcloud-main
-              mountPath: /var/www/custom_apps
-              subPath: docker/nextcloud/custom_apps
         - name: occ-db-sync
           image: docker.io/library/nextcloud:33.0.3-apache
           securityContext:
@@ -197,10 +184,14 @@ spec:
     resources:
       requests:
         cpu: 50m
-        memory: 128Mi
+        memory: 512Mi
       limits:
-        memory: 1Gi
-    podSecurityContext:
-      fsGroup: 33
+        memory: 2Gi
     cronjob:
       enabled: true
+      # crond sidecar requires root; use CronJob with same UID as the app pod.
+      type: cronjob
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 33
+        runAsNonRoot: true
