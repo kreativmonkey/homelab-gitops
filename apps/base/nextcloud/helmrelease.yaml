@@ -234,7 +234,7 @@ spec:
               php occ config:system:set forwarded_for_headers 1 --value="HTTP_X_REAL_IP"
               php occ config:system:set maintenance_window_start --value=2 --type=integer
               # NFS atomic writes leave dot-prefixed temp files (integrity EXTRA_FILE)
-              find /var/www/html/core/dist -maxdepth 1 -type f -name '.*.*' -delete 2>/dev/null || true
+              find /var/www/html/dist /var/www/html/core/dist -maxdepth 1 -type f -name '.*.*' -delete 2>/dev/null || true
               find /var/www/html/apps/weather_status/img/met.no.icons -maxdepth 1 -type f -name '.*.*' -delete 2>/dev/null || true
               php occ maintenance:update:htaccess --no-interaction
               MARKER=/var/www/html/data/.occ-mime-repair-done
