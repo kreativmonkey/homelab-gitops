@@ -70,7 +70,7 @@ data:
 
   # Cluster-internal apps (covered by *.cluster.f4mily.net wildcard):
   host_goloom: goloom.cluster.f4mily.net
-  host_nextcloud: nextcloud.cluster.f4mily.net
+  host_nextcloud: nc.f4mily.net
   host_homer: homer.cluster.f4mily.net
   host_grafana: grafana.cluster.f4mily.net
   host_victoria_metrics: metrics.cluster.f4mily.net
