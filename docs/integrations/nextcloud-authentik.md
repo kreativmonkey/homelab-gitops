@@ -4,7 +4,7 @@ Nextcloud uses the **OpenID Connect user backend** app (`user_oidc`) against Aut
 
 ## Prerequisites
 
-1. Nextcloud reachable at `https://nextcloud.cluster.f4mily.net` (pod Ready, `status.php` 200).
+1. Nextcloud reachable at `https://nc.f4mily.net` (pod Ready, `status.php` 200).
 2. SOPS secret `nextcloud-authentik-oauth` in the `nextcloud` namespace (see below).
 3. Authentik **Application + OAuth2 provider** (slug **`nextcloud`**) — not in GitOps blueprints (Authentik DB is authoritative).
 
@@ -31,7 +31,7 @@ Create **Applications → Application** with provider **OAuth2/OIDC**:
 | Client type | Confidential |
 | Client ID | `homelab-nextcloud` (same as SOPS `client-id`) |
 | Client secret | Same as SOPS `client-secret` |
-| Redirect URIs (strict) | `https://nextcloud.cluster.f4mily.net/apps/user_oidc/code` |
+| Redirect URIs (strict) | `https://nc.f4mily.net/apps/user_oidc/code` |
 | **Signing key** | **Required:** `authentik Self-signed Certificate` (or any certificate key pair) |
 | Subject mode | Based on the User's UUID |
 | Scopes | `openid`, `profile`, `email`, `groups` (or custom property mapping with `groups` claim) |
@@ -86,7 +86,7 @@ kubectl -n nextcloud exec deploy/nextcloud -- php occ config:app:get user_oidc a
 
 ## Verify
 
-1. Open https://nextcloud.cluster.f4mily.net → redirect to Authentik.
+1. Open https://nc.f4mily.net → redirect to Authentik.
 2. Log in with an Authentik user → Nextcloud dashboard (user provisioned on first login).
 
 ## Troubleshooting
@@ -104,7 +104,7 @@ Log: `kubectl exec -n nextcloud deploy/nextcloud -- tail -20 /var/www/html/data/
 If OIDC is misconfigured:
 
 ```text
-https://nextcloud.cluster.f4mily.net/login?direct=1
+https://nc.f4mily.net/login?direct=1
 ```
 
 Uses the **local** admin from `nextcloud-admin` (created on first `occ maintenance:install`).  

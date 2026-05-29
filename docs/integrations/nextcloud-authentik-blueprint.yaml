@@ -22,7 +22,7 @@ entries:
       sub_mode: user_uuid
       redirect_uris:
         - matching_mode: strict
-          url: https://nextcloud.cluster.f4mily.net/apps/user_oidc/code
+          url: https://nc.f4mily.net/apps/user_oidc/code
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
@@ -34,5 +34,5 @@ entries:
       name: Nextcloud
       slug: nextcloud
       provider: !KeyOf nextcloud-provider
-      launch_url: https://nextcloud.cluster.f4mily.net
-      meta_launch_url: https://nextcloud.cluster.f4mily.net
+      launch_url: https://nc.f4mily.net
+      meta_launch_url: https://nc.f4mily.net
