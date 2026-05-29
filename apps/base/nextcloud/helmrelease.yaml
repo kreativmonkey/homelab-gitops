@@ -256,7 +256,8 @@ spec:
       enabled: true
       # crond sidecar requires root; use CronJob with same UID as the app pod.
       type: cronjob
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
+      cronjob:
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
