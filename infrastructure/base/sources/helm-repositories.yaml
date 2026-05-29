@@ -151,4 +151,13 @@ metadata:
 spec:
   interval: 24h
   url: https://rubxkube.github.io/charts
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: nextcloud-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://nextcloud.github.io/helm/
 
