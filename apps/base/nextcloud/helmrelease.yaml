@@ -104,6 +104,7 @@ spec:
           $CONFIG = array(
             'overwritehost' => 'nextcloud.cluster.f4mily.net',
             'overwriteprotocol' => 'https',
+            'overwrite.cli.url' => 'https://nextcloud.cluster.f4mily.net',
             'allow_local_remote_servers' => true,
           );
       # Shared TrueNAS export: files are UID 1000 from Docker (PUID). Run non-root as 1000 so
@@ -218,6 +219,8 @@ spec:
               php occ config:system:set dbpassword --value="${POSTGRES_PASSWORD}"
               php occ config:system:set redis host --value=nextcloud-redis-master
               php occ config:system:set redis port --value=6379
+              php occ config:system:set overwrite.cli.url --value="https://nextcloud.cluster.f4mily.net"
+              php occ maintenance:update:htaccess --no-interaction
               php occ maintenance:mode --off || true
               php occ status
           volumeMounts:
