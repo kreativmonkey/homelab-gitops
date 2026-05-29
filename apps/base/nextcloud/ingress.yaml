@@ -17,8 +17,6 @@ metadata:
     nginx.org/hsts-max-age: "15552000"
     nginx.org/hsts-include-subdomains: "true"
     nginx.org/hsts-behind-proxy: "true"
-    nginx.org/server-snippets: |
-      add_header Strict-Transport-Security "max-age=15552000; includeSubDomains" always;
 spec:
   ingressClassName: nginx
   tls:
