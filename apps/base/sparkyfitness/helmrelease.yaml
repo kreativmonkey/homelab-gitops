@@ -67,12 +67,14 @@ spec:
         backup:
           storageClass: truenas-iscsi
           size: 5Gi
+      # Sized from cluster metrics (idle): ~2m CPU, ~260Mi RAM; headroom for sync/API bursts.
       resources:
         requests:
           cpu: 50m
-          memory: 256Mi
+          memory: 384Mi
         limits:
-          memory: 1Gi
+          cpu: 500m
+          memory: 768Mi
     frontend:
       image:
         # renovate: datasource=docker depName=codewithcj/sparkyfitness versioning=semver
@@ -84,10 +86,10 @@ spec:
         port: 8080
       resources:
         requests:
-          cpu: 25m
-          memory: 64Mi
+          cpu: 10m
+          memory: 32Mi
         limits:
-          memory: 256Mi
+          memory: 128Mi
     config:
       # Chart ingress is disabled; without this Better Auth defaults to localhost:3004 → Invalid origin.
       frontendUrl: https://fitness.f4mily.net
@@ -118,12 +120,14 @@ spec:
       image:
         repository: codewithcj/sparkyfitness_garmin
         tag: v0.16.6.3
+      # Sized from cluster metrics (idle): ~3m CPU, ~95Mi RAM.
       resources:
         requests:
-          cpu: 50m
+          cpu: 25m
           memory: 128Mi
         limits:
-          memory: 512Mi
+          cpu: 250m
+          memory: 256Mi
     ingress:
       enabled: false
     databaseBackup:

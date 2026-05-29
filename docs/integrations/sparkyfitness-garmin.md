@@ -15,7 +15,10 @@ After Flux reconcile, check:
 ```bash
 kubectl -n sparkyfitness get pods -l app.kubernetes.io/component=garmin
 kubectl -n sparkyfitness exec deploy/sparkyfitness-server -- printenv GARMIN_MICROSERVICE_URL
+kubectl -n sparkyfitness top pods
 ```
+
+Helm resources are tuned from `kubectl top` (homelab idle: server ~260Mi, garmin ~95Mi, frontend ~5Mi). Re-check after heavy Garmin sync.
 
 ## Connect in the app
 
