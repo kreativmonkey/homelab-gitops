@@ -104,6 +104,7 @@ spec:
           $CONFIG = array(
             'overwritehost' => 'nextcloud.cluster.f4mily.net',
             'overwriteprotocol' => 'https',
+            'allow_local_remote_servers' => true,
           );
       # Shared TrueNAS export: files are UID 1000 from Docker (PUID). Run non-root as 1000 so
       # rsync skips --chown (nextcloud/docker#1344) and writes match existing ownership.
@@ -226,8 +227,59 @@ spec:
               mountPath: /var/www/html/data
               subPath: docker/nextcloud/data
             - name: nextcloud-main
-              mountPath: /var/www/custom_apps
+              mountPath: /var/www/html/custom_apps
               subPath: docker/nextcloud/custom_apps
+        - name: occ-oidc-setup
+          image: docker.io/library/nextcloud:33.0.3-apache
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          env:
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-authentik-oauth
+                  key: client-id
+                  optional: true
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-authentik-oauth
+                  key: client-secret
+                  optional: true
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              set -e
+              cd /var/www/html
+              test -f config/config.php || exit 0
+              php occ app:install user_oidc 2>/dev/null || true
+              php occ app:enable user_oidc
+              php occ config:system:set allow_local_remote_servers --value=true --type=boolean
+              if [ -z "${OIDC_CLIENT_ID:-}" ] || [ -z "${OIDC_CLIENT_SECRET:-}" ]; then
+                echo "occ-oidc-setup: skip provider (secret nextcloud-authentik-oauth missing — run just nextcloud-authentik-oauth)"
+                exit 0
+              fi
+              php occ user_oidc:provider authentik \
+                --clientid="${OIDC_CLIENT_ID}" \
+                --clientsecret="${OIDC_CLIENT_SECRET}" \
+                --discoveryuri="https://login.f4mily.net/application/o/nextcloud/.well-known/openid-configuration" \
+                --scope="openid profile email" \
+                --mapping-uid=sub \
+                --mapping-display-name=name \
+                --mapping-email=email \
+                --unique-uid=0
+              php occ config:app:set --value=0 user_oidc allow_multiple_user_backends
+              php occ config:app:set user_oidc login_button_text --value="Authentik"
+              echo "occ-oidc-setup: Authentik provider configured"
+          volumeMounts:
+            - name: nextcloud-main
+              mountPath: /var/www/html
+              subPath: docker/nextcloud/html
+            - name: nextcloud-main
+              mountPath: /var/www/html/config
+              subPath: docker/nextcloud/config
       extraEnv:
         - name: TZ
           value: Europe/Berlin
