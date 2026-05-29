@@ -98,6 +98,31 @@ grafana-authentik-oauth:
     echo ""
     echo "See docs/integrations/grafana-authentik.md"
 
+# Nextcloud ↔ Authentik OAuth (nextcloud namespace)
+nextcloud-authentik-oauth:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${SOPS_AGE_KEY_FILE:?Set SOPS_AGE_KEY_FILE to your age private key}"
+    client_id="homelab-nextcloud"
+    client_secret="$(openssl rand -base64 32 | tr -d '\n')"
+    dir="apps/base/nextcloud"
+    cd "$dir"
+    kubectl create secret generic nextcloud-authentik-oauth \
+      --namespace nextcloud \
+      --from-literal=client-id="$client_id" \
+      --from-literal=client-secret="$client_secret" \
+      --dry-run=client -o yaml >nextcloud-authentik-oauth.secret.yaml
+    sops --encrypt --in-place nextcloud-authentik-oauth.secret.yaml
+    echo "Created: $dir/nextcloud-authentik-oauth.secret.yaml"
+    echo ""
+    echo "Next:"
+    echo "  1. Add nextcloud-authentik-oauth.secret.yaml to apps/base/nextcloud/kustomization.yaml"
+    echo "  2. Commit, push, flux reconcile"
+    echo "  3. In Authentik create application slug nextcloud (see docs/integrations/nextcloud-authentik.md)"
+    echo "     Client secret: $client_secret"
+    echo ""
+    echo "See docs/integrations/nextcloud-authentik.md"
+
 # Encrypt a plaintext *.secret.yaml in place
 sops-encrypt file:
     #!/usr/bin/env bash
