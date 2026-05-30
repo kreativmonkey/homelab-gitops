@@ -259,16 +259,6 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
-      fieldPath: data.host_tandoor_legacy
-    targets:
-      - select: {kind: Ingress, name: tandoor}
-        fieldPaths:
-          - spec.rules.1.host
-          - spec.tls.0.hosts.1
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
       fieldPath: data.tandoor_allowed_hosts
     targets:
       - select: {kind: Deployment, name: tandoor}
