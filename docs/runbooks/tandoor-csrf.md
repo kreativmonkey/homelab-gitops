@@ -29,7 +29,8 @@ Expected env:
 | Cause | Fix |
 |-------|-----|
 | Wrong TLS secret on Ingress (`wildcard-cluster-*` on public host) | Overlay must use `publicTlsSecret` for `tandoor` — see `apps/overlays/main/kustomization.yaml` |
-| Old bookmark `recipes.f4mily.net` | Redirects to `rezepte`; both origins must be in `CSRF_TRUSTED_ORIGINS` |
+| `nginx.org/server-snippets` with `if` on Tandoor Ingress | Breaks F5 NGINX routing → 404; do not use — redirect legacy host in DNS instead |
+| Old bookmark `recipes.f4mily.net` | Use `https://rezepte.f4mily.net`; keep both origins in `CSRF_TRUSTED_ORIGINS` |
 | Stale cookies after `SECRET_KEY` or domain change | Clear site data for `rezepte.f4mily.net` / `recipes.f4mily.net`, retry in private window |
 | DNS still on old Docker host (`192.168.10.244`) | `dig rezepte.f4mily.net` → **192.168.10.245** (Talos VIP) |
 
