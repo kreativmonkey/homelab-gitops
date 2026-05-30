@@ -134,6 +134,18 @@ spec:
               name: n8n-integration-credentials
               key: ntfy-token
               optional: true
+        # Webhook secret for Alertmanager→n8n alert triage (shared secret in URL path)
+        WEBHOOK_SECRET:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: webhook-secret
+        # Telegram chat ID for alert triage notifications
+        TELEGRAM_CHAT_ID:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-integration-credentials
+              key: telegram-chat-id
 
     # Single-node homelab: no queue/redis split
     worker:

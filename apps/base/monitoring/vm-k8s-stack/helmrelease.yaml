@@ -102,7 +102,7 @@ spec:
         replicaCount: 1
         secrets:
           - alertmanager-ntfy-credentials
-          # alertmanager-n8n-webhook: add after `just sops-create alertmanager-n8n-webhook` (see template)
+          - alertmanager-n8n-webhook
         resources:
           requests:
             cpu: 10m
@@ -133,12 +133,12 @@ spec:
               group_wait: 30s
               repeat_interval: 12h
               continue: true
-            # n8n KI-Triage: enable after alertmanager-n8n-webhook secret exists (template in notifications/)
-            # - matchers:
-            #     - homelab/owner="platform"
-            #     - severity=~"critical|warning"
-            #   receiver: n8n-triage
-            #   continue: true
+            # n8n KI-Triage: Alertmanager → n8n → LLM → Telegram (secret must exist)
+            - matchers:
+                - homelab/owner="platform"
+                - severity=~"critical|warning"
+              receiver: n8n-triage
+              continue: true
             - matchers:
                 - severity=critical
               receiver: ntfy-monitoring
@@ -171,10 +171,10 @@ spec:
                   authorization:
                     type: Bearer
                     credentials_file: /etc/vm/secrets/alertmanager-ntfy-credentials/token
-          # - name: n8n-triage
-          #   webhook_configs:
-          #     - url_file: /etc/vm/secrets/alertmanager-n8n-webhook/url
-          #       send_resolved: true
+          - name: n8n-triage
+            webhook_configs:
+              - url_file: /etc/vm/secrets/alertmanager-n8n-webhook/url
+                send_resolved: true
           # Closed-loop GitOps: VMRule OOM/CrashLoop → n8n workflow /webhook/vmalert
           - name: n8n-remediation
             webhook_configs:
