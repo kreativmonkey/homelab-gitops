@@ -1,0 +1,10 @@
+# Static upstream headers for Django behind TLS-terminated F5 NGINX Ingress.
+# NIC→pod is HTTP; without this, X-Forwarded-Proto can be "http" and break CSRF/session.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tandoor-proxy-headers
+  namespace: tandoor
+data:
+  X-Forwarded-Proto: "https"
+  X-Forwarded-Port: "443"
