@@ -360,8 +360,9 @@ spec:
     # ============================================
     # KUBE API SERVER SCRAPING
     # ============================================
+    # Talos: per-node apiserver Endpoints often look down from vmagent → TargetDown noise.
     kubeApiServer:
-      enabled: true
+      enabled: false
 
     # ============================================
     # KUBE CONTROLLER MANAGER
