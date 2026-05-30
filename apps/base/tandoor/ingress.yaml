@@ -13,14 +13,26 @@ metadata:
     gethomepage.dev/pod-selector: app=tandoor
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
+    nginx.org/proxy-set-headers: "tandoor-proxy-headers"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
         - rezepte.f4mily.net
+        - recipes.f4mily.net
       secretName: wildcard-f4mily-net-tls
   rules:
     - host: rezepte.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tandoor
+                port:
+                  number: 80
+    - host: recipes.f4mily.net
       http:
         paths:
           - path: /
