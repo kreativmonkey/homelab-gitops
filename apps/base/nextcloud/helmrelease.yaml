@@ -321,6 +321,79 @@ spec:
             - name: nextcloud-main
               mountPath: /var/www/html/data
               subPath: docker/nextcloud/data
+        - name: occ-collab-setup
+          image: docker.io/library/nextcloud:33.0.3-apache
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          env:
+            - name: NEXTCLOUD_PUBLIC_HOST
+              value: nc.f4mily.net
+            - name: NEXTCLOUD_PUBLIC_URL
+              value: https://nc.f4mily.net
+            - name: WHITEBOARD_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-collab
+                  key: whiteboard-jwt-secret
+                  optional: true
+            - name: HARP_SHARED_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-collab
+                  key: harp-shared-key
+                  optional: true
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              set -e
+              cd /var/www/html
+              test -f config/config.php || exit 0
+              if [ -z "${WHITEBOARD_JWT_SECRET:-}" ] || [ -z "${HARP_SHARED_KEY:-}" ]; then
+                echo "occ-collab-setup: skip (secret nextcloud-collab missing — run just nextcloud-collab-secrets)"
+                exit 0
+              fi
+              php occ app:install whiteboard 2>/dev/null || true
+              php occ app:enable whiteboard
+              php occ config:app:set whiteboard collabBackendUrl --value="${NEXTCLOUD_PUBLIC_URL}"
+              php occ config:app:set whiteboard jwt_secret_key --value="${WHITEBOARD_JWT_SECRET}"
+              php occ app:install app_api 2>/dev/null || true
+              php occ app:enable app_api
+              echo "occ-collab-setup: waiting for AppAPI HaRP..."
+              for i in $(seq 1 60); do
+                if curl -fsS "http://appapi-harp:8780/exapps/app_api/info" \
+                    -H "harp-shared-key: ${HARP_SHARED_KEY}" 2>/dev/null \
+                    | grep -q '"kubernetes"'; then
+                  echo "occ-collab-setup: HaRP K8s backend ready"
+                  break
+                fi
+                if [ "$i" -eq 60 ]; then
+                  echo "occ-collab-setup: HaRP not ready — skip daemon register (retry on next pod restart)"
+                  exit 0
+                fi
+                sleep 5
+              done
+              if ! php occ app_api:daemon:list 2>/dev/null | grep -q 'k8s_homelab'; then
+                php occ app_api:daemon:register k8s_homelab "K8s Homelab" "kubernetes-install" "http" \
+                  "appapi-harp:8780" "${NEXTCLOUD_PUBLIC_URL}" \
+                  --harp --harp_shared_key "${HARP_SHARED_KEY}" \
+                  --harp_frp_address "appapi-harp:8782" \
+                  --k8s --k8s_expose_type=clusterip --set-default
+                echo "occ-collab-setup: registered AppAPI K8s deploy daemon"
+              else
+                echo "occ-collab-setup: AppAPI daemon k8s_homelab already registered"
+              fi
+          volumeMounts:
+            - name: nextcloud-main
+              mountPath: /var/www/html
+              subPath: docker/nextcloud/html
+            - name: nextcloud-main
+              mountPath: /var/www/html/config
+              subPath: docker/nextcloud/config
+            - name: nextcloud-main
+              mountPath: /var/www/html/data
+              subPath: docker/nextcloud/data
       extraEnv:
         - name: TZ
           value: Europe/Berlin

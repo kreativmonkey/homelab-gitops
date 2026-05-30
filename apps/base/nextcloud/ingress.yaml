@@ -16,6 +16,10 @@ metadata:
     nginx.org/hsts: "true"
     nginx.org/hsts-max-age: "15552000"
     nginx.org/hsts-include-subdomains: "true"
+    # Whiteboard /socket.io/ + ExApps via HaRP (/exapps/)
+    nginx.org/websocket-services: "nextcloud-whiteboard,appapi-harp"
+    nginx.org/proxy-read-timeout: "3600s"
+    nginx.org/proxy-send-timeout: "3600s"
 spec:
   ingressClassName: nginx
   tls:
@@ -26,6 +30,20 @@ spec:
     - host: nc.f4mily.net
       http:
         paths:
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: nextcloud-whiteboard
+                port:
+                  number: 3002
+          - path: /exapps
+            pathType: Prefix
+            backend:
+              service:
+                name: appapi-harp
+                port:
+                  number: 8780
           - path: /
             pathType: Prefix
             backend:
