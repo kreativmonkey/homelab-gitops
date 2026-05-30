@@ -84,6 +84,22 @@ kubectl wait -n monitoring --for=condition=ready pod -l app.kubernetes.io/name=v
 
 If it persists: Longhorn UI → volume for `vmsingle-*` PVC → check health; last resort detach/reattach volume or restore from backup (metrics gap).
 
+## Stale chart default alerts (KubeControllerManager*, KubeJobFailed, …)
+
+Symptom: Alerts from `runbooks.prometheus-operator.dev` despite intending to use only P0 VMRules.
+
+Cause: `defaultRules.enabled: false` is ignored by `victoria-metrics-k8s-stack` — use **`defaultRules.create: false`**.
+
+After fixing Helm values:
+
+```bash
+flux reconcile helmrelease vm-k8s-stack -n monitoring
+kubectl get vmrule -n monitoring
+# Expect only homelab-platform-* and workload-remediation rules, not vm-k8s-stack-kube-*.rules
+```
+
+Talos: keep `kubeControllerManager`, `kubeScheduler`, and `kubeEtcd` scrapes disabled — control-plane endpoints are not reachable like on kubeadm clusters.
+
 ## Flux
 
 ```bash
