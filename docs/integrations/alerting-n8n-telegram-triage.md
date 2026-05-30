@@ -55,11 +55,13 @@ Datei: [`apps/base/monitoring/n8n-workflows/homelab-alert-triage.workflow.json`]
 | `WEBHOOK_SECRET` | zufällig 32+ Zeichen | Muss mit Alertmanager-Header übereinstimmen |
 | `REMEDIATION_URL` | leer oder `http://homelab-remediation...` | Optional Phase 2 |
 
-4. Workflow **aktivieren** → Production-Webhook-URL kopieren. Alertmanager unterstützt **keine Custom-HTTP-Header** — das Secret steckt im Pfad:
+4. Workflow **aktivieren** → Production-Webhook-URL kopieren. Alertmanager unterstützt **keine Custom-HTTP-Header** — das Secret steckt als Query-Parameter:
 
-   `https://n8n.f4mily.net/webhook/homelab-alert/DEIN_LANGES_SECRET`
+   `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/homelab-alert?webhookSecret=DEIN_LANGES_SECRET`
 
    Dieselbe Zeichenkette in n8n als `WEBHOOK_SECRET` und in SOPS als `url` (komplette URL).
+
+   > **Hinweis:** n8n 2.23.1 registriert keine Webhooks mit dynamischen Pfad-Parametern (`:webhookSecret`) im Production-Modus. Daher wird das Secret als Query-Parameter übergeben. Der Workflow-Code prüft `params`, `query` und `headers` auf das Secret.
 
 ### 2. SOPS-Secret für Alertmanager
 
@@ -67,7 +69,7 @@ Datei: [`apps/base/monitoring/n8n-workflows/homelab-alert-triage.workflow.json`]
 cd apps/base/monitoring/notifications
 # SOPS_AGE_KEY_FILE gesetzt
 just sops-create alertmanager-n8n-webhook monitoring \
-  url='https://n8n.f4mily.net/webhook/homelab-alert/DEIN_LANGES_SECRET'
+  url='http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/homelab-alert?webhookSecret=DEIN_LANGES_SECRET'
 ```
 
 `kustomization.yaml` unter `notifications/` enthält die verschlüsselte Datei nach dem Erzeugen.
@@ -82,7 +84,7 @@ flux reconcile helmrelease vm-k8s-stack -n monitoring
 
 ```bash
 # AM-Testpayload (vereinfacht)
-curl -X POST "https://n8n.f4mily.net/webhook/homelab-alert/$SECRET" \
+curl -X POST "http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/homelab-alert?webhookSecret=$SECRET" \
   -H "Content-Type: application/json" \
   -d '{"status":"firing","alerts":[{"labels":{"alertname":"HomelabAlertingTest","severity":"critical","homelab/owner":"platform","homelab/auto_triage":"true"},"annotations":{"summary":"Test"}}]}'
 ```
@@ -91,7 +93,7 @@ Erwartung: Telegram-Nachricht mit Triage-Ergebnis (kein Auto-Fix bei unbekanntem
 
 ## Workflow-Logik (Kurz)
 
-1. **Webhook** empfängt Alertmanager-JSON, prüft Secret im URL-Pfad (`:webhookSecret`).
+1. **Webhook** empfängt Alertmanager-JSON, prüft Secret als Query-Parameter (`?webhookSecret=...`).
 2. **Parse** extrahiert `alertname`, `severity`, Runbook, `homelab/auto_triage`.
 3. **Resolved** → Telegram „behoben“, Ende.
 4. **Firing** → LLM bewertet Handlungsbedarf (Runbook-Kontext im Prompt).
@@ -160,7 +162,7 @@ n8n-Node **Call Remediation** nutzt `REMEDIATION_URL` — solange leer, überspr
 | Symptom | Prüfung |
 |---------|---------|
 | Kein Telegram | n8n Execution Log; `TELEGRAM_CHAT_ID`; Bot gestartet (`/start`) |
-| 401 Webhook | Secret in AM-`url` vs. n8n `WEBHOOK_SECRET` und Pfad-Parameter |
+| 401 Webhook | Secret in AM-`url` (Query-Param) vs. n8n `WEBHOOK_SECRET` |
 | Doppelte ntfy + n8n OK | `continue: true` auf Route `n8n-triage` |
 | LLM Timeout | Modell/kürzerer Prompt; Ollama lokal |
 

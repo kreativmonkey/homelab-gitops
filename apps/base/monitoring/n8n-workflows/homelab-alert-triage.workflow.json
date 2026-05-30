@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "homelab-alert/:webhookSecret",
+        "path": "homelab-alert",
         "responseMode": "onReceived",
         "options": {}
       },
@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const AUTO_FIX_ALLOWLIST = new Set(['NtfyBridgeDown']);\nconst expectedSecret = $env.WEBHOOK_SECRET || '';\nconst gotSecret = $input.first().params?.webhookSecret || $input.first().headers?.['x-webhook-secret'] || '';\nif (expectedSecret && gotSecret !== expectedSecret) {\n  throw new Error('Invalid webhook secret');\n}\nconst body = $input.first().json.body ?? $input.first().json;\nconst alerts = body.alerts || [];\nconst first = alerts[0] || {};\nconst labels = { ...(body.commonLabels || {}), ...(first.labels || {}) };\nconst annotations = { ...(body.commonAnnotations || {}), ...(first.annotations || {}) };\nconst alertname = labels.alertname || body.groupLabels?.alertname || 'Unknown';\nconst autoTriage = labels['homelab/auto_triage'] === 'true';\nconst allowAutoFix = autoTriage && AUTO_FIX_ALLOWLIST.has(alertname);\nreturn [{\n  json: {\n    status: body.status || 'firing',\n    alertname,\n    severity: labels.severity || 'warning',\n    namespace: labels.namespace || '',\n    instance: labels.instance || labels.pod || '',\n    cluster: labels.cluster || 'homelab',\n    owner: labels['homelab/owner'] || '',\n    autoTriage,\n    allowAutoFix,\n    runbookUrl: annotations.runbook_url || '',\n    summary: annotations.summary || '',\n    description: annotations.description || '',\n    alertCount: alerts.length,\n    fingerprint: first.fingerprint || '',\n    raw: body,\n  },\n}];"
+        "jsCode": "const AUTO_FIX_ALLOWLIST = new Set(['NtfyBridgeDown']);\nconst expectedSecret = $env.WEBHOOK_SECRET || '';\nconst gotSecret = $input.first().params?.webhookSecret || $input.first().query?.webhookSecret || $input.first().headers?.['x-webhook-secret'] || '';\nif (expectedSecret && gotSecret !== expectedSecret) {\n  throw new Error('Invalid webhook secret');\n}\nconst body = $input.first().json.body ?? $input.first().json;\nconst alerts = body.alerts || [];\nconst first = alerts[0] || {};\nconst labels = { ...(body.commonLabels || {}), ...(first.labels || {}) };\nconst annotations = { ...(body.commonAnnotations || {}), ...(first.annotations || {}) };\nconst alertname = labels.alertname || body.groupLabels?.alertname || 'Unknown';\nconst autoTriage = labels['homelab/auto_triage'] === 'true';\nconst allowAutoFix = autoTriage && AUTO_FIX_ALLOWLIST.has(alertname);\nreturn [{\n  json: {\n    status: body.status || 'firing',\n    alertname,\n    severity: labels.severity || 'warning',\n    namespace: labels.namespace || '',\n    instance: labels.instance || labels.pod || '',\n    cluster: labels.cluster || 'homelab',\n    owner: labels['homelab/owner'] || '',\n    autoTriage,\n    allowAutoFix,\n    runbookUrl: annotations.runbook_url || '',\n    summary: annotations.summary || '',\n    description: annotations.description || '',\n    alertCount: alerts.length,\n    fingerprint: first.fingerprint || '',\n    raw: body,\n  },\n}];"
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000002",
       "name": "Parse Alert",
