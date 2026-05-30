@@ -58,10 +58,9 @@ data:
   host_teslamate: teslamate.f4mily.net
   url_teslamate_grafana: https://teslamate.f4mily.net/grafana/
   host_tandoor: rezepte.f4mily.net
-  host_tandoor_legacy: recipes.f4mily.net
   # Public URL (scheme required for Django CSRF_TRUSTED_ORIGINS behind TLS ingress).
+  # Include legacy recipes hostname for bookmarks still using the old Docker URL.
   url_tandoor: https://rezepte.f4mily.net,https://recipes.f4mily.net
-  # Comma-separated Django ALLOWED_HOSTS (public host + legacy alias + local debugging).
   tandoor_allowed_hosts: rezepte.f4mily.net,recipes.f4mily.net,localhost,127.0.0.1
   host_linkwarden: linkwarden.f4mily.net
   host_readeck: readeck.f4mily.net
