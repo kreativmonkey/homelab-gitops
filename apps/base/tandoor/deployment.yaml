@@ -18,7 +18,6 @@ spec:
         app: tandoor
         app.kubernetes.io/name: tandoor
     spec:
-      enableServiceLinks: false
       securityContext:
         fsGroup: 0
       containers:
