@@ -57,10 +57,10 @@ spec:
                   name: homelab-postgres-tandoor
                   key: password
             - name: ALLOWED_HOSTS
-              value: rezepte.f4mily.net,localhost,127.0.0.1
+              value: rezepte.f4mily.net,recipes.f4mily.net,localhost,127.0.0.1
             # Django 4+ origin check when TLS terminates at ingress (see docs.tandoor.dev)
             - name: CSRF_TRUSTED_ORIGINS
-              value: https://rezepte.f4mily.net
+              value: https://rezepte.f4mily.net,https://recipes.f4mily.net
             # Built-in container nginx + cluster ingress nginx
             - name: ALLAUTH_TRUSTED_PROXY_COUNT
               value: "2"
