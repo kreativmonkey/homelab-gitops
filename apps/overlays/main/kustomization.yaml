@@ -333,6 +333,22 @@ replacements:
           - spec.values.nextcloud.host
           - spec.values.nextcloud.trustedDomains.0
           - spec.values.nextcloud.extraInitContainers.2.env.[name=NEXTCLOUD_PUBLIC_HOST].value
+          - spec.values.nextcloud.extraInitContainers.4.env.[name=NEXTCLOUD_PUBLIC_HOST].value
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.url_nextcloud
+    targets:
+      - select: {kind: Deployment, name: nextcloud-whiteboard}
+        fieldPaths:
+          - spec.template.spec.containers.[name=whiteboard].env.[name=NEXTCLOUD_URL].value
+      - select: {kind: Deployment, name: appapi-harp}
+        fieldPaths:
+          - spec.template.spec.containers.[name=appapi-harp].env.[name=NC_INSTANCE_URL].value
+      - select: {kind: HelmRelease, name: nextcloud}
+        fieldPaths:
+          - spec.values.nextcloud.extraInitContainers.4.env.[name=NEXTCLOUD_PUBLIC_URL].value
 
   - source:
       kind: ConfigMap
