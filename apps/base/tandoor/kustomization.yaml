@@ -4,5 +4,6 @@ resources:
   - namespace.yaml
   - pvc.yaml
   - tandoor-app.secret.yaml
+  - proxy-headers-configmap.yaml
   - deployment.yaml
   - ingress.yaml
