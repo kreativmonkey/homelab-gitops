@@ -367,12 +367,17 @@ spec:
                     | grep -q '"kubernetes"'; then
                   echo "occ-collab-setup: HaRP K8s backend ready"
                   if ! php occ app_api:daemon:list 2>/dev/null | grep -q 'k8s_homelab'; then
-                    php occ app_api:daemon:register k8s_homelab "K8s Homelab" "kubernetes-install" "http" \
-                      "appapi-harp:8780" "${NEXTCLOUD_PUBLIC_URL}" \
-                      --harp --harp_shared_key "${HARP_SHARED_KEY}" \
-                      --harp_frp_address "appapi-harp:8782" \
-                      --k8s --k8s_expose_type=clusterip --set-default
-                    echo "occ-collab-setup: registered AppAPI K8s deploy daemon"
+                    if php occ help app_api:daemon:register 2>&1 | grep -q '\-\-k8s'; then
+                      php occ app_api:daemon:register k8s_homelab "K8s Homelab" "kubernetes-install" "http" \
+                        "appapi-harp:8780" "${NEXTCLOUD_PUBLIC_URL}" \
+                        --harp --harp_shared_key "${HARP_SHARED_KEY}" \
+                        --harp_frp_address "appapi-harp:8782" \
+                        --k8s --k8s_expose_type=clusterip --set-default \
+                        || echo "occ-collab-setup: daemon register failed (non-fatal)"
+                      echo "occ-collab-setup: registered AppAPI K8s deploy daemon"
+                    else
+                      echo "occ-collab-setup: app_api lacks --k8s (bundled 33.x); HaRP running, manual daemon register later"
+                    fi
                   else
                     echo "occ-collab-setup: AppAPI daemon k8s_homelab already registered"
                   fi
