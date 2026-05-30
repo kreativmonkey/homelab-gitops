@@ -88,17 +88,26 @@ If it persists: Longhorn UI → volume for `vmsingle-*` PVC → check health; la
 
 Symptom: Alerts from `runbooks.prometheus-operator.dev` despite intending to use only P0 VMRules.
 
-Cause: `defaultRules.enabled: false` is ignored by `victoria-metrics-k8s-stack` — use **`defaultRules.create: false`**.
+Cause: `defaultRules.enabled: false` is ignored by `victoria-metrics-k8s-stack` — use **`defaultRules.create: false`**. After fixing Helm values, **orphaned VMRule CRs may remain** until deleted once.
 
-After fixing Helm values:
+One-time cleanup (keeps `homelab-platform-*` / `workload-remediation` VMRules):
 
 ```bash
+./scripts/monitoring/purge-chart-vmrules.sh monitoring
 flux reconcile helmrelease vm-k8s-stack -n monitoring
 kubectl get vmrule -n monitoring
-# Expect only homelab-platform-* and workload-remediation rules, not vm-k8s-stack-kube-*.rules
+# Expect only homelab-platform-p0 and homelab-workload-remediation — no vm-k8s-stack-*.rules
 ```
 
-Talos: keep `kubeControllerManager`, `kubeScheduler`, and `kubeEtcd` scrapes disabled — control-plane endpoints are not reachable like on kubeadm clusters.
+Talos: keep `kubeApiServer`, `kubeControllerManager`, `kubeScheduler`, and `kubeEtcd` scrapes disabled — control-plane Endpoints are not reliably reachable from vmagent (→ `TargetDown`, `KubeAPIInstanceUnreachable`).
+
+If `KubeJobFailed` persists **after** VMRule cleanup, check real Jobs (not monitoring noise):
+
+```bash
+kubectl get jobs -A --field-selector status.successful!=1
+kubectl logs -n nextcloud job/<name>
+kubectl logs -n renovate job/<name>
+```
 
 ## Flux
 

@@ -167,6 +167,7 @@ docs/runbooks/
 
 | Datum | Änderung |
 |-------|----------|
+| 2026-05-30 | kubeApiServer-Scrape aus; Script `purge-chart-vmrules.sh` für verwaiste VMRules |
 | 2026-05-30 | Fix `defaultRules.create: false`; Talos control-plane scrapes aus |
 | 2026-05-30 | CNPG VMPodScrape mit namespace/pod-Relabeling; enablePodMonitor deaktiviert |
 | 2026-05-21 | Phase 1–3 implementiert, Plan angelegt |
