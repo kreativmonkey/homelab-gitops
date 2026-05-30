@@ -64,8 +64,6 @@ spec:
             # Built-in container nginx + cluster ingress nginx
             - name: ALLAUTH_TRUSTED_PROXY_COUNT
               value: "2"
-            - name: STATIC_CDN
-              value: "1"
             - name: EMAIL_HOST
               value: mail.f4mily.net
             - name: EMAIL_PORT
