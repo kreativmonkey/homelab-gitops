@@ -130,7 +130,7 @@ spec:
           subPath: redis-session.ini
       extraInitContainers:
         - name: create-redis-session-ini
-          image: docker.io/library/busybox:1.36
+          image: docker.io/library/busybox:1.38
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -144,7 +144,7 @@ spec:
               mountPath: /mnt
         # Existing NFS tree from Docker: avoid multi-hour rsync when code is already present.
         - name: bootstrap-skip-rsync
-          image: docker.io/library/nextcloud:33.0.3-apache
+          image: docker.io/library/nextcloud:33.0.4-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -162,7 +162,7 @@ spec:
               mountPath: /var/www/html
               subPath: docker/nextcloud/html
         - name: occ-db-sync
-          image: docker.io/library/nextcloud:33.0.3-apache
+          image: docker.io/library/nextcloud:33.0.4-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -262,7 +262,7 @@ spec:
               mountPath: /var/www/html/custom_apps
               subPath: docker/nextcloud/custom_apps
         - name: occ-oidc-setup
-          image: docker.io/library/nextcloud:33.0.3-apache
+          image: docker.io/library/nextcloud:33.0.4-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -322,7 +322,7 @@ spec:
               mountPath: /var/www/html/data
               subPath: docker/nextcloud/data
         - name: occ-collab-setup
-          image: docker.io/library/nextcloud:33.0.3-apache
+          image: docker.io/library/nextcloud:33.0.4-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
