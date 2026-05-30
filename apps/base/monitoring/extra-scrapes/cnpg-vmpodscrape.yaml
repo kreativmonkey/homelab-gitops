@@ -1,0 +1,28 @@
+# CNPG instance metrics — explicit scrape with namespace/pod relabeling.
+# Auto PodMonitor from enablePodMonitor lacks these labels (CNPG #8978), which
+# breaks alerts filtering on namespace="cnpg-system".
+# Disable enablePodMonitor on Cluster CRs when using this scrape.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: cnpg-clusters
+  namespace: cnpg-system
+  labels:
+    release: victoriametrics
+spec:
+  namespaceSelector:
+    matchNames:
+      - cnpg-system
+  selector:
+    matchExpressions:
+      - key: cnpg.io/cluster
+        operator: Exists
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+      relabelConfigs:
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
