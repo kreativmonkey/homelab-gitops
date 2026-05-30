@@ -50,7 +50,7 @@
       "credentials": {
         "telegramApi": {
           "id": "CONFIGURE_ME",
-          "name": "Telegram Homelab Bot"
+          "name": "Telegram account"
         }
       }
     }
