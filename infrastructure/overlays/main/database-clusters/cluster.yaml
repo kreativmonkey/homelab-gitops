@@ -35,7 +35,8 @@ spec:
       memory: 1Gi
 
   monitoring:
-    enablePodMonitor: true
+    # Metrics scraped via apps/base/monitoring/extra-scrapes/cnpg-vmpodscrape.yaml
+    enablePodMonitor: false
 
   affinity:
     podAntiAffinityType: preferred

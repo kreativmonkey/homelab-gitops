@@ -37,7 +37,8 @@ spec:
       memory: 2Gi
 
   monitoring:
-    enablePodMonitor: true
+    # Metrics scraped via apps/base/monitoring/extra-scrapes/cnpg-vmpodscrape.yaml
+    enablePodMonitor: false
 
   env:
     - name: AWS_DEFAULT_REGION
