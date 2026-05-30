@@ -201,8 +201,9 @@ spec:
       enabled: true
 
     # Chart defaults (~100+ rules) are too noisy for a homelab; use platform P0 VMRules only.
+    # Note: chart uses `create`, not `enabled` — `enabled: false` has no effect.
     defaultRules:
-      enabled: false
+      create: false
 
     # ============================================
     # GRAFANA
@@ -365,20 +366,21 @@ spec:
     # ============================================
     # KUBE CONTROLLER MANAGER
     # ============================================
+    # Talos: control-plane metrics are not reachable via standard Endpoints scrape.
     kubeControllerManager:
-      enabled: true
+      enabled: false
 
     # ============================================
     # KUBE SCHEDULER
     # ============================================
     kubeScheduler:
-      enabled: true
+      enabled: false
 
     # ============================================
     # KUBE ETCD
     # ============================================
     kubeEtcd:
-      enabled: true
+      enabled: false
 
     # ============================================
     # KUBE PROXY

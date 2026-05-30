@@ -103,7 +103,7 @@ Siehe [`docs/integrations/grafana-authentik.md`](docs/integrations/grafana-authe
 
 | Task | Status |
 |------|--------|
-| `defaultRules.enabled: false` (nur P0-VMRules) | ✅ |
+| `defaultRules.create: false` (nur P0-VMRules) | ✅ |
 | Alertmanager: Default → blackhole, nur critical/warning → ntfy | ✅ |
 | längere `group_wait` / `repeat_interval` | ✅ |
 | ntfy-Bridge (`apps/base/monitoring/ntfy-bridge/`) | ✅ |
@@ -167,5 +167,6 @@ docs/runbooks/
 
 | Datum | Änderung |
 |-------|----------|
+| 2026-05-30 | Fix `defaultRules.create: false`; Talos control-plane scrapes aus |
 | 2026-05-30 | CNPG VMPodScrape mit namespace/pod-Relabeling; enablePodMonitor deaktiviert |
 | 2026-05-21 | Phase 1–3 implementiert, Plan angelegt |
