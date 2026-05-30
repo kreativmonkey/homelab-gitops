@@ -123,6 +123,26 @@ nextcloud-authentik-oauth:
     echo ""
     echo "See docs/integrations/nextcloud-authentik.md"
 
+# Whiteboard WebSocket + AppAPI HaRP shared secrets (nextcloud namespace)
+nextcloud-collab-secrets:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${SOPS_AGE_KEY_FILE:?Set SOPS_AGE_KEY_FILE to your age private key}"
+    whiteboard_jwt="$(openssl rand -base64 32 | tr -d '\n/+=' | head -c 48)"
+    # HaRP rejects " and \ in HP_SHARED_KEY
+    harp_shared_key="$(openssl rand -base64 32 | tr -d '\n\"\\' | head -c 48)"
+    dir="apps/base/nextcloud"
+    cd "$dir"
+    kubectl create secret generic nextcloud-collab \
+      --namespace nextcloud \
+      --from-literal=whiteboard-jwt-secret="$whiteboard_jwt" \
+      --from-literal=harp-shared-key="$harp_shared_key" \
+      --dry-run=client -o yaml >nextcloud-collab.secret.yaml
+    sops --encrypt --in-place nextcloud-collab.secret.yaml
+    echo "Created: $dir/nextcloud-collab.secret.yaml"
+    echo ""
+    echo "Next: commit, push, flux reconcile. See docs/integrations/nextcloud-appapi-collabora.md"
+
 # Encrypt a plaintext *.secret.yaml in place
 sops-encrypt file:
     #!/usr/bin/env bash
