@@ -53,6 +53,7 @@ kubectl port-forward -n monitoring svc/vmalertmanager-vm-k8s-stack 9093:9093
 | Overlay `apps/overlays/main` → `../../base/monitoring` | ✅ |
 | Velero ServiceMonitor wieder aktiv | ✅ |
 | Nginx Ingress VMServiceScrape wieder aktiv | ✅ |
+| CNPG VMPodScrape + namespace/pod relabeling | ✅ |
 | `defaultRules` Noise-Reduktion (K3s/Talos) | ✅ |
 
 ---
@@ -166,4 +167,5 @@ docs/runbooks/
 
 | Datum | Änderung |
 |-------|----------|
+| 2026-05-30 | CNPG VMPodScrape mit namespace/pod-Relabeling; enablePodMonitor deaktiviert |
 | 2026-05-21 | Phase 1–3 implementiert, Plan angelegt |
