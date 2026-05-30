@@ -22,24 +22,20 @@ Expected env:
 
 - `CSRF_TRUSTED_ORIGINS=https://rezepte.f4mily.net,https://recipes.f4mily.net`
 - `ALLOWED_HOSTS=rezepte.f4mily.net,recipes.f4mily.net,...`
-- `ALLAUTH_TRUSTED_PROXY_COUNT=2` (one external ingress + in-container nginx)
-
-Ingress must expose **both** hostnames in `spec.tls` and `spec.rules` (legacy `recipes` SNI fails otherwise).
-Annotation `nginx.org/proxy-set-headers: tandoor-proxy-headers` forces `X-Forwarded-Proto: https`
-(TLS terminates at ingress; without it Django may treat requests as HTTP → CSRF/session issues).
+- `ALLAUTH_TRUSTED_PROXY_COUNT=2` (container nginx + ingress)
 
 ## Common causes
 
 | Cause | Fix |
 |-------|-----|
 | Wrong TLS secret on Ingress (`wildcard-cluster-*` on public host) | Overlay must use `publicTlsSecret` for `tandoor` — see `apps/overlays/main/kustomization.yaml` |
-| Missing `X-Forwarded-Proto: https` at ingress | ConfigMap `tandoor-proxy-headers` + `nginx.org/proxy-set-headers` on Ingress |
 | `nginx.org/server-snippets` with `if` on Tandoor Ingress | Breaks F5 NGINX routing → 404; do not use |
-| Old bookmark `recipes.f4mily.net` without Ingress host/TLS entry | Second rule + TLS SAN; both origins in `CSRF_TRUSTED_ORIGINS` |
+| `nginx.org/proxy-set-headers` (ConfigMap or inline) on Tandoor Ingress | Broke upstream routing → **502** in homelab (PR #184 reverted); do not re-add without kind dry-run |
+| Second Ingress host `recipes.f4mily.net` | Also reverted with #184 — use `https://rezepte.f4mily.net` only |
+| Old bookmark `recipes.f4mily.net` | Use `https://rezepte.f4mily.net`; keep both origins in `CSRF_TRUSTED_ORIGINS` |
 | HTTP URL (`http://rezepte…`) | CSRF origins are HTTPS-only; always open `https://rezepte.f4mily.net` |
 | Stale cookies after `SECRET_KEY` or domain change | Clear site data for `rezepte.f4mily.net` / `recipes.f4mily.net`, retry in private window |
 | DNS still on old Docker host (`192.168.10.244`) | `dig rezepte.f4mily.net` → **192.168.10.245** (Talos VIP) |
-| Access via Netbird/extra reverse proxy | Try `ALLAUTH_TRUSTED_PROXY_COUNT=3` (two external proxies) |
 
 ## After GitOps fix
 
