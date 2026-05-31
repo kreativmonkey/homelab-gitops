@@ -18,7 +18,7 @@ spec:
   concurrency: 1
   exclusive: true
   serviceAccountName: system-upgrade
-  version: v1.13.2 # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
+  version: v1.13.3 # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
   nodeSelector:
     matchLabels:
       talos.dev/upgrade: "true"
@@ -40,7 +40,7 @@ spec:
   upgrade:
     # Runner: talosctl talks to local apid via Unix socket (Talos has no SSH/shell).
     # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
-    image: ghcr.io/siderolabs/talosctl:v1.13.2
+    image: ghcr.io/siderolabs/talosctl:v1.13.3
     command:
       - /bin/sh
       - -ec
