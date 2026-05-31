@@ -17,23 +17,6 @@ metadata:
     nginx.org/client-max-body-size: "512M"
     nginx.org/proxy-read-timeout: "300s"
     nginx.org/proxy-send-timeout: "300s"
-    # ── CSRF-Root-Cause (recurring) ──────────────────────────────────────────
-    # Tandoor container nginx handles request to gunicorn via Unix socket.
-    # Its nginx-template (http.d/Recipes.conf.template) sets only Host &
-    # X-Forwarded-For, NOT X-Forwarded-Proto.  While nginx normally passes
-    # unset headers through, this is NOT guaranteed when proxy_set_header
-    # exists in the location block — the header CAN be dropped depending on
-    # nginx version, Alpine update, or container restart.
-    #
-    # Solution: Explicitly set X-Forwarded-Proto at the ingress-controller
-    # layer so the header ALWAYS reaches gunicorn.  Django then honours
-    # its hardcoded SECURE_PROXY_SSL_HEADER and request.is_secure() is
-    # correctly True.
-    #
-    # Do NOT replace with nginx.org/proxy-set-headers (caused 502 in PR#184).
-    # Do NOT add nginx.org/server-snippets with `if` (caused 404 in same PR).
-    nginx.org/location-snippets: |
-      proxy_set_header X-Forwarded-Proto $scheme;
 spec:
   ingressClassName: nginx
   tls:
