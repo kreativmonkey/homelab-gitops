@@ -151,6 +151,29 @@ spec:
             capabilities:
               add: ["CHOWN", "DAC_OVERRIDE", "SETGID", "SETUID"]
               drop: ["ALL"]
+          # ── CSRF-Permanent-Fix ──────────────────────────────────────────────────
+          # Tandoor container nginx template (Recipes.conf.template) hardcodes
+          # `proxy_set_header X-Forwarded-Proto $scheme;`.  Since nginx receives HTTP
+          # from the Ingress Controller, `$scheme` = http, which OVERRIDES the
+          # correct https value sent by the IC.  Django then sees X-Forwarded-Proto:
+          # http and request.is_secure() = False → CSRF error.
+          #
+          # This postStart hook patches the generated nginx config to preserve the
+          # upstream's X-Forwarded-Proto value ($http_x_forwarded_proto) instead of
+          # blindly using $scheme.  Runs after boot.sh generates the file.
+          #
+          # Do NOT convert to initContainer — the file doesn't exist yet at that stage.
+          # Do NOT remove — see docs/runbooks/tandoor-csrf.md for the full analysis.
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    while [ ! -f /etc/nginx/http.d/Recipes.conf ]; do sleep 1; done
+                    sed -i 's/proxy_set_header X-Forwarded-Proto \$scheme;/proxy_set_header X-Forwarded-Proto \$http_x_forwarded_proto;/' /etc/nginx/http.d/Recipes.conf
+                    nginx -s reload 2>/dev/null || true
       volumes:
         - name: static
           persistentVolumeClaim:

@@ -37,50 +37,79 @@ Expected env:
 | HTTP URL (`http://rezepte…`) | CSRF origins are HTTPS-only; always open `https://rezepte.f4mily.net` |
 | Stale cookies after `SECRET_KEY` or domain change | Clear site data for `rezepte.f4mily.net` / `recipes.f4mily.net`, retry in private window |
 | DNS still on old Docker host (`192.168.10.244`) | `dig rezepte.f4mily.net` → **192.168.10.245** (Talos VIP) |
-| `location-snippets` deleted or reverted | Check `apps/base/tandoor/ingress.yaml` for `nginx.org/location-snippets` annotation |
+| `postStart` lifecycle hook deleted or reverted | Check `apps/base/tandoor/deployment.yaml` for `lifecycle.postStart` block |
 
 ## Root cause & permanent fix
 
 ### Why
 
-Tandoor container runs nginx → gunicorn (Unix socket). The container nginx template
-(`http.d/Recipes.conf.template`) sets only `Host` and `X-Forwarded-For`, **not**
-`X-Forwarded-Proto`. While nginx normally passes unmodified headers upstream,
-when `proxy_set_header` exists in the location block the behaviour depends on
-nginx version, Alpine image updates, and container restarts — the header can
-be **dropped**.
-
-Without `X-Forwarded-Proto: https`, Django's hardcoded
-`SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')` never activates,
-`request.is_secure()` stays `False`, and the CSRF cookie/Secure-flag logic
-mismatches the browser's HTTPS origin → 403 CSRF error.
-
-### Fix
-
-The Tandoor Ingress (`apps/base/tandoor/ingress.yaml`) has a
-`nginx.org/location-snippets` annotation that injects:
+Tandoor container runs nginx → gunicorn (Unix socket). The container nginx
+template (`http.d/Recipes.conf.template`) **hardcodes**:
 ```nginx
 proxy_set_header X-Forwarded-Proto $scheme;
 ```
-directly into the ingress controller's location block. This guarantees the
-header reaches the container nginx → gunicorn → Django, regardless of what
-the container nginx does internally.
+
+The Ingress Controller sends `X-Forwarded-Proto: https` upstream, but
+Tandoor's container nginx receives plain HTTP from the IC and `$scheme`
+resolves to `http`.  The `proxy_set_header` **overwrites** the correct
+`https` value with `http`.
+
+Django's `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')`
+never matches → `request.is_secure()` = `False` → CSRF cookie/secure-flag
+mismatch → **403 CSRF error**.
+
+### Why NOT fix at the Ingress Controller level
+
+- `nginx.org/location-snippets` was rejected by NIC v5.5.0 (server-level
+  spacing change broke inline snippets) → Ingress rejected → nginx has no
+  server block for `rezepte.f4mily.net` → **SSL_ERROR_UNRECOGNIZED_NAME_ALERT**
+- `nginx.org/proxy-set-headers` (ConfigMap) → caused 502 in earlier PR#184
+- `nginx.org/server-snippets` → 404 in same PR
+
+**Conclusion**: the fix MUST be inside the Tandoor container, not at the IC.
+
+### Fix
+
+A `postStart` lifecycle hook on the Tandoor deployment
+(`apps/base/tandoor/deployment.yaml`) patches the generated nginx config
+after `boot.sh` creates it:
+
+```yaml
+lifecycle:
+  postStart:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - |
+          while [ ! -f /etc/nginx/http.d/Recipes.conf ]; do sleep 1; done
+          sed -i 's/proxy_set_header X-Forwarded-Proto \$scheme;/proxy_set_header X-Forwarded-Proto \$http_x_forwarded_proto;/' /etc/nginx/http.d/Recipes.conf
+          nginx -s reload 2>/dev/null || true
+```
+
+This replaces `$scheme` with `$http_x_forwarded_proto`, preserving the
+upstream's correct `https` value that the Ingress Controller already sends.
 
 ### Do NOT
 
-- `nginx.org/proxy-set-headers` (ConfigMap) → caused 502 in PR#184, still fragile
-- `nginx.org/server-snippets` with `if` → caused 404 in same PR
-- `nginx.org/location-snippets` with anything except simple `proxy_set_header`
-  (no conditionals, no `if`)
+- `nginx.org/proxy-set-headers` (ConfigMap) → 502 in PR#184
+- `nginx.org/server-snippets` → 404
+- `nginx.org/location-snippets` → rejected by NIC v5.5.0, SSL error
+- Convert `postStart` to `initContainer` → file doesn't exist yet
+- Remove the `postStart` hook without providing an alternative
 
 ### Verify the fix
 
 ```bash
-# Check annotation is present
-kubectl get ingress tandoor -n tandoor -o yaml | grep location-snippets
+# Check postStart hook is present
+kubectl get deploy tandoor -n tandoor -o yaml | grep -A5 postStart
 
 # Check X-Forwarded-Proto reaches gunicorn (tail Tandoor pod logs)
 kubectl logs -n tandoor deploy/tandoor --tail=20 2>&1 | grep -i "forwarded"
+
+# Or exec into the pod and check the generated nginx config
+kubectl exec -n tandoor deploy/tandoor -- cat /etc/nginx/http.d/Recipes.conf | grep X-Forwarded-Proto
+# Expect: proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
 ```
 
 
