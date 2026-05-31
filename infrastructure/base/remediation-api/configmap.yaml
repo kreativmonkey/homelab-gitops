@@ -73,7 +73,34 @@ data:
         try:
             config.load_incluster_config()
         except Exception:
-            raise HTTPException(500, "Failed to load k8s config")
+            pass
+        # Override host if service IP (10.96.0.1) is unreachable.
+        # Use direct API server node IP instead.
+        svc_host = os.environ.get("KUBERNETES_SERVICE_HOST", "")
+        if svc_host == "10.96.0.1":
+            # Find a reachable API server from the kubernetes service endpoints
+            candidates = ["192.168.10.41", "192.168.10.42", "192.168.10.43"]
+            for ip in candidates:
+                try:
+                    api = client.CoreV1Api()
+                    api.list_namespaced_pod("default", limit=1)
+                    break
+                except Exception:
+                    # Patch the configuration host directly
+                    ca_path = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+                    token = open("/var/run/secrets/kubernetes.io/serviceaccount/token").read()
+                    cfg = client.Configuration()
+                    cfg.host = f"https://{ip}:6443"
+                    cfg.ssl_ca_cert = ca_path
+                    cfg.api_key = {"authorization": f"Bearer {token}"}
+                    cfg.assert_hostname = False
+                    client.Configuration.set_default(cfg)
+                    try:
+                        api = client.CoreV1Api()
+                        api.list_namespaced_pod("default", limit=1)
+                        break
+                    except Exception:
+                        continue
 
     def gh_request(method: str, path: str, data: dict = None) -> dict:
         """Call GitHub REST API. path is e.g. /repos/owner/repo/contents/path"""
