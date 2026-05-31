@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: remediation-api
+  namespace: ai-ops
+data:
+  main.py: |
+    import os, json, urllib.request, hmac, secrets
+    from datetime import datetime, timezone
+    from fastapi import FastAPI, HTTPException, Depends
+    from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+    from pydantic import BaseModel
+    from kubernetes import client, config
+
+    app = FastAPI(title="Remediation-API", version="1.0")
+    security = HTTPBearer()
+
+    API_SECRET = os.environ["REMEDIATION_SECRET"].encode()
+    NTFY_URL = os.environ.get("NTFY_URL", "")
+    AUDIT_TOPIC = "remediation-audit"
+
+    ALLOWED_ACTIONS = {
+        "delete-pod": {"group": "", "resource": "pods", "verb": "delete"},
+        "rollout-restart": {"group": "apps", "resource": "deployments", "verb": "patch"},
+        "get-pods": {"group": "", "resource": "pods", "verb": "list"},
+    }
+    ALLOWED_NAMESPACES = {"monitoring", "ai-ops"}
+
+    class RemediateRequest(BaseModel):
+        action: str
+        namespace: str
+        resource: str
+        triggered_by: str = ""
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
+
+    def verify_token(creds: HTTPAuthorizationCredentials = Depends(security)):
+        given = creds.credentials.encode()
+        # Constant-time comparison to prevent timing attacks
+        if not hmac.compare_digest(given, API_SECRET):
+            raise HTTPException(401, "Invalid token")
+        return True
+
+    def audit(msg: str):
+        if not NTFY_URL:
+            return
+        try:
+            body = json.dumps({"topic": AUDIT_TOPIC, "message": msg, "priority": 4}).encode()
+            req = urllib.request.Request(NTFY_URL + "/" + AUDIT_TOPIC, data=body, headers={"Content-Type": "application/json"})
+            urllib.request.urlopen(req, timeout=5)
+        except Exception:
+            pass
+
+    @app.post("/v1/remediate")
+    def remediate(req: RemediateRequest, _=Depends(verify_token)):
+        if req.action not in ALLOWED_ACTIONS:
+            raise HTTPException(400, f"Unknown action: {req.action}")
+        if req.namespace not in ALLOWED_NAMESPACES:
+            raise HTTPException(403, f"Namespace not allowed: {req.namespace}")
+
+        try:
+            config.load_incluster_config()
+        except Exception:
+            raise HTTPException(500, "Failed to load k8s config")
+
+        triggered_by = req.triggered_by or "unknown"
+
+        try:
+            if req.action == "rollout-restart":
+                api = client.AppsV1Api()
+                body = {
+                    "spec": {
+                        "template": {
+                            "metadata": {
+                                "annotations": {
+                                    "kubectl.kubernetes.io/restartedAt": datetime.now(timezone.utc).isoformat()
+                                }
+                            }
+                        }
+                    }
+                }
+                api.patch_namespaced_deployment(req.resource, req.namespace, body)
+
+            elif req.action == "delete-pod":
+                api = client.CoreV1Api()
+                api.delete_namespaced_pod(req.resource, req.namespace)
+
+            elif req.action == "get-pods":
+                api = client.CoreV1Api()
+                pods = api.list_namespaced_pod(req.namespace, field_selector=f"metadata.name={req.resource}")
+                return {
+                    "status": "ok",
+                    "pods": [p.metadata.name for p in pods.items],
+                    "namespace": req.namespace,
+                }
+
+        except client.exceptions.ApiException as e:
+            raise HTTPException(e.status, f"K8s API error: {e.reason or e.body}")
+
+        msg = f"[{triggered_by}] {req.action} {req.resource} in {req.namespace}"
+        audit(msg)
+        return {"status": "ok", "action": req.action, "namespace": req.namespace, "resource": req.resource}
