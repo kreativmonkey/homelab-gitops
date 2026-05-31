@@ -53,6 +53,7 @@ spec:
       - unix:///host/system/run/apid/apid.sock
       - upgrade
       - --image=factory.talos.dev/nocloud-installer/10f9392d7091b30abf573524649756e5bc894f653af525836e9ab0297f301fc2:$(SYSTEM_UPGRADE_PLAN_LATEST_VERSION)
+      - --drain=false
       - --wait=false
       - --timeout=15m
     securityContext:
