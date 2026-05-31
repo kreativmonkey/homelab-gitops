@@ -9,3 +9,4 @@ resources:
   - system-upgrade-controller
   - backup
   - database
+  - remediation-api
