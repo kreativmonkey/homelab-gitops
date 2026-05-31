@@ -44,19 +44,25 @@ Expected env:
 ### Why
 
 Tandoor container runs nginx → gunicorn (Unix socket). The container nginx
-template (`http.d/Recipes.conf.template`) **hardcodes**:
-```nginx
-proxy_set_header X-Forwarded-Proto $scheme;
-```
+template (`http.d/Recipes.conf.template` in Docker tag `2.6.9`) does **not**
+set `proxy_set_header X-Forwarded-Proto`.
 
-The Ingress Controller sends `X-Forwarded-Proto: https` upstream, but
-Tandoor's container nginx receives plain HTTP from the IC and `$scheme`
-resolves to `http`.  The `proxy_set_header` **overwrites** the correct
-`https` value with `http`.
+The Ingress Controller (F5 NGINX Ingress Controller) normally sends
+`X-Forwarded-Proto: https` upstream.  However, after the v5.5.0 release
+(which included a "Refactor proxy-set-headers on Ingress"), the IC may omit
+this header depending on configuration or version-specific behavior changes.
 
-Django's `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')`
-never matches → `request.is_secure()` = `False` → CSRF cookie/secure-flag
+Without `X-Forwarded-Proto: https`, Django's
+`SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')` never
+matches → `request.is_secure()` = `False` → CSRF cookie/secure-flag
 mismatch → **403 CSRF error**.
+
+**Note**: older versions of Tandoor (pre-2.6.9) *did* have a
+`proxy_set_header X-Forwarded-Proto $scheme;` in their nginx template
+(visible in the GitHub source), which also caused issues because `$scheme`
+resolves to `http` when the container nginx receives plain HTTP from the
+IC.  The Docker image `2.6.9` removed this line, but the IC-side header
+dropping remains an issue.
 
 ### Why NOT fix at the Ingress Controller level
 
@@ -71,8 +77,8 @@ mismatch → **403 CSRF error**.
 ### Fix
 
 A `postStart` lifecycle hook on the Tandoor deployment
-(`apps/base/tandoor/deployment.yaml`) patches the generated nginx config
-after `boot.sh` creates it:
+(`apps/base/tandoor/deployment.yaml`) injects the header into the generated
+nginx config after `boot.sh` creates it:
 
 ```yaml
 lifecycle:
@@ -83,12 +89,16 @@ lifecycle:
         - -c
         - |
           while [ ! -f /etc/nginx/http.d/Recipes.conf ]; do sleep 1; done
-          sed -i 's/proxy_set_header X-Forwarded-Proto \$scheme;/proxy_set_header X-Forwarded-Proto \$http_x_forwarded_proto;/' /etc/nginx/http.d/Recipes.conf
+          if ! grep -q 'X-Forwarded-Proto.*https' /etc/nginx/http.d/Recipes.conf; then
+            sed -i '/proxy_set_header Host/a\    proxy_set_header X-Forwarded-Proto "https";' /etc/nginx/http.d/Recipes.conf
+          fi
           nginx -s reload 2>/dev/null || true
 ```
 
-This replaces `$scheme` with `$http_x_forwarded_proto`, preserving the
-upstream's correct `https` value that the Ingress Controller already sends.
+This adds `proxy_set_header X-Forwarded-Proto "https";` unconditionally,
+ensuring gunicorn/Django always receives the correct scheme regardless of
+IC version or proxy-set-headers behavior.  The `grep` guard makes the
+operation idempotent (safe across container restarts).
 
 ### Do NOT
 
@@ -104,12 +114,12 @@ upstream's correct `https` value that the Ingress Controller already sends.
 # Check postStart hook is present
 kubectl get deploy tandoor -n tandoor -o yaml | grep -A5 postStart
 
-# Check X-Forwarded-Proto reaches gunicorn (tail Tandoor pod logs)
-kubectl logs -n tandoor deploy/tandoor --tail=20 2>&1 | grep -i "forwarded"
-
-# Or exec into the pod and check the generated nginx config
+# Check X-Forwarded-Proto in generated nginx config
 kubectl exec -n tandoor deploy/tandoor -- cat /etc/nginx/http.d/Recipes.conf | grep X-Forwarded-Proto
-# Expect: proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+# Expect: proxy_set_header X-Forwarded-Proto "https";
+
+# Or curl the gunicorn directly and check X-Forwarded-Proto
+kubectl exec -n tandoor deploy/tandoor -- sh -c "curl -s -H 'Host: rezepte.f4mily.net' http://localhost:8080/ | head -5"
 ```
 
 
