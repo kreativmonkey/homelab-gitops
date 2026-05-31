@@ -18,8 +18,6 @@ spec:
   concurrency: 1
   exclusive: true
   serviceAccountName: system-upgrade
-  # 30 min: drain (10min) + talosctl upgrade + download installer + reboot + node rejoin
-  activeDeadlineSeconds: 1800
   version: v1.13.3 # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
   nodeSelector:
     matchLabels:
