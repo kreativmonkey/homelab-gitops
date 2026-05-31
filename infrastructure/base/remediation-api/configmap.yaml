@@ -5,7 +5,7 @@ metadata:
   namespace: ai-ops
 data:
   main.py: |
-    import os, json, urllib.request, hmac, secrets
+    import os, json, urllib.request, hmac
     from datetime import datetime, timezone
     from fastapi import FastAPI, HTTPException, Depends
     from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
