@@ -27,15 +27,61 @@ Expected env:
 ## Common causes
 
 | Cause | Fix |
-|-------|-----|
+|-------|------|
+| **X-Forwarded-Proto dropped by container nginx** (recurring root cause) | See "Root cause & permanent fix" below |
 | Wrong TLS secret on Ingress (`wildcard-cluster-*` on public host) | Overlay must use `publicTlsSecret` for `tandoor` — see `apps/overlays/main/kustomization.yaml` |
 | `nginx.org/server-snippets` with `if` on Tandoor Ingress | Breaks F5 NGINX routing → 404; do not use |
-| `nginx.org/proxy-set-headers` (ConfigMap or inline) on Tandoor Ingress | Broke upstream routing → **502** in homelab (PR #184 reverted); do not re-add without kind dry-run |
+| `nginx.org/proxy-set-headers` (ConfigMap or inline) on Tandoor Ingress | Broke upstream routing → **502** in homelab (PR #184 reverted); do not re-add |
 | Second Ingress host `recipes.f4mily.net` | Also reverted with #184 — use `https://rezepte.f4mily.net` only |
 | Old bookmark `recipes.f4mily.net` | Use `https://rezepte.f4mily.net`; keep both origins in `CSRF_TRUSTED_ORIGINS` |
 | HTTP URL (`http://rezepte…`) | CSRF origins are HTTPS-only; always open `https://rezepte.f4mily.net` |
 | Stale cookies after `SECRET_KEY` or domain change | Clear site data for `rezepte.f4mily.net` / `recipes.f4mily.net`, retry in private window |
 | DNS still on old Docker host (`192.168.10.244`) | `dig rezepte.f4mily.net` → **192.168.10.245** (Talos VIP) |
+| `location-snippets` deleted or reverted | Check `apps/base/tandoor/ingress.yaml` for `nginx.org/location-snippets` annotation |
+
+## Root cause & permanent fix
+
+### Why
+
+Tandoor container runs nginx → gunicorn (Unix socket). The container nginx template
+(`http.d/Recipes.conf.template`) sets only `Host` and `X-Forwarded-For`, **not**
+`X-Forwarded-Proto`. While nginx normally passes unmodified headers upstream,
+when `proxy_set_header` exists in the location block the behaviour depends on
+nginx version, Alpine image updates, and container restarts — the header can
+be **dropped**.
+
+Without `X-Forwarded-Proto: https`, Django's hardcoded
+`SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')` never activates,
+`request.is_secure()` stays `False`, and the CSRF cookie/Secure-flag logic
+mismatches the browser's HTTPS origin → 403 CSRF error.
+
+### Fix
+
+The Tandoor Ingress (`apps/base/tandoor/ingress.yaml`) has a
+`nginx.org/location-snippets` annotation that injects:
+```nginx
+proxy_set_header X-Forwarded-Proto $scheme;
+```
+directly into the ingress controller's location block. This guarantees the
+header reaches the container nginx → gunicorn → Django, regardless of what
+the container nginx does internally.
+
+### Do NOT
+
+- `nginx.org/proxy-set-headers` (ConfigMap) → caused 502 in PR#184, still fragile
+- `nginx.org/server-snippets` with `if` → caused 404 in same PR
+- `nginx.org/location-snippets` with anything except simple `proxy_set_header`
+  (no conditionals, no `if`)
+
+### Verify the fix
+
+```bash
+# Check annotation is present
+kubectl get ingress tandoor -n tandoor -o yaml | grep location-snippets
+
+# Check X-Forwarded-Proto reaches gunicorn (tail Tandoor pod logs)
+kubectl logs -n tandoor deploy/tandoor --tail=20 2>&1 | grep -i "forwarded"
+```
 
 
 ## Diagnosis: 502 Bad Gateway
