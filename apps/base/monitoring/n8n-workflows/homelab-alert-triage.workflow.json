@@ -168,17 +168,17 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.REMEDIATION_URL }}",
+        "url": "={{ $env.REMEDIATION_API_URL }}/v1/remediate",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.REMEDIATION_TOKEN || '' }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.REMEDIATION_API_KEY || '' }}" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ alertname: $json.alertname, namespace: $json.namespace, action: 'restart_ntfy_bridge' }) }}",
+        "jsonBody": "={{ (() => {\n  const a = $('Merge Triage').first().json;\n  const alertname = a.alertname || '';\n  const namespace = a.namespace || '';\n  // Build action + resource from alert context\n  let action = 'get-pods';\n  let resource = a.instance || a.labels?.pod || '';\n  if (alertname === 'NtfyBridgeDown') { action = 'rollout-restart'; resource = 'ntfy-bridge'; }\n  if (alertname === 'OOMKilled' || alertname === 'CrashLoopBackOff') { action = 'rollout-restart'; }\n  if (!resource) resource = alertname.toLowerCase().replace('down','').replace('bridge','ntfy-bridge');\n  return JSON.stringify({ action, namespace, resource });\n})() }}",
         "options": { "timeout": 120000 }
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000009",
@@ -190,7 +190,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const a = $('Merge Triage').first().json;\nconst rem = $input.first().json;\nconst ok = rem.statusCode >= 200 && rem.statusCode < 300;\nconst text = ok\n  ? `🔧 *Auto-Fix ausgeführt*\\n\\n*${a.alertname}*\\n${a.triage.summary_de || ''}\\n\\nStatus: erledigt — bitte Alert/Metrik prüfen.`\n  : `⚠️ *Auto-Fix fehlgeschlagen*\\n\\n*${a.alertname}*\\n${a.triage.summary_de || ''}\\n\\nHTTP ${rem.statusCode || '?'} — *Human-in-the-Loop*: Remediation-API prüfen oder manuell eingreifen.`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+        "jsCode": "const a = $('Merge Triage').first().json;\nconst rem = $input.first().json;\nconst httpCode = rem.statusCode || rem.httpCode || (rem.error ? 500 : 200);\nconst ok = httpCode >= 200 && httpCode < 300;\nconst body = typeof rem.body === 'string' ? JSON.parse(rem.body) : (rem.body || rem);\nconst details = body.message || body.audit_id || JSON.stringify(body).slice(0,200);\nconst text = ok\n  ? `🔧 *Auto-Fix ausgeführt*\\n\\n*${a.alertname}*\\n${a.triage.summary_de || ''}\\n\\nAktion: ${body.action || '?'} → ${body.status || 'ok'}\\n\\n_audit: ${body.audit_id || '—'}_`\n  : `⚠️ *Auto-Fix fehlgeschlagen*\\n\\n*${a.alertname}*\\n${a.triage.summary_de || ''}\\n\\nHTTP ${httpCode} — ${details}\\n\\n*Human-in-the-Loop*: Remediation-API prüfen oder manuell eingreifen.`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000010",
       "name": "Format Auto-Fix Result",
@@ -252,7 +252,7 @@
           "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
           "conditions": [
             {
-              "leftValue": "={{ $env.REMEDIATION_URL }}",
+              "leftValue": "={{ $env.REMEDIATION_API_URL }}",
               "rightValue": "",
               "operator": { "type": "string", "operation": "notEmpty" }
             }
