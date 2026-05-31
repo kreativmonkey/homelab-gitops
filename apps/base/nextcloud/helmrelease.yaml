@@ -47,7 +47,7 @@ spec:
         allowInsecureImages: true
     image:
       # renovate: datasource=docker depName=docker.io/library/nextcloud
-      tag: 33.0.3-apache
+      tag: 33.0.3
     ingress:
       enabled: false
     service:
