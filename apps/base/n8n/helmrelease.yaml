@@ -146,6 +146,14 @@ spec:
             secretKeyRef:
               name: n8n-integration-credentials
               key: telegram-chat-id
+        # Remediation API for auto-remediation actions (Phase D)
+        REMEDIATION_API_URL:
+          value: http://remediation-api.ai-ops.svc.cluster.local:8080
+        REMEDIATION_API_KEY:
+          valueFrom:
+            secretKeyRef:
+              name: remediation-api-secret
+              key: hmac-secret
 
     # Single-node homelab: no queue/redis split
     worker:
