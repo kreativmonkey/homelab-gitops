@@ -5,19 +5,24 @@ metadata:
   namespace: ai-ops
 data:
   main.py: |
-    import os, json, urllib.request, hmac
+    import os, json, urllib.request, urllib.parse, hmac, base64, re
     from datetime import datetime, timezone
     from fastapi import FastAPI, HTTPException, Depends
     from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
     from pydantic import BaseModel
     from kubernetes import client, config
+    import yaml
 
-    app = FastAPI(title="Remediation-API", version="1.0")
+    app = FastAPI(title="Remediation-API", version="2.0")
     security = HTTPBearer()
 
     API_SECRET = os.environ["REMEDIATION_SECRET"].encode()
     NTFY_URL = os.environ.get("NTFY_URL", "")
     AUDIT_TOPIC = "remediation-audit"
+    GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
+    GITHUB_OWNER = "kreativmonkey"
+    GITHUB_REPO = "homelab-gitops"
+    GITHUB_BRANCH = "main"
 
     ALLOWED_ACTIONS = {
         "delete-pod": {"group": "", "resource": "pods", "verb": "delete"},
@@ -32,13 +37,24 @@ data:
         resource: str
         triggered_by: str = ""
 
+    class InvestigateRequest(BaseModel):
+        namespace: str
+        pod: str
+
+    class FixResourcesRequest(BaseModel):
+        namespace: str
+        deployment: str
+        container: str = ""
+        resource_type: str = "memory"
+        increase_factor: float = 1.5
+        manifest_path: str = ""
+
     @app.get("/health")
     def health():
         return {"status": "ok"}
 
     def verify_token(creds: HTTPAuthorizationCredentials = Depends(security)):
         given = creds.credentials.encode()
-        # Constant-time comparison to prevent timing attacks
         if not hmac.compare_digest(given, API_SECRET):
             raise HTTPException(401, "Invalid token")
         return True
@@ -53,6 +69,363 @@ data:
         except Exception:
             pass
 
+    def load_k8s():
+        try:
+            config.load_incluster_config()
+        except Exception:
+            raise HTTPException(500, "Failed to load k8s config")
+
+    def gh_request(method: str, path: str, data: dict = None) -> dict:
+        """Call GitHub REST API. path is e.g. /repos/owner/repo/contents/path"""
+        url = f"https://api.github.com{path}"
+        headers = {
+            "Authorization": f"Bearer {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "remediation-api/2.0",
+        }
+        body = json.dumps(data).encode() if data else None
+        req = urllib.request.Request(url, data=body, headers=headers, method=method)
+        try:
+            resp = urllib.request.urlopen(req, timeout=15)
+            return json.loads(resp.read().decode())
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode()[:500]
+            raise HTTPException(e.code, f"GitHub API error: {detail}")
+
+    # ── Investigate ──────────────────────────────────────────────
+    @app.post("/v1/investigate")
+    def investigate(req: InvestigateRequest, _=Depends(verify_token)):
+        load_k8s()
+        core = client.CoreV1Api()
+        apps = client.AppsV1Api()
+
+        # Pod metadata
+        try:
+            pod = core.read_namespaced_pod(req.pod, req.namespace)
+        except client.exceptions.ApiException as e:
+            if e.status == 404:
+                raise HTTPException(404, f"Pod {req.pod} not found in {req.namespace}")
+            raise
+
+        # Container state
+        statuses = pod.status.container_statuses or []
+        cs = statuses[0] if statuses else None
+
+        # Owner chain
+        owner = {}
+        for ref in pod.metadata.owner_references or []:
+            if ref.kind == "ReplicaSet":
+                try:
+                    rs = apps.read_namespaced_replica_set(ref.name, req.namespace)
+                    for r in rs.metadata.owner_references or []:
+                        if r.kind == "Deployment":
+                            owner = {"kind": "Deployment", "name": r.name}
+                except Exception:
+                    pass
+            elif ref.kind in ("DaemonSet", "StatefulSet", "Job"):
+                owner = {"kind": ref.kind, "name": ref.name}
+
+        # Logs
+        logs = ""
+        prev_logs = ""
+        if cs:
+            try:
+                logs = core.read_namespaced_pod_log(req.pod, req.namespace, tail_lines=100)
+            except Exception:
+                pass
+            try:
+                prev_logs = core.read_namespaced_pod_log(req.pod, req.namespace, tail_lines=100, previous=True)
+            except Exception:
+                pass
+
+        # Events
+        try:
+            events = core.list_namespaced_event(req.namespace, field_selector=f"involvedObject.name={req.pod}")
+            evt_list = [
+                {"reason": e.reason, "message": e.message, "count": e.count, "last": str(e.last_timestamp or "")}
+                for e in events.items
+            ]
+        except Exception:
+            evt_list = []
+
+        # Resource limits per container
+        resources = {}
+        for c in pod.spec.containers:
+            r = c.resources
+            resources[c.name] = {
+                "requests": {"cpu": str(r.requests.get("cpu", "")), "memory": str(r.requests.get("memory", ""))} if r.requests else {},
+                "limits": {"cpu": str(r.limits.get("cpu", "")), "memory": str(r.limits.get("memory", ""))} if r.limits else {},
+            }
+
+        last_state = ""
+        termination_reason = ""
+        if cs and cs.last_state:
+            ls = cs.last_state
+            if ls.terminated:
+                last_state = "Terminated"
+                termination_reason = ls.terminated.reason or ""
+            elif ls.waiting:
+                last_state = "Waiting"
+                termination_reason = ls.waiting.reason or ""
+
+        return {
+            "pod": req.pod,
+            "namespace": req.namespace,
+            "owner": owner,
+            "container_statuses": [
+                {"name": s.name, "ready": s.ready, "restart_count": s.restart_count,
+                 "state": str(s.state), "last_state": str(s.last_state),
+                 "termination_reason": termination_reason}
+                for s in statuses
+            ],
+            "resources": resources,
+            "image": pod.spec.containers[0].image if pod.spec.containers else "",
+            "node": pod.spec.node_name or "",
+            "logs": logs[-8000:] if logs else "",
+            "previous_logs": prev_logs[-8000:] if prev_logs else "",
+            "events": evt_list,
+        }
+
+    # ── GitHub manifest helpers ──────────────────────────────────
+    MANIFEST_INDEX = None
+
+    def find_manifest_path(namespace: str, deployment: str) -> str:
+        """Find the manifest file path in the git repo for a given deployment."""
+        candidates = [
+            f"apps/base/{namespace}/{deployment}/deployment.yaml",
+            f"apps/base/{namespace}/{deployment}/helmrelease.yaml",
+            f"apps/base/{deployment}/deployment.yaml",
+            f"apps/base/{deployment}/helmrelease.yaml",
+            f"infrastructure/base/{deployment}/deployment.yaml",
+            f"infrastructure/base/{deployment}/helmrelease.yaml",
+        ]
+        for path in candidates:
+            try:
+                gh_request("GET", f"/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{path}")
+                return path
+            except HTTPException as e:
+                if e.status_code != 404:
+                    raise
+        return ""
+
+    def gh_get_file(path: str) -> tuple[str, str, str]:
+        """Get file content, sha, and encoding from GitHub."""
+        data = gh_request("GET", f"/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{path}?ref={GITHUB_BRANCH}")
+        content = base64.b64decode(data["content"]).decode()
+        return content, data["sha"], data.get("encoding", "base64")
+
+    def gh_commit_file(path: str, content: str, sha: str, message: str):
+        """Commit a file update to GitHub."""
+        body = {
+            "message": message,
+            "content": base64.b64encode(content.encode()).decode(),
+            "sha": sha,
+            "branch": GITHUB_BRANCH,
+        }
+        gh_request("PUT", f"/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{path}", body)
+
+    # ── Fix OOM / Resources ──────────────────────────────────────
+    def parse_resource_value(val: str) -> tuple[int, str]:
+        """Parse k8s resource string like '256Mi' -> (256, 'Mi'), '0.5' -> (0.5, '')."""
+        if not val:
+            return 0, ""
+        m = re.match(r"^(\d+(?:\.\d+)?)([A-Za-z]*)$", val)
+        if not m:
+            return 0, ""
+        return float(m.group(1)), m.group(2)
+
+    def format_resource_value(val: float, unit: str) -> str:
+        """Format a resource value back."""
+        if unit:
+            return f"{int(val)}{unit}"
+        return str(val)
+
+    def patch_deployment_resources(namespace: str, deployment: str, container: str,
+                                   resource_type: str, increase_factor: float):
+        """Patch a deployment's resource limits directly (immediate fix)."""
+        apps_api = client.AppsV1Api()
+        dep = apps_api.read_namespaced_deployment(deployment, namespace)
+
+        for c in dep.spec.template.spec.containers:
+            if container and c.name != container:
+                continue
+            if not c.resources:
+                continue
+            limits = c.resources.limits or {}
+            if not limits:
+                continue
+
+            key = "memory" if resource_type == "memory" else "cpu"
+            current = limits.get(key, "")
+            if not current:
+                continue
+
+            val, unit = parse_resource_value(current)
+            if val == 0:
+                continue
+            new_val = val * increase_factor
+            new_str = format_resource_value(new_val, unit)
+            limits[key] = new_str
+
+        # Patch deployment
+        patch_body = {
+            "spec": {
+                "template": {
+                    "spec": {
+                        "containers": [
+                            {
+                                "name": c.name,
+                                "resources": {
+                                    "limits": {
+                                        k: str(v) for k, v in (c.resources.limits or {}).items()
+                                    } if c.resources.limits else None
+                                }
+                            } if (not container or c.name == container) else None
+                            for c in dep.spec.template.spec.containers
+                        ]
+                    }
+                }
+            }
+        }
+        # Clean None entries
+        patch_body["spec"]["template"]["spec"]["containers"] = [
+            c for c in patch_body["spec"]["template"]["spec"]["containers"] if c is not None
+        ]
+        apps_api.patch_namespaced_deployment(deployment, namespace, patch_body)
+        return new_str
+
+    def get_yaml_resource_path(file_content: str, resource_type: str) -> tuple[dict, list, str]:
+        """Find the resource limits dict in a YAML manifest.
+        Returns (parent_dict, parent_keys_to_limit_key, old_value).
+        Handles both deployment.yaml and helmrelease.yaml patterns."""
+        data = yaml.safe_load(file_content)
+        if not isinstance(data, dict):
+            return None, [], ""
+
+        # Pattern 1: apiVersion: apps/v1 kind: Deployment → spec.template.spec.containers[0].resources
+        if data.get("kind") in ("Deployment",):
+            containers = data.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [])
+            if containers:
+                res = containers[0].get("resources", {})
+                limits = res.get("limits", {})
+                val = limits.get(resource_type, "")
+                return limits, ["spec", "template", "spec", "containers", "0", "resources", "limits"], val
+
+        # Pattern 2: HelmRelease → spec.values.resources.limits
+        if data.get("kind") == "HelmRelease":
+            values = data.get("spec", {}).get("values", {})
+            res = values.get("resources", {})
+            limits = res.get("limits", {})
+            val = limits.get(resource_type, "")
+            if val:
+                return limits, ["spec", "values", "resources", "limits"], val
+            # Check deeper: values.$main.resources
+            for key in ("main", "controller", "app", data.get("metadata", {}).get("name", "")):
+                section = values.get(key, {})
+                if isinstance(section, dict):
+                    res = section.get("resources", {})
+                    limits = res.get("limits", {})
+                    val = limits.get(resource_type, "")
+                    if val:
+                        return limits, ["spec", "values", key, "resources", "limits"], val
+
+        # Pattern 3: Kustomize deployment.yaml with different structure
+        # Try all containers at root
+        containers = data.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [])
+        if containers:
+            for i, c in enumerate(containers):
+                res = c.get("resources", {})
+                limits = res.get("limits", {})
+                val = limits.get(resource_type, "")
+                if val:
+                    return limits, ["spec", "template", "spec", "containers", str(i), "resources", "limits"], val
+
+        return None, [], ""
+
+    def set_nested_value(data: dict, keys: list, value):
+        """Set a value in a nested dict/list structure given a key path."""
+        current = data
+        for i, key in enumerate(keys):
+            if i == len(keys) - 1:
+                current[key] = value
+                return
+            if key.isdigit():
+                idx = int(key)
+                while len(current) <= idx:
+                    current.append({})
+                current = current[idx]
+            else:
+                if key not in current:
+                    current[key] = {}
+                current = current[key]
+
+    @app.post("/v1/fix-resources")
+    def fix_resources(req: FixResourcesRequest, _=Depends(verify_token)):
+        load_k8s()
+        container = req.container or ""
+
+        # 1. Immediate fix: patch deployment resources
+        new_val = patch_deployment_resources(
+            req.namespace, req.deployment, container,
+            req.resource_type, req.increase_factor
+        )
+
+        # 2. Git commit: find manifest, update limits, commit
+        manifest_path = req.manifest_path or find_manifest_path(req.namespace, req.deployment)
+        if not manifest_path and GITHUB_TOKEN:
+            manifest_path = find_manifest_path(req.namespace, req.deployment)
+
+        git_result = {"committed": False}
+        if manifest_path and GITHUB_TOKEN:
+            try:
+                content, sha, _ = gh_get_file(manifest_path)
+                limits_dict, keys, old_val = get_yaml_resource_path(content, req.resource_type)
+
+                if limits_dict and old_val:
+                    parsed, unit = parse_resource_value(old_val)
+                    new_v = parsed * req.increase_factor
+                    new_formatted = format_resource_value(new_v, unit)
+
+                    # Modify YAML
+                    data = yaml.safe_load(content)
+                    key_path = list(keys)  # Copy
+                    set_nested_value(data, key_path, new_formatted)
+                    new_content = yaml.dump(data, default_flow_style=False, allow_unicode=True)
+
+                    msg = f"fix({req.deployment}): increase {req.resource_type} limit {old_val} → {new_formatted} (auto-remediation)"
+                    gh_commit_file(manifest_path, new_content, sha, msg)
+
+                    # Re-deploy via annotation to trigger Flux
+                    try:
+                        apps_api = client.AppsV1Api()
+                        body = {
+                            "metadata": {
+                                "annotations": {
+                                    "remediation-api/flux-trigger": datetime.now(timezone.utc).isoformat()
+                                }
+                            }
+                        }
+                        apps_api.patch_namespaced_deployment(req.deployment, req.namespace, body)
+                    except Exception:
+                        pass
+
+                    git_result = {"committed": True, "path": manifest_path, "old_value": old_val, "new_value": new_formatted}
+            except Exception as e:
+                git_result = {"committed": False, "error": str(e)[:300]}
+
+        result = {
+            "status": "ok",
+            "action": f"increase_{req.resource_type}",
+            "namespace": req.namespace,
+            "deployment": req.deployment,
+            "new_limit": new_val,
+            "deployment_patched": True,
+            "git_commit": git_result,
+        }
+        audit(f"[auto-fix] increased {req.resource_type} for {req.deployment}/{req.namespace} to {new_val}")
+        return result
+
+    # ── Existing remediate endpoint ──────────────────────────────
     @app.post("/v1/remediate")
     def remediate(req: RemediateRequest, _=Depends(verify_token)):
         if req.action not in ALLOWED_ACTIONS:
@@ -60,11 +433,7 @@ data:
         if req.namespace not in ALLOWED_NAMESPACES:
             raise HTTPException(403, f"Namespace not allowed: {req.namespace}")
 
-        try:
-            config.load_incluster_config()
-        except Exception:
-            raise HTTPException(500, "Failed to load k8s config")
-
+        load_k8s()
         triggered_by = req.triggered_by or "unknown"
 
         try:
