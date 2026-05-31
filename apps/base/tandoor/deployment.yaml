@@ -152,18 +152,17 @@ spec:
               add: ["CHOWN", "DAC_OVERRIDE", "SETGID", "SETUID"]
               drop: ["ALL"]
           # ── CSRF-Permanent-Fix ──────────────────────────────────────────────────
-          # Tandoor container nginx template (Recipes.conf.template) hardcodes
-          # `proxy_set_header X-Forwarded-Proto $scheme;`.  Since nginx receives HTTP
-          # from the Ingress Controller, `$scheme` = http, which OVERRIDES the
-          # correct https value sent by the IC.  Django then sees X-Forwarded-Proto:
-          # http and request.is_secure() = False → CSRF error.
+          # Tandoor container nginx v2.6.9 template (`Recipes.conf.template`) does
+          # NOT set `proxy_set_header X-Forwarded-Proto`.  While default nginx
+          # behaviour passes the header through, NGINX Ingress Controller versions
+          # (especially after the v5.5.0 proxy-set-headers refactor) may omit it.
+          # Without `X-Forwarded-Proto: https`, Django's SECURE_PROXY_SSL_HEADER
+          # never matches → request.is_secure() = False → CSRF 403.
           #
-          # This postStart hook patches the generated nginx config to preserve the
-          # upstream's X-Forwarded-Proto value ($http_x_forwarded_proto) instead of
-          # blindly using $scheme.  Runs after boot.sh generates the file.
+          # This postStart hook injects the header unconditionally so it always
+          # reaches gunicorn regardless of IC version or config changes.
           #
-          # Do NOT convert to initContainer — the file doesn't exist yet at that stage.
-          # Do NOT remove — see docs/runbooks/tandoor-csrf.md for the full analysis.
+          # Do NOT remove or convert to initContainer.
           lifecycle:
             postStart:
               exec:
@@ -172,7 +171,9 @@ spec:
                   - -c
                   - |
                     while [ ! -f /etc/nginx/http.d/Recipes.conf ]; do sleep 1; done
-                    sed -i 's/proxy_set_header X-Forwarded-Proto \$scheme;/proxy_set_header X-Forwarded-Proto \$http_x_forwarded_proto;/' /etc/nginx/http.d/Recipes.conf
+                    if ! grep -q 'X-Forwarded-Proto.*https' /etc/nginx/http.d/Recipes.conf; then
+                      sed -i '/proxy_set_header Host/a\    proxy_set_header X-Forwarded-Proto "https";' /etc/nginx/http.d/Recipes.conf
+                    fi
                     nginx -s reload 2>/dev/null || true
       volumes:
         - name: static
