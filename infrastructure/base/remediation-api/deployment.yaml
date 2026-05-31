@@ -25,7 +25,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: pip-install
-          image: python:3.11-slim
+          image: python:3.14-slim
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -47,7 +47,7 @@ spec:
               mountPath: /packages
       containers:
         - name: api
-          image: python:3.11-slim
+          image: python:3.14-slim
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
