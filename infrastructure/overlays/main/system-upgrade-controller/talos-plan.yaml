@@ -41,22 +41,20 @@ spec:
     - key: CriticalAddonsOnly
       operator: Exists
   upgrade:
-    # Runner: talosctl talks to local apid via Unix socket (Talos has no SSH/shell).
+    # Direct /talosctl binary: talosctl image is scratch-based (no shell).
+    # $(SYSTEM_UPGRADE_PLAN_LATEST_VERSION) expanded by K8s, not shell.
+    # Keep schematic ID in sync with homelab-infrastructure/talos/cluster.auto.tfvars
     # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
     image: ghcr.io/siderolabs/talosctl:v1.13.3
     command:
-      - /bin/sh
-      - -ec
+      - /talosctl
     args:
-      - |
-        set -euo pipefail
-        ENDPOINT="unix:///host/system/run/apid/apid.sock"
-        # Keep in sync with talos_schematic_id in homelab-infrastructure/talos/cluster.auto.tfvars
-        INSTALLER_IMAGE="factory.talos.dev/nocloud-installer/10f9392d7091b30abf573524649756e5bc894f653af525836e9ab0297f301fc2:${SYSTEM_UPGRADE_PLAN_LATEST_VERSION}"
-        exec talosctl -e "${ENDPOINT}" upgrade \
-          --image="${INSTALLER_IMAGE}" \
-          --wait=false \
-          --timeout=15m
+      - -e
+      - unix:///host/system/run/apid/apid.sock
+      - upgrade
+      - --image=factory.talos.dev/nocloud-installer/10f9392d7091b30abf573524649756e5bc894f653af525836e9ab0297f301fc2:$(SYSTEM_UPGRADE_PLAN_LATEST_VERSION)
+      - --wait=false
+      - --timeout=15m
     securityContext:
       privileged: true
     volumes:
