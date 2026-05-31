@@ -19,15 +19,45 @@ spec:
     spec:
       serviceAccountName: remediation-api
       automountServiceAccountToken: true
-      containers:
-        - name: api
-          image: python:3.11-alpine
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: pip-install
+          image: python:3.11-slim
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsUser: 1000
+            runAsGroup: 1000
           command:
             - sh
             - -c
-            - |
-              pip install -q fastapi uvicorn pyjwt kubernetes 2>/dev/null
-              exec uvicorn main:app --host 0.0.0.0 --port 8080
+            - pip install --no-cache-dir --target=/packages fastapi uvicorn kubernetes
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: packages
+              mountPath: /packages
+      containers:
+        - name: api
+          image: python:3.11-slim
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+            - export PYTHONPATH=/packages:$PYTHONPATH && exec python -m uvicorn main:app --host 0.0.0.0 --port 8080
           workingDir: /app
           ports:
             - containerPort: 8080
@@ -48,13 +78,13 @@ spec:
             httpGet:
               path: /health
               port: 8080
-            initialDelaySeconds: 30
+            initialDelaySeconds: 15
             periodSeconds: 15
           readinessProbe:
             httpGet:
               path: /health
               port: 8080
-            initialDelaySeconds: 10
+            initialDelaySeconds: 5
             periodSeconds: 10
           resources:
             requests:
@@ -65,7 +95,12 @@ spec:
           volumeMounts:
             - name: code
               mountPath: /app
+            - name: packages
+              mountPath: /packages
+              readOnly: true
       volumes:
         - name: code
           configMap:
             name: remediation-api
+        - name: packages
+          emptyDir: {}
