@@ -1,5 +1,5 @@
 {
-  "name": "Homelab Alert Triage (AM → LLM → Telegram)",
+  "name": "Homelab Alert Triage (AM \u2192 LLM \u2192 Telegram)",
   "nodes": [
     {
       "parameters": {
@@ -12,7 +12,10 @@
       "name": "Webhook Alertmanager",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 300],
+      "position": [
+        0,
+        300
+      ],
       "webhookId": "homelab-alert-webhook"
     },
     {
@@ -23,7 +26,10 @@
       "name": "Parse Alert",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -31,12 +37,19 @@
           "values": [
             {
               "conditions": {
-                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.status }}",
                     "rightValue": "resolved",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ],
                 "combinator": "and"
@@ -46,45 +59,65 @@
             }
           ]
         },
-        "options": { "fallbackOutput": "extra" }
+        "options": {
+          "fallbackOutput": "extra"
+        }
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000003",
       "name": "Resolved?",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
-      "position": [480, 300]
+      "position": [
+        480,
+        300
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const a = $input.first().json;\nconst text = `✅ *RESOLVED*\\n\\n*${a.alertname}*\\n${a.summary || ''}\\n\\n_ns:_ ${a.namespace || '—'}_`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+        "jsCode": "const a = $input.first().json;\nconst text = `\u2705 *RESOLVED*\\n\\n*${a.alertname}*\\n${a.summary || ''}\\n\\n_ns:_ ${a.namespace || '\u2014'}_`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000004",
       "name": "Format Resolved",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [720, 160]
+      "position": [
+        720,
+        160
+      ]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "={{ $json.telegramText }}",
-        "additionalFields": { "parse_mode": "={{ $json.parseMode }}" }
+        "additionalFields": {
+          "parse_mode": "={{ $json.parseMode }}"
+        }
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000005",
       "name": "Telegram Resolved",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [960, 160],
-      "credentials": { "telegramApi": { "id": "CONFIGURE_ME", "name": "Telegram Homelab Bot" } }
+      "position": [
+        960,
+        160
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CONFIGURE_ME",
+          "name": "Telegram Homelab Bot"
+        }
+      }
     },
     {
       "parameters": {
         "model": "gpt-4o-mini",
-        "options": { "temperature": 0.2 },
+        "options": {
+          "temperature": 0.2
+        },
         "messages": {
           "values": [
             {
-              "content": "=Du bist Homelab-SRE. Antworte NUR mit gültigem JSON (kein Markdown):\n{\"action_needed\":bool,\"automatable\":bool,\"risk\":\"low|medium|high\",\"outcome\":\"no_action|needs_human|cannot_fix|auto_fix_candidate\",\"summary_de\":\"...\",\"proposed_steps\":[\"...\"],\"telegram_message\":\"...\"}\n\nRegeln:\n- outcome=no_action bei reinem Lärm oder unklaren Chart-Defaults\n- outcome=needs_human bei CNPG, Disk, Memory, Velero, Datenverlust-Risiko\n- outcome=cannot_fix wenn Agent keine sichere Aktion hat\n- outcome=auto_fix_candidate nur bei klarer, risikoarmer Aktion (z.B. Pod-Restart bekanntes Deployment)\n- automatable=true nur wenn allowAutoFix={{ $json.allowAutoFix }} und Aktion in Allowlist\n\nAlert: {{ $json.alertname }}\nSeverity: {{ $json.severity }}\nStatus: {{ $json.status }}\nSummary: {{ $json.summary }}\nDescription: {{ $json.description }}\nRunbook: {{ $json.runbookUrl }}\nNamespace: {{ $json.namespace }}"
+              "content": "=Du bist Homelab-SRE. Antworte NUR mit g\u00fcltigem JSON (kein Markdown):\n{\"action_needed\":bool,\"automatable\":bool,\"risk\":\"low|medium|high\",\"outcome\":\"no_action|needs_human|cannot_fix|auto_fix_candidate\",\"summary_de\":\"...\",\"proposed_steps\":[\"...\"],\"telegram_message\":\"...\"}\n\nRegeln:\n- outcome=no_action bei reinem L\u00e4rm oder unklaren Chart-Defaults\n- outcome=needs_human bei CNPG, Disk, Memory, Velero, Datenverlust-Risiko\n- outcome=cannot_fix wenn Agent keine sichere Aktion hat\n- outcome=auto_fix_candidate nur bei klarer, risikoarmer Aktion (z.B. Pod-Restart bekanntes Deployment)\n- automatable=true nur wenn allowAutoFix={{ $json.allowAutoFix }} und Aktion in Allowlist\n\nAlert: {{ $json.alertname }}\nSeverity: {{ $json.severity }}\nStatus: {{ $json.status }}\nSummary: {{ $json.summary }}\nDescription: {{ $json.description }}\nRunbook: {{ $json.runbookUrl }}\nNamespace: {{ $json.namespace }}"
             }
           ]
         }
@@ -93,8 +126,16 @@
       "name": "LLM Triage",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
-      "position": [720, 440],
-      "credentials": { "openAiApi": { "id": "CONFIGURE_ME", "name": "OpenAI Homelab" } }
+      "position": [
+        720,
+        440
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "CONFIGURE_ME",
+          "name": "OpenAI Homelab"
+        }
+      }
     },
     {
       "parameters": {
@@ -104,7 +145,10 @@
       "name": "Merge Triage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [960, 440]
+      "position": [
+        960,
+        440
+      ]
     },
     {
       "parameters": {
@@ -112,12 +156,19 @@
           "values": [
             {
               "conditions": {
-                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.mayAutoFix }}",
                     "rightValue": true,
-                    "operator": { "type": "boolean", "operation": "true" }
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true"
+                    }
                   }
                 ],
                 "combinator": "and"
@@ -127,12 +178,19 @@
             },
             {
               "conditions": {
-                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.triage.outcome }}",
                     "rightValue": "needs_human",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ],
                 "combinator": "and"
@@ -142,12 +200,19 @@
             },
             {
               "conditions": {
-                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.triage.outcome }}",
                     "rightValue": "cannot_fix",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ],
                 "combinator": "and"
@@ -157,86 +222,94 @@
             }
           ]
         },
-        "options": { "fallbackOutput": "extra" }
+        "options": {
+          "fallbackOutput": "extra"
+        }
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000008",
       "name": "Route Outcome",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
-      "position": [1200, 440]
+      "position": [
+        1200,
+        440
+      ]
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{ $env.REMEDIATION_API_URL }}/v1/remediate",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.REMEDIATION_API_KEY || '' }}" },
-            { "name": "Content-Type", "value": "application/json" }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ (() => {\n  const a = $('Merge Triage').first().json;\n  const alertname = a.alertname || '';\n  let action = 'get-pods';\n  let resource = a.instance || '';\n  let ns = a.namespace || '';\n  if (alertname === 'NtfyBridgeDown') {\n    action = 'rollout-restart'; resource = 'ntfy-bridge'; ns = 'monitoring';\n  } else if (alertname === 'KubePodCrashLoopBackOff' || alertname === 'KubePodOOMKilled') {\n    action = 'delete-pod'; resource = a.instance || '';\n  } else if (alertname === 'MonitoringVMAlertDown') {\n    action = 'rollout-restart'; resource = 'vmalert-vm-k8s-stack-victoria-metrics-k8s-stack'; ns = 'monitoring';\n  } else if (alertname === 'MonitoringAlertmanagerDown') {\n    action = 'delete-pod'; resource = 'vmalertmanager-vm-am-0'; ns = 'monitoring';\n  }\n  if (!resource) resource = alertname.toLowerCase() + '-pod';\n  return JSON.stringify({ action, namespace: ns, resource });\n})() }}",
-        "options": { "timeout": 120000 }
-      },
-      "id": "f8a1c2e0-1111-4a2b-9c3d-000000000009",
-      "name": "Call Remediation",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1440, 280],
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "const a = $('Merge Triage').first().json;\nconst rem = $input.first().json;\nconst httpCode = rem.statusCode || rem.httpCode || (rem.error ? 500 : 200);\nconst ok = httpCode >= 200 && httpCode < 300;\nconst body = typeof rem.body === 'string' ? JSON.parse(rem.body) : (rem.body || rem);\nconst action = body.action || body.req?.action || '?';\nconst details = body.message || body.audit_id || JSON.stringify(body).slice(0,200);\nconst text = ok\n  ? `🔧 *Auto-Fix ausgeführt*\\n\\n*${a.alertname}*\\n${a.triage.summary_de || ''}\\n\\nAktion: ${action} → ${body.status || 'ok'}\\nObjekt: ${a.namespace || '?'}/${a.instance || '?'}\\n\\n_audit: ${body.audit_id || '—'}_`\n  : `⚠️ *Auto-Fix fehlgeschlagen*\\n\\n*${a.alertname}*\\n${a.triage.summary_de || ''}\\n\\nHTTP ${httpCode} — ${details}\\n\\n*Human-in-the-Loop*: Remediation-API prüfen oder manuell eingreifen.`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+        "jsCode": "const a = $('Parse Root Cause').first().json;\nconst rem = $input.first().json;\nconst httpCode = rem.statusCode || rem.httpCode || (rem.error ? 500 : 200);\nconst ok = httpCode >= 200 && httpCode < 300;\nconst body = typeof rem.body === 'string' ? JSON.parse(rem.body) : (rem.body || rem);\nconst fix = body.git_commit || {};\nlet text;\nif (ok) {\n  text = '\ud83d\udd27 *Auto-Fix ausgef\u00fchrt*\\n\\n*' + a.alertname + '*\\n' + (a.summary_de || '') + '\\n\\n';\n  if (a.memory_suggested) text += 'Memory: ' + (a.memory_current || '?') + ' \\u2192 ' + a.memory_suggested + '\\n';\n  if (a.cpu_suggested) text += 'CPU: ' + (a.cpu_current || '?') + ' \\u2192 ' + a.cpu_suggested + '\\n';\n  text += 'Deployment: ' + a.deployment_name + '\\n';\n  text += 'Git-Commit: ' + (fix.committed ? '\u2705 committed' : '\u274c fehlgeschlagen') + '\\n';\n  text += '\\n_audit: ' + (body.audit_id || '\u2014') + '_';\n} else {\n  text = '\u26a0\ufe0f *Auto-Fix fehlgeschlagen*\\n\\n*' + a.alertname + '*\\n' + (a.summary_de || '') + '\\n\\nHTTP ' + httpCode + ' \\u2014 ' + (body.message || JSON.stringify(body).slice(0,200)) + '\\n\\n*Human-in-the-Loop*: manuell eingreifen.';\n}\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000010",
       "name": "Format Auto-Fix Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1680, 280]
+      "position": [
+        1680,
+        280
+      ]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "={{ $json.telegramText }}",
-        "additionalFields": { "parse_mode": "={{ $json.parseMode }}" }
+        "additionalFields": {
+          "parse_mode": "={{ $json.parseMode }}"
+        }
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000011",
       "name": "Telegram Auto-Fix",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1920, 280],
-      "credentials": { "telegramApi": { "id": "CONFIGURE_ME", "name": "Telegram Homelab Bot" } }
+      "position": [
+        1920,
+        280
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CONFIGURE_ME",
+          "name": "Telegram Homelab Bot"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const a = $input.first().json;\nconst t = a.triage || {};\nconst icon = { needs_human: '👤', cannot_fix: '🚫', no_action: 'ℹ️' }[t.outcome] || '🔔';\nconst hitl = t.outcome === 'needs_human' ? '\\n\\n*Rückmeldung nötig* — antworte mit /ack oder Details.' : '';\nconst text = `${icon} *${a.status === 'resolved' ? 'OK' : 'FIRING'}: ${a.alertname}*\\n\\n${t.telegram_message || t.summary_de || a.summary}\\n\\nSeverity: ${a.severity}\\nNamespace: ${a.namespace || '—'}\\nOutcome: ${t.outcome || 'unknown'}${hitl}\\n${a.runbookUrl ? '\\n' + a.runbookUrl : ''}`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+        "jsCode": "// Input either from needs_human path or from auto_fix investigate-only path\nconst input = $input.first().json;\nlet text;\n\nif (input.alertname && input.root_cause) {\n  // investigate-only format\n  const emoji = { CONFIG_ERROR: '\u26a0\ufe0f', IMAGE_ERROR: '\ud83d\udce6', DEPENDENCY: '\ud83d\udd17', UNKNOWN: '\u2753', OOM: '\ud83d\udca5' }[input.root_cause] || '\u2139\ufe0f';\n  text = emoji + ' *Investigation abgeschlossen - kein Auto-Fix*\\n\\n';\n  text += '*Alarm:* ' + input.alertname + '\\n';\n  text += '*Root Cause:* ' + input.root_cause + ' (confidence: ' + input.confidence + ')\\n';\n  text += '*Deployment:* ' + input.deployment_name + '\\n';\n  if (input.summary_de) text += '\\n' + input.summary_de + '\\n';\n  if (input.recommended_action) text += '\\nHandlungsempfehlung: ' + input.recommended_action;\n} else {\n  // Original needs_human / cannot_fix format\n  text = $json.telegramText || input.telegramText || 'Investigation abgeschlossen.';\n}\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000012",
       "name": "Format Notify",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1440, 560]
+      "position": [
+        1440,
+        560
+      ]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "={{ $json.telegramText }}",
-        "additionalFields": { "parse_mode": "={{ $json.parseMode }}" }
+        "additionalFields": {
+          "parse_mode": "={{ $json.parseMode }}"
+        }
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000013",
       "name": "Telegram Notify",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1680, 560],
-      "credentials": { "telegramApi": { "id": "CONFIGURE_ME", "name": "Telegram Homelab Bot" } }
+      "position": [
+        1680,
+        560
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CONFIGURE_ME",
+          "name": "Telegram Homelab Bot"
+        }
+      }
     },
     {
       "parameters": {
-        "content": "## Human-in-the-Loop (Phase 2)\n\nAktiviere einen **Telegram Trigger** (Callback Query) + **Wait**-Node:\n- User tippt ✅ → Remediation ausführen\n- User tippt ❌ → Workflow beenden\n\nDokumentation: docs/integrations/alerting-n8n-telegram-triage.md",
+        "content": "## Human-in-the-Loop (Phase 2)\n\nAktiviere einen **Telegram Trigger** (Callback Query) + **Wait**-Node:\n- User tippt \u2705 \u2192 Remediation ausf\u00fchren\n- User tippt \u274c \u2192 Workflow beenden\n\nDokumentation: docs/integrations/alerting-n8n-telegram-triage.md",
         "height": 220,
         "width": 380
       },
@@ -244,17 +317,27 @@
       "name": "Note HITL",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [1920, 520]
+      "position": [
+        1920,
+        520
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "leftValue": "={{ $env.REMEDIATION_API_URL }}",
               "rightValue": "",
-              "operator": { "type": "string", "operation": "notEmpty" }
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
             }
           ],
           "combinator": "and"
@@ -264,45 +347,494 @@
       "name": "Remediation configured?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [1440, 400]
+      "position": [
+        1440,
+        400
+      ]
+    },
+    {
+      "id": "inv-001",
+      "name": "Call Investigate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        280
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.REMEDIATION_API_URL }}/v1/investigate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.REMEDIATION_API_KEY || '' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"pod\": $(\"Merge Triage\").first().json.instance, \"namespace\": $(\"Merge Triage\").first().json.namespace}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "llm-rc-001",
+      "name": "LLM Root Cause",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1720,
+        280
+      ],
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.2
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Du bist Homelab-SRE. Analysiere die Pod-Investigation-Daten und bestimme die Grundursache.\nAntworte NUR mit g\u00fcltigem JSON (kein Markdown):\n\n{\"root_cause\":\"OOM|CONFIG_ERROR|IMAGE_ERROR|DEPENDENCY|UNKNOWN\",\"confidence\":\"high|medium|low\",\"fix_type\":\"increase_memory|increase_cpu|fix_config|restart_only|none\",\"summary_de\":\"...\",\"recommended_action\":\"...\",\"memory_current\":\"...\",\"memory_suggested\":\"...\",\"cpu_current\":\"...\",\"cpu_suggested\":\"...\"}\n\n**Investigation Data:**\n{{ JSON.stringify($json) }}\n\n**Original Alert:**\n{{ JSON.stringify($(\"Merge Triage\").first().json) }}\n\nRegeln:\n- root_cause=OOM wenn termination_reason OOMKilled oder logs OOM/Out of memory zeigen\n- root_cause=CONFIG_ERROR wenn logs Config/Parse/Invalid errors zeigen\n- root_cause=IMAGE_ERROR wenn events ImagePullBackOff/ErrImagePull zeigen\n- root_cause=DEPENDENCY wenn logs connection refused/timeout zu DB/Api zeigen\n- confidence=high nur bei klaren Signalen\n- fix_type=increase_memory nur bei OOM\n- fix_type=increase_cpu nur bei CPUThrottling oder CPU limits zu niedrig\n- memory/cpu Angaben mit Einheit (z.B. \"256Mi\", \"500m\")"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse-rc-001",
+      "name": "Parse Root Cause",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const alert = $('Merge Triage').first().json;\nconst inv = $('Call Investigate').first().json;\nlet rc = {};\ntry {\n  const raw = $input.first().json.message?.content ?? $input.first().json.text ?? $input.first().json.output ?? '';\n  const m = String(raw).match(/\\{[\\s\\S]*\\}/);\n  rc = m ? JSON.parse(m[0]) : { root_cause: 'UNKNOWN', confidence: 'low', summary_de: 'LLM-Antwort nicht parsebar' };\n} catch (e) {\n  rc = { root_cause: 'UNKNOWN', confidence: 'low', summary_de: 'LLM parse error: ' + e.message };\n}\nconst owner = inv.owner || {};\nconst podName = alert.instance || '';\nconst depName = owner.name || podName.replace(/-[a-z0-9]{5,10}-[a-z0-9]{5}$/, '').replace(/-[0-9]+$/, '');\nreturn [{\n  json: {\n    root_cause: rc.root_cause || 'UNKNOWN',\n    confidence: rc.confidence || 'low',\n    fix_type: rc.fix_type || 'none',\n    summary_de: rc.summary_de || '',\n    recommended_action: rc.recommended_action || '',\n    memory_current: rc.memory_current || '',\n    memory_suggested: rc.memory_suggested || '',\n    cpu_current: rc.cpu_current || '',\n    cpu_suggested: rc.cpu_suggested || '',\n    alertname: alert.alertname,\n    namespace: alert.namespace,\n    instance: alert.instance,\n    deployment_name: depName,\n  }\n}];"
+      }
+    },
+    {
+      "id": "route-fix-001",
+      "name": "Route Fix Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2280,
+        280
+      ],
+      "parameters": {
+        "dataType": "string",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fix_type }}",
+                    "rightValue": "increase_memory",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "fix_memory"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fix_type }}",
+                    "rightValue": "increase_cpu",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "fix_cpu"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.root_cause }}",
+                    "rightValue": "OOM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "fix_memory_fallback"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "investigate_only"
+        }
+      }
+    },
+    {
+      "id": "fix-res-001",
+      "name": "Call Fix-Resources",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2560,
+        220
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.REMEDIATION_API_URL }}/v1/fix-resources",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.REMEDIATION_API_KEY || '' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"namespace\": $json.namespace,\n  \"deployment\": $json.deployment_name,\n  \"resource_type\": \"all\",\n  \"memory\": $json.memory_suggested || null,\n  \"cpu\": $json.cpu_suggested || null\n}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "fmt-inv-001",
+      "name": "Format Investigate Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        460
+      ],
+      "parameters": {
+        "jsCode": "const a = $input.first().json;\nconst emoji = {\n  CONFIG_ERROR: '\u26a0\ufe0f',\n  IMAGE_ERROR: '\ud83d\udce6',\n  DEPENDENCY: '\ud83d\udd17',\n  UNKNOWN: '\u2753',\n  OOM: '\ud83d\udca5'\n}[a.root_cause] || '\u2139\ufe0f';\nlet text = emoji + ' *Investigation abgeschlossen - kein Auto-Fix*\n\n';\ntext += '*Alarm:* ' + a.alertname + '\n';\ntext += '*Root Cause:* ' + a.root_cause + ' (confidence: ' + a.confidence + ')\n';\ntext += '*Deployment:* ' + a.deployment_name + '\n';\nif (a.summary_de) text += '\n' + a.summary_de + '\n';\nif (a.recommended_action) text += '\n_Handlungsempfehlung:_ ' + a.recommended_action;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+      }
+    },
+    {
+      "id": "tel-inv-001",
+      "name": "Telegram Investigate",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 2.0,
+      "position": [
+        2840,
+        460
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "additionalFields": {
+          "parse_mode": "={{ $json.parseMode }}"
+        },
+        "text": "={{ $json.telegramText }}"
+      },
+      "credentials": {
+        "telegramApi": "n8n-telegram-bot"
+      }
     }
   ],
   "connections": {
-    "Webhook Alertmanager": { "main": [[{ "node": "Parse Alert", "type": "main", "index": 0 }]] },
-    "Parse Alert": { "main": [[{ "node": "Resolved?", "type": "main", "index": 0 }]] },
-    "Resolved?": {
+    "Webhook Alertmanager": {
       "main": [
-        [{ "node": "Format Resolved", "type": "main", "index": 0 }],
-        [{ "node": "LLM Triage", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Parse Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Format Resolved": { "main": [[{ "node": "Telegram Resolved", "type": "main", "index": 0 }]] },
-    "LLM Triage": { "main": [[{ "node": "Merge Triage", "type": "main", "index": 0 }]] },
-    "Merge Triage": { "main": [[{ "node": "Route Outcome", "type": "main", "index": 0 }]] },
+    "Parse Alert": {
+      "main": [
+        [
+          {
+            "node": "Resolved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolved?": {
+      "main": [
+        [
+          {
+            "node": "Format Resolved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LLM Triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Resolved": {
+      "main": [
+        [
+          {
+            "node": "Telegram Resolved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Triage": {
+      "main": [
+        [
+          {
+            "node": "Merge Triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Triage": {
+      "main": [
+        [
+          {
+            "node": "Route Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Route Outcome": {
       "main": [
-        [{ "node": "Remediation configured?", "type": "main", "index": 0 }],
-        [{ "node": "Format Notify", "type": "main", "index": 0 }],
-        [{ "node": "Format Notify", "type": "main", "index": 0 }],
-        [{ "node": "Format Notify", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Remediation configured?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Notify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Notify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Remediation configured?": {
       "main": [
-        [{ "node": "Call Remediation", "type": "main", "index": 0 }],
-        [{ "node": "Format Notify", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Call Investigate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Call Remediation": { "main": [[{ "node": "Format Auto-Fix Result", "type": "main", "index": 0 }]] },
-    "Format Auto-Fix Result": { "main": [[{ "node": "Telegram Auto-Fix", "type": "main", "index": 0 }]] },
-    "Format Notify": { "main": [[{ "node": "Telegram Notify", "type": "main", "index": 0 }]] }
+    "Format Auto-Fix Result": {
+      "main": [
+        [
+          {
+            "node": "Telegram Auto-Fix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Notify": {
+      "main": [
+        [
+          {
+            "node": "Telegram Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Investigate": {
+      "main": [
+        [
+          {
+            "node": "LLM Root Cause",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Root Cause": {
+      "main": [
+        [
+          {
+            "node": "Parse Root Cause",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Root Cause": {
+      "main": [
+        [
+          {
+            "node": "Route Fix Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Fix Type": {
+      "main": [
+        [
+          {
+            "node": "Call Fix-Resources",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Fix-Resources",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Fix-Resources",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Investigate Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Fix-Resources": {
+      "main": [
+        [
+          {
+            "node": "Format Auto-Fix Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Investigate Report": {
+      "main": [
+        [
+          {
+            "node": "Telegram Investigate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "pinData": {},
-  "settings": { "executionOrder": "v1" },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Berlin",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "onError": "continueRegularOutput"
+  },
   "staticData": null,
-  "tags": [{ "name": "homelab" }, { "name": "monitoring" }],
+  "tags": [
+    {
+      "name": "homelab"
+    },
+    {
+      "name": "monitoring"
+    }
+  ],
   "meta": {
     "templateCredsSetupCompleted": false,
     "instanceId": "homelab-gitops-alert-triage"
-  }
+  },
+  "id": "45059508-78e7-4ed1-8e66-8e5b3b7181f3",
+  "versionId": "fdd7d6ca-532e-47f5-bb7b-d690c1a7546e",
+  "triggerCount": 1,
+  "active": false,
+  "nodeGroups": []
 }

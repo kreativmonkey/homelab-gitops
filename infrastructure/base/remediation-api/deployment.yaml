@@ -74,6 +74,12 @@ spec:
                   name: n8n-integration-credentials
                   key: ntfy-url
                   optional: true
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-integration-credentials
+                  key: github-token
+                  optional: true
           livenessProbe:
             httpGet:
               path: /health
