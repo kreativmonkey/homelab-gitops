@@ -29,9 +29,11 @@ spec:
       limits:
         memory: 128Mi
 
-    # Recreate erforderlich für RWO PVC (truenas-iscsi), sonst Deadlock bei Upgrade
-    deployment:
-      strategy: Recreate
+    # RollingUpdate (default) – Recreate blockiert, weil Chart immer rollingUpdate: {}
+    # rendert, was Kubernetes bei type=Recreate verbietet.
+    # Bei RWO-PVC-Upgrade kurzzeitig Multi-Attach-Error, Recovery funktioniert aber.
+    # deployment:
+    #   strategy: Recreate
 
     # Persistenz für SQLite-Datenbank (Uptime-Verlauf)
     persistence:
