@@ -1,0 +1,19 @@
+# VMProbe für tandoor – benötigt eigenen Host-Header (rezepte.f4mily.net).
+# Nutzt separates Modul http_2xx_tandoor im blackbox-exporter.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMProbe
+metadata:
+  name: blackbox-http-tandoor
+  namespace: monitoring
+  labels:
+    release: victoriametrics
+spec:
+  jobName: blackbox-http-tandoor
+  vmProberSpec:
+    url: http://prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+  module: http_2xx_tandoor
+  targets:
+    static:
+      targets:
+        - https://rezepte.f4mily.net
+  interval: 30s
