@@ -1,0 +1,36 @@
+# Alerting-Regeln für Blackbox-Exporter-Prüfungen (Erreichbarkeit + SSL).
+# $labels.instance enthält die geprüfte URL (z. B. https://nextcloud.deinedomain.local).
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: homelab-blackbox
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.blackbox.ingress
+      interval: 30s
+      rules:
+        - alert: EndpointDown
+          expr: probe_success == 0
+          for: 2m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "Blackbox-Probe fehlgeschlagen: {{ $labels.instance }}"
+            description: "Der Endpunkt {{ $labels.instance }} ist nicht erreichbar oder antwortet mit einem Fehlerstatus. HTTP/SSL-Prüfung fehlgeschlagen."
+
+        - alert: SSLCertExpiringSoon
+          expr: probe_ssl_earliest_cert_expiry - time() < 7 * 24 * 3600 and probe_success == 1
+          for: 5m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab/owner: platform
+          annotations:
+            summary: "SSL-Zertifikat läuft bald ab: {{ $labels.instance }}"
+            description: "Das SSL-Zertifikat für {{ $labels.instance }} läuft in weniger als 7 Tagen ab. Läuft ab am {{ $value | humanizeTimestamp }}."
