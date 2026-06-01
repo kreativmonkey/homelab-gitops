@@ -53,8 +53,9 @@ spec:
         title: Cluster Status
         default-sort-by: group
 
-      # HTTPS durch nginx ClusterIP + Host-Header + insecure (cert matcht nicht auf ClusterIP).
-      # Prüft vollen TLS-Handshake + nginx-Routing + Backend ohne Hairpin NAT.
+      # HTTP durch nginx ClusterIP + Host-Header.
+      # Kein TLS (SNI würde nicht auf ClusterIP-Name passen).
+      # Prüft nginx-Routing + Backend ohne Hairpin NAT.
 
       endpoints:
         # ──────────────────────────────────────────────
@@ -62,10 +63,8 @@ spec:
         # ──────────────────────────────────────────────
         - name: audible
           group: media
-          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
-          client:
-             insecure: true
           headers:
              Host: audible.f4mily.net
           conditions:
@@ -74,10 +73,8 @@ spec:
 
         - name: immich
           group: media
-          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
-          client:
-             insecure: true
           headers:
              Host: immich.f4mily.net
           conditions:
@@ -86,10 +83,8 @@ spec:
 
         - name: jellyfin
           group: media
-          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx/health
+          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx/health
           interval: 60s
-          client:
-             insecure: true
           headers:
              Host: jellyfin.f4mily.net
           conditions:
@@ -98,10 +93,8 @@ spec:
 
         - name: kavita
           group: media
-          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx/api/health
+          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx/api/health
           interval: 60s
-          client:
-             insecure: true
           headers:
              Host: books.f4mily.net
           conditions:
@@ -110,10 +103,8 @@ spec:
 
         - name: paperless
           group: documents
-          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
-          client:
-             insecure: true
           headers:
              Host: paperless.f4mily.net
           conditions:
@@ -122,10 +113,8 @@ spec:
 
         - name: readeck
           group: documents
-          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
-          client:
-             insecure: true
           headers:
              Host: readeck.f4mily.net
           conditions:
@@ -134,10 +123,9 @@ spec:
 
         - name: sterling-pdf
           group: documents
-          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           client:
-             insecure: true
              timeout: 180s
           headers:
              Host: pdf.f4mily.net
@@ -147,10 +135,8 @@ spec:
 
         - name: linkding
           group: bookmarks
-          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
-          client:
-             insecure: true
           headers:
              Host: bookmarks.f4mily.net
           conditions:
