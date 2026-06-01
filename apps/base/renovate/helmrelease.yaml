@@ -30,7 +30,7 @@ spec:
       # GitHub token via RENOVATE_GITHUB_COM_TOKEN in renovate-credentials (existingSecret).
       config: |
         {
-          "platform": "forgejo",
+          "platform": "gitea",
           "endpoint": "http://forgejo-app.forgejo.svc.cluster.local:3000/api/v1/",
           "autodiscover": true,
           "autodiscoverFilter": ["homelab/*", "Homelab/*", "kreativmonkey/*", "diyon/*"],
