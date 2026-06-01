@@ -101,7 +101,7 @@ spec:
 
         - name: readeck
           group: documents
-          url: https://readdeck.f4mily.net
+          url: https://readeck.f4mily.net
           interval: 60s
           conditions:
             - "[STATUS] < 400"
