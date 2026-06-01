@@ -80,5 +80,7 @@ data:
   host_uptime_kuma: uptime-kuma.cluster.f4mily.net
   host_unifi_controller: unifi-controller.cluster.f4mily.net
   host_watchyourlan: watchyourlan.cluster.f4mily.net
+  host_gatus: status.cluster.f4mily.net
+
   # Full base URL for n8n production webhooks (trailing slash required by n8n)
   url_n8n_webhook: https://n8n.cluster.f4mily.net/
