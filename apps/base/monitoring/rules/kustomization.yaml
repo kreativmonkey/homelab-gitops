@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - platform-p0-vmrule.yaml
   - workload-remediation-vmrule.yaml
+  - blackbox-vmrule.yaml

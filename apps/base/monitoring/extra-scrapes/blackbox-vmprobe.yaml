@@ -1,0 +1,46 @@
+# VMProbe konfiguriert vmagent so, dass externe Ingress-Endpunkte über
+# den prometheus-blackbox-exporter geprüft werden (HTTP 200 + SSL-Zertifikat).
+# $labels.instance = geprüfte URL; verwendbar in Alert-Annotations.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMProbe
+metadata:
+  name: blackbox-http
+  namespace: monitoring
+  labels:
+    release: victoriametrics
+spec:
+  jobName: blackbox-http
+  vmProberSpec:
+    url: http://prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+  module: http_2xx
+  targets:
+    static:
+      targets:
+        # Public (f4mily.net)
+        - https://audible.f4mily.net
+        - https://git.f4mily.net
+        - https://login.f4mily.net
+        - https://home.f4mily.net
+        - https://immich.f4mily.net
+        - https://jellyfin.f4mily.net
+        - https://books.f4mily.net
+        - https://paperless.f4mily.net
+        - https://pdf.f4mily.net
+        - https://search.f4mily.net
+        - https://teslamate.f4mily.net
+        - https://rezepte.f4mily.net
+        - https://bookmarks.f4mily.net
+        - https://linkwarden.f4mily.net
+        - https://readeck.f4mily.net
+        - https://fitness.f4mily.net
+        - https://nc.f4mily.net
+        # Cluster-internal (cluster.f4mily.net)
+        - https://goloom.cluster.f4mily.net
+        - https://grafana.cluster.f4mily.net
+        - https://metrics.cluster.f4mily.net
+        - https://n8n.cluster.f4mily.net
+        - https://homer.cluster.f4mily.net
+        - https://uptime-kuma.cluster.f4mily.net
+        - https://unifi-controller.cluster.f4mily.net
+        - https://watchyourlan.cluster.f4mily.net
+  interval: 30s
