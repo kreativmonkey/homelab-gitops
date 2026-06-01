@@ -55,34 +55,15 @@ spec:
         # Public (f4mily.net)
         # ──────────────────────────────────────────────
         - name: audible
+          group: media
           url: https://audible.f4mily.net
           interval: 60s
           conditions:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 2000"
 
-        - name: git
-          url: https://git.f4mily.net
-          interval: 60s
-          conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 2000"
-
-        - name: authentik
-          url: https://login.f4mily.net
-          interval: 60s
-          conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 2000"
-
-        - name: homepage
-          url: https://home.f4mily.net
-          interval: 60s
-          conditions:
-            - "[STATUS] < 500"
-            - "[RESPONSE_TIME] < 3000"
-
         - name: immich
+          group: media
           url: https://immich.f4mily.net
           interval: 60s
           conditions:
@@ -90,6 +71,7 @@ spec:
             - "[RESPONSE_TIME] < 3000"
 
         - name: jellyfin
+          group: media
           url: https://jellyfin.f4mily.net
           interval: 60s
           conditions:
@@ -97,6 +79,7 @@ spec:
             - "[RESPONSE_TIME] < 3000"
 
         - name: kavita
+          group: media
           url: https://books.f4mily.net/api/health
           interval: 60s
           conditions:
@@ -104,13 +87,23 @@ spec:
             - "[RESPONSE_TIME] < 5000"
 
         - name: paperless
+          group: documents
           url: https://paperless.f4mily.net
           interval: 60s
           conditions:
             - "[STATUS] < 500"
             - "[RESPONSE_TIME] < 3000"
 
+        - name: readeck
+          group: documents
+          url: https://readeck.f4mily.net
+          interval: 60s
+          conditions:
+            - "[STATUS] < 500"
+            - "[RESPONSE_TIME] < 3000"
+
         - name: sterling-pdf
+          group: documents
           url: https://pdf.f4mily.net
           interval: 60s
           client:
@@ -119,7 +112,40 @@ spec:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 5000"
 
+        - name: linkding
+          group: bookmarks
+          url: https://bookmarks.f4mily.net
+          interval: 60s
+          conditions:
+            - "[STATUS] < 500"
+            - "[RESPONSE_TIME] < 5000"
+
+        - name: linkwarden
+          group: bookmarks
+          url: https://linkwarden.f4mily.net
+          interval: 60s
+          conditions:
+            - "[STATUS] == 200"
+            - "[RESPONSE_TIME] < 2000"
+
+        - name: homepage
+          group: tools
+          url: https://home.f4mily.net
+          interval: 60s
+          conditions:
+            - "[STATUS] < 500"
+            - "[RESPONSE_TIME] < 3000"
+
+        - name: fitness
+          group: tools
+          url: https://fitness.f4mily.net
+          interval: 60s
+          conditions:
+            - "[STATUS] < 500"
+            - "[RESPONSE_TIME] < 3000"
+
         - name: searxng
+          group: tools
           url: https://search.f4mily.net
           interval: 60s
           client:
@@ -128,16 +154,8 @@ spec:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 5000"
 
-        - name: teslamate
-          url: https://teslamate.f4mily.net
-          interval: 60s
-          headers:
-            Host: teslamate.f4mily.net
-          conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
-
         - name: tandoor
+          group: tools
           url: https://rezepte.f4mily.net
           interval: 60s
           client:
@@ -148,35 +166,34 @@ spec:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 5000"
 
-        - name: linkding
-          url: https://bookmarks.f4mily.net
+        - name: teslamate
+          group: monitoring
+          url: https://teslamate.f4mily.net
           interval: 60s
+          headers:
+            Host: teslamate.f4mily.net
           conditions:
-            - "[STATUS] < 500"
+            - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 5000"
 
-        - name: linkwarden
-          url: https://linkwarden.f4mily.net
+        - name: git
+          group: core
+          url: https://git.f4mily.net
           interval: 60s
           conditions:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 2000"
 
-        - name: readeck
-          url: https://readeck.f4mily.net
+        - name: authentik
+          group: core
+          url: https://login.f4mily.net
           interval: 60s
           conditions:
-            - "[STATUS] < 500"
-            - "[RESPONSE_TIME] < 3000"
-
-        - name: fitness
-          url: https://fitness.f4mily.net
-          interval: 60s
-          conditions:
-            - "[STATUS] < 500"
-            - "[RESPONSE_TIME] < 3000"
+            - "[STATUS] == 200"
+            - "[RESPONSE_TIME] < 2000"
 
         - name: nextcloud
+          group: core
           url: https://nc.f4mily.net
           interval: 60s
           conditions:
@@ -186,14 +203,8 @@ spec:
         # ──────────────────────────────────────────────
         # Cluster-internal (cluster.f4mily.net)
         # ──────────────────────────────────────────────
-        - name: goloom
-          url: https://goloom.cluster.f4mily.net/healthz
-          interval: 60s
-          conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
-
         - name: grafana
+          group: observability
           url: https://grafana.cluster.f4mily.net/api/health
           interval: 60s
           conditions:
@@ -201,20 +212,15 @@ spec:
             - "[RESPONSE_TIME] < 5000"
 
         - name: victoria-metrics
+          group: observability
           url: https://metrics.cluster.f4mily.net
           interval: 60s
           conditions:
             - "[STATUS] < 500"
             - "[RESPONSE_TIME] < 3000"
 
-        - name: n8n
-          url: https://n8n.cluster.f4mily.net
-          interval: 60s
-          conditions:
-            - "[STATUS] < 500"
-            - "[RESPONSE_TIME] < 5000"
-
         - name: homer
+          group: observability
           url: https://homer.cluster.f4mily.net
           interval: 60s
           conditions:
@@ -222,13 +228,31 @@ spec:
             - "[RESPONSE_TIME] < 3000"
 
         - name: uptime-kuma
+          group: observability
           url: https://uptime-kuma.cluster.f4mily.net
           interval: 60s
           conditions:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 2000"
 
+        - name: goloom
+          group: automation
+          url: https://goloom.cluster.f4mily.net/healthz
+          interval: 60s
+          conditions:
+            - "[STATUS] == 200"
+            - "[RESPONSE_TIME] < 5000"
+
+        - name: n8n
+          group: automation
+          url: https://n8n.cluster.f4mily.net
+          interval: 60s
+          conditions:
+            - "[STATUS] < 500"
+            - "[RESPONSE_TIME] < 5000"
+
         - name: unifi-controller
+          group: network
           url: https://unifi-controller.cluster.f4mily.net
           interval: 60s
           conditions:
@@ -236,6 +260,7 @@ spec:
             - "[RESPONSE_TIME] < 2000"
 
         - name: watchyourlan
+          group: network
           url: https://watchyourlan.cluster.f4mily.net
           interval: 60s
           conditions:
