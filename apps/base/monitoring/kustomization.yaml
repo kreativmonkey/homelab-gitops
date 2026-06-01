@@ -4,4 +4,7 @@ resources:
   - vm-k8s-stack
   - notifications
   - ntfy-bridge
+  # Kite-Prometheus-Bridge: mapped 8429→8428, Label app.kubernetes.io/name: vmsingle
+  # Kite's auto-discovery braucht Port 8429, vmsingle läuft auf 8428
+  - kite-prometheus-discovery.yaml
   # VMRule CRDs: separate Flux Kustomization apps-monitoring-rules (after vm operator)

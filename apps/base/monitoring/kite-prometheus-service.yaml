@@ -1,0 +1,24 @@
+# Kite-Prometheus-Discovery-Service
+#
+# Kite's auto-discovery sucht Services mit Label app.kubernetes.io/name: vmsingle
+# UND Port 8429 (github.com/kite-org/kite/pkg/cluster/prometheus.go).
+# VMSingle läuft aber auf Port 8428, daher findet Kite nix.
+# Dieser Service bridged die Lücke: Port 8429 → vmsingle:8428.
+# Sobald Kite den Service discovered, nutzt es die interne URL per k8s-api-proxy
+# und umgeht das Hairpin-NAT-Problem.
+apiVersion: v1
+kind: Service
+metadata:
+  name: kite-prometheus-discovery
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: vmsingle
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8429
+      targetPort: 8428
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: vmsingle
