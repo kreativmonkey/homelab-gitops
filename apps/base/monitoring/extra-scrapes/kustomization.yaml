@@ -5,3 +5,4 @@ resources:
   - velero-vmservicescrape.yaml
   - nginx-ingress-vmservicescrape.yaml
   - cnpg-vmpodscrape.yaml
+  - blackbox-vmprobe.yaml
