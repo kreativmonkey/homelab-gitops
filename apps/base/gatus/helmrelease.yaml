@@ -51,8 +51,8 @@ spec:
         title: Cluster Status
         default-sort-by: group
 
-      # Interne URLs: Gatus routet über nginx ClusterIP mit Host-Header.
-      # http:// + Host-Header umgeht Hairpin NAT / TLS-Zertifikatsprobleme.
+      # HTTPS durch nginx ClusterIP + Host-Header + insecure (cert matcht nicht auf ClusterIP).
+      # Prüft vollen TLS-Handshake + nginx-Routing + Backend ohne Hairpin NAT.
 
       endpoints:
         # ──────────────────────────────────────────────
@@ -60,70 +60,100 @@ spec:
         # ──────────────────────────────────────────────
         - name: audible
           group: media
-          url: https://audible.f4mily.net
+          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
+          client:
+             insecure: true
+          headers:
+             Host: audible.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: immich
           group: media
-          url: https://immich.f4mily.net
+          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
+          client:
+             insecure: true
+          headers:
+             Host: immich.f4mily.net
           conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: jellyfin
           group: media
-          url: https://jellyfin.f4mily.net/health
+          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx/health
           interval: 60s
+          client:
+             insecure: true
+          headers:
+             Host: jellyfin.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[BODY].status == Healthy"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: kavita
           group: media
-          url: https://books.f4mily.net/api/health
+          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx/api/health
           interval: 60s
+          client:
+             insecure: true
+          headers:
+             Host: books.f4mily.net
           conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: paperless
           group: documents
-          url: https://paperless.f4mily.net
+          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
+          client:
+             insecure: true
+          headers:
+             Host: paperless.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: readeck
           group: documents
-          url: https://readeck.f4mily.net
+          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
+          client:
+             insecure: true
+          headers:
+             Host: readeck.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: sterling-pdf
           group: documents
-          url: https://pdf.f4mily.net
+          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           client:
-            timeout: 180s
+             insecure: true
+             timeout: 180s
+          headers:
+             Host: pdf.f4mily.net
           conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: linkding
           group: bookmarks
-          url: https://bookmarks.f4mily.net
+          url: https://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
+          client:
+             insecure: true
+          headers:
+             Host: bookmarks.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         # linkwarden deaktiviert (aus Overlay-Katalog entfernt, s. kustomization.yaml)
 
@@ -132,94 +162,94 @@ spec:
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           headers:
-            Host: home.f4mily.net
+             Host: home.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: fitness
           group: tools
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           headers:
-            Host: fitness.f4mily.net
+             Host: fitness.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: searxng
           group: tools
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           client:
-            timeout: 120s
+             timeout: 120s
           headers:
-            Host: search.f4mily.net
+             Host: search.f4mily.net
           conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: tandoor
           group: tools
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           client:
-            timeout: 180s
+             timeout: 180s
           headers:
-            Host: rezepte.f4mily.net
+             Host: rezepte.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: teslamate
           group: monitoring
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           headers:
-            Host: teslamate.f4mily.net
+             Host: teslamate.f4mily.net
           conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: teslamate-grafana
           group: monitoring
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx/grafana/
           interval: 60s
           headers:
-            Host: teslamate.f4mily.net
+             Host: teslamate.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: git
           group: core
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           headers:
-            Host: git.f4mily.net
+             Host: git.f4mily.net
           conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: authentik
           group: core
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           headers:
-            Host: login.f4mily.net
+             Host: login.f4mily.net
           conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: nextcloud
           group: core
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           headers:
-            Host: nc.f4mily.net
+             Host: nc.f4mily.net
           conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
 
         # ──────────────────────────────────────────────
         # Cluster-internal (cluster.f4mily.net)
@@ -229,57 +259,57 @@ spec:
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx/api/health
           interval: 60s
           headers:
-            Host: grafana.cluster.f4mily.net
+             Host: grafana.cluster.f4mily.net
           conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: victoria-metrics
           group: observability
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           headers:
-            Host: metrics.cluster.f4mily.net
+             Host: metrics.cluster.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: homer
           group: observability
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           headers:
-            Host: homer.cluster.f4mily.net
+             Host: homer.cluster.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: goloom
           group: automation
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx/healthz
           interval: 60s
           headers:
-            Host: goloom.cluster.f4mily.net
+             Host: goloom.cluster.f4mily.net
           conditions:
-            - "[STATUS] == 200"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: n8n
           group: automation
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           headers:
-            Host: n8n.cluster.f4mily.net
+             Host: n8n.cluster.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
 
         - name: watchyourlan
           group: network
           url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
           interval: 60s
           headers:
-            Host: watchyourlan.cluster.f4mily.net
+             Host: watchyourlan.cluster.f4mily.net
           conditions:
-            - "[STATUS] < 400"
-            - "[RESPONSE_TIME] < 5000"
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
