@@ -23,9 +23,6 @@ spec:
       jobBackoffLimit: 1
       ttlSecondsAfterFinished: 86400
 
-    image:
-      tag: "40.49.0"
-
     renovate:
       # GitHub token via RENOVATE_GITHUB_COM_TOKEN in renovate-credentials (existingSecret).
       config: |
