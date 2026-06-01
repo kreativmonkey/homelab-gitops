@@ -50,6 +50,7 @@ resources:
   # --- Network Monitoring -----------------------------------------------
   # - ../../base/speedtest-tracker   # wip: ingress only, no workload
   - ../../base/watchyourlan
+  - ../../base/gatus
 
   # --- Development / Misc -----------------------------------------------
   - ../../base/teslamate
@@ -287,133 +288,13 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
-      fieldPath: data.host_goloom
+      fieldPath: data.host_gatus
     targets:
-      - select: {kind: Ingress, name: goloom}
+      - select: {kind: Ingress, name: gatus}
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
 
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.host_teslamate
-    targets:
-      - select: {kind: Ingress, name: teslamate}
-        fieldPaths:
-          - spec.rules.0.host
-          - spec.tls.0.hosts.0
-      - select: {kind: Deployment, name: teslamate}
-        fieldPaths:
-          - spec.template.spec.containers.[name=teslamate].env.[name=VIRTUAL_HOST].value
-      - select: {kind: ConfigMap, name: teslamate-grafana-config}
-        fieldPaths:
-          - data.GF_SERVER_DOMAIN
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.url_teslamate_grafana
-    targets:
-      - select: {kind: ConfigMap, name: teslamate-grafana-config}
-        fieldPaths:
-          - data.GF_SERVER_ROOT_URL
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.host_nextcloud
-    targets:
-      - select: {kind: Ingress, name: nextcloud}
-        fieldPaths:
-          - spec.rules.0.host
-          - spec.tls.0.hosts.0
-      - select: {kind: HelmRelease, name: nextcloud}
-        fieldPaths:
-          - spec.values.nextcloud.host
-          - spec.values.nextcloud.trustedDomains.0
-          - spec.values.nextcloud.extraInitContainers.2.env.[name=NEXTCLOUD_PUBLIC_HOST].value
-          - spec.values.nextcloud.extraInitContainers.4.env.[name=NEXTCLOUD_PUBLIC_HOST].value
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.url_nextcloud
-    targets:
-      - select: {kind: Deployment, name: nextcloud-whiteboard}
-        fieldPaths:
-          - spec.template.spec.containers.[name=whiteboard].env.[name=NEXTCLOUD_URL].value
-      - select: {kind: Deployment, name: appapi-harp}
-        fieldPaths:
-          - spec.template.spec.containers.[name=appapi-harp].env.[name=NC_INSTANCE_URL].value
-      - select: {kind: HelmRelease, name: nextcloud}
-        fieldPaths:
-          - spec.values.nextcloud.extraInitContainers.4.env.[name=NEXTCLOUD_PUBLIC_URL].value
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.host_homer
-    targets:
-      - select: {kind: Ingress, name: homer}
-        fieldPaths:
-          - spec.rules.0.host
-          - spec.tls.0.hosts.0
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.host_grafana
-    targets:
-      - select: {kind: Ingress, name: grafana}
-        fieldPaths:
-          - spec.rules.0.host
-          - spec.tls.0.hosts.0
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.host_victoria_metrics
-    targets:
-      - select: {kind: Ingress, name: victoria-metrics}
-        fieldPaths:
-          - spec.rules.0.host
-          - spec.tls.0.hosts.0
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.host_kite
-    targets:
-      - select: {kind: HelmRelease, name: kite}
-        fieldPaths:
-          - spec.values.ingress.hosts.0.host
-          - spec.values.ingress.tls.0.hosts.0
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.host_n8n
-    targets:
-      - select: {kind: Ingress, name: n8n}
-        fieldPaths:
-          - spec.rules.0.host
-          - spec.tls.0.hosts.0
-      - select: {kind: HelmRelease, name: n8n}
-        fieldPaths:
-          - spec.values.main.config.n8n.host
-
-  - source:
-      kind: ConfigMap
-      name: homelab-cluster-config
-      fieldPath: data.url_n8n_webhook
-    targets:
-      - select: {kind: HelmRelease, name: n8n}
-        fieldPaths:
-          - spec.values.main.config.n8n.webhook_url
-          - spec.values.main.extraEnv.WEBHOOK_URL.value
-
-  # -------- TLS secret names ----------------------------------------------
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
@@ -464,4 +345,6 @@ replacements:
       - select: {kind: Ingress, name: n8n}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: watchyourlan}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: gatus}
         fieldPaths: [spec.tls.0.secretName]
