@@ -127,9 +127,8 @@ spec:
         - name: teslamate
           url: https://teslamate.f4mily.net
           interval: 60s
-          client:
-            headers:
-              Host: teslamate.f4mily.net
+          headers:
+            Host: teslamate.f4mily.net
           conditions:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 5000"
@@ -139,8 +138,8 @@ spec:
           interval: 60s
           client:
             timeout: 180s
-            headers:
-              Host: rezepte.f4mily.net
+          headers:
+            Host: rezepte.f4mily.net
           conditions:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 5000"
