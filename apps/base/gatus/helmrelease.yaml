@@ -60,82 +60,67 @@ spec:
         # ──────────────────────────────────────────────
         - name: audible
           group: media
-          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: https://audible.f4mily.net
           interval: 60s
-          headers:
-            Host: audible.f4mily.net
           conditions:
             - "[STATUS] < 400"
             - "[RESPONSE_TIME] < 5000"
 
         - name: immich
           group: media
-          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: https://immich.f4mily.net
           interval: 60s
-          headers:
-            Host: immich.f4mily.net
           conditions:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 5000"
 
         - name: jellyfin
           group: media
-          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: https://jellyfin.f4mily.net/health
           interval: 60s
-          headers:
-            Host: jellyfin.f4mily.net
           conditions:
             - "[STATUS] < 400"
+            - "[BODY].status == Healthy"
             - "[RESPONSE_TIME] < 5000"
 
         - name: kavita
           group: media
-          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx/api/health
+          url: https://books.f4mily.net/api/health
           interval: 60s
-          headers:
-            Host: books.f4mily.net
           conditions:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 5000"
 
         - name: paperless
           group: documents
-          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: https://paperless.f4mily.net
           interval: 60s
-          headers:
-            Host: paperless.f4mily.net
           conditions:
             - "[STATUS] < 400"
             - "[RESPONSE_TIME] < 5000"
 
         - name: readeck
           group: documents
-          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: https://readdeck.f4mily.net
           interval: 60s
-          headers:
-            Host: readeck.f4mily.net
           conditions:
             - "[STATUS] < 400"
             - "[RESPONSE_TIME] < 5000"
 
         - name: sterling-pdf
           group: documents
-          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: https://pdf.f4mily.net
           interval: 60s
           client:
             timeout: 180s
-          headers:
-            Host: pdf.f4mily.net
           conditions:
             - "[STATUS] == 200"
             - "[RESPONSE_TIME] < 5000"
 
         - name: linkding
           group: bookmarks
-          url: http://ingress-nginx-nginx-ingress-controller.ingress-nginx
+          url: https://bookmarks.f4mily.net
           interval: 60s
-          headers:
-            Host: bookmarks.f4mily.net
           conditions:
             - "[STATUS] < 400"
             - "[RESPONSE_TIME] < 5000"
