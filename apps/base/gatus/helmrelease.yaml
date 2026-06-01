@@ -17,6 +17,10 @@ spec:
   values:
     priorityClassName: homelab-infrastructure
 
+    # Recreate-Strategie wegen RWO PVC (truenas-iscsi) – RollingUpdate blockiert sonst
+    deployment:
+      strategy: Recreate
+
     # Eigenes Ingress (siehe ingress.yaml)
     ingress:
       enabled: false
