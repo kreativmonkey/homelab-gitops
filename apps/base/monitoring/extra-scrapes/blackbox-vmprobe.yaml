@@ -23,20 +23,19 @@ spec:
         - https://home.f4mily.net
         - https://immich.f4mily.net
         - https://jellyfin.f4mily.net
-        - https://books.f4mily.net
+        - https://books.f4mily.net/api/health
         - https://paperless.f4mily.net
         - https://pdf.f4mily.net
         - https://search.f4mily.net
         - https://teslamate.f4mily.net
-        - https://rezepte.f4mily.net
         - https://bookmarks.f4mily.net
         - https://linkwarden.f4mily.net
         - https://readeck.f4mily.net
         - https://fitness.f4mily.net
         - https://nc.f4mily.net
         # Cluster-internal (cluster.f4mily.net)
-        - https://goloom.cluster.f4mily.net
-        - https://grafana.cluster.f4mily.net
+        - https://goloom.cluster.f4mily.net/healthz
+        - https://grafana.cluster.f4mily.net/api/health
         - https://metrics.cluster.f4mily.net
         - https://n8n.cluster.f4mily.net
         - https://homer.cluster.f4mily.net

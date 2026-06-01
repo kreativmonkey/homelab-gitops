@@ -6,3 +6,4 @@ resources:
   - nginx-ingress-vmservicescrape.yaml
   - cnpg-vmpodscrape.yaml
   - blackbox-vmprobe.yaml
+  - blackbox-vmprobe-tandoor.yaml
