@@ -61,18 +61,29 @@ spec:
                       - name: paperless-ngx
                         volumeMounts:
                           - name: data
+                            mountPath: /usr/src/paperless/data
                             subPath: paperless/data
                           - name: media
+                            mountPath: /usr/src/paperless/media
                             subPath: paperless/media
                           - name: export
+                            mountPath: /usr/src/paperless/export
                             subPath: paperless/export
                           - name: consume
                             mountPath: /usr/src/paperless/consume
                             subPath: paperless/consume
-                    volumes:
-                      - name: consume
-                        persistentVolumeClaim:
-                          claimName: paperless-ngx-consume
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: paperless-ngx
+            patch: |
+              - op: add
+                path: /spec/template/spec/volumes/-
+                value:
+                  name: consume
+                  persistentVolumeClaim:
+                    claimName: paperless-ngx-consume
           - target:
               group: apps
               version: v1
@@ -90,6 +101,7 @@ spec:
                       - name: redis
                         volumeMounts:
                           - name: data
+                            mountPath: /data
                             subPath: paperless/redis
           - target:
               group: apps
