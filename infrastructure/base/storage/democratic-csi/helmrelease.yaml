@@ -53,4 +53,4 @@ spec:
         parameters:
           detachedVolumesFromSnapshots: "false"
           fsType: ext4
-    # VolumeSnapshotClass requires snapshot.storage.k8s.io CRDs (not installed yet).
+          # VolumeSnapshotClass requires snapshot.storage.k8s.io CRDs (not installed yet).

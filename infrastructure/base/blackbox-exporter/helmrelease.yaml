@@ -18,6 +18,13 @@ spec:
   values:
     priorityClassName: homelab-infrastructure
 
+    # IMPORTANT: Split-horizon DNS. Public resolvers return WAN IPs which breaks
+    # in-cluster probing (TLS handshake to wrong endpoint). Force homelab DNS.
+    dnsPolicy: None
+    dnsConfig:
+      nameservers:
+        - 192.168.10.1
+
     # http_2xx-Modul – prüft HTTP 200 + SSL-Zertifikatsgültigkeit
     # Timeout 15s für Java-/Django-Apps (sterling-pdf, tandoor).
     config:
@@ -30,6 +37,11 @@ spec:
             method: GET
             follow_redirects: true
             preferred_ip_protocol: "ip4"
+            # Force SNI even if the prober connects to a resolved IP.
+            # Otherwise some ingress frontends reset the connection with
+            # `remote error: tls: internal error`.
+            tls_config:
+              server_name: home.f4mily.net
         # Separates Modul für tandoor (benötigt Host-Header)
         http_2xx_tandoor:
           prober: http
@@ -41,6 +53,8 @@ spec:
             preferred_ip_protocol: "ip4"
             headers:
               Host: rezepte.f4mily.net
+            tls_config:
+              server_name: rezepte.f4mily.net
 
     # Blackbox-Exporter ist extrem leichtgewichtig
     resources:
