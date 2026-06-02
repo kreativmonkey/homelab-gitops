@@ -37,14 +37,6 @@ spec:
                 path: /spec/volumeName
                 value: pv-nfs-paperless-export-documents
           - target:
-              version: v1
-              kind: PersistentVolumeClaim
-              name: redis-data
-            patch: |
-              - op: add
-                path: /spec/volumeName
-                value: pv-nfs-paperless-redis-documents
-          - target:
               group: apps
               version: v1
               kind: Deployment
@@ -102,7 +94,9 @@ spec:
                         volumeMounts:
                           - name: data
                             mountPath: /data
-                            subPath: paperless/redis
+                    volumes:
+                      - name: data
+                        emptyDir: {}
           - target:
               group: apps
               version: v1
