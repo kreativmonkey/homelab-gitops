@@ -192,14 +192,7 @@ spec:
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
-
-        - name: teslamate-ws
-          group: monitoring
-          url: wss://teslamate.f4mily.net/live/websocket
-          interval: 60s
-          client: *default-dns
-          conditions:
-             - "[CONNECTED] == true"
+             - '[BODY] == pat(*TeslaMate*)'
 
         - name: teslamate-grafana
           group: monitoring
