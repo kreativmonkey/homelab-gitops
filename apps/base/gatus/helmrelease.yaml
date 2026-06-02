@@ -323,7 +323,7 @@ spec:
           interval: 60s
           conditions:
               - "[STATUS] == 200"
-              - "[RESPONSE_TIME] < 200"
+              - "[RESPONSE_TIME] < 1000"
               - "len([BODY]) > 5"
 
         - name: Download Server 2
@@ -332,7 +332,7 @@ spec:
           interval: 60s
           conditions:
               - "[STATUS] == 200"
-              - "[RESPONSE_TIME] < 200"
+              - "[RESPONSE_TIME] < 1000"
               - "len([BODY]) > 5"
 
         - name: Etherpad
@@ -341,7 +341,7 @@ spec:
           interval: 60s
           conditions:
               - "[STATUS] == 200"
-              - "[RESPONSE_TIME] < 200"
+              - "[RESPONSE_TIME] < 1000"
 
         - name: Planer
           group: binärgewitter-internal
@@ -349,7 +349,7 @@ spec:
           interval: 60s
           conditions:
               - "[STATUS] == 200"
-              - "[RESPONSE_TIME] < 200"
+              - "[RESPONSE_TIME] < 1000"
 
         - name: Jit.social
           group: Keller.io
