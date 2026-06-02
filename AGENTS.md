@@ -9,8 +9,9 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 - **Ingress / Networking**: NGINX Ingress Controller with `nginx.org/*` annotations (or Gateway API) + Cilium CNI
 - **Storage**: Democratic CSI (TrueNAS iSCSI) for fast workloads (e.g., databases) and NFS for large media files
 - **Database Operator**: CloudNativePG (central PostgreSQL)
-- **VCS / CI‑CD**: Forgejo + Forgejo Runners
+- **VCS / CI‑CD**: Github + Github Runners
 - **Dependency Management**: Renovate
+- **Kubernetes Connection**: kubeconfig und nix developer shell im repository 
 
 ---
 
