@@ -4,7 +4,7 @@
 |----------|------|---------|-------------|
 | GitOps auto-remediation | `homelab-gitops-remediation.workflow.json` | `POST /webhook/vmalert` | **None in UI** — `$env` from `n8n-integration-credentials` |
 | GitOps remediation **errors** | `homelab-gitops-remediation-error.workflow.json` | Error Trigger (linked workflow) | `$env` `NTFY_URL`, `NTFY_TOKEN` |
-| Alert triage (Telegram) | `../monitoring/n8n-workflows/homelab-alert-triage.workflow.json` | SOPS URL in monitoring | Manual: OpenAI + Telegram in n8n UI |
+| Alert triage (Telegram) | `../monitoring/n8n-workflows/homelab-alert-triage.workflow.json` | SOPS URL in monitoring | Manual: Telegram credential + Chat ID in jedem Telegram-Node; OpenAI auf LLM-Nodes |
 
 ## After deploy / upgrade
 

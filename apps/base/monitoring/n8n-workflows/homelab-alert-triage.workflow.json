@@ -87,7 +87,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "chatId": "",
         "text": "={{ $json.telegramText }}",
         "additionalFields": {
           "parse_mode": "={{ $json.parseMode }}"
@@ -250,7 +250,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "chatId": "",
         "text": "={{ $json.telegramText }}",
         "additionalFields": {
           "parse_mode": "={{ $json.parseMode }}"
@@ -286,7 +286,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "chatId": "",
         "text": "={{ $json.telegramText }}",
         "additionalFields": {
           "parse_mode": "={{ $json.parseMode }}"
@@ -564,14 +564,17 @@
       "parameters": {
         "resource": "message",
         "operation": "sendMessage",
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "chatId": "",
         "additionalFields": {
           "parse_mode": "={{ $json.parseMode }}"
         },
         "text": "={{ $json.telegramText }}"
       },
       "credentials": {
-        "telegramApi": "n8n-telegram-bot"
+        "telegramApi": {
+          "id": "CONFIGURE_ME",
+          "name": "Telegram Homelab Bot"
+        }
       }
     }
   ],
