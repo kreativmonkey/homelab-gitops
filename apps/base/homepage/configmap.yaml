@@ -56,7 +56,7 @@ data:
             description: Network Firewall & Router
             ping: https://opnsense.f4mily.net
         - Adguard Home:
-            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/adguard.png
+            icon: https://cdn.jsdelivr.net/gh/selfhst/icons/svg/adguard-home-central-manager.svg
             href: "http://192.168.10.1:3000"
             external: true
             description: Network-wide Ad Blocker
@@ -73,7 +73,7 @@ data:
             description: Network Attached Storage
             ping: http://192.168.10.94"
         - Garage S3 Controller:
-            icon: mdi-garage
+            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/garage.svg
             href: "http://192.168.10.94:30186"
             external: true
             description: Garage S3 Controller
