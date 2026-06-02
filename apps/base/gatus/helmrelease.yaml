@@ -374,7 +374,12 @@ spec:
 
         - name: Gitlab
           group: Keller.io
-          url: https://gitlab.jit-creatives.de/-/health
+          url: https://gitlab.jit-creatives.de/users/sign_in
+          interval: 60s
+          conditions:
+              - "[STATUS] < 400"
+              - "[RESPONSE_TIME] < 5000"
+              - "[BODY] == pat(*GitLab*)"
 
         - name: Nextcloud 
           group: Keller.io 
