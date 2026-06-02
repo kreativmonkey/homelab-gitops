@@ -15,6 +15,17 @@ spec:
       labels:
         app.kubernetes.io/name: paperless-smb
     spec:
+      initContainers:
+        - name: seed-consume-dir
+          image: docker.io/library/busybox:1.37
+          command:
+            - sh
+            - -c
+            - touch /storage/.paperless-smb-keep
+          volumeMounts:
+            - name: consume
+              mountPath: /storage
+              subPath: paperless/consume
       containers:
         - name: samba
           image: ghcr.io/dockur/samba:4.22.6
