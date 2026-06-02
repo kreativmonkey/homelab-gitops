@@ -46,6 +46,12 @@ spec:
       # Metriken für VictoriaMetrics-Scraping aktivieren
       metrics: true
 
+      # PVC mountPath ist /data — ohne storage bleibt Default "memory" (History weg nach Restart)
+      storage:
+        type: sqlite
+        path: /data/data.db
+        caching: true
+
       # UI
       ui:
         title: Cluster Status
