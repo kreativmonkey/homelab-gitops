@@ -14,15 +14,6 @@ spec:
         kind: HelmRepository
         name: twin-repo
         namespace: flux-system
-  # Chart rendert rollingUpdate auch bei strategy: Recreate → K8s rejected.
-  # postRenderers setzt rollingUpdate auf null (entfernt es).
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              kind: Deployment
-              name: gatus
-            patch: '[{"op": "replace", "path": "/spec/strategy/rollingUpdate", "value": null}]'
   values:
     priorityClassName: homelab-infrastructure
 
@@ -38,7 +29,7 @@ spec:
       limits:
         memory: 128Mi
 
-    # Recreate statt RollingUpdate vermeidet RWO-Multi-Attach-Deadlock.
+    # Recreate vermeidet RWO-Multi-Attach-Deadlock bei RollingUpdate.
     deployment:
       strategy: Recreate
 
