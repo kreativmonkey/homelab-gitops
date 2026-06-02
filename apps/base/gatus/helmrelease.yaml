@@ -14,17 +14,6 @@ spec:
         kind: HelmRepository
         name: twin-repo
         namespace: flux-system
-  # postRenderers entfernt das leere rollingUpdate: {} das das Gatus-Chart
-  # immer mitsendet – sonst rejected K8s bei strategy: Recreate.
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              kind: Deployment
-              name: gatus
-            patch: |-
-              - op: remove
-                path: /spec/strategy/rollingUpdate
   values:
     priorityClassName: homelab-infrastructure
 
@@ -41,7 +30,6 @@ spec:
         memory: 128Mi
 
     # Recreate statt RollingUpdate vermeidet RWO-Multi-Attach-Deadlock.
-    # Chart rendert immer rollingUpdate: {} → postRenderers entfernt es.
     deployment:
       strategy: Recreate
 
