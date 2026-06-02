@@ -295,3 +295,91 @@ spec:
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
+
+        # ──────────────────────────────────────────────
+        # Externe Services
+        # ──────────────────────────────────────────────
+
+        - name: Blog
+          group: binaergewitter-public
+          url: https://blog.binaergewitter.de
+          interval: 60s
+          conditions:
+              - "[STATUS] == 200"
+              - "[RESPONSE_TIME] < 200"
+              - '[BODY] == pat(*Binärgewitter*)'
+        
+        - name: Feed
+          group: binaergewitter-public
+          url: https://feed.binaergewitter.de
+          interval: 60s
+          conditions:
+              - "[STATUS] == 200"
+              - "[RESPONSE_TIME] < 5000"
+        
+        - name: Download Server 1
+          group: binaergewitter-infra
+          url: https://download.binaergewitter.de/
+          interval: 60s
+          conditions:
+              - "[STATUS] == 200"
+              - "[RESPONSE_TIME] < 200"
+              - "len([BODY]) > 5"
+
+        - name: Download Server 2
+          group: binaergewitter-infra
+          url: https://dl2.binaergewitter.de/
+          interval: 60s
+          conditions:
+              - "[STATUS] == 200"
+              - "[RESPONSE_TIME] < 200"
+              - "len([BODY]) > 5"
+
+        - name: Etherpad
+          group: binärgewitter-internal
+          url: https://etherpad.binaergewitter.de/stats
+          interval: 60s
+          conditions:
+              - "[STATUS] == 200"
+              - "[RESPONSE_TIME] < 200"
+
+        - name: Planer
+          group: binärgewitter-internal
+          url: https://plan.binaergewitter.de/
+          interval: 60s
+          conditions:
+              - "[STATUS] == 200"
+              - "[RESPONSE_TIME] < 200"
+
+        - name: Jit.social
+          group: Keller.io
+          url: https://jit.social/health
+          interval: 60s
+          conditions:
+              - "[STATUS] == 200"
+              - "[RESPONSE_TIME] < 5000"
+              - "[BODY] == OK"
+
+        - name: Keycloak
+          group: Keller.io
+          # Enable Health endpoints for Keycloak
+          # KC_HEALTH_ENABLED=true
+          # use url: https://auth.savar.de/health
+          url: https://auth.savar.de
+          interval: 60s
+          conditions:
+              - "[STATUS] < 400"
+              - "[RESPONSE_TIME] < 5000"
+              - "[BODY] == pat(*Console*)"
+
+        - name: Gitlab
+          group: Keller.io
+          url: https://gitlab.jit-creatives.de/-/health
+
+        - name: Nextcloud 
+          group: Keller.io 
+          url: https://cloud.savar.de/status.php
+          conditions:
+              - "[STATUS] == 200"
+              - "[RESPONSE_TIME] < 5000"
+              - "[BODY] == pat(*Nextcloud*)"
