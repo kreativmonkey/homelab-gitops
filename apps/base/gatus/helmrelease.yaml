@@ -301,7 +301,7 @@ spec:
         # ──────────────────────────────────────────────
 
         - name: Blog
-          group: binaergewitter
+          group: Binaergewitter
           url: https://blog.binaergewitter.de
           interval: 60s
           conditions:
@@ -310,7 +310,7 @@ spec:
               - '[BODY] == pat(*Binärgewitter*)'
         
         - name: Feed
-          group: binaergewitter
+          group: Binaergewitter
           url: https://feed.binaergewitter.de
           interval: 60s
           conditions:
@@ -318,7 +318,7 @@ spec:
               - "[RESPONSE_TIME] < 5000"
         
         - name: Download Server 1
-          group: binaergewitter
+          group: Binaergewitter
           url: https://download.binaergewitter.de/
           interval: 60s
           conditions:
@@ -327,7 +327,7 @@ spec:
               - "len([BODY]) > 5"
 
         - name: Download Server 2
-          group: binaergewitter
+          group: Binaergewitter
           url: https://dl2.binaergewitter.de/
           interval: 60s
           conditions:
@@ -336,7 +336,7 @@ spec:
               - "len([BODY]) > 5"
 
         - name: Etherpad
-          group: binärgewitter
+          group: Binaergewitter
           url: https://etherpad.binaergewitter.de/stats
           interval: 60s
           conditions:
@@ -344,7 +344,7 @@ spec:
               - "[RESPONSE_TIME] < 1000"
 
         - name: Planer
-          group: binärgewitter
+          group: Binaergewitter
           url: https://plan.binaergewitter.de/
           interval: 60s
           conditions:
