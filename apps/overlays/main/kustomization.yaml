@@ -20,6 +20,7 @@ resources:
   - databases
   - db-secrets
   - paperless-ngx.secret.yaml
+  - paperless-ngx-integrations.secret.yaml
 
   # --- Media & Documents ------------------------------------------------
   - ../../base/audiobookshelf

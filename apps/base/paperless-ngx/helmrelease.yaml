@@ -66,6 +66,13 @@ spec:
                             subPath: paperless/media
                           - name: export
                             subPath: paperless/export
+                          - name: consume
+                            mountPath: /usr/src/paperless/consume
+                            subPath: paperless/consume
+                    volumes:
+                      - name: consume
+                        persistentVolumeClaim:
+                          claimName: paperless-ngx-consume
           - target:
               group: apps
               version: v1
@@ -147,6 +154,38 @@ spec:
           value: Europe/Berlin
         - name: PAPERLESS_OCR_LANGUAGE
           value: eng
+        - name: PAPERLESS_ALLOWED_HOSTS
+          value: paperless.f4mily.net
+        - name: PAPERLESS_CSRF_TRUSTED_ORIGINS
+          value: https://paperless.f4mily.net
+        - name: PAPERLESS_TASK_WORKERS
+          value: "2"
+        - name: PAPERLESS_THREADS_PER_WORKER
+          value: "1"
+        - name: PAPERLESS_CONSUMER_POLLING
+          value: "60"
+        - name: PAPERLESS_TIKA_ENABLED
+          value: "1"
+        - name: PAPERLESS_TIKA_GOTENBERG_ENDPOINT
+          value: http://gotenberg:3000
+        - name: PAPERLESS_TIKA_ENDPOINT
+          value: http://tika:9998
+        - name: PAPERLESS_CONSUMER_ENABLE_BARCODES
+          value: "true"
+        - name: PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE
+          value: "true"
+        - name: PAPERLESS_CONSUMER_ENABLE_TAG_BARCODE
+          value: "true"
+        - name: PAPERLESS_CONSUMER_TAG_BARCODE_MAPPING
+          value: '{ "ASN13.*": "Hausbau" }'
+        - name: PAPERLESS_APPS
+          value: allauth.socialaccount.providers.openid_connect
+        - name: PAPERLESS_LOGOUT_REDIRECT_URL
+          value: https://login.f4mily.net/application/o/paperless/end-session/
+        - name: PAPERLESS_SOCIAL_AUTO_SIGNUP
+          value: "true"
+        - name: PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS
+          value: "true"
       ingress:
         enabled: false
       volumes:
@@ -167,6 +206,8 @@ spec:
           name: paperless-ngx
         - key: PAPERLESS_URL
           name: paperless-ngx
+        - key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+          name: paperless-ngx-integrations
     redis:
       volumes:
         - name: data

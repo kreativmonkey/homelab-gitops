@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless-smb
+  namespace: paperless-ngx
+  labels:
+    app.kubernetes.io/name: paperless-smb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: paperless-smb
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: paperless-smb
+    spec:
+      containers:
+        - name: samba
+          image: ghcr.io/dockur/samba:4.22.6
+          env:
+            - name: NAME
+              value: Consume
+            - name: USER
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-integrations
+                  key: SMB_USER
+            - name: PASS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-integrations
+                  key: SMB_PASSWORD
+          ports:
+            - name: smb
+              containerPort: 445
+          volumeMounts:
+            - name: consume
+              mountPath: /storage
+              subPath: paperless/consume
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: consume
+          persistentVolumeClaim:
+            claimName: paperless-ngx-consume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-smb
+  namespace: paperless-ngx
+spec:
+  type: ClusterIP
+  externalIPs:
+    - 192.168.10.245
+  selector:
+    app.kubernetes.io/name: paperless-smb
+  ports:
+    - name: smb
+      port: 445
+      targetPort: smb

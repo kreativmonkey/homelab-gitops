@@ -10,8 +10,9 @@
 # immich/paperless HelmRelease values).
 #
 # subPath reference (relative to export root):
-#   Media/Bilder, Media/Fotos, Media/paperless/*, Media/jellyfin/*,
-#   Media/MediaStack/media/*, Media/Books, Media/docker/* (create on NAS if missing)
+#   Media/Bilder, Media/Fotos, Media/jellyfin/*,
+#   Documents/paperless/*, Media/MediaStack/media/*, Media/Books,
+#   Media/docker/* (create on NAS if missing)
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -66,7 +67,7 @@ metadata:
   name: pv-nfs-paperless-data
   labels:
     app: paperless-ngx
-    storage.type: nfs-media
+    storage.type: nfs-documents
 spec:
   capacity:
     storage: 50Gi
@@ -78,7 +79,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/Media
+    path: /mnt/Storagepool/Documents
     server: 192.168.10.94
   claimRef:
     name: paperless-ngx-data
@@ -90,7 +91,7 @@ metadata:
   name: pv-nfs-paperless-media
   labels:
     app: paperless-ngx
-    storage.type: nfs-media
+    storage.type: nfs-documents
 spec:
   capacity:
     storage: 500Gi
@@ -102,7 +103,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/Media
+    path: /mnt/Storagepool/Documents
     server: 192.168.10.94
   claimRef:
     name: paperless-ngx-media
@@ -114,7 +115,7 @@ metadata:
   name: pv-nfs-paperless-export
   labels:
     app: paperless-ngx
-    storage.type: nfs-media
+    storage.type: nfs-documents
 spec:
   capacity:
     storage: 100Gi
@@ -126,7 +127,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/Media
+    path: /mnt/Storagepool/Documents
     server: 192.168.10.94
   claimRef:
     name: paperless-ngx-export
@@ -138,7 +139,7 @@ metadata:
   name: pv-nfs-paperless-redis
   labels:
     app: paperless-ngx
-    storage.type: nfs-media
+    storage.type: nfs-documents
 spec:
   capacity:
     storage: 10Gi
@@ -150,10 +151,34 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    path: /mnt/Storagepool/Media
+    path: /mnt/Storagepool/Documents
     server: 192.168.10.94
   claimRef:
     name: redis-data
+    namespace: paperless-ngx
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-paperless-consume
+  labels:
+    app: paperless-ngx
+    storage.type: nfs-documents
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Documents
+    server: 192.168.10.94
+  claimRef:
+    name: paperless-ngx-consume
     namespace: paperless-ngx
 ---
 apiVersion: v1
