@@ -53,34 +53,57 @@ spec:
         title: Cluster Status
         default-sort-by: group
 
-      # Split-Horizon DNS erzwingen: f4mily.net Domains immer über internen DNS auflösen.
-      client:
-        dns-resolver: tcp://192.168.10.1:53
-
       endpoints:
+        # ──────────────────────────────────────────────
+        #  YAML-Anchor: Split-Horizon DNS via internen Resolver
+        # ──────────────────────────────────────────────
+        # Erzwingt Auflösung von f4mily.net/cluster.f4mily.net
+        # über den internen DNS (192.168.10.1) statt CoreDNS.
+        # ──────────────────────────────────────────────
+
         # ──────────────────────────────────────────────
         # Public (f4mily.net)
         # ──────────────────────────────────────────────
-        - name: audible
+        - name: audiobookshelf
           group: media
           url: https://audible.f4mily.net
           interval: 60s
+          client: &default-dns
+            dns-resolver: tcp://192.168.10.1:53
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
+
+        - name: audiobookshelf-ws
+          group: media
+          url: wss://audible.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[CONNECTED] == true"
 
         - name: immich
           group: media
           url: https://immich.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
+
+        - name: immich-ws
+          group: media
+          url: wss://immich.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[CONNECTED] == true"
 
         - name: jellyfin
           group: media
           url: https://jellyfin.f4mily.net/health
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
@@ -89,14 +112,24 @@ spec:
           group: media
           url: https://books.f4mily.net/api/health
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
+
+        - name: kavita-ws
+          group: media
+          url: wss://books.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[CONNECTED] == true"
 
         - name: paperless
           group: documents
           url: https://paperless.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
@@ -105,6 +138,7 @@ spec:
           group: documents
           url: https://readeck.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
@@ -114,7 +148,8 @@ spec:
           url: https://pdf.f4mily.net
           interval: 60s
           client:
-             timeout: 180s
+            dns-resolver: tcp://192.168.10.1:53
+            timeout: 180s
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
@@ -123,6 +158,7 @@ spec:
           group: bookmarks
           url: https://bookmarks.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
@@ -133,6 +169,7 @@ spec:
           group: tools
           url: https://home.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
@@ -141,6 +178,7 @@ spec:
           group: tools
           url: https://fitness.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
@@ -150,7 +188,8 @@ spec:
           url: https://search.f4mily.net
           interval: 60s
           client:
-             timeout: 120s
+            dns-resolver: tcp://192.168.10.1:53
+            timeout: 120s
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
@@ -160,7 +199,8 @@ spec:
           url: https://rezepte.f4mily.net
           interval: 60s
           client:
-             timeout: 180s
+            dns-resolver: tcp://192.168.10.1:53
+            timeout: 180s
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
@@ -169,14 +209,24 @@ spec:
           group: monitoring
           url: https://teslamate.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
+
+        - name: teslamate-ws
+          group: monitoring
+          url: wss://teslamate.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[CONNECTED] == true"
 
         - name: teslamate-grafana
           group: monitoring
           url: https://teslamate.f4mily.net/grafana/
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
@@ -185,14 +235,24 @@ spec:
           group: core
           url: https://git.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
+
+        - name: forgejo-ws
+          group: core
+          url: wss://git.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[CONNECTED] == true"
 
         - name: authentik
           group: core
           url: https://login.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
@@ -201,9 +261,18 @@ spec:
           group: core
           url: https://nc.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
+
+        - name: nextcloud-ws
+          group: core
+          url: wss://nc.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[CONNECTED] == true"
 
         # ──────────────────────────────────────────────
         # Cluster-internal (cluster.f4mily.net)
@@ -212,6 +281,7 @@ spec:
           group: observability
           url: https://grafana.cluster.f4mily.net/api/health
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
@@ -220,6 +290,7 @@ spec:
           group: observability
           url: https://metrics.cluster.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
@@ -228,6 +299,7 @@ spec:
           group: observability
           url: https://homer.cluster.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
@@ -236,6 +308,7 @@ spec:
           group: automation
           url: https://goloom.cluster.f4mily.net/healthz
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
@@ -244,14 +317,24 @@ spec:
           group: automation
           url: https://n8n.cluster.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
+
+        - name: n8n-ws
+          group: automation
+          url: wss://n8n.cluster.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[CONNECTED] == true"
 
         - name: watchyourlan
           group: network
           url: https://watchyourlan.cluster.f4mily.net
           interval: 60s
+          client: *default-dns
           conditions:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
