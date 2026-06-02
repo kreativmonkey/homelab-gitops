@@ -66,13 +66,14 @@ spec:
         # ──────────────────────────────────────────────
         - name: audiobookshelf
           group: media
-          url: https://audible.f4mily.net
+          url: https://audible.f4mily.net/healthcheck
           interval: 60s
           client: &default-dns
             dns-resolver: tcp://192.168.10.1:53
           conditions:
-             - "[STATUS] < 400"
+             - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
+             - '[BODY] == "OK"'
 
         - name: immich
           group: media
@@ -89,8 +90,9 @@ spec:
           interval: 60s
           client: *default-dns
           conditions:
-             - "[STATUS] < 400"
+             - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
+             - '[BODY] == "Healthy"'
 
         - name: kavita
           group: media
@@ -100,6 +102,7 @@ spec:
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
+             - '[BODY] == "Ok"'
 
         - name: paperless
           group: documents
@@ -275,12 +278,13 @@ spec:
 
         - name: n8n
           group: automation
-          url: https://n8n.cluster.f4mily.net
+          url: https://n8n.cluster.f4mily.net/healthz
           interval: 60s
           client: *default-dns
           conditions:
-             - "[STATUS] < 400"
+             - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
+             - '[BODY] == "{"status":"ok"}"'
 
         - name: n8n-ws
           group: automation
