@@ -4,6 +4,12 @@ metadata:
   name: gatus
   namespace: gatus
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Gatus
+    gethomepage.dev/description: Uptime monitoring and alerting tool for HTTP(s) endpoints.
+    gethomepage.dev/group: Cluster Management
+    gethomepage.dev/icon: gatus.png
+    gethomepage.dev/pod-selector: app=gatus
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
