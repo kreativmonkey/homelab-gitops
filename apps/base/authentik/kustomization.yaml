@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - authentik-secret-key.secret.yaml
+  - blueprints/paperless-oauth.configmap.yaml
   - media-pvc.yaml
   - helmrelease.yaml
   - ingress.yaml

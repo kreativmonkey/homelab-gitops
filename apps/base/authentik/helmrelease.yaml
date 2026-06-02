@@ -60,9 +60,10 @@ spec:
         timeout: 10
       error_reporting:
         enabled: true
-    # Production DB is authoritative — do not overlay GitOps OAuth blueprints.
+    # Production DB is authoritative for migrated apps; add new providers here only.
     blueprints:
-      configMaps: []
+      configMaps:
+        - authentik-paperless-blueprint
     server:
       ingress:
         enabled: false
