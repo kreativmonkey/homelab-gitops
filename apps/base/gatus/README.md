@@ -10,19 +10,19 @@ Gatus nutzt `strategy: Recreate` statt RollingUpdate.
 
 **Problem:** Das Gatus-Chart rendert auch bei `strategy: Recreate` ein leeres `rollingUpdate: {}` mit. Kubernetes rejected das (`Forbidden: may not be specified when strategy type is 'Recreate'`).
 
-**Lösung:** Flux `postRenderers` mit StrategicMergePatch nullt `rollingUpdate`:
+**Lösung:** Flux `postRenderers` mit JSON-Patch nullt `rollingUpdate`:
 
 ```yaml
 postRenderers:
   - kustomize:
-      patchesStrategicMerge:
-        - apiVersion: apps/v1
-          kind: Deployment
-          metadata:
+      patches:
+        - target:
+            kind: Deployment
             name: gatus
-          spec:
-            strategy:
-              rollingUpdate: null
+          patch: |-
+            - op: replace
+              path: /spec/strategy/rollingUpdate
+              value: null
 ```
 
 ## Persistence

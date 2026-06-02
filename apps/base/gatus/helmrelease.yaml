@@ -15,17 +15,17 @@ spec:
         name: twin-repo
         namespace: flux-system
   # Chart rendert rollingUpdate auch bei strategy: Recreate → K8s rejected.
-  # Mit postRenderers/null wird das leere rollingUpdate entfernt.
+  # postRenderers setzt rollingUpdate auf null (entfernt es).
   postRenderers:
     - kustomize:
-        patchesStrategicMerge:
-          - apiVersion: apps/v1
-            kind: Deployment
-            metadata:
+        patches:
+          - target:
+              kind: Deployment
               name: gatus
-            spec:
-              strategy:
-                rollingUpdate: null
+            patch: |-
+              - op: replace
+                path: /spec/strategy/rollingUpdate
+                value: null
   values:
     priorityClassName: homelab-infrastructure
 
