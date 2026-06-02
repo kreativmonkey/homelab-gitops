@@ -18,6 +18,13 @@ spec:
   values:
     priorityClassName: homelab-infrastructure
 
+    # IMPORTANT: Split-horizon DNS. Public resolvers return WAN IPs which breaks
+    # in-cluster probing (TLS handshake to wrong endpoint). Force homelab DNS.
+    dnsPolicy: None
+    dnsConfig:
+      nameservers:
+        - 192.168.10.1
+
     # http_2xx-Modul – prüft HTTP 200 + SSL-Zertifikatsgültigkeit
     # Timeout 15s für Java-/Django-Apps (sterling-pdf, tandoor).
     config:
