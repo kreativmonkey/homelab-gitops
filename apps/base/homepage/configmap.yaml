@@ -131,7 +131,7 @@ data:
             description: EV Charger Management
             ping: http://192.168.10.49
         - EVCC:
-            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/evcc.png
+            icon: evcc.png
             href: "http://192.168.10.234:7070"
             external: true
             description: EV Charger Management
