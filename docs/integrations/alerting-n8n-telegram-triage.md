@@ -46,16 +46,13 @@ Alertmanager sendet **parallel** zu ntfy auch an n8n (`continue: true`), nur fü
 Datei: [`apps/base/monitoring/n8n-workflows/homelab-alert-triage.workflow.json`](../../apps/base/monitoring/n8n-workflows/homelab-alert-triage.workflow.json)
 
 1. n8n → **Workflows** → **Import from File**
-2. Credentials zuweisen: **OpenAI** (oder Node auf Ollama umstellen), **Telegram**
-3. Workflow-Variablen / Umgebung in n8n setzen:
+2. **Credentials** in n8n anlegen und zuweisen:
+   - **Telegram Homelab Bot** → alle vier Telegram-Nodes (`Telegram Resolved`, `Telegram Notify`, `Telegram Auto-Fix`, `Telegram Investigate`)
+   - **OpenAI Homelab** → `LLM Triage` und `LLM Root Cause` (oder Nodes auf Ollama umstellen)
+3. **Chat-ID** direkt in jedem Telegram-Node eintragen (Feld *Chat ID* — `$env` funktioniert in Standard-Telegram-Nodes nicht). ID via [@userinfobot](https://t.me/userinfobot).
+4. Optional: Umgebungsvariable `WEBHOOK_SECRET` in n8n (muss mit Alertmanager-Query-Parameter übereinstimmen), `REMEDIATION_API_URL` für Auto-Fix.
 
-| Variable | Beispiel | Beschreibung |
-|----------|----------|--------------|
-| `TELEGRAM_CHAT_ID` | `123456789` | Deine Chat-ID (`@userinfobot`) |
-| `WEBHOOK_SECRET` | zufällig 32+ Zeichen | Muss mit Alertmanager-Header übereinstimmen |
-| `REMEDIATION_URL` | leer oder `http://homelab-remediation...` | Optional Phase 2 |
-
-4. Workflow **aktivieren** → Production-Webhook-URL kopieren. Alertmanager unterstützt **keine Custom-HTTP-Header** — das Secret steckt als Query-Parameter:
+5. Workflow **aktivieren** → Production-Webhook-URL kopieren. Alertmanager unterstützt **keine Custom-HTTP-Header** — das Secret steckt als Query-Parameter:
 
    `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/homelab-alert?webhookSecret=DEIN_LANGES_SECRET`
 
