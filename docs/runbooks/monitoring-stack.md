@@ -84,11 +84,19 @@ kubectl wait -n monitoring --for=condition=ready pod -l app.kubernetes.io/name=v
 
 If it persists: Longhorn UI → volume for `vmsingle-*` PVC → check health; last resort detach/reattach volume or restore from backup (metrics gap).
 
-## Stale chart default alerts (KubeControllerManager*, KubeJobFailed, …)
+## Stale chart default alerts (KubeControllerManager*, ScrapePoolHasNoTargets, …)
 
-Symptom: Alerts from `runbooks.prometheus-operator.dev` despite intending to use only P0 VMRules.
+Symptom: Alerts from chart VMRules (`ScrapePoolHasNoTargets`, `KubeJobFailed`, …) despite intending to use only P0 VMRules.
 
-Cause: `defaultRules.enabled: false` is ignored by `victoria-metrics-k8s-stack` — use **`defaultRules.create: false`**. After fixing Helm values, **orphaned VMRule CRs may remain** until deleted once.
+Cause: the chart template prefers **`defaultRules.enabled`** (default `true`). Setting only `create: false` still renders chart VMRules including `ScrapePoolHasNoTargets` (`vmagent` group). After fixing Helm values, **orphaned VMRule CRs may remain** until deleted once.
+
+Git fix (both required):
+
+```yaml
+defaultRules:
+  create: false
+  enabled: false
+```
 
 One-time cleanup (keeps `homelab-platform-*` / `workload-remediation` VMRules):
 
@@ -99,7 +107,43 @@ kubectl get vmrule -n monitoring
 # Expect only homelab-platform-p0 and homelab-workload-remediation — no vm-k8s-stack-*.rules
 ```
 
-Talos: keep `kubeApiServer`, `kubeControllerManager`, `kubeScheduler`, and `kubeEtcd` scrapes disabled — control-plane Endpoints are not reliably reachable from vmagent (→ `TargetDown`, `KubeAPIInstanceUnreachable`).
+## ScrapePoolHasNoTargets (vmagent empty scrape pools)
+
+Symptom: `ScrapePoolHasNoTargets` — vmagent has a scrape job with 0 discovered targets for 30m+.
+
+Common homelab causes:
+
+| Cause | Typical `scrape_job` / pool names |
+|-------|-----------------------------------|
+| Talos control-plane scrapes disabled in Git but **orphan VMServiceScrape CRs** remain | `serviceScrape/monitoring/vm-k8s-stack-kube-controller-manager/0`, `…-kube-scheduler/0`, `…-kube-etcd/0` (often **3 alerts**) |
+| Wrong port on a Pod/Service endpoint | custom `VMPodScrape` / sidecar port with no `/metrics` |
+| Selector mismatch | `extra-scrapes` CR finds no Services/Pods |
+
+Talos: keep `kubeApiServer`, `kubeControllerManager`, `kubeScheduler`, and `kubeEtcd` **disabled** in `helmrelease.yaml` — control-plane metrics are not reachable via standard Endpoints (empty pools or `TargetDown`).
+
+Diagnose (needs cluster access):
+
+```bash
+kubectl get vmpodscrape,vmservicescrape,vmstaticscrape,vmprobe -A
+# vmagent targets UI (port-forward vmagent pod :8429)
+kubectl port-forward -n monitoring svc/vmagent-vm-k8s-stack 8429:8429
+# open http://127.0.0.1:8429/targets — search "0/0 up"
+curl -s 'http://127.0.0.1:8429/metrics' | grep 'vm_promscrape_scrape_pool_targets{.*} 0$' || true
+curl -sG 'http://127.0.0.1:8429/api/v1/query' --data-urlencode \
+  'query=sum(vm_promscrape_scrape_pool_targets) without(status,instance,pod) == 0'
+```
+
+Remove orphan Talos control-plane scrapes (after Git has them `enabled: false`):
+
+```bash
+kubectl get vmservicescrape -n monitoring -o name | grep -E 'kube-(api-server|controller-manager|scheduler|etcd)|kube-proxy' || true
+kubectl delete vmservicescrape -n monitoring \
+  vm-k8s-stack-kube-controller-manager \
+  vm-k8s-stack-kube-scheduler \
+  vm-k8s-stack-kube-etcd \
+  vm-k8s-stack-kube-api-server 2>/dev/null || true
+flux reconcile helmrelease vm-k8s-stack -n monitoring
+```
 
 If `KubeJobFailed` persists **after** VMRule cleanup, check real Jobs (not monitoring noise):
 
@@ -108,6 +152,8 @@ kubectl get jobs -A --field-selector status.successful!=1
 kubectl logs -n nextcloud job/<name>
 kubectl logs -n renovate job/<name>
 ```
+
+**Nextcloud:** five alerts often = five retained failed CronJob runs (`failedJobsHistoryLimit: 5`). See [nextcloud-cronjob-failed.md](nextcloud-cronjob-failed.md).
 
 ## Flux
 

@@ -47,7 +47,8 @@ spec:
         allowInsecureImages: true
     image:
       # renovate: datasource=docker depName=docker.io/library/nextcloud
-      tag: 33.0.3
+      # Chart uses tag as-is (no -apache suffix); must match apache image used by occ init containers.
+      tag: 33.0.3-apache
     ingress:
       enabled: false
     service:
@@ -425,6 +426,25 @@ spec:
       # crond sidecar requires root; use CronJob with same UID as the app pod.
       type: cronjob
       cronjob:
+        # Chart default failedJobsHistoryLimit=5 → five parallel KubeJobFailed alerts.
+        failedJobsHistoryLimit: 1
+        successfulJobsHistoryLimit: 2
+        activeDeadlineSeconds: 1800
+        backoffLimit: 2
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
+        command:
+          - php
+          - -d
+          - memory_limit=512M
+          - -f
+          - /var/www/html/cron.php
+          - --
+          - --verbose
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
