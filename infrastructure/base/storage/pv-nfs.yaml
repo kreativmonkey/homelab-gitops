@@ -67,6 +67,102 @@ metadata:
   name: pv-nfs-paperless-data
   labels:
     app: paperless-ngx
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media
+    server: 192.168.10.94
+  claimRef:
+    name: paperless-ngx-data
+    namespace: paperless-ngx
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-paperless-media
+  labels:
+    app: paperless-ngx
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 500Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media
+    server: 192.168.10.94
+  claimRef:
+    name: paperless-ngx-media
+    namespace: paperless-ngx
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-paperless-export
+  labels:
+    app: paperless-ngx
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media
+    server: 192.168.10.94
+  claimRef:
+    name: paperless-ngx-export
+    namespace: paperless-ngx
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-paperless-redis
+  labels:
+    app: paperless-ngx
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    path: /mnt/Storagepool/Media
+    server: 192.168.10.94
+  claimRef:
+    name: redis-data
+    namespace: paperless-ngx
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-paperless-data-documents
+  labels:
+    app: paperless-ngx
     storage.type: nfs-documents
 spec:
   capacity:
@@ -88,7 +184,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-nfs-paperless-media
+  name: pv-nfs-paperless-media-documents
   labels:
     app: paperless-ngx
     storage.type: nfs-documents
@@ -112,7 +208,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-nfs-paperless-export
+  name: pv-nfs-paperless-export-documents
   labels:
     app: paperless-ngx
     storage.type: nfs-documents
@@ -136,7 +232,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-nfs-paperless-redis
+  name: pv-nfs-paperless-redis-documents
   labels:
     app: paperless-ngx
     storage.type: nfs-documents
