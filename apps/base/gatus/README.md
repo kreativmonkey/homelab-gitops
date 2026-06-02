@@ -19,10 +19,7 @@ postRenderers:
         - target:
             kind: Deployment
             name: gatus
-          patch: |-
-            - op: replace
-              path: /spec/strategy/rollingUpdate
-              value: null
+          patch: '[{"op": "replace", "path": "/spec/strategy/rollingUpdate", "value": null}]'
 ```
 
 ## Persistence
