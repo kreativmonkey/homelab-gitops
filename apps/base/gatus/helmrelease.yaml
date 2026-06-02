@@ -132,7 +132,7 @@ spec:
              - "[RESPONSE_TIME] < 5000"
 
         - name: linkding
-          group: bookmarks
+          group: application
           url: https://bookmarks.f4mily.net
           interval: 60s
           client: *default-dns
@@ -143,7 +143,7 @@ spec:
         # linkwarden deaktiviert (aus Overlay-Katalog entfernt, s. kustomization.yaml)
 
         - name: homepage
-          group: tools
+          group: core
           url: https://home.f4mily.net
           interval: 60s
           client: *default-dns
@@ -152,7 +152,7 @@ spec:
              - "[RESPONSE_TIME] < 5000"
 
         - name: fitness
-          group: tools
+          group: application
           url: https://fitness.f4mily.net
           interval: 60s
           client: *default-dns
@@ -161,7 +161,7 @@ spec:
              - "[RESPONSE_TIME] < 5000"
 
         - name: searxng
-          group: tools
+          group: core
           url: https://search.f4mily.net
           interval: 60s
           client:
@@ -172,7 +172,7 @@ spec:
              - "[RESPONSE_TIME] < 5000"
 
         - name: tandoor
-          group: tools
+          group: application
           url: https://rezepte.f4mily.net
           interval: 60s
           client:
@@ -183,7 +183,7 @@ spec:
              - "[RESPONSE_TIME] < 5000"
 
         - name: teslamate
-          group: monitoring
+          group: observability
           url: https://teslamate.f4mily.net
           interval: 60s
           client: *default-dns
@@ -193,7 +193,7 @@ spec:
              - '[BODY] == pat(*TeslaMate*)'
 
         - name: teslamate-grafana
-          group: monitoring
+          group: observability
           url: https://teslamate.f4mily.net/grafana/
           interval: 60s
           client: *default-dns
@@ -288,7 +288,7 @@ spec:
              - '[BODY] == pat(*n8n*)'
 
         - name: watchyourlan
-          group: network
+          group: observability
           url: https://watchyourlan.cluster.f4mily.net
           interval: 60s
           client: *default-dns
