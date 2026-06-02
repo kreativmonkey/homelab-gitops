@@ -19,7 +19,7 @@ spec:
             patch: |
               - op: add
                 path: /spec/volumeName
-                value: pv-nfs-paperless-data
+                value: pv-nfs-paperless-data-documents
           - target:
               version: v1
               kind: PersistentVolumeClaim
@@ -27,7 +27,7 @@ spec:
             patch: |
               - op: add
                 path: /spec/volumeName
-                value: pv-nfs-paperless-media
+                value: pv-nfs-paperless-media-documents
           - target:
               version: v1
               kind: PersistentVolumeClaim
@@ -35,7 +35,7 @@ spec:
             patch: |
               - op: add
                 path: /spec/volumeName
-                value: pv-nfs-paperless-export
+                value: pv-nfs-paperless-export-documents
           - target:
               version: v1
               kind: PersistentVolumeClaim
@@ -43,7 +43,7 @@ spec:
             patch: |
               - op: add
                 path: /spec/volumeName
-                value: pv-nfs-paperless-redis
+                value: pv-nfs-paperless-redis-documents
           - target:
               group: apps
               version: v1
