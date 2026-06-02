@@ -136,12 +136,7 @@ curl -sG 'http://127.0.0.1:8429/api/v1/query' --data-urlencode \
 Remove orphan Talos control-plane scrapes (after Git has them `enabled: false`):
 
 ```bash
-kubectl get vmservicescrape -n monitoring -o name | grep -E 'kube-(api-server|controller-manager|scheduler|etcd)|kube-proxy' || true
-kubectl delete vmservicescrape -n monitoring \
-  vm-k8s-stack-kube-controller-manager \
-  vm-k8s-stack-kube-scheduler \
-  vm-k8s-stack-kube-etcd \
-  vm-k8s-stack-kube-api-server 2>/dev/null || true
+./scripts/monitoring/purge-talos-vmservicescrapes.sh monitoring
 flux reconcile helmrelease vm-k8s-stack -n monitoring
 ```
 
