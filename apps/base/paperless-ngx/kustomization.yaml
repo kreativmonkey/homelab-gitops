@@ -2,5 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - namespace.yaml
+  - consume-pvc.yaml
+  - document-services.yaml
   - helmrelease.yaml
   - ingress.yaml
+  - scanner-smb.yaml
