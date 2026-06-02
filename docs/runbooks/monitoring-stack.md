@@ -148,6 +148,8 @@ kubectl logs -n nextcloud job/<name>
 kubectl logs -n renovate job/<name>
 ```
 
+**Nextcloud:** five alerts often = five retained failed CronJob runs (`failedJobsHistoryLimit: 5`). See [nextcloud-cronjob-failed.md](nextcloud-cronjob-failed.md).
+
 ## Flux
 
 ```bash
