@@ -277,13 +277,15 @@ spec:
              - "[RESPONSE_TIME] < 5000"
              - '[BODY].status == ok'
 
-        - name: n8n-ws
+        - name: n8n-main
           group: automation
-          url: wss://n8n.cluster.f4mily.net/rest/push
+          url: https://n8n.cluster.f4mily.net/
           interval: 60s
           client: *default-dns
           conditions:
-             - "[CONNECTED] == true"
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+             - '[BODY] == pat(*n8n*)'
 
         - name: watchyourlan
           group: network
