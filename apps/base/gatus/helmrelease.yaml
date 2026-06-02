@@ -74,14 +74,6 @@ spec:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
 
-        - name: audiobookshelf-ws
-          group: media
-          url: wss://audible.f4mily.net
-          interval: 60s
-          client: *default-dns
-          conditions:
-             - "[CONNECTED] == true"
-
         - name: immich
           group: media
           url: https://immich.f4mily.net
@@ -90,14 +82,6 @@ spec:
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
-
-        - name: immich-ws
-          group: media
-          url: wss://immich.f4mily.net
-          interval: 60s
-          client: *default-dns
-          conditions:
-             - "[CONNECTED] == true"
 
         - name: jellyfin
           group: media
@@ -116,14 +100,6 @@ spec:
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
-
-        - name: kavita-ws
-          group: media
-          url: wss://books.f4mily.net
-          interval: 60s
-          client: *default-dns
-          conditions:
-             - "[CONNECTED] == true"
 
         - name: paperless
           group: documents
@@ -216,7 +192,7 @@ spec:
 
         - name: teslamate-ws
           group: monitoring
-          url: wss://teslamate.f4mily.net
+          url: wss://teslamate.f4mily.net/live/websocket
           interval: 60s
           client: *default-dns
           conditions:
@@ -240,14 +216,6 @@ spec:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
 
-        - name: forgejo-ws
-          group: core
-          url: wss://git.f4mily.net
-          interval: 60s
-          client: *default-dns
-          conditions:
-             - "[CONNECTED] == true"
-
         - name: authentik
           group: core
           url: https://login.f4mily.net
@@ -265,14 +233,6 @@ spec:
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
-
-        - name: nextcloud-ws
-          group: core
-          url: wss://nc.f4mily.net
-          interval: 60s
-          client: *default-dns
-          conditions:
-             - "[CONNECTED] == true"
 
         # ──────────────────────────────────────────────
         # Cluster-internal (cluster.f4mily.net)
@@ -324,7 +284,7 @@ spec:
 
         - name: n8n-ws
           group: automation
-          url: wss://n8n.cluster.f4mily.net
+          url: wss://n8n.cluster.f4mily.net/rest/push
           interval: 60s
           client: *default-dns
           conditions:
