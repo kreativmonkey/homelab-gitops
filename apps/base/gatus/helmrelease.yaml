@@ -14,6 +14,17 @@ spec:
         kind: HelmRepository
         name: twin-repo
         namespace: flux-system
+  # postRenderers entfernt das leere rollingUpdate: {} das das Gatus-Chart
+  # immer mitsendet – sonst rejected K8s bei strategy: Recreate.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: gatus
+            patch: |-
+              - op: remove
+                path: /spec/strategy/rollingUpdate
   values:
     priorityClassName: homelab-infrastructure
 
@@ -29,11 +40,10 @@ spec:
       limits:
         memory: 128Mi
 
-    # RollingUpdate (default) – Recreate blockiert, weil Chart immer rollingUpdate: {}
-    # rendert, was Kubernetes bei type=Recreate verbietet.
-    # Bei RWO-PVC-Upgrade kurzzeitig Multi-Attach-Error, Recovery funktioniert aber.
-    # deployment:
-    #   strategy: Recreate
+    # Recreate statt RollingUpdate vermeidet RWO-Multi-Attach-Deadlock.
+    # Chart rendert immer rollingUpdate: {} → postRenderers entfernt es.
+    deployment:
+      strategy: Recreate
 
     # Persistenz für SQLite-Datenbank (Uptime-Verlauf)
     persistence:
