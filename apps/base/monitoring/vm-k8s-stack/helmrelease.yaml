@@ -201,9 +201,10 @@ spec:
       enabled: true
 
     # Chart defaults (~100+ rules) are too noisy for a homelab; use platform P0 VMRules only.
-    # Note: chart uses `create`, not `enabled` — `enabled: false` has no effect.
+    # Template checks `enabled` first (chart default: true). `create: false` alone leaves ~39 rules.
     defaultRules:
       create: false
+      enabled: false
 
     # ============================================
     # GRAFANA
