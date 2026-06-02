@@ -12,4 +12,18 @@ Gatus nutzt `strategy: Recreate` statt RollingUpdate.
 
 ## Persistence
 
-SQLite-DB auf `truenas-iscsi` (RWO). History bleibt über Pod-Neustarts erhalten. Bei `Recreate`-bedingtem kurzzeitigem Downtime gibt's keinen Deadlock.
+Helm `persistence.enabled: true` legt ein PVC unter `/data` an — **Gatus selbst** muss SQLite dort konfigurieren, sonst bleibt `storage.type: memory` (Default) und die History geht bei jedem Pod-Neustart verloren.
+
+```yaml
+persistence:
+  enabled: true
+  storageClass: truenas-iscsi  # RWO
+
+config:
+  storage:
+    type: sqlite
+    path: /data/data.db
+    caching: true
+```
+
+Siehe [Helm-Chart README](https://github.com/TwiN/helm-charts/blob/master/charts/gatus/README.md) und [Gatus Storage](https://github.com/TwiN/gatus#storage).
