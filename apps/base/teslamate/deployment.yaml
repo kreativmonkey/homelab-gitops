@@ -105,3 +105,4 @@ spec:
               - key: ENCRYPTION_KEY
                 path: encryption_key
             # defaultMode 0644: readable by container user (nonroot 10000); 0400 would be root-only.
+            defaultMode: 0644
