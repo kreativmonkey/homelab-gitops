@@ -8,7 +8,7 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: SparkyFitness
     gethomepage.dev/description: Fitness Tracking
-    gethomepage.dev/group: Health
+    gethomepage.dev/group: Tools
     gethomepage.dev/icon: mdi-dumbbell
     gethomepage.dev/pod-selector: app.kubernetes.io/component=frontend,app.kubernetes.io/instance=sparkyfitness
     nginx.org/ssl-redirect: "false"
