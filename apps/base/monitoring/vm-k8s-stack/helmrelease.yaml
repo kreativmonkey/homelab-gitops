@@ -269,7 +269,7 @@ spec:
       # Pin to 0.22.0 - 0.23.x requires Grafana >=11.6.11 (not yet available in charts)
       plugins:
         # renovate: datasource=github-releases depName=VictoriaMetrics/victoriametrics-datasource
-        - victoriametrics-metrics-datasource@0.24.0
+        - victoriametrics-metrics-datasource@0.25.0
 
       priorityClassName: homelab-infrastructure
 
