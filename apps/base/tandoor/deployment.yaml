@@ -143,7 +143,7 @@ spec:
               cpu: 100m
               memory: 768Mi
             limits:
-              memory: 3Gi
+              memory: 1536Mi
           securityContext:
             runAsUser: 0
             runAsNonRoot: false
