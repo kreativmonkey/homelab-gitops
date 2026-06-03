@@ -215,6 +215,30 @@ cnpg-db-credential secret_name username password:
     just sops-create "{{secret_name}}" cnpg-system \
       "username={{username}}" "password={{password}}"
 
+# Fix Alertmanager → n8n-triage URL (query param; must match n8n WEBHOOK_SECRET)
+alertmanager-n8n-webhook-url:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${SOPS_AGE_KEY_FILE:?Set SOPS_AGE_KEY_FILE}"
+    : "${KUBECONFIG:?Set KUBECONFIG}"
+    webhook_secret="$(kubectl get secret -n ai-ops n8n-integration-credentials -o jsonpath='{.data.webhook-secret}' | base64 -d)"
+    [[ -n "$webhook_secret" ]] || { echo "error: n8n-integration-credentials.webhook-secret missing"; exit 1; }
+    url="http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/homelab-alert?webhookSecret=${webhook_secret}"
+    dir="apps/base/monitoring/notifications"
+    cd "$dir"
+    if [[ -f alertmanager-n8n-webhook.secret.yaml ]]; then
+      sops --set '["data"]["url"]' "$(printf '%s' "$url" | jq -Rs .)" alertmanager-n8n-webhook.secret.yaml
+      echo "Updated SOPS: alertmanager-n8n-webhook.secret.yaml"
+    else
+      echo "error: run sops-create first or copy from template"; exit 1
+    fi
+    kubectl patch secret alertmanager-n8n-webhook -n monitoring \
+      -p "{\"data\":{\"url\":\"$(printf '%s' "$url" | base64 -w0)\"}}"
+    kubectl delete pod -n monitoring -l app.kubernetes.io/name=vmalertmanager --wait=false 2>/dev/null || \
+      kubectl delete pod -n monitoring vmalertmanager-vm-am-0 --wait=false
+    echo "Patched cluster secret; restarted Alertmanager."
+    echo "URL: $url"
+
 # Import remediation + error-notify workflows; link error handler (API or UI)
 n8n-bootstrap url="https://n8n.cluster.f4mily.net":
     #!/usr/bin/env bash
@@ -307,6 +331,19 @@ n8n-bootstrap url="https://n8n.cluster.f4mily.net":
     echo "kubectl exec/cp failed (often: no route to node/kubelet 100.96.x.x:10250)." >&2
     echo "Set N8N_API_KEY and re-run, or fix Netbird routes — docs/netbird-cluster-access.md" >&2
     exit 1
+
+# Fire test Alertmanager JSON at homelab-alert triage webhook (needs ?webhookSecret= in URL)
+n8n-test-triage-webhook url="https://n8n.cluster.f4mily.net":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${KUBECONFIG:?Set KUBECONFIG}"
+    base="{{url}}"
+    secret="$(kubectl get secret -n ai-ops n8n-integration-credentials -o jsonpath='{.data.webhook-secret}' | base64 -d)"
+    body='{"status":"firing","alerts":[{"labels":{"alertname":"HomelabAlertingTest","severity":"critical","homelab/owner":"platform"},"annotations":{"summary":"just n8n-test-triage-webhook"}}]}'
+    curl -fsS -X POST "${base%/}/webhook/homelab-alert?webhookSecret=${secret}" \
+      -H 'Content-Type: application/json' -d "$body"
+    echo ""
+    echo "Verify: ${base} → Executions → Homelab Alert Triage"
 
 # Fire a test Alertmanager payload at the GitOps remediation webhook (no kubectl exec needed)
 n8n-test-webhook url="https://n8n.cluster.f4mily.net" scenario="firing":
