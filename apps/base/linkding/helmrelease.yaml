@@ -32,6 +32,10 @@ spec:
       targetPath: common.variables.secret.OIDC_RP_CLIENT_SECRET
   values:
     common:
+      deployment:
+        cpuRequest: 25m
+        memoryRequest: 128Mi
+        memoryLimit: 512Mi
       ingress:
         enabled: false
       persistence:
