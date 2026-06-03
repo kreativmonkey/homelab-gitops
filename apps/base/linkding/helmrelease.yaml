@@ -21,6 +21,15 @@ spec:
         kind: HelmRepository
         name: rubxkube-repo
         namespace: flux-system
+  valuesFrom:
+    - kind: Secret
+      name: linkding-authentik-oauth
+      valuesKey: client-id
+      targetPath: common.variables.secret.OIDC_RP_CLIENT_ID
+    - kind: Secret
+      name: linkding-authentik-oauth
+      valuesKey: client-secret
+      targetPath: common.variables.secret.OIDC_RP_CLIENT_SECRET
   values:
     common:
       ingress:
@@ -35,3 +44,12 @@ spec:
       variables:
         nonSecret:
           TZ: Europe/Berlin
+          # OIDC
+          LD_ENABLE_OIDC: "True"
+          OIDC_OP_AUTHORIZATION_ENDPOINT: https://login.f4mily.net/application/o/linkding/authorize/
+          OIDC_OP_TOKEN_ENDPOINT: https://login.f4mily.net/application/o/linkding/token/
+          OIDC_OP_USER_ENDPOINT: https://login.f4mily.net/application/o/linkding/userinfo/
+          OIDC_OP_JWKS_ENDPOINT: https://login.f4mily.net/application/o/linkding/jwks/
+          OIDC_RP_SCOPES: openid profile email
+          OIDC_USERNAME_CLAIM: preferred_username
+          LD_CSRF_TRUSTED_ORIGINS: https://bookmarks.f4mily.net
