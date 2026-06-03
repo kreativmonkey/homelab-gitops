@@ -4,3 +4,4 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
   - ingress.yaml
+  - linkding-authentik-oauth.secret.yaml

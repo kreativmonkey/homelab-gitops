@@ -148,6 +148,31 @@ nextcloud-authentik-oauth:
     echo ""
     echo "See docs/integrations/nextcloud-authentik.md"
 
+# Linkding ↔ Authentik OIDC (linkding namespace)
+linkding-authentik-oauth:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${SOPS_AGE_KEY_FILE:?Set SOPS_AGE_KEY_FILE to your age private key}"
+    client_id="homelab-linkding"
+    client_secret="$(openssl rand -base64 32 | tr -d '\n')"
+    dir="apps/base/linkding"
+    cd "$dir"
+    kubectl create secret generic linkding-authentik-oauth \
+      --namespace linkding \
+      --from-literal=client-id="$client_id" \
+      --from-literal=client-secret="$client_secret" \
+      --dry-run=client -o yaml >linkding-authentik-oauth.secret.yaml
+    sops --encrypt --in-place linkding-authentik-oauth.secret.yaml
+    echo "Created: $dir/linkding-authentik-oauth.secret.yaml"
+    echo ""
+    echo "Next:"
+    echo "  1. Add linkding-authentik-oauth.secret.yaml to apps/base/linkding/kustomization.yaml"
+    echo "  2. Commit, push, flux reconcile"
+    echo "  3. In Authentik → Provider for Linkding → set Client secret to:"
+    echo "     $client_secret"
+    echo ""
+    echo "See docs/integrations/linkding-authentik.md"
+
 # Whiteboard WebSocket + AppAPI HaRP shared secrets (nextcloud namespace)
 nextcloud-collab-secrets:
     #!/usr/bin/env bash
