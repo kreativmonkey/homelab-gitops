@@ -160,6 +160,7 @@ n8n-Node **Call Remediation** nutzt `REMEDIATION_URL` — solange leer, überspr
 |---------|---------|
 | Kein Telegram | n8n Execution Log; `TELEGRAM_CHAT_ID`; Bot gestartet (`/start`) |
 | 401 Webhook | Secret in AM-`url` (Query-Param) vs. n8n `WEBHOOK_SECRET` |
+| Nur GitOps Remediation, keine Triage | AM-URL oft falsch (`/homelab-alert/SECRET` → 404); `just alertmanager-n8n-webhook-url` |
 | Doppelte ntfy + n8n OK | `continue: true` auf Route `n8n-triage` |
 | LLM Timeout | Modell/kürzerer Prompt; Ollama lokal |
 

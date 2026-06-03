@@ -1,5 +1,5 @@
-# Critical workload alerts → closed-loop GitOps remediation via n8n → GitHub PR (ai-ops).
-# Alertmanager receiver: n8n-remediation (in-cluster webhook).
+# Critical workload alerts (OOM / CrashLoop) — labels for n8n Alert Triage + runbooks.
+# Direct AM → /webhook/vmalert (GitOps PR) is disabled by default; see alerting-n8n-gitops-remediation.md.
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMRule
 metadata:
