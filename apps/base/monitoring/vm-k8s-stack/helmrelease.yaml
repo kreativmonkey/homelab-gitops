@@ -253,11 +253,11 @@ spec:
         - name: logs
           mountPath: /var/log/grafana
 
-      # Native VictoriaMetrics datasource plugin
-      # Pin to 0.22.0 - 0.23.x requires Grafana >=11.6.11 (not yet available in charts)
+      # Native VictoriaMetrics datasource plugin (must exist on grafana.com/plugins catalog)
+      # 0.25.x is not published to the catalog yet → Grafana exits on plugin install failure
       plugins:
-        # renovate: datasource=github-releases depName=VictoriaMetrics/victoriametrics-datasource
-        - victoriametrics-metrics-datasource@0.25.0
+        # renovate: datasource=custom.grafana-plugins depName=victoriametrics-metrics-datasource
+        - victoriametrics-metrics-datasource@0.24.0
 
       priorityClassName: homelab-infrastructure
 
