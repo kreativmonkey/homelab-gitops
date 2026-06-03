@@ -22,7 +22,8 @@ spec:
       #   - name: goloom-registry
       containers:
         - name: goloom
-          image: git.f4mily.net/kreativmonkey/goloon:latest # {"$imagepolicy": "goloom:goloom"}
+          # renovate: datasource=docker depName=git.f4mily.net/kreativmonkey/goloon
+          image: git.f4mily.net/kreativmonkey/goloon:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
