@@ -133,7 +133,7 @@ Aktivierung: Telegram-Trigger-Node + Bot-Webhook in n8n; siehe Kommentar im Work
 |-------|-----|------------|
 | **v1 (jetzt)** | LLM klassifiziert + Text an Telegram; Auto-Fix nur Allowlist | Niedriges Risiko |
 | **v2** | Kleiner `homelab-remediation` Service im Cluster (JWT, Allowlist kubectl) | RBAC nur `monitoring` Namespace |
-| **v3** | GitOps: Agent öffnet Forgejo-PR (`.opencode/agents/k8s-specialist`) | Review vor Merge |
+| **v3** | GitOps: Agent öffnet Forgejo-PR | Review vor Merge |
 
 **Nicht empfohlen:** Vollautomatisches `kubectl` aus n8n mit Cluster-Admin — ein falscher Prompt kann mehr kaputt machen als der Ausfall.
 

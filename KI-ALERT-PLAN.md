@@ -125,7 +125,7 @@ Siehe [`docs/integrations/grafana-authentik.md`](docs/integrations/grafana-authe
 | Remediation-API (Auto-Fix Allowlist) | ⬜ Phase 2 |
 | Human-in-the-Loop (Telegram-Buttons / Wait) | ⬜ Phase 2 |
 
-**KI-Workflow heute:** Issue → `.opencode/agents/architect` Plan → `k8s-specialist` YAML → PR → `integration-test` CI.
+**KI-Workflow today:** Issue → AI-Agent Plan → Manifest Update → PR → CI validation.
 
 **Alert-Workflow:** AM → n8n (LLM) → Telegram; optional Remediation nur `NtfyBridgeDown` mit Label `homelab/auto_triage=true`.
 
