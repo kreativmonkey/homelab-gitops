@@ -84,7 +84,27 @@ if [[ "$EXIT_CODE" -eq 0 ]]; then
     echo -e "${GREEN}✓ Grafana plugins have renovate markers.${NC}"
 fi
 
-# 4. github-releases depName must be a real GitHub repo (plugin id != repo name)
+# 4. Grafana plugin pins must exist in grafana.com catalog (Grafana preinstalls from catalog)
+echo -e "\n${YELLOW}Validating Grafana plugin versions against grafana.com catalog...${NC}"
+while IFS= read -r marker_line; do
+    file=$(echo "$marker_line" | cut -d: -f1)
+    lineno=$(echo "$marker_line" | cut -d: -f2)
+    plugin_line=$(sed -n "$((lineno + 1))p" "$file")
+    plugin_id=$(echo "$plugin_line" | sed -n 's/^[[:space:]]*-[[:space:]]*\([^@[:space:]]*\)@.*/\1/p')
+    plugin_ver=$(echo "$plugin_line" | sed -n 's/^[[:space:]]*-[[:space:]]*[^@[:space:]]*@\([^[:space:]#]*\).*/\1/p')
+    [[ -n "$plugin_id" && -n "$plugin_ver" ]] || continue
+    if ! curl -fsS "https://grafana.com/api/plugins/${plugin_id}/versions" \
+        | jq -e --arg v "$plugin_ver" '.items[] | select(.version == $v)' >/dev/null; then
+        echo -e "${RED}Grafana plugin version not in catalog:${NC} ${plugin_id}@${plugin_ver}"
+        echo "  ${file}:${lineno}"
+        EXIT_CODE=1
+    fi
+done < <(grep -rn 'datasource=custom\.grafana-plugins' apps/ infrastructure/ clusters/ --include="*.yaml" || true)
+if [[ "$EXIT_CODE" -eq 0 ]]; then
+    echo -e "${GREEN}✓ All pinned Grafana plugin versions exist in the catalog.${NC}"
+fi
+
+# 5. github-releases depName must be a real GitHub repo (plugin id != repo name)
 echo -e "\n${YELLOW}Validating github-releases depName markers...${NC}"
 while IFS= read -r marker_line; do
     dep_name=$(echo "$marker_line" | sed -n 's/.*depName=\([^[:space:]]*\).*/\1/p')
@@ -101,7 +121,7 @@ if [[ "$EXIT_CODE" -eq 0 ]]; then
     echo -e "${GREEN}✓ All github-releases depName values resolve on GitHub.${NC}"
 fi
 
-# 5. Check for remote Kustomize resources
+# 6. Check for remote Kustomize resources
 echo -e "\n${YELLOW}Checking for remote Kustomize resources...${NC}"
 remote_resources=$(grep -rE "https?://|github\.com" **/kustomization.yaml 2>/dev/null || true)
 if [[ -n "$remote_resources" ]]; then
@@ -110,7 +130,7 @@ else
     echo -e "${GREEN}✓ No remote Kustomize resources found.${NC}"
 fi
 
-# 6. renovate.json managerFilePatterns must match nested paths (not only repo-root filenames)
+# 7. renovate.json managerFilePatterns must match nested paths (not only repo-root filenames)
 echo -e "\n${YELLOW}Checking renovate.json managerFilePatterns...${NC}"
 if grep -qE '\(\^\|\)/\)\(helmrelease\|values\|deployment\)' renovate.json 2>/dev/null \
     || grep -qE '"\(\^\|/\)helmrelease' renovate.json; then
