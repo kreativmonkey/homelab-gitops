@@ -48,7 +48,7 @@ spec:
     image:
       # renovate: datasource=docker depName=docker.io/library/nextcloud
       # Chart uses tag as-is (no -apache suffix); must match apache image used by occ init containers.
-      tag: 33.0.3-apache
+      tag: 33.0.3
     ingress:
       enabled: false
     service:
