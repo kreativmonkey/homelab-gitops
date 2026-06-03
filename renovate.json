@@ -65,21 +65,20 @@
         "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
       ],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*-\\s+[^@\\s]+@(?<currentValue>[^\\s#]+)"
+        "#\\s*renovate:\\s*datasource=(?<datasource>(?!custom\\.grafana-plugins)\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*-\\s+[^@\\s]+@(?<currentValue>[^\\s#]+)"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
     {
       "customType": "regex",
-      "description": "Grafana VictoriaMetrics plugin (plugin id != GitHub repo name)",
+      "description": "Grafana plugins — versions from grafana.com catalog (Grafana installs from catalog, not GitHub)",
       "managerFilePatterns": [
-        "/apps/base/monitoring/vm-k8s-stack/helmrelease\\.yaml$/"
+        "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
       ],
       "matchStrings": [
-        "\\s*-\\s+victoriametrics-metrics-datasource@(?<currentValue>[^\\s#]+)"
+        "#\\s*renovate:\\s*datasource=custom\\.grafana-plugins\\s+depName=(?<depName>\\S+)\\s*\\n\\s*-\\s+(?<packageName>[^@\\s]+)@(?<currentValue>[^\\s#]+)"
       ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "VictoriaMetrics/victoriametrics-datasource",
+      "datasourceTemplate": "custom.grafana-plugins",
       "versioningTemplate": "semver"
     },
     {
@@ -133,7 +132,27 @@
       "datasourceTemplate": "github-tags"
     }
   ],
+  "customDatasources": {
+    "grafana-plugins": {
+      "defaultRegistryUrlTemplate": "https://grafana.com/api/plugins/{{packageName}}/versions",
+      "format": "json",
+      "transformTemplates": [
+        "{\"releases\": items.({\"version\": $string(version)}), \"sourceUrl\": \"https://grafana.com/grafana/plugins/{{packageName}}\"}"
+      ]
+    }
+  },
   "packageRules": [
+    {
+      "description": "Grafana plugins: only catalog versions; short soak before bump",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "custom.grafana-plugins"
+      ],
+      "minimumReleaseAge": "3 days",
+      "automerge": false
+    },
     {
       "description": "Kite: bump Helm chart via flux only (appVersion sets container image)",
       "matchFileNames": [
