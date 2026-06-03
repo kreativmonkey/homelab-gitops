@@ -64,6 +64,7 @@ spec:
     blueprints:
       configMaps:
         - authentik-paperless-blueprint
+        - authentik-gatus-blueprint
     server:
       ingress:
         enabled: false
