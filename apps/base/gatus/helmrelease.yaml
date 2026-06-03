@@ -14,6 +14,15 @@ spec:
         kind: HelmRepository
         name: twin-repo
         namespace: flux-system
+  valuesFrom:
+    - kind: Secret
+      name: gatus-authentik-oauth
+      valuesKey: client-id
+      targetPath: env.OIDC_CLIENT_ID
+    - kind: Secret
+      name: gatus-authentik-oauth
+      valuesKey: client-secret
+      targetPath: env.OIDC_CLIENT_SECRET
   values:
     priorityClassName: homelab-infrastructure
 
@@ -56,6 +65,18 @@ spec:
       ui:
         title: Cluster Status
         default-sort-by: group
+
+      # Authentik OIDC — credentials via ${OIDC_*} from gatus-authentik-oauth secret (just gatus-authentik-oauth)
+      security:
+        oidc:
+          issuer-url: https://login.f4mily.net/application/o/gatus/
+          redirect-url: https://status.cluster.f4mily.net/authorization-code/callback
+          client-id: ${OIDC_CLIENT_ID}
+          client-secret: ${OIDC_CLIENT_SECRET}
+          scopes:
+            - openid
+            - profile
+            - email
 
       endpoints:
         # ──────────────────────────────────────────────

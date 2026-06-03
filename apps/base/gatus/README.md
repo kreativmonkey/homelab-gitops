@@ -27,3 +27,13 @@ config:
 ```
 
 Siehe [Helm-Chart README](https://github.com/TwiN/helm-charts/blob/master/charts/gatus/README.md) und [Gatus Storage](https://github.com/TwiN/gatus#storage).
+
+## Authentik (OIDC)
+
+Login per SSO auf `https://status.cluster.f4mily.net`.
+
+1. `just gatus-authentik-oauth` (SOPS-Secret anlegen)
+2. `gatus-authentik-oauth.secret.yaml` in `kustomization.yaml` eintragen
+3. Flux reconcile Authentik + Gatus
+
+Anleitung: [`docs/integrations/gatus-authentik.md`](../../../docs/integrations/gatus-authentik.md)
