@@ -125,15 +125,8 @@ spec:
                 - alertname="NtfyBridgeDown"
               receiver: ntfy-emergency
               repeat_interval: 3h
-            # OOM / CrashLoop → in-cluster n8n GitOps remediation (ai-ops).
-            # Match alertname only — label homelab/auto_remediate breaks AM routing (slash in key).
-            - matchers:
-                - alertname=~"KubePodOOMKilled|KubePodCrashLoopBackOff|KubePodCrashLooping"
-              receiver: n8n-remediation
-              group_wait: 30s
-              repeat_interval: 12h
-              continue: true
-            # n8n KI-Triage: Alertmanager → n8n → LLM → Telegram (secret must exist)
+            # n8n KI-Triage: Alertmanager → n8n → LLM → Telegram (requires alertmanager-n8n-webhook secret)
+            # GitOps auto-PR (webhook/vmalert) is opt-in — see docs/integrations/alerting-n8n-gitops-remediation.md
             - matchers:
                 - homelab/owner="platform"
                 - severity=~"critical|warning"
@@ -174,11 +167,6 @@ spec:
           - name: n8n-triage
             webhook_configs:
               - url_file: /etc/vm/secrets/alertmanager-n8n-webhook/url
-                send_resolved: true
-          # Closed-loop GitOps: VMRule OOM/CrashLoop → n8n workflow /webhook/vmalert
-          - name: n8n-remediation
-            webhook_configs:
-              - url: http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmalert
                 send_resolved: true
           - name: blackhole
 

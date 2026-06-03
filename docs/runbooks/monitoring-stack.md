@@ -24,11 +24,35 @@ kubectl logs -n monitoring -l app.kubernetes.io/name=vmalert --tail=50
 kubectl logs -n monitoring -l app.kubernetes.io/name=vmalertmanager --tail=50
 ```
 
-## n8n CrashLoop / OOM remediation
+## n8n Alert Triage (Telegram / LLM)
 
-VMAlert fires → Alertmanager receiver `n8n-remediation` → `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmalert`.
+VMAlert → Alertmanager receiver `n8n-triage` → `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/homelab-alert?webhookSecret=…`
 
-**Symptom:** ntfy zeigt CrashLoop, aber n8n **Executions** bleiben leer.
+**Symptom:** ntfy kommt, aber n8n zeigt nur **Homelab GitOps Remediation** oder gar keine Triage-Executions.
+
+| Ursache | Fix |
+|---------|-----|
+| Secret-URL Pfad statt Query (`…/homelab-alert/SECRET`) | `just alertmanager-n8n-webhook-url` + Flux reconcile; AM-Pod neu starten |
+| Route `n8n-remediation` aktiv | Standard: deaktiviert — nur `n8n-triage` für `homelab/owner=platform` |
+| Workflow Credentials | Telegram + OpenAI in n8n UI (siehe `docs/integrations/alerting-n8n-telegram-triage.md`) |
+
+Test aus dem Cluster:
+
+```bash
+URL=$(kubectl get secret -n monitoring alertmanager-n8n-webhook -o jsonpath='{.data.url}' | base64 -d)
+kubectl exec -n monitoring deploy/vmalert-vm-k8s-stack-victoria-metrics-k8s-stack -- \
+  wget -qO- --post-data='{"status":"firing","alerts":[{"labels":{"alertname":"Test","severity":"critical","homelab/owner":"platform"}}]}' \
+  --header='Content-Type: application/json' "$URL"
+# Erwartung: {"message":"Workflow was started"}
+```
+
+## n8n CrashLoop / OOM GitOps remediation (opt-in)
+
+Direkt-Webhook `POST /webhook/vmalert` ist **nicht** mehr an Alertmanager gebunden (vermeidet parallele Runs neben Triage).
+
+Aktivierung: Route `n8n-remediation` in `vm-k8s-stack/helmrelease.yaml` wieder einkommentieren — siehe `docs/integrations/alerting-n8n-gitops-remediation.md`.
+
+**Symptom:** ntfy zeigt CrashLoop, aber n8n **Executions** bleiben leer (wenn Remediation-Route aktiv).
 
 **Häufige Ursachen:**
 
