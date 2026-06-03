@@ -98,6 +98,31 @@ grafana-authentik-oauth:
     echo ""
     echo "See docs/integrations/grafana-authentik.md"
 
+# Gatus ↔ Authentik OIDC (gatus namespace)
+gatus-authentik-oauth:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${SOPS_AGE_KEY_FILE:?Set SOPS_AGE_KEY_FILE to your age private key}"
+    client_id="homelab-gatus"
+    client_secret="$(openssl rand -base64 32 | tr -d '\n')"
+    dir="apps/base/gatus"
+    cd "$dir"
+    kubectl create secret generic gatus-authentik-oauth \
+      --namespace gatus \
+      --from-literal=client-id="$client_id" \
+      --from-literal=client-secret="$client_secret" \
+      --dry-run=client -o yaml >gatus-authentik-oauth.secret.yaml
+    sops --encrypt --in-place gatus-authentik-oauth.secret.yaml
+    echo "Created: $dir/gatus-authentik-oauth.secret.yaml"
+    echo ""
+    echo "Next:"
+    echo "  1. Uncomment or add gatus-authentik-oauth.secret.yaml in apps/base/gatus/kustomization.yaml"
+    echo "  2. Commit, push, flux reconcile"
+    echo "  3. In Authentik → Provider for Gatus → set Client secret to:"
+    echo "     $client_secret"
+    echo ""
+    echo "See docs/integrations/gatus-authentik.md"
+
 # Nextcloud ↔ Authentik OAuth (nextcloud namespace)
 nextcloud-authentik-oauth:
     #!/usr/bin/env bash

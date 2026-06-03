@@ -5,3 +5,4 @@ resources:
   - helmrepository.yaml
   - helmrelease.yaml
   - ingress.yaml
+  - gatus-authentik-oauth.secret.yaml
