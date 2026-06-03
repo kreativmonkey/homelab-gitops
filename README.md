@@ -1,6 +1,6 @@
 # 📁 Homelab GitOps Repository
 
-This repository is the **Single Source of Truth** for my Kubernetes homelab. It leverages a declarative approach to manage infrastructure on **Talos Linux** using **FluxCD** for continuous delivery.
+This repository is the **Single Source of Truth** for my Kubernetes homelab. It leverages a declarative approach to manage infrastructure on **Talos Linux** using **FluxCD** for continuous delivery. GitHub is the primary source; Forgejo is an in-cluster mirror.
 
 > **New here?** Start with [`docs/cluster-access.md`](./docs/cluster-access.md)
 > to get a kubeconfig, then [`docs/applications.md`](./docs/applications.md)
@@ -10,6 +10,7 @@ This repository is the **Single Source of Truth** for my Kubernetes homelab. It 
 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
+| **VCS / Mirror** | GitHub (Primary) + Forgejo (Mirror) | GitHub is leading; Forgejo is in-cluster mirror. |
 | **Secrets** | [SOPS](https://github.com/getsops/sops) + [age](https://github.com/FiloSottile/age) | Encrypted GitOps secrets (In-repo encryption) |
 | **OS & K8s** | [Talos Linux](https://www.talos.dev/) | Immutable, RAM-based, API-managed OS |
 | **GitOps** | [FluxCD](https://fluxcd.io/) | Reconciles Git state to Cluster state |
@@ -28,7 +29,7 @@ This cluster runs a variety of self-hosted applications. Uptime is monitored via
 | Application | Category | Uptime |
 | :--- | :--- | :--- |
 | [**authentik**](https://goauthentik.io/) | Security | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_authentik/uptimes/30d/badge.svg) |
-| [**forgejo**](https://forgejo.org/) | Git | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_git/uptimes/30d/badge.svg) |
+| [**forgejo**](https://forgejo.org/) | Git Mirror | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_git/uptimes/30d/badge.svg) |
 | [**nextcloud**](https://nextcloud.com/) | Productivity | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_nextcloud/uptimes/30d/badge.svg) |
 | [**homepage**](https://gethomepage.dev/) | Dashboard | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_homepage/uptimes/30d/badge.svg) |
 | [**searxng**](https://docs.searxng.org/) | Search | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_searxng/uptimes/30d/badge.svg) |
@@ -52,102 +53,54 @@ This cluster runs a variety of self-hosted applications. Uptime is monitored via
 ## 🏗 Infrastructure Principles
 
 ### 1. Dependency Management
-To ensure a stable boot sequence, the cluster follows a strict hierarchy:
-* **Infrastructure First:** Storage, Networking, and Certs are reconciled before any application.
-* **Health Checks:** Flux monitors the `ready` state of infrastructure before proceeding to the `apps` layer.
+Standard tools (Helm charts, Docker images) are managed by Renovate. GitHub is the primary source of truth.
 
-### 2. Hybrid Storage Strategy
-We distinguish between two types of persistence:
-* **High Performance (Longhorn):** Used for databases (PostgreSQL, Redis) and application configs. These provide high IOPS and automated volume replication.
-* **Mass Storage (NFS):** Used for large media archives (e.g., Photos, Videos). Managed via static `PersistentVolumes` pointing to the external NAS.
+### 2. Networking
+Talos nodes run Cilium CNI. Ingress is handled by the NGINX Ingress Controller. SSL certificates are automated via cert-manager (Let's Encrypt).
 
-### 3. Networking & Security
-* **Ingress:** Automated through Nginx.
-* **TLS:** Issued via `cert-manager` using **DNS-01 challenges** (supporting wildcard certs and internal-only domains).
-* **Workload Security:** All apps follow the principle of least privilege (non-root UIDs, no privilege escalation).
+### 3. Persistence Strategy
+* **High Performance (iSCSI):** Used for databases (PostgreSQL, Redis) and application configs via Democratic CSI on TrueNAS. These provide high IOPS and are backed up via Velero.
+* **Mass Storage (NFS):** Used for large media files (Photos, Videos, Books) and large-scale document storage.
 
-## 📂 Repository Structure
-
-The repository follows a strict Kustomize **base/overlay** structure. The
-**overlay** is the *human switchboard* — it decides which apps are
-deployed and what hostnames/TLS they use. The **base** holds reusable,
-opinionated manifests per app.
-
-```bash
-.
-├── clusters/
-│   └── main/                       # FluxCD entry point for the homelab cluster
-│       ├── flux-system/            # Bootstrap (Flux components + GitRepository)
-│       ├── infrastructure.yaml     # Kustomization → infrastructure/ (priority 1)
-│       └── apps.yaml               # Kustomization → apps/ (depends on infra)
-│
-├── infrastructure/                 # Core cluster components
-│   ├── base/
-│   │   ├── sources/                # HelmRepositories, IngressClass, namespaces
-│   │   ├── storage/                # Longhorn HR + static NFS PVs + storageclasses
-│   │   ├── network/
-│   │   │   ├── cert-manager/       # cert-manager HelmRelease
-│   │   │   ├── cert-manager-issuer/# Let's Encrypt ClusterIssuer (Hetzner DNS-01)
-│   │   │   ├── certificates/       # Wildcard Certificates (*.f4mily.net, *.cluster.f4mily.net)
-│   │   │   ├── external-dns/       # ExternalDNS HelmRelease
-│   │   │   └── ingress/            # nginx-ingress HelmRelease
-│   │   ├── database/cnpg/          # CloudNativePG operator
-│   │   ├── backup/                 # Velero HelmRelease
-│   │   └── backup-schedules/       # Velero Schedules (daily / weekly)
-│   └── overlays/main/              # Cluster-specific patches
-│       ├── database-clusters/      # Central PostgreSQL cluster + barman S3
-│       └── pgadmin/                # pgAdmin UI for the central cluster
-│
-└── apps/
-    ├── base/                       # One self-contained kustomize base per app
-    │   ├── audiobookshelf/         #   namespace, deployment, ingress, …
-    │   ├── homepage/
-    │   ├── homer/
-    │   ├── immich/                 # HelmRelease + ingress + NFS PVCs
-    │   ├── paperless-ngx/          # HelmRelease + NFS PVCs
-    │   ├── monitoring/vm-k8s-stack # VictoriaMetrics + Grafana
-    │   └── …                       # ~20 apps total
-    └── overlays/main/              # ◀ THE SWITCHBOARD
-        ├── kustomization.yaml      #   enabled/disabled apps + replacements
-        ├── cluster-config.yaml     #   ConfigMap: domains, TLS, per-app hosts
-        ├── databases/              #   CNPG `Database` CRs (per-app schemas)
-        └── db-secrets/             #   SOPS-encrypted DB user passwords
-```
-
-See [`docs/applications.md`](./docs/applications.md) for the day-to-day
-workflow (enable / disable apps, change hostnames, add a new app) and
-[`docs/cluster-access.md`](./docs/cluster-access.md) for how to talk to
-the cluster (kubeconfig, talosctl, flux CLI).
-
-## 🛡 Design Principles
-
-1.  **Immutability:** No manual `kubectl` changes. If it's not in Git, it doesn't exist.
-2.  **Security First:** Workloads run as non-root (UID 1000/1001) with `allowPrivilegeEscalation: false`.
-3.  **Persistence Strategy:** * **Longhorn:** Used for high-IOPS workloads (PostgreSQL, Redis, Configs).
-    * **NFS:** Used for bulk data (Media, Backups).
-4.  **Observability:** Every service must export metrics via a `ServiceMonitor`.
-5.  **Automated Maintenance:** Renovate handles version bumps; Talos handles node-level immutability.
+### 4. GitOps (FluxCD)
+Flux reconciles the cluster state against the GitHub repository. Changes are applied via PRs to the `main` branch.
 
 ---
 
-## 🔐 Secret Management
+## 🛠 Directory Structure
 
-This repository uses **SOPS** with the **age** encryption tool. Secrets are encrypted locally before being committed to Git and are decrypted by the Flux controller inside the cluster.
-
-### Key Management
-* **Public Key:** `age1...` (Stored in `.sops.yaml` for encryption).
-* **Private Key:** Stored in the cluster as a Kubernetes Secret named `sops-age` in the `flux-system` namespace.
-
-### Workflow: Creating/Editing Secrets
-
-With `nix develop` (includes `just` and `sops`):
-
-```bash
-just sops-create my-secret flux-system . REMOVED_BY_HISTORY_REWRITE
-just sops-edit infrastructure/base/sources/my-secret.secret.yaml
+```text
+/home/sebastian/git/git.f4mily.net/homelab/gitops-homelab/
+├── clusters/                # Flux entry points
+│   └── main/                # Production cluster config
+├── infrastructure/          # Cluster-wide components
+│   ├── base/                # Shared sources
+│   │   ├── storage/         # iSCSI (democratic-csi) + NFS PVs
+│   │   ├── database/        # CloudNativePG operator
+│   │   └── ...
+│   └── overlays/main/       # Cluster patches & secrets
+├── apps/                    # Business applications
+│   ├── base/                # Generic HelmReleases & manifests
+│   └── overlays/main/       # Environment-specific overrides
+├── docs/                    # Architecture, Runbooks, Migrations
+└── scripts/                 # Maintenance and CI helpers
 ```
 
-Manual equivalent: `kubectl create secret … --dry-run=client -o yaml` then `sops --encrypt --in-place`.
+## 📜 Governance
+1.  **GitHub is Leading:** Always push to GitHub. Forgejo is a local mirror.
+2.  **Surgical Changes:** Use targeted Kustomize patches instead of duplicating base manifests.
+3.  **Persistence Strategy:** Prefer `truenas-iscsi` for anything needing high IOPS.
+4.  **Security:** Secrets are encrypted with SOPS (Age). Never commit plain text secrets.
+5.  **Automated Updates:** Let Renovate handle version bumps; manual overrides only when necessary.
+
+---
+
+## 🚀 Getting Started
+
+1.  **Clone the Repo:** `git clone git@github.com:kreativmonkey/homelab-gitops.git`
+2.  **Initialize Environment:** Use the provided Nix flake: `nix develop`.
+3.  **Secrets:** Ensure you have access to the cluster's `age` private key and set `SOPS_AGE_KEY_FILE`.
+4.  **Validate:** Run `just validate` to check manifests before pushing.
 
 ---
 
