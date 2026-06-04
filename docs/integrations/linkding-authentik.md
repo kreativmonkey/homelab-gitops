@@ -14,6 +14,17 @@ Redirect URI (strict): `https://bookmarks.f4mily.net/oidc/callback/`
 
 Issuer URL: `https://login.f4mily.net/application/o/linkding/`
 
+OIDC endpoints (from discovery — do not guess slug on `/token/`):
+
+| Variable | URL |
+|----------|-----|
+| `OIDC_OP_AUTHORIZATION_ENDPOINT` | `https://login.f4mily.net/application/o/authorize/` |
+| `OIDC_OP_TOKEN_ENDPOINT` | `https://login.f4mily.net/application/o/token/` |
+| `OIDC_OP_USER_ENDPOINT` | `https://login.f4mily.net/application/o/userinfo/` |
+| `OIDC_OP_JWKS_ENDPOINT` | `https://login.f4mily.net/application/o/linkding/jwks/` |
+
+Wrong token URL (`/application/o/linkding/token/`) returns **405** on POST → Linkding `/oidc/callback/` shows **500**.
+
 ## Einrichtung
 
 ```bash
