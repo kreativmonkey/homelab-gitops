@@ -58,10 +58,12 @@ spec:
           TZ: Europe/Berlin
           # OIDC
           LD_ENABLE_OIDC: "True"
-          OIDC_OP_AUTHORIZATION_ENDPOINT: https://login.f4mily.net/application/o/linkding/authorize/
-          OIDC_OP_TOKEN_ENDPOINT: https://login.f4mily.net/application/o/linkding/token/
-          OIDC_OP_USER_ENDPOINT: https://login.f4mily.net/application/o/linkding/userinfo/
-          OIDC_OP_JWKS_ENDPOINT: https://login.f4mily.net/application/o/linkding/jwks/
+          # Using generic client_id-agnostic endpoints - slug-based format (/application/o/{slug}/authorize/)
+          # returns 404 in Authentik 2026.5 enterprise. The OIDC lib appends client_id as a query parameter.
+          OIDC_OP_AUTHORIZATION_ENDPOINT: https://login.f4mily.net/application/o/authorize/
+          OIDC_OP_TOKEN_ENDPOINT: https://login.f4mily.net/application/o/token/
+          OIDC_OP_USER_ENDPOINT: https://login.f4mily.net/application/o/userinfo/
+          OIDC_OP_JWKS_ENDPOINT: https://login.f4mily.net/application/o/jwks/
           OIDC_RP_SCOPES: openid profile email
           OIDC_USERNAME_CLAIM: preferred_username
           LD_CSRF_TRUSTED_ORIGINS: https://bookmarks.f4mily.net
