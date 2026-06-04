@@ -25,11 +25,11 @@ spec:
     - kind: Secret
       name: linkding-authentik-oauth
       valuesKey: client-id
-      targetPath: common.variables.secret.OIDC_RP_CLIENT_ID
+      targetPath: common.variables.secret.data.OIDC_RP_CLIENT_ID
     - kind: Secret
       name: linkding-authentik-oauth
       valuesKey: client-secret
-      targetPath: common.variables.secret.OIDC_RP_CLIENT_SECRET
+      targetPath: common.variables.secret.data.OIDC_RP_CLIENT_SECRET
   values:
     common:
       deployment:
