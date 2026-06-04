@@ -59,12 +59,13 @@ data:
             ping: https://opnsense.f4mily.net
         - Adguard Home:
             icon: https://cdn.jsdelivr.net/gh/selfhst/icons/svg/adguard-home-central-manager.svg
-            href: "http://192.168.10.1:3000"
+            href: "https://192.168.10.1:3000"
             external: true
             description: Network-wide Ad Blocker
+            ping: https://192.168.10.1:3000
             widget:
               type: adguard
-              url: http://192.168.10.1:3000
+              url: https://192.168.10.1:3000
               username: "{{HOMEPAGE_VAR_ADGUARD_USERNAME}}"
               password: "{{HOMEPAGE_VAR_ADGUARD_PASSWORD}}"
         - Proxmox VE:

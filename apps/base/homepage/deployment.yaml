@@ -14,7 +14,7 @@ spec:
         app: homepage
       annotations:
         # Bump to force rollout when only ConfigMap content changes.
-        config-version: "2026-06-04-adguard-widget"
+        config-version: "2026-06-04-adguard-https"
     spec:
       serviceAccountName: homepage
       automountServiceAccountToken: true
