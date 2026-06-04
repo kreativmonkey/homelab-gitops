@@ -42,3 +42,4 @@ data:
           provider: !KeyOf linkding-provider
           launch_url: https://bookmarks.f4mily.net
           meta_launch_url: https://bookmarks.f4mily.net
+          icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/linkding.svg
