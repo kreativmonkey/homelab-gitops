@@ -36,6 +36,14 @@ spec:
         cpuRequest: 25m
         memoryRequest: 128Mi
         memoryLimit: 512Mi
+        # RWO PVC can only attach to one node at a time.
+        # maxSurge=0 ensures old pod is killed first during rolling updates,
+        # preventing deadlock where new pod on a different node can't mount volume.
+        strategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxSurge: 0
+            maxUnavailable: 1
       ingress:
         enabled: false
       persistence:
