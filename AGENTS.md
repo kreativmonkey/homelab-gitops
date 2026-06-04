@@ -123,6 +123,76 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 
 ---
 
+# OIDC / Authentik Blueprint Onboarding
+
+**Trigger**: When adding a new app that exposes a web UI.
+
+## Checklist
+
+1. **Check OIDC support** – Search the app's official docs for "OIDC", "OpenID Connect", "SSO", "OAuth2". If unclear, ask the user.
+
+2. **Ask explicitly** – "App X supports OIDC. Soll ich OIDC via Authentik einrichten?" Do NOT auto-enable without confirmation.
+
+3. **Blueprint erstellen** – If user confirms:
+   - Create `apps/base/authentik/blueprints/<app>-oauth.configmap.yaml` with:
+     - OAuth2 provider entry (`authentik_providers_oauth2.oauth2provider`) with `client_id`, `client_secret` (placeholder), `redirect_uris`, `authorization_flow`, `signing_key`, `property_mappings`.
+     - Application entry (`authentik_core.application`) with `slug`, `provider: !KeyOf`, `launch_url`, `meta_launch_url`, `icon`.
+     - Label `app.kubernetes.io/part-of: authentik` on the ConfigMap.
+   - Add the ConfigMap to `apps/base/authentik/kustomization.yaml` resources.
+   - Add the ConfigMap name to `apps/base/authentik/helmrelease.yaml` under `blueprints.configMaps`.
+   - Store OIDC `client-id` / `client-secret` as SOPS-encrypted secret in `apps/base/<app>/` and wire via `valuesFrom` in the app's HelmRelease.
+
+4. **Icon suchen** – Search `https://dashboardicons.com/` for the app's icon. Prefer SVG. Set as `icon:` field on the application entry in the blueprint. Use the jsDelivr CDN URL from the dashboardicons collection.
+
+5. **Unklarheiten** – If redirect URI format, scope names, flow slugs, or any config is uncertain → ask the user before guessing.
+
+## Blueprint-Format-Referenz
+```yaml
+version: 1
+metadata:
+  name: Homelab <App> OIDC
+  labels:
+    blueprints.goauthentik.io/description: OAuth2 provider and application for <App>
+entries:
+  - model: authentik_providers_oauth2.oauth2provider
+    id: <app>-provider
+    identifiers:
+      client_id: <client-id>
+    attrs:
+      name: Provider for <App>
+      client_type: confidential
+      client_id: <client-id>
+      client_secret: <placeholder-change-me>
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+      redirect_uris:
+        - matching_mode: strict
+          url: https://<app-host>/<callback-path>
+      property_mappings:
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+  - model: authentik_core.application
+    identifiers:
+      slug: <app>
+    attrs:
+      name: <App>
+      slug: <app>
+      provider: !KeyOf <app>-provider
+      launch_url: https://<app-host>
+      meta_launch_url: https://<app-host>
+      icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/<app>.svg
+
+```
+
+## Apply / Sync
+- Flux syncs the HelmRelease → mounts the ConfigMap into the worker pod at `/blueprints/mounted/cm-<name>/`.
+- The `blueprints_discovery` dramatiq task picks it up and applies it.
+- If Flux dependency chain is blocked, apply manually: `kubectl exec deploy/authentik-worker -c worker -- python3 -c "..."` using `Importer.from_string()` (see existing linkding blueprint for reference).
+
+---
+
 # Caveman Mode
 Full‑intensity caveman mode is always active: articles, filler words and pleasantries are omitted; sentences are short fragments, technical terms unchanged. This keeps communication terse while retaining all technical substance.
 
