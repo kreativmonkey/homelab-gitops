@@ -9,8 +9,8 @@ metadata:
     gethomepage.dev/description: Uptime monitoring and alerting tool for HTTP(s) endpoints.
     gethomepage.dev/group: Cluster Management
     gethomepage.dev/icon: gatus.png
-    gethomepage.dev/pod-selector: app=gatus
-    gethomepage.dev/app: gatus
+    # Pods use app.kubernetes.io/name=gatus (Helm), not app=gatus
+    gethomepage.dev/pod-selector: app.kubernetes.io/name=gatus
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
