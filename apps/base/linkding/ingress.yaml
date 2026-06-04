@@ -9,7 +9,8 @@ metadata:
     gethomepage.dev/description: Bookmark Manager
     gethomepage.dev/group: Office
     gethomepage.dev/icon: linkding.png
-    gethomepage.dev/pod-selector: app.kubernetes.io/instance=linkding
+    gethomepage.dev/app: linkding
+    gethomepage.dev/pod-selector: app=linkding
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
