@@ -33,6 +33,8 @@ data:
       - goloom
       - tandoor
       - n8n
+      - gatus
+      - linkding
     # Enable Ingress discovery.
     ingress: true
   bookmarks.yaml: |
