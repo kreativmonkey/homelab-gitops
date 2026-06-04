@@ -56,12 +56,11 @@ spec:
       variables:
         nonSecret:
           TZ: Europe/Berlin
-          # OIDC
+          # OIDC — endpoints from discovery:
+          # curl -sS https://login.f4mily.net/application/o/linkding/.well-known/openid-configuration
           LD_ENABLE_OIDC: "True"
-          # Authentik 2026.5 enterprise: slug-based vs generic endpoint support varies per endpoint.
-          # Authorize+Userinfo work with generic, Token+JWKS need the application slug.
           OIDC_OP_AUTHORIZATION_ENDPOINT: https://login.f4mily.net/application/o/authorize/
-          OIDC_OP_TOKEN_ENDPOINT: https://login.f4mily.net/application/o/linkding/token/
+          OIDC_OP_TOKEN_ENDPOINT: https://login.f4mily.net/application/o/token/
           OIDC_OP_USER_ENDPOINT: https://login.f4mily.net/application/o/userinfo/
           OIDC_OP_JWKS_ENDPOINT: https://login.f4mily.net/application/o/linkding/jwks/
           OIDC_RP_SCOPES: openid profile email
