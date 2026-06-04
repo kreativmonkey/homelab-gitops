@@ -5,6 +5,7 @@ resources:
   - authentik-secret-key.secret.yaml
   - blueprints/paperless-oauth.configmap.yaml
   - blueprints/gatus-oauth.configmap.yaml
+  - blueprints/linkding-oauth.configmap.yaml
   - media-pvc.yaml
   - helmrelease.yaml
   - ingress.yaml

@@ -65,6 +65,7 @@ spec:
       configMaps:
         - authentik-paperless-blueprint
         - authentik-gatus-blueprint
+        - authentik-linkding-blueprint
     server:
       ingress:
         enabled: false
