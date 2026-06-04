@@ -14,7 +14,7 @@ spec:
         app: homepage
       annotations:
         # Bump to force rollout when only ConfigMap content changes.
-        config-version: "2026-05-26a"
+        config-version: "2026-06-04-adguard-widget"
     spec:
       serviceAccountName: homepage
       automountServiceAccountToken: true
@@ -58,6 +58,16 @@ spec:
           value: "1000"
         - name: TZ
           value: "Europe/Berlin"
+        - name: HOMEPAGE_VAR_ADGUARD_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: homepage-adguard
+              key: username
+        - name: HOMEPAGE_VAR_ADGUARD_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: homepage-adguard
+              key: password
         startupProbe:
           tcpSocket:
             port: http

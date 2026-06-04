@@ -62,6 +62,11 @@ data:
             href: "http://192.168.10.1:3000"
             external: true
             description: Network-wide Ad Blocker
+            widget:
+              type: adguard
+              url: http://192.168.10.1:3000
+              username: "{{HOMEPAGE_VAR_ADGUARD_USERNAME}}"
+              password: "{{HOMEPAGE_VAR_ADGUARD_PASSWORD}}"
         - Proxmox VE:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/proxmox.png
             href: "https://192.168.10.5:8006"
