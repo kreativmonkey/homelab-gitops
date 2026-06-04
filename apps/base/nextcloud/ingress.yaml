@@ -30,6 +30,14 @@ spec:
     - host: nc.f4mily.net
       http:
         paths:
+          # Root first — Homepage v1.13.1 ingress discovery picks first path as URL.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nextcloud
+                port:
+                  number: 80
           - path: /socket.io
             pathType: Prefix
             backend:
@@ -44,10 +52,3 @@ spec:
                 name: appapi-harp
                 port:
                   number: 8780
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: nextcloud
-                port:
-                  number: 80
