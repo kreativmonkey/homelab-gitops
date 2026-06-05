@@ -158,6 +158,15 @@ spec:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
 
+        - name: outline
+          group: application
+          url: https://outline.f4mily.net/_health
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
         - name: linkding
           group: application
           url: https://bookmarks.f4mily.net

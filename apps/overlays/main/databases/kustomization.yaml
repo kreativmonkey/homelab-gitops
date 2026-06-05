@@ -11,3 +11,4 @@ resources:
   - goloom.yaml
   - forgejo.yaml
   - sparkyfitness.yaml
+  - outline.yaml

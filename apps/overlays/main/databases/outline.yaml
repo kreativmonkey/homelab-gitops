@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: homelab-postgres-outline
+  namespace: cnpg-system
+spec:
+  name: outline
+  owner: outline
+  cluster:
+    name: homelab-postgres

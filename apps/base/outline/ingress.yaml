@@ -1,0 +1,38 @@
+# Public HTTPS access (public wildcard TLS).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: outline
+  namespace: outline
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Outline
+    gethomepage.dev/description: Knowledge base & wiki
+    gethomepage.dev/group: Documents
+    gethomepage.dev/icon: outline.png
+    gethomepage.dev/app: outline
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+    # Outline verwendet SSE für Live-Updates im Editor
+    nginx.org/proxy-read-timeout: "3600s"
+    nginx.org/proxy-send-timeout: "3600s"
+    # Uploads (Bilder, Anhänge) bis 250MB
+    nginx.org/client-max-body-size: "250m"
+    nginx.org/proxy-body-size: "250m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - outline.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: outline.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: outline-app
+                port:
+                  name: http
