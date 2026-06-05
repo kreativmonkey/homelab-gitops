@@ -186,10 +186,4 @@ spec:
       timeoutSeconds: 5
       failureThreshold: 6
 
-    # Extra env
-    extraEnvVars:
-      NODE_ENV: production
-      PORT: "3000"
-      DEBUG: http
-      ENABLE_UPDATES: "true"
-      PGSSLMODE: disable
+
