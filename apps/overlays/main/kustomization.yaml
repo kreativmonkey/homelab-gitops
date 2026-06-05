@@ -23,6 +23,7 @@ resources:
   - paperless-ngx-integrations.secret.yaml
 
   # --- Media & Documents ------------------------------------------------
+  - ../../base/outline
   - ../../base/audiobookshelf
   - ../../base/jellyfin
   - ../../base/kavita
@@ -77,6 +78,16 @@ resources:
 # ============================================================================
 replacements:
   # -------- Per-app hostnames (full-value replacement) ----------------------
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_outline
+    targets:
+      - select: {kind: Ingress, name: outline}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
@@ -301,6 +312,8 @@ replacements:
       name: homelab-cluster-config
       fieldPath: data.publicTlsSecret
     targets:
+      - select: {kind: Ingress, name: outline}
+        fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: audiobookshelf}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: forgejo}

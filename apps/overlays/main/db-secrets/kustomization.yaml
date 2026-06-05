@@ -13,6 +13,7 @@ resources:
   # linkwarden disabled in apps catalog — no linkwarden namespace
   # - linkwarden-db-credentials.secret.yaml
   - tandoor-db-credentials.secret.yaml
+  - outline-db-credentials.secret.yaml
 patches:
   - target:
       kind: Secret
@@ -94,6 +95,16 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: forgejo
+  - target:
+      kind: Secret
+      name: outline-db-credentials
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: homelab-postgres-outline
+      - op: replace
+        path: /metadata/namespace
+        value: outline
   - target:
       kind: Secret
       name: sparkyfitness-db-credentials

@@ -40,6 +40,7 @@ This cluster runs a variety of self-hosted applications. Uptime is monitored via
 | [**paperless-ngx**](https://docs.paperless-ngx.com/) | Documents | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/documents_paperless/uptimes/30d/badge.svg) |
 | [**readeck**](https://readeck.org/) | Documents | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/documents_readeck/uptimes/30d/badge.svg) |
 | [**Stirling-PDF**](https://github.com/Stirling-Tools/Stirling-PDF) | Documents | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/documents_sterling-pdf/uptimes/30d/badge.svg) |
+| [**Outline**](https://www.getoutline.com/) | Knowledge Base | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_outline/uptimes/30d/badge.svg) |
 | [**linkding**](https://github.com/sissis-m/linkding) | Bookmarks | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_linkding/uptimes/30d/badge.svg) |
 | [**tandoor**](https://tandoor.dev/) | Recipes | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_tandoor/uptimes/30d/badge.svg) |
 | [**SparkyFitness**](https://github.com/codewithcj/SparkyFitness) | Fitness | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_fitness/uptimes/30d/badge.svg) |

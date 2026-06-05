@@ -1,0 +1,195 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: outline
+  namespace: outline
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-outline
+spec:
+  interval: 1h
+  timeout: 15m
+  chart:
+    spec:
+      chart: outline
+      version: "0.8.0"
+      sourceRef:
+        kind: HelmRepository
+        name: community-charts
+        namespace: flux-system
+  valuesFrom:
+    - kind: Secret
+      name: outline-config
+      valuesKey: secret-key
+      targetPath: secretKey
+    - kind: Secret
+      name: outline-config
+      valuesKey: utils-secret
+      targetPath: utilsSecret
+    - kind: Secret
+      name: outline-config
+      valuesKey: oidc-client-secret
+      targetPath: auth.oidc.clientSecret
+    - kind: Secret
+      name: outline-config
+      valuesKey: smtp-password
+      targetPath: smtp.password
+  values:
+    replicaCount: 1
+
+    # Service name muss anders sein als "outline" — K8s injects OUTLINE_PORT=tcp://… und bricht den Listener (502)
+    fullnameOverride: outline-app
+
+    strategy:
+      type: Recreate
+
+    image:
+      repository: outlinewiki/outline
+      tag: ""
+
+    serviceAccount:
+      create: true
+      automount: true
+
+    podSecurityContext:
+      fsGroup: 1001
+      fsGroupChangePolicy: "OnRootMismatch"
+
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: false
+      runAsNonRoot: true
+      runAsUser: 1001
+      runAsGroup: 1001
+
+    # Eigenes Ingress (siehe ingress.yaml)
+    ingress:
+      enabled: false
+
+    url: https://outline.f4mily.net
+    defaultLanguage: de_DE
+
+    rateLimiter:
+      enabled: true
+      limit: 1000
+      window: 60
+
+    autoUpdate:
+      enabled: false
+      telemetry: false
+
+    web:
+      concurrency: 1
+      forceHttps: true
+      skipSSLVerification: false
+
+    logging:
+      level: info
+
+    fileStorage:
+      mode: local
+      uploadMaxSize: "262144000"
+      local:
+        rootDir: /var/lib/outline/data
+        persistence:
+          enabled: true
+          accessModes:
+            - ReadWriteOnce
+          size: 5Gi
+          storageClass: truenas-iscsi
+
+    # OIDC via Authentik
+    auth:
+      oidc:
+        enabled: true
+        clientId: "nj4Pmp5zMftJEESaFBZAUmwWRbqtSBJaoKzNAmen"
+        authUri: https://login.f4mily.net/application/o/authorize/
+        tokenUri: https://login.f4mily.net/application/o/token/
+        userInfoUri: https://login.f4mily.net/application/o/userinfo/
+        logoutUri: https://login.f4mily.net/application/o/outline/end-session/
+        usernameClaim: preferred_username
+        displayName: Authentik
+        scopes:
+          - openid
+          - profile
+          - email
+
+    # SMTP
+    smtp:
+      host: mail.f4mily.net
+      port: 465
+      secure: true
+      username: outline@f4mily.net
+      fromEmail: outline@f4mily.net
+      replyEmail: outline@f4mily.net
+
+    # DB via zentrales CNPG (CloudNativePG)
+    database:
+      connectionPoolMin: ""
+      connectionPoolMax: "20"
+      sslMode: disable
+
+    postgresql:
+      enabled: false
+
+    externalPostgresql:
+      host: homelab-postgres-rw.cnpg-system.svc.cluster.local
+      port: 5432
+      database: outline
+      username: outline
+      existingSecret: homelab-postgres-outline
+      passwordSecretKey: password
+
+    # Redis — Built-in Subchart, minimale Ressourcen (Cache only, kein Persistenz nötig)
+    redis:
+      enabled: true
+      architecture: standalone
+      auth:
+        enabled: false
+      master:
+        service:
+          ports:
+            redis: 6379
+        persistence:
+          enabled: false
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 768Mi
+
+    livenessProbe:
+      httpGet:
+        path: /_health
+        port: http
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 6
+
+    readinessProbe:
+      httpGet:
+        path: /_health
+        port: http
+      initialDelaySeconds: 20
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+
+    # Extra env
+    extraEnvVars:
+      NODE_ENV: production
+      PORT: "3000"
+      DEBUG: http
+      ENABLE_UPDATES: "true"
+      PGSSLMODE: disable
