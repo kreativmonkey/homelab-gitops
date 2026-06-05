@@ -19,7 +19,7 @@ entries:
       authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
-      sub_mode: user_uuid
+      sub_mode: user_username
       redirect_uris:
         - matching_mode: strict
           url: https://nc.f4mily.net/apps/user_oidc/code
