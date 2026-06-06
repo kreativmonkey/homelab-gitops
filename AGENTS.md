@@ -113,6 +113,35 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 
 ---
 
+# Operational Learnings
+
+> **Check `docs/learnings/` first** before attempting complex migrations or configuration changes.
+
+The `docs/learnings/` directory contains distilled knowledge from past operations that did not work on the first attempt. These are not generic tutorials but specific pitfalls and solutions discovered the hard way.
+
+## When to Create a New Learning
+
+Create a learning when:
+- A migration or major reconfiguration required multiple attempts
+- An action had unexpected side effects (e.g., deleting `oc_filecache` breaks S3 storage)
+- Kubernetes / Helm / Application behavior contradicts intuitive expectations
+- A fix required a specific sequence or workaround
+
+Do **not** create learnings for:
+- Standard procedures that worked as documented
+- Generic best practices (e.g., "always use resource limits")
+- One-line fixes for obvious typos
+
+## Learning Structure
+
+Each learning is a standalone Markdown file in `docs/learnings/` with:
+- **What went wrong**: The incorrect assumption or action
+- **Why it failed**: The technical root cause
+- **The correct approach**: What actually works
+- **Prevention**: How to avoid this in the future
+
+---
+
 # Process for Adding / Updating Apps
 1. **Web‑search latest official docs** for target version and deployment patterns.
 2. Add/adjust HelmRelease in `apps/base/<app>/helmrelease.yaml` (or raw manifests if no chart).
