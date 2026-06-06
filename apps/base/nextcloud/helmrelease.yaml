@@ -48,7 +48,7 @@ spec:
     # PVC has data from 33.0.4.1 — must match to avoid downgrade error.
     # renovate: datasource=docker depName=docker.io/library/nextcloud
     image:
-      tag: 33.0.4-apache
+      tag: 33.0.4
     ingress:
       enabled: false
     service:
