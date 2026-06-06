@@ -154,7 +154,6 @@ spec:
           subPath: redis-session.ini
       extraInitContainers:
         - name: create-redis-session-ini
-        - name: create-redis-session-ini
           image: docker.io/library/busybox:1.38
           securityContext:
             runAsUser: 1000
