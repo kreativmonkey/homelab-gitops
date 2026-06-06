@@ -45,8 +45,10 @@ spec:
     global:
       security:
         allowInsecureImages: true
-    # image.tag is intentionally omitted — the chart default (aligned with chart version) is used.
-    # See nextcloud.extraInitContainers for Renovate-managed init container image tags.
+    # PVC has data from 33.0.4.1 — must match to avoid downgrade error.
+    # renovate: datasource=docker depName=docker.io/library/nextcloud
+    image:
+      tag: 33.0.4-apache
     ingress:
       enabled: false
     service:
