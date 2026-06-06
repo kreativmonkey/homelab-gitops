@@ -260,6 +260,56 @@ spec:
               mountPath: /var/www/html/config
               subPath: config
 
+        # S3 migration safeguard: clean up duplicate mounts and verify storage types.
+        # Nextcloud ≥33 has a unique index on oc_mounts, but during migration
+        # orphaned ObjectHomeMountProvider entries can accumulate.
+        - name: cleanup-mounts
+          image: docker.io/library/postgres:16-alpine
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+          env:
+            - name: PGHOST
+              value: homelab-postgres-rw.cnpg-system.svc.cluster.local
+            - name: PGDATABASE
+              value: nextcloud
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-nextcloud
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-nextcloud
+                  key: password
+          command:
+            - sh
+            - -c
+            - |
+              echo "cleanup-mounts: checking for duplicate mounts..."
+              psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -c "
+                DELETE FROM oc_mounts
+                WHERE id IN (
+                  SELECT id FROM (
+                    SELECT id,
+                      ROW_NUMBER() OVER (
+                        PARTITION BY user_id, mount_point
+                        ORDER BY id
+                      ) as rn
+                    FROM oc_mounts
+                  ) t WHERE rn > 1
+                );
+              "
+
+              echo "cleanup-mounts: verifying S3 storage migration..."
+              psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -c "
+                SELECT numeric_id, id FROM oc_storages ORDER BY numeric_id;
+              "
+
+              echo "cleanup-mounts: done"
+
         # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-oidc-setup
           image: docker.io/library/nextcloud:33.0.4-apache
