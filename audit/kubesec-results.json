@@ -1,0 +1,10 @@
+[
+  {
+    "object": "Unknown",
+    "valid": false,
+    "fileName": "STDIN",
+    "message": "error unmarshalling resource: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal array into Go value of type map[string]interface {}",
+    "score": 0,
+    "scoring": {}
+  }
+]
