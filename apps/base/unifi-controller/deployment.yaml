@@ -112,7 +112,7 @@ spec:
               drop: ["ALL"]
       containers:
         - name: unifi-controller
-          image: lscr.io/linuxserver/unifi-network-application:8.6.9
+          image: lscr.io/linuxserver/unifi-network-application:10.4.57
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8443
