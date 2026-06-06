@@ -154,12 +154,12 @@ spec:
             redis: 6379
         persistence:
           enabled: false
-        resources:
-          requests:
-            cpu: 25m
-            memory: 64Mi
-          limits:
-            memory: 128Mi
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
 
     resources:
       requests:
@@ -185,5 +185,3 @@ spec:
       periodSeconds: 10
       timeoutSeconds: 5
       failureThreshold: 6
-
-
