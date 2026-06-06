@@ -124,3 +124,8 @@ spec:
         login: true
         passwordSecret:
           name: sparkyfitness-app-db-credentials
+      - name: outline
+        ensure: present
+        login: true
+        passwordSecret:
+          name: outline-db-credentials
