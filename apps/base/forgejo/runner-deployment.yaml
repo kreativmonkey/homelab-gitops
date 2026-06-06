@@ -20,7 +20,7 @@ spec:
       containers:
         - name: runner
           # renovate: datasource=docker depName=data.forgejo.org/forgejo/runner versioning=semver
-          image: data.forgejo.org/forgejo/runner:6.2.2
+          image: data.forgejo.org/forgejo/runner:12.10.2
           env:
             - name: DOCKER_HOST
               value: tcp://127.0.0.1:2375

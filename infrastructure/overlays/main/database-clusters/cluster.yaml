@@ -11,7 +11,7 @@ metadata:
 spec:
   description: "Homelab PostgreSQL cluster"
   # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql versioning=loose
-  imageName: ghcr.io/cloudnative-pg/postgresql:18.4
+  imageName: ghcr.io/cloudnative-pg/postgresql:19beta1-system-trixie
 
   instances: 1
 

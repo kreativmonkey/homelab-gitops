@@ -14,7 +14,7 @@ metadata:
 spec:
   description: "Immich PostgreSQL with VectorChord"
   # renovate: datasource=docker depName=ghcr.io/tensorchord/cloudnative-vectorchord versioning=loose
-  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16.9-0.4.3
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:18.3
   instances: 1
 
   postgresql:
