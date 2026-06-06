@@ -104,8 +104,31 @@ WHERE mount_provider_class LIKE '%HomeMountPoint%';
 
 ## Bekannte Probleme & Monitoring
 
-### Doppelte Mounts
-Nextcloud erstellt bei Pod-Neustart manchmal doppelte `ObjectHomeMountProvider` Mounts für admin. Bereinigung:
+### Doppelte Mounts (Automatisch behoben)
+
+**Hintergrund:** Nextcloud hatte bis Version 33 einen Bug, bei dem `ObjectHomeMountProvider` bei jedem Filesystem-Setup einen neuen Mount hinzufügte (siehe [PR #52972](https://github.com/nextcloud/server/pull/52972)). Seit [PR #56933](https://github.com/nextcloud/server/pull/56933) gibt es einen Unique Index auf `oc_mounts`, der Duplikate technisch verhindert.
+
+**Automatische Bereinigung:** Ein Init-Container `cleanup-mounts` läuft bei jedem Pod-Start und entfernt eventuelle Duplikate:
+```yaml
+- name: cleanup-mounts
+  image: docker.io/library/postgres:16-alpine
+  command:
+    - sh
+    - -c
+    - |
+      psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -c "
+        DELETE FROM oc_mounts
+        WHERE id IN (
+          SELECT id FROM (
+            SELECT id, ROW_NUMBER() OVER (
+              PARTITION BY user_id, mount_point ORDER BY id
+            ) as rn FROM oc_mounts
+          ) t WHERE rn > 1
+        );
+      "
+```
+
+**Manuelle Bereinigung** (falls der Init-Container nicht greift):
 ```sql
 DELETE FROM oc_mounts WHERE id IN (
   SELECT id FROM (
