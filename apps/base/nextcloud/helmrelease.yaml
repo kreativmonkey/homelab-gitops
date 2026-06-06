@@ -98,6 +98,15 @@ spec:
       host: nc.f4mily.net
       trustedDomains:
         - nc.f4mily.net
+      # PHP ini overrides for large file uploads and long-running requests.
+      # Nextcloud federated share uploads (server-to-server) time out at PHP's default 30s.
+      # zz- prefix ensures this is loaded last, overriding defaults.
+      phpConfigs:
+        zz-large-uploads.ini: |-
+          max_execution_time = 0
+          upload_max_filesize = 16G
+          post_max_size = 16G
+          memory_limit = 512M
       # Required so the chart mounts defaultConfigs (autoconfig.php reads POSTGRES_*).
       configs:
         cluster.config.php: |-
