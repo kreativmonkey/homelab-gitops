@@ -25,7 +25,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: uptime-kuma
-          image: docker.io/louislam/uptime-kuma:2.3.2
+          image: docker.io/louislam/uptime-kuma:2.4.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3001
