@@ -6,7 +6,9 @@ resources:
   - nextcloud-admin.secret.yaml
   - nextcloud-authentik-oauth.secret.yaml
   - nextcloud-collab.secret.yaml
+  - nextcloud-s3-credentials.secret.yaml
   - pvc.yaml
+  - pvc-iscsi.yaml
   - whiteboard-deployment.yaml
   - appapi-harp-rbac.yaml
   - appapi-harp-deployment.yaml
