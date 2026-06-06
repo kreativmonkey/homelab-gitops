@@ -87,12 +87,7 @@ spec:
     persistence:
       enabled: true
       existingClaim: nextcloud-app-iscsi
-      # Separate NFS PVC for data directory (mounted at /var/www/html/data).
-      # Chart creates a dedicated nextcloud-data volume — no extraVolume needed.
-      nextcloudData:
-        enabled: true
-        existingClaim: nextcloud-data
-        subPath: docker/nextcloud
+
     nextcloud:
       persistence:
         # Empty subPath → chart uses "html", "config", etc. directly on iSCSI PVC.
@@ -158,42 +153,7 @@ spec:
           mountPath: /usr/local/etc/php/conf.d/redis-session.ini
           subPath: redis-session.ini
       extraInitContainers:
-        # 1) Migrate config + app code from old NFS to new iSCSI PVC (one-shot).
-        # Chart mounts nextcloud-main with subPath "html", "config", etc.
-        # This init container mounts nextcloud-main at root (no subPath) to populate
-        # the correct subdirectory structure: html/, config/, custom_apps/, etc.
-        - name: migrate-from-nfs
-          image: docker.io/library/nextcloud:33.0.4-apache
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-          command:
-            - /bin/sh
-            - -ec
-            - |
-              set -e
-              if [ -f /var/www/html/html/version.php ] && [ -f /var/www/html/config/config.php ]; then
-                echo "migrate-from-nfs: data already present on iSCSI PVC, skipping"
-                exit 0
-              fi
-              echo "migrate-from-nfs: copying data from old NFS to iSCSI PVC..."
-              mkdir -p /var/www/html/html /var/www/html/config \
-                       /var/www/html/custom_apps /var/www/html/themes \
-                       /var/www/html/tmp /var/www/html/root
-              [ -d /mnt/old-nfs/html ] && cp -a /mnt/old-nfs/html/. /var/www/html/html/
-              [ -d /mnt/old-nfs/config ] && cp -a /mnt/old-nfs/config/. /var/www/html/config/
-              [ -d /mnt/old-nfs/custom_apps ] && cp -a /mnt/old-nfs/custom_apps/. /var/www/html/custom_apps/
-              [ -d /mnt/old-nfs/themes ] && cp -a /mnt/old-nfs/themes/. /var/www/html/themes/
-              [ -d /mnt/old-nfs/tmp ] && cp -a /mnt/old-nfs/tmp/. /var/www/html/tmp/
-              echo "migrate-from-nfs: migration complete"
-          volumeMounts:
-            - name: nextcloud-main
-              mountPath: /var/www/html
-            - name: nextcloud-data
-              mountPath: /mnt/old-nfs
-              subPath: docker/nextcloud
-        # 2) Create Redis session config file (emptyDir).
+        - name: create-redis-session-ini
         - name: create-redis-session-ini
           image: docker.io/library/busybox:1.38
           securityContext:
@@ -207,7 +167,7 @@ spec:
           volumeMounts:
             - name: php-confd
               mountPath: /mnt
-        # 3) Ensure database configuration is set.
+
         # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-db-sync
           image: docker.io/library/nextcloud:33.0.4-apache
@@ -299,10 +259,7 @@ spec:
             - name: nextcloud-main
               mountPath: /var/www/html/config
               subPath: config
-            - name: nextcloud-data
-              mountPath: /var/www/html/data
-              subPath: docker/nextcloud/data
-        # 4) Configure Authentik OIDC provider.
+
         # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-oidc-setup
           image: docker.io/library/nextcloud:33.0.4-apache
@@ -357,10 +314,7 @@ spec:
             - name: nextcloud-main
               mountPath: /var/www/html/config
               subPath: config
-            - name: nextcloud-data
-              mountPath: /var/www/html/data
-              subPath: docker/nextcloud/data
-        # 5) Configure Whiteboard + AppAPI HaRP.
+
         # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-collab-setup
           image: docker.io/library/nextcloud:33.0.4-apache
@@ -434,9 +388,6 @@ spec:
             - name: nextcloud-main
               mountPath: /var/www/html/config
               subPath: config
-            - name: nextcloud-data
-              mountPath: /var/www/html/data
-              subPath: docker/nextcloud/data
       extraEnv:
         - name: TZ
           value: Europe/Berlin
