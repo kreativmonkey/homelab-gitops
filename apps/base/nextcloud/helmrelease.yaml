@@ -264,7 +264,7 @@ spec:
         # Nextcloud ≥33 has a unique index on oc_mounts, but during migration
         # orphaned ObjectHomeMountProvider entries can accumulate.
         - name: cleanup-mounts
-          image: docker.io/library/postgres:16-alpine
+          image: docker.io/library/postgres:18-alpine
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
