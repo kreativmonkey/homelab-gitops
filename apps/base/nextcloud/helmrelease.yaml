@@ -85,8 +85,16 @@ spec:
     persistence:
       enabled: true
       existingClaim: nextcloud-app-iscsi
-      # Dedicated iSCSI PVC — no subPath needed; the entire PVC is the webroot.
+      # Separate NFS PVC for data directory (mounted at /var/www/html/data).
+      # Chart creates a dedicated nextcloud-data volume — no extraVolume needed.
+      nextcloudData:
+        enabled: true
+        existingClaim: nextcloud-data
+        subPath: docker/nextcloud
     nextcloud:
+      persistence:
+        # Empty subPath → chart uses "html", "config", etc. directly on iSCSI PVC.
+        subPath: ""
       existingSecret:
         enabled: true
         secretName: nextcloud-admin
@@ -138,24 +146,20 @@ spec:
         runAsNonRoot: true
       podSecurityContext:
         fsGroup: 1000
-      # Extra volumes: old NFS PVC (for existing data) + php-confd (for Redis session config).
+      # php-confd emptyDir for Redis session config (non-root cannot write to conf.d).
       extraVolumes:
-        - name: old-nfs-volume
-          persistentVolumeClaim:
-            claimName: nextcloud-data
         - name: php-confd
           emptyDir: {}
       extraVolumeMounts:
-        # Mount old NFS data directory for existing files (new files go to S3).
-        - name: old-nfs-volume
-          mountPath: /var/www/html/data
-          subPath: docker/nextcloud/data
         # Non-root cannot create redis-session.ini in image-owned conf.d (nextcloud/helm#187).
         - name: php-confd
           mountPath: /usr/local/etc/php/conf.d/redis-session.ini
           subPath: redis-session.ini
       extraInitContainers:
-        # 1) Migrate config + custom_apps from old NFS to new iSCSI PVC (one-shot).
+        # 1) Migrate config + app code from old NFS to new iSCSI PVC (one-shot).
+        # Chart mounts nextcloud-main with subPath "html", "config", etc.
+        # This init container mounts nextcloud-main at root (no subPath) to populate
+        # the correct subdirectory structure: html/, config/, custom_apps/, etc.
         - name: migrate-from-nfs
           image: docker.io/library/nextcloud:33.0.4-apache
           securityContext:
@@ -167,31 +171,24 @@ spec:
             - -ec
             - |
               set -e
-              if [ -f /var/www/html/config/config.php ] && [ -f /var/www/html/version.php ]; then
+              if [ -f /var/www/html/html/version.php ] && [ -f /var/www/html/config/config.php ]; then
                 echo "migrate-from-nfs: data already present on iSCSI PVC, skipping"
                 exit 0
               fi
-              echo "migrate-from-nfs: copying config/ and custom_apps/ from old NFS..."
-              if [ -d /mnt/old-nfs/config ]; then
-                mkdir -p /var/www/html/config
-                cp -a /mnt/old-nfs/config/. /var/www/html/config/
-                echo "migrate-from-nfs: config copied"
-              fi
-              if [ -d /mnt/old-nfs/custom_apps ]; then
-                mkdir -p /var/www/html/custom_apps
-                cp -a /mnt/old-nfs/custom_apps/. /var/www/html/custom_apps/
-                echo "migrate-from-nfs: custom_apps copied"
-              fi
-              # Copy app code from old html/ subdirectory to root so version.php is found.
-              if [ -d /mnt/old-nfs/html ]; then
-                cp -a /mnt/old-nfs/html/. /var/www/html/
-                echo "migrate-from-nfs: app code (html/) copied"
-              fi
+              echo "migrate-from-nfs: copying data from old NFS to iSCSI PVC..."
+              mkdir -p /var/www/html/html /var/www/html/config \
+                       /var/www/html/custom_apps /var/www/html/themes \
+                       /var/www/html/tmp /var/www/html/root
+              [ -d /mnt/old-nfs/html ] && cp -a /mnt/old-nfs/html/. /var/www/html/html/
+              [ -d /mnt/old-nfs/config ] && cp -a /mnt/old-nfs/config/. /var/www/html/config/
+              [ -d /mnt/old-nfs/custom_apps ] && cp -a /mnt/old-nfs/custom_apps/. /var/www/html/custom_apps/
+              [ -d /mnt/old-nfs/themes ] && cp -a /mnt/old-nfs/themes/. /var/www/html/themes/
+              [ -d /mnt/old-nfs/tmp ] && cp -a /mnt/old-nfs/tmp/. /var/www/html/tmp/
               echo "migrate-from-nfs: migration complete"
           volumeMounts:
             - name: nextcloud-main
               mountPath: /var/www/html
-            - name: old-nfs-volume
+            - name: nextcloud-data
               mountPath: /mnt/old-nfs
               subPath: docker/nextcloud
         # 2) Create Redis session config file (emptyDir).
@@ -296,7 +293,11 @@ spec:
           volumeMounts:
             - name: nextcloud-main
               mountPath: /var/www/html
-            - name: old-nfs-volume
+              subPath: html
+            - name: nextcloud-main
+              mountPath: /var/www/html/config
+              subPath: config
+            - name: nextcloud-data
               mountPath: /var/www/html/data
               subPath: docker/nextcloud/data
         # 4) Configure Authentik OIDC provider.
@@ -350,7 +351,11 @@ spec:
           volumeMounts:
             - name: nextcloud-main
               mountPath: /var/www/html
-            - name: old-nfs-volume
+              subPath: html
+            - name: nextcloud-main
+              mountPath: /var/www/html/config
+              subPath: config
+            - name: nextcloud-data
               mountPath: /var/www/html/data
               subPath: docker/nextcloud/data
         # 5) Configure Whiteboard + AppAPI HaRP.
@@ -423,7 +428,11 @@ spec:
           volumeMounts:
             - name: nextcloud-main
               mountPath: /var/www/html
-            - name: old-nfs-volume
+              subPath: html
+            - name: nextcloud-main
+              mountPath: /var/www/html/config
+              subPath: config
+            - name: nextcloud-data
               mountPath: /var/www/html/data
               subPath: docker/nextcloud/data
       extraEnv:
