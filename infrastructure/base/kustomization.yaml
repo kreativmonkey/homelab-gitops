@@ -11,3 +11,4 @@ resources:
   - backup
   - database
   - remediation-api
+  - mcp-server
