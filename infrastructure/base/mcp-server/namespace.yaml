@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcp-system
+  labels:
+    app.kubernetes.io/name: mcp-server
+    app.kubernetes.io/part-of: homelab-infrastructure
