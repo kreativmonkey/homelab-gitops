@@ -118,6 +118,7 @@ spec:
     garmin:
       # Docker Hub image uses underscore (not chart default sparkyfitness-garmin).
       image:
+        # renovate: datasource=docker depName=codewithcj/sparkyfitness_garmin versioning=semver
         repository: codewithcj/sparkyfitness_garmin
         tag: v0.16.8
       # Sized from cluster metrics (idle): ~3m CPU, ~95Mi RAM.
