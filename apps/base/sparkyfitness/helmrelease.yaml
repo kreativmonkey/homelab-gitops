@@ -55,7 +55,7 @@ spec:
       image:
         # renovate: datasource=docker depName=codewithcj/sparkyfitness_server versioning=semver
         repository: codewithcj/sparkyfitness_server
-        tag: v0.16.6.3
+        tag: v0.16.8
       secrets:
         generate: false
       appDatabase:
@@ -79,7 +79,7 @@ spec:
       image:
         # renovate: datasource=docker depName=codewithcj/sparkyfitness versioning=semver
         repository: codewithcj/sparkyfitness
-        tag: v0.16.6.3
+        tag: v0.16.8
       # Docker Hub `codewithcj/sparkyfitness` listens on 8080 (not chart default :80 / ghcr frontend image).
       port: 8080
       service:
@@ -119,7 +119,7 @@ spec:
       # Docker Hub image uses underscore (not chart default sparkyfitness-garmin).
       image:
         repository: codewithcj/sparkyfitness_garmin
-        tag: v0.16.6.3
+        tag: v0.16.8
       # Sized from cluster metrics (idle): ~3m CPU, ~95Mi RAM.
       resources:
         requests:
