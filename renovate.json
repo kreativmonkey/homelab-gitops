@@ -196,13 +196,29 @@
       "automerge": false
     },
     {
-      "description": "Group all flux Helm chart bumps (except kite)",
+      "description": "SparkyFitness: group chart ref + image tags in one PR to prevent version drift",
+      "matchFileNames": [
+        "apps/base/sparkyfitness/**"
+      ],
+      "matchManagers": [
+        "flux",
+        "helm-values",
+        "custom.regex"
+      ],
+      "groupName": "sparkyfitness",
+      "groupSlug": "sparkyfitness",
+      "minimumReleaseAge": "7 days",
+      "automerge": false
+    },
+    {
+      "description": "Group all flux Helm chart bumps (except kite / sparkyfitness)",
       "matchManagers": [
         "flux"
       ],
       "matchFileNames": [
         "!apps/base/kite/**",
-        "!apps/base/authentik/**"
+        "!apps/base/authentik/**",
+        "!apps/base/sparkyfitness/**"
       ],
       "groupName": "flux helm releases",
       "groupSlug": "flux-helm-releases",
@@ -210,12 +226,13 @@
       "automerge": false
     },
     {
-      "description": "Group all helm-values image bumps (except kite)",
+      "description": "Group all helm-values image bumps (except kite / sparkyfitness)",
       "matchManagers": [
         "helm-values"
       ],
       "matchFileNames": [
-        "!apps/base/kite/**"
+        "!apps/base/kite/**",
+        "!apps/base/sparkyfitness/**"
       ],
       "groupName": "helm chart values",
       "groupSlug": "helm-chart-values",
@@ -233,9 +250,12 @@
       "automerge": false
     },
     {
-      "description": "Group renovate marker bumps (custom.regex)",
+      "description": "Group renovate marker bumps (custom.regex, except sparkyfitness)",
       "matchManagers": [
         "custom.regex"
+      ],
+      "matchFileNames": [
+        "!apps/base/sparkyfitness/**"
       ],
       "groupName": "renovate markers",
       "groupSlug": "renovate-markers",
