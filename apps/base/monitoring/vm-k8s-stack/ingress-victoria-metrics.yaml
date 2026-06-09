@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/description: Metrics DB & VMUI
     gethomepage.dev/group: Cluster Management
     gethomepage.dev/icon: victoriametrics.png
-    gethomepage.dev/app: vmsingle
+    gethomepage.dev/app: vmselect
     # TLS: wildcard-cluster-f4mily-net-tls via reflector (no cluster-issuer).
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
@@ -29,6 +29,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: vmsingle-vm-k8s-stack-victoria-metrics-k8s-stack
+                # VMCluster: vmselect bedient HTTP-Queries auf Port 8427
+                name: vmselect-vm-k8s-stack-victoria-metrics-k8s-stack
                 port:
-                  number: 8428
+                  number: 8427
