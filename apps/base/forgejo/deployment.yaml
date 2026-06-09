@@ -103,7 +103,15 @@ spec:
             - name: data
               mountPath: /data
               subPath: docker/forgejo
+            - name: comments-tmpl
+              mountPath: /data/gitea/templates/repo/issue/view_content/comments.tmpl
+              subPath: comments.tmpl
+              readOnly: true
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: forgejo-data
+        - name: comments-tmpl
+          configMap:
+            name: forgejo-comments-tmpl
+            defaultMode: 0444
