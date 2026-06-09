@@ -100,9 +100,13 @@ spec:
         - name: data
           mountPath: /data
     worker:
+      # 2026-06-09: limit raised 2Gi→4Gi (OOMKilled, exit 137)
+      #   Previous pod ran 3.5d then OOM. DockerException spam
+      #   (outpost_service_connection_monitor → Docker) on Talos
+      #   is harmless but adds CPU/memory pressure.
       resources:
         requests:
-          cpu: 25m
-          memory: 768Mi
+          cpu: 50m
+          memory: 1Gi
         limits:
-          memory: 2Gi
+          memory: 4Gi
