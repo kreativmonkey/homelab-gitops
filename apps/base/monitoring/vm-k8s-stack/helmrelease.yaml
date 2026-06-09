@@ -19,29 +19,54 @@ spec:
       clusterLabel: cluster
 
     # ============================================
-    # VMSINGLE - Storage
+    # VMCLUSTER - Hochverfügbares Storage
     # ============================================
     vmsingle:
+      enabled: false
+
+    vmcluster:
       enabled: true
       spec:
         retentionPeriod: "1"
-        storage:
-          storageClassName: truenas-iscsi
+        vmstorage:
+          replicaCount: 2
+          priorityClassName: homelab-infrastructure
+          podMetadata:
+            annotations:
+              backup.velero.io/backup-volumes: vm-data
+          storage:
+            volumeClaimTemplate:
+              spec:
+                storageClassName: truenas-iscsi
+                resources:
+                  requests:
+                    storage: 20Gi
           resources:
             requests:
-              storage: 20Gi
-        resources:
-          requests:
-            cpu: 100m
-            memory: 512Mi
-          limits:
-            memory: 4Gi
-        priorityClassName: homelab-infrastructure
-        podMetadata:
-          annotations:
-            backup.velero.io/backup-volumes: vm-data
-      ingress:
-        enabled: false
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              memory: 4Gi
+        vmselect:
+          enabled: true
+          replicaCount: 2
+          priorityClassName: homelab-infrastructure
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+        vminsert:
+          enabled: true
+          replicaCount: 2
+          priorityClassName: homelab-infrastructure
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
 
     # ============================================
     # OPERATOR - use quay.io to avoid Docker Hub rate limits
