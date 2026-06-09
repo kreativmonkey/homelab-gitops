@@ -52,6 +52,7 @@ How to avoid this in the future. Include specific checks or guardrails.
 | File | Topic | Date |
 |------|-------|------|
 | [nextcloud-s3-primary-storage.md](nextcloud-s3-primary-storage.md) | Nextcloud: NFS → S3 Primary Storage Migration | 2026-06-06 |
+| [immich-vchord-extension-update.md](immich-vchord-extension-update.md) | Immich: vchord Extension Update Crashes Server on Startup | 2026-06-08 |
 
 ---
 

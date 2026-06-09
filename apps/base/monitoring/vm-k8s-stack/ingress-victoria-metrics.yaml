@@ -29,7 +29,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                # VMCluster: vmselect bedient HTTP-Queries auf Port 8427
+                # VMCluster: vmselect bedient HTTP-Queries auf Port 8481
                 name: vmselect-vm-k8s-stack-victoria-metrics-k8s-stack
                 port:
-                  number: 8427
+                  number: 8481

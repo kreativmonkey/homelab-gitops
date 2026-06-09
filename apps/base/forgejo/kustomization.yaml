@@ -5,6 +5,7 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - redis.yaml
+  - comments-tmpl.configmap.yaml
   # Runner: enable after SOPS-encrypting forgejo-runner-register.secret.yaml (see docs/migrations.md#5-first-time-deploy-fresh-app).
   # - runner-deployment.yaml
   - service.yaml
