@@ -85,6 +85,15 @@ spec:
       periodSeconds: 15
       timeoutSeconds: 10
       failureThreshold: 4
+    # Prometheus-URL mit /select/0/prometheus-Prefix für VMCluster-Mode
+    # Kite auto-discovery baut nur /api/v1/query, VMCluster braucht aber
+    # /select/0/prometheus/api/v1/query.
+    config:
+      enabled: true
+      clusters:
+        - name: homelab
+          inCluster: true
+          prometheusURL: "http://vmselect-vm-k8s-stack-victoria-metrics-k8s-stack.monitoring.svc.cluster.local:8481/select/0/prometheus"
     resources:
       requests:
         cpu: 10m
