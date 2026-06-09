@@ -44,7 +44,7 @@ spec:
         cache:
           enabled: true
           storageClass: truenas-iscsi
-          storageSize: "2Gi"
+          storageSize: "10Gi"
 
     existingSecret: renovate-credentials
 
