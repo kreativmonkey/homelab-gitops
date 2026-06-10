@@ -1,4 +1,4 @@
-# Renovate erkennt keine Docker-Image-Updates bei CalVer/Hash-Tags
+# Renovate Misses Docker Image Updates with CalVer/Hash Tags
 
 **Date**: 2026-06-10
 **Severity**: high
@@ -7,22 +7,22 @@
 
 ## What Went Wrong
 
-SearXNG Docker-Image war 16 Monate alt (`2025.2.7-739822f70`). Renovate hat nie ein Update-PR vorgeschlagen. Google und Startplace waren seit Cluster-Erstellung nicht funktionsfähig (CAPTCHA-Blockierung durch fehlenden `arc_id`-Parameter).
+SearXNG Docker image was 16 months old (`2025.2.7-739822f70`). Renovate never proposed an update PR. Google and Startpage were non-functional since cluster creation (CAPTCHA blocking due to missing `arc_id` parameter).
 
 ## Why It Failed
 
-Renovate's `kubernetes`-Manager erkennt `image:`-Felder in Deployment-Manifests und nutzt standardmäßig die `docker`-Datasource mit **Semver**-Versioning.
+Renovate's `kubernetes` manager detects `image:` fields in Deployment manifests and defaults to the `docker` datasource with **Semver** versioning.
 
-SearXNG's Tag-Format ist `YYYY.M.D-commitshort` (z.B. `2025.2.7-739822f70`). Dieses CalVer + Hash-Format wird von Semver-Logik nicht korrekt versioniert:
-- Renovate interpretiert den Hash als Pre-Release-Suffix
-- Der Versionsvergleich zwischen `2025.2.7-739822f70` und `2026.6.2-e964708c0` schlägt fehl
-- Kein Update-PR wird erstellt
+SearXNG's tag format is `YYYY.M.D-commitshort` (e.g. `2025.2.7-739822f70`). This CalVer + hash format is not handled correctly by Semver logic:
+- Renovate interprets the hash as a pre-release suffix
+- Version comparison between `2025.2.7-739822f70` and `2026.6.2-e964708c0` fails
+- No update PR is created
 
-Das gleiche Problem betrifft potenziell alle Images mit CalVer/Hash-Tags (z.B. SearXNG, manche Monitoring-Tools).
+This affects any image using CalVer or commit-hash tags (e.g. SearXNG, some monitoring tools).
 
 ## The Correct Approach
 
-`# renovate:`-Marker mit `versioning=loose` in die Deployment-Manuale einfügen:
+Add `# renovate:` markers with `versioning=loose` to Deployment manifests:
 
 ```yaml
 containers:
@@ -31,14 +31,14 @@ containers:
     image: docker.io/searxng/searxng:2026.6.2-e964708c0
 ```
 
-`loose`-Versioning sagt Renovate: "Vergleiche nach Datum/Tag-Name, nicht nach Semver-Compliance."
+`loose` versioning tells Renovate: "Compare by date/tag name, not Semver compliance."
 
 ## Prevention
 
-- **Bei jedem neuen App-Deployment mit Docker-Images prüfen**: Folgt das Tag-Format Semver (`v1.2.3`) oder CalVer/Hash? Bei CalVer/Hash → `# renovate: datasource=docker depName=... versioning=loose` einfügen.
-- **Nicht auf den `kubernetes`-Manager allein vertrauen** — er erkennt `image:`-Felder, aber das Versioning muss stimmen.
-- **Regelmäßig `renovatedashboard` prüfen**: `https://dashboard.renovatebot.com` zeigt an, welche Packages Renovate nicht versionieren kann.
-- **Renovate-Config-Review bei neuen Apps**: Prüfen ob ein `packageRules`-Eintrag oder `# renovate:`-Marker benötigt wird.
+- **Check every new app deployment with Docker images**: Does the tag follow Semver (`v1.2.3`) or CalVer/hash? For CalVer/hash — add `# renovate: datasource=docker depName=... versioning=loose`.
+- **Do not rely solely on the `kubernetes` manager** — it detects `image:` fields but versioning must match.
+- **Regularly check the Renovate dashboard**: `https://dashboard.renovatebot.com` shows which packages Renovate cannot version.
+- **Review Renovate config for new apps**: Check if a `packageRules` entry or `# renovate:` marker is needed.
 
 ## Related
 
