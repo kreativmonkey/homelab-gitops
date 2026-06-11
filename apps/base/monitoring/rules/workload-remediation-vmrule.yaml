@@ -36,5 +36,5 @@ spec:
             homelab_auto_remediate: "true"
           annotations:
             summary: "CrashLoopBackOff: {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }})"
-            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is in CrashLoopBackOff for at least 5 minutes."
-            runbook_url: "https://github.com/kreativmonkey/homelab-gitops/blob/main/gitops-homelab/docs/runbooks/pod-crash-remediation.md"
+            description: "Pod {{ $labels.pod }} container {{ $labels.container }} in {{ $labels.namespace }} is in CrashLoopBackOff. If this is an init container, pod restart does not help — fix GitOps manifest."
+            runbook_url: "https://github.com/kreativmonkey/homelab-gitops/blob/main/gitops-homelab/docs/runbooks/nextcloud-init-crashloop.md"
