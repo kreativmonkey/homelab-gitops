@@ -153,7 +153,7 @@ spec:
             # n8n KI-Triage: Alertmanager → n8n → LLM → Telegram (requires alertmanager-n8n-webhook secret)
             # GitOps auto-PR (webhook/vmalert) is opt-in — see docs/integrations/alerting-n8n-gitops-remediation.md
             - matchers:
-                - homelab/owner="platform"
+                - homelab_owner="platform"
                 - severity=~"critical|warning"
               receiver: n8n-triage
               continue: true
