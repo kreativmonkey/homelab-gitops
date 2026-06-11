@@ -29,7 +29,14 @@ data:
         "rollout-restart": {"group": "apps", "resource": "deployments", "verb": "patch"},
         "get-pods": {"group": "", "resource": "pods", "verb": "list"},
     }
-    ALLOWED_NAMESPACES = {"monitoring", "ai-ops"}
+    ALLOWED_NAMESPACES = {
+        "monitoring", "ai-ops",
+        "nextcloud", "immich", "jellyfin", "paperless-ngx", "audiobookshelf",
+        "tandoor", "linkwarden", "homepage", "authentik", "searxng",
+        "goloom", "teslamate", "netbird", "watchyourlan", "renovate",
+        "gatus", "sparkyfitness", "readeck", "kavita", "outline",
+        "sterling-pdf", "kite", "homer",
+    }
 
     class RemediateRequest(BaseModel):
         action: str
