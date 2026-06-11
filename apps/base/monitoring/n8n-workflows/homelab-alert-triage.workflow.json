@@ -117,7 +117,7 @@
         "messages": {
           "values": [
             {
-              "content": "=Du bist Homelab-SRE. Antworte NUR mit g\u00fcltigem JSON (kein Markdown):\n{\"action_needed\":bool,\"automatable\":bool,\"risk\":\"low|medium|high\",\"outcome\":\"no_action|needs_human|cannot_fix|auto_fix_candidate\",\"summary_de\":\"...\",\"proposed_steps\":[\"...\"],\"telegram_message\":\"...\"}\n\nRegeln:\n- outcome=no_action bei reinem L\u00e4rm oder unklaren Chart-Defaults\n- outcome=needs_human bei CNPG, Disk, Memory, Velero, Datenverlust-Risiko\n- outcome=cannot_fix wenn Agent keine sichere Aktion hat\n- outcome=auto_fix_candidate nur bei klarer, risikoarmer Aktion (z.B. Pod-Restart bekanntes Deployment)\n- automatable=true nur wenn allowAutoFix={{ $json.allowAutoFix }} und Aktion in Allowlist\n\nAlert: {{ $json.alertname }}\nSeverity: {{ $json.severity }}\nStatus: {{ $json.status }}\nSummary: {{ $json.summary }}\nDescription: {{ $json.description }}\nRunbook: {{ $json.runbookUrl }}\nNamespace: {{ $json.namespace }}"
+              "content": "=Du bist Homelab-SRE. Antworte NUR mit g\u00fcltigem JSON (kein Markdown):\n{\"action_needed\":bool,\"automatable\":bool,\"risk\":\"low|medium|high\",\"outcome\":\"no_action|needs_human|cannot_fix|auto_fix_candidate\",\"summary_de\":\"...\",\"proposed_steps\":[\"...\"],\"telegram_message\":\"...\"}\n\nRegeln:\n- outcome=no_action bei reinem L\u00e4rm oder unklaren Chart-Defaults\n- outcome=needs_human bei CNPG, Disk, Memory, Velero, Datenverlust-Risiko\n- outcome=cannot_fix wenn Agent keine sichere Aktion hat\n- outcome=auto_fix_candidate nur bei klarer, risikoarmer Aktion (z.B. transiente Netzwerk-Glitches)\n- NIEMALS auto_fix_candidate bei Init:CrashLoopBackOff, Init-Container-Fehlern, occ/config-Fehlern oder HelmRelease-Init-Skripten — dort hilft Restart nicht\n- automatable=true nur wenn allowAutoFix={{ $json.allowAutoFix }} und Aktion in Allowlist\n\nAlert: {{ $json.alertname }}\nSeverity: {{ $json.severity }}\nStatus: {{ $json.status }}\nSummary: {{ $json.summary }}\nDescription: {{ $json.description }}\nRunbook: {{ $json.runbookUrl }}\nNamespace: {{ $json.namespace }}"
             }
           ]
         }
@@ -139,7 +139,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const alert = $('Parse Alert').first().json;\nlet triage = {};\ntry {\n  const raw = $input.first().json.message?.content ?? $input.first().json.text ?? $input.first().json.output ?? '';\n  const m = String(raw).match(/\\{[\\s\\S]*\\}/);\n  triage = m ? JSON.parse(m[0]) : { outcome: 'cannot_fix', summary_de: 'LLM-Antwort nicht parsebar', action_needed: true };\n} catch (e) {\n  triage = { outcome: 'cannot_fix', summary_de: 'LLM parse error: ' + e.message, action_needed: true, automatable: false };\n}\nconst mayAutoFix = alert.allowAutoFix && triage.automatable === true && triage.outcome === 'auto_fix_candidate';\nreturn [{ json: { ...alert, triage, mayAutoFix } }];"
+        "jsCode": "const alert = $('Parse Alert').first().json;\nlet triage = {};\ntry {\n  const raw = $input.first().json.message?.content ?? $input.first().json.text ?? $input.first().json.output ?? '';\n  const m = String(raw).match(/\\{[\\s\\S]*\\}/);\n  triage = m ? JSON.parse(m[0]) : { outcome: 'cannot_fix', summary_de: 'LLM-Antwort nicht parsebar', action_needed: true };\n} catch (e) {\n  triage = { outcome: 'cannot_fix', summary_de: 'LLM parse error: ' + e.message, action_needed: true, automatable: false };\n}\nconst desc = (alert.description || '').toLowerCase();\nif ((desc.includes('init:') || desc.includes('initcontainer')) && triage.outcome === 'auto_fix_candidate') {\n  triage.outcome = 'needs_human';\n  triage.automatable = false;\n  triage.summary_de = (triage.summary_de || '') + ' Init-Container — kein Auto-Restart.';\n}\nconst mayAutoFix = alert.allowAutoFix && triage.automatable === true && triage.outcome === 'auto_fix_candidate';\nreturn [{ json: { ...alert, triage, mayAutoFix } }];"
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000007",
       "name": "Merge Triage",
@@ -387,6 +387,51 @@
       }
     },
     {
+      "id": "guard-af-001",
+      "name": "Guard Auto-Fix",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const inv = $input.first().json;\nconst alert = $('Merge Triage').first().json;\nconst failed = inv.failed_init_containers || [];\nconst blocked = inv.restart_recommended === false || failed.length > 0;\nconst owner = inv.owner || {};\nconst depName = owner.name || (alert.instance || '').replace(/-[a-z0-9]{5,10}-[a-z0-9]{5}$/, '').replace(/-[0-9]+$/, '');\nif (blocked) {\n  return [{\n    json: {\n      skip_auto_fix: true,\n      alertname: alert.alertname,\n      namespace: alert.namespace,\n      instance: alert.instance,\n      deployment_name: depName,\n      root_cause: 'CONFIG_ERROR',\n      confidence: 'high',\n      summary_de: inv.restart_not_recommended_reason || ('Init-Container fehlgeschlagen: ' + failed.join(', ')),\n      recommended_action: 'GitOps-Manifest prüfen (Init-Container/HelmRelease). Pod-Neustart hilft nicht.',\n    }\n  }];\n}\nreturn [{ json: { ...inv, skip_auto_fix: false } }];"
+      }
+    },
+    {
+      "id": "guard-af-if-001",
+      "name": "Init fix blocked?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1720,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "skip-init-fix",
+              "leftValue": "={{ $json.skip_auto_fix }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
       "id": "llm-rc-001",
       "name": "LLM Root Cause",
       "type": "@n8n/n8n-nodes-langchain.openAi",
@@ -403,7 +448,7 @@
         "messages": {
           "values": [
             {
-              "content": "=Du bist Homelab-SRE. Analysiere die Pod-Investigation-Daten und bestimme die Grundursache.\nAntworte NUR mit g\u00fcltigem JSON (kein Markdown):\n\n{\"root_cause\":\"OOM|CONFIG_ERROR|IMAGE_ERROR|DEPENDENCY|UNKNOWN\",\"confidence\":\"high|medium|low\",\"fix_type\":\"increase_memory|increase_cpu|fix_config|restart_only|none\",\"summary_de\":\"...\",\"recommended_action\":\"...\",\"memory_current\":\"...\",\"memory_suggested\":\"...\",\"cpu_current\":\"...\",\"cpu_suggested\":\"...\"}\n\n**Investigation Data:**\n{{ JSON.stringify($json) }}\n\n**Original Alert:**\n{{ JSON.stringify($(\"Merge Triage\").first().json) }}\n\nRegeln:\n- root_cause=OOM wenn termination_reason OOMKilled oder logs OOM/Out of memory zeigen\n- root_cause=CONFIG_ERROR wenn logs Config/Parse/Invalid errors zeigen\n- root_cause=IMAGE_ERROR wenn events ImagePullBackOff/ErrImagePull zeigen\n- root_cause=DEPENDENCY wenn logs connection refused/timeout zu DB/Api zeigen\n- confidence=high nur bei klaren Signalen\n- fix_type=increase_memory nur bei OOM\n- fix_type=increase_cpu nur bei CPUThrottling oder CPU limits zu niedrig\n- memory/cpu Angaben mit Einheit (z.B. \"256Mi\", \"500m\")"
+              "content": "=Du bist Homelab-SRE. Analysiere die Pod-Investigation-Daten und bestimme die Grundursache.\nAntworte NUR mit g\u00fcltigem JSON (kein Markdown):\n\n{\"root_cause\":\"OOM|CONFIG_ERROR|IMAGE_ERROR|DEPENDENCY|UNKNOWN\",\"confidence\":\"high|medium|low\",\"fix_type\":\"increase_memory|increase_cpu|fix_config|restart_only|none\",\"summary_de\":\"...\",\"recommended_action\":\"...\",\"memory_current\":\"...\",\"memory_suggested\":\"...\",\"cpu_current\":\"...\",\"cpu_suggested\":\"...\"}\n\n**Investigation Data:**\n{{ JSON.stringify($json) }}\n\n**Original Alert:**\n{{ JSON.stringify($(\"Merge Triage\").first().json) }}\n\nRegeln:\n- restart_recommended=false oder failed_init_containers nicht leer => fix_type=none, root_cause=CONFIG_ERROR, recommended_action=GitOps/Manifest prüfen\n- root_cause=OOM wenn termination_reason OOMKilled oder logs OOM/Out of memory zeigen\n- root_cause=CONFIG_ERROR wenn init_logs/logs Config/occ/Read-only/Can't write into config zeigen\n- root_cause=IMAGE_ERROR wenn events ImagePullBackOff/ErrImagePull zeigen\n- root_cause=DEPENDENCY wenn logs connection refused/timeout zu DB/Api zeigen\n- confidence=high nur bei klaren Signalen\n- fix_type=increase_memory nur bei OOM im Haupt-Container (nicht bei Init-Fehlern)\n- fix_type=restart_only ist verboten — Auto-Remediation führt keinen Restart aus\n- memory/cpu Angaben mit Einheit (z.B. \"256Mi\", \"500m\")"
             }
           ]
         }
@@ -419,7 +464,7 @@
         280
       ],
       "parameters": {
-        "jsCode": "const alert = $('Merge Triage').first().json;\nconst inv = $('Call Investigate').first().json;\nlet rc = {};\ntry {\n  const raw = $input.first().json.message?.content ?? $input.first().json.text ?? $input.first().json.output ?? '';\n  const m = String(raw).match(/\\{[\\s\\S]*\\}/);\n  rc = m ? JSON.parse(m[0]) : { root_cause: 'UNKNOWN', confidence: 'low', summary_de: 'LLM-Antwort nicht parsebar' };\n} catch (e) {\n  rc = { root_cause: 'UNKNOWN', confidence: 'low', summary_de: 'LLM parse error: ' + e.message };\n}\nconst owner = inv.owner || {};\nconst podName = alert.instance || '';\nconst depName = owner.name || podName.replace(/-[a-z0-9]{5,10}-[a-z0-9]{5}$/, '').replace(/-[0-9]+$/, '');\nreturn [{\n  json: {\n    root_cause: rc.root_cause || 'UNKNOWN',\n    confidence: rc.confidence || 'low',\n    fix_type: rc.fix_type || 'none',\n    summary_de: rc.summary_de || '',\n    recommended_action: rc.recommended_action || '',\n    memory_current: rc.memory_current || '',\n    memory_suggested: rc.memory_suggested || '',\n    cpu_current: rc.cpu_current || '',\n    cpu_suggested: rc.cpu_suggested || '',\n    alertname: alert.alertname,\n    namespace: alert.namespace,\n    instance: alert.instance,\n    deployment_name: depName,\n  }\n}];"
+        "jsCode": "const alert = $('Merge Triage').first().json;\nconst inv = $('Call Investigate').first().json;\nlet rc = {};\ntry {\n  const raw = $input.first().json.message?.content ?? $input.first().json.text ?? $input.first().json.output ?? '';\n  const m = String(raw).match(/\\{[\\s\\S]*\\}/);\n  rc = m ? JSON.parse(m[0]) : { root_cause: 'UNKNOWN', confidence: 'low', summary_de: 'LLM-Antwort nicht parsebar' };\n} catch (e) {\n  rc = { root_cause: 'UNKNOWN', confidence: 'low', summary_de: 'LLM parse error: ' + e.message };\n}\nconst owner = inv.owner || {};\nconst podName = alert.instance || '';\nconst depName = owner.name || podName.replace(/-[a-z0-9]{5,10}-[a-z0-9]{5}$/, '').replace(/-[0-9]+$/, '');\nconst initBlocked = inv.restart_recommended === false || (inv.failed_init_containers || []).length > 0;\nlet fixType = rc.fix_type || 'none';\nlet rootCause = rc.root_cause || 'UNKNOWN';\nlet summary = rc.summary_de || '';\nlet action = rc.recommended_action || '';\nif (initBlocked) {\n  fixType = 'none';\n  rootCause = 'CONFIG_ERROR';\n  summary = inv.restart_not_recommended_reason || summary || ('Init-Container: ' + (inv.failed_init_containers || []).join(', '));\n  action = action || 'GitOps-Manifest prüfen (Init-Container/HelmRelease). Pod-Neustart hilft nicht.';\n}\nif (['restart_only', 'increase_memory', 'increase_cpu'].includes(fixType) && initBlocked) {\n  fixType = 'none';\n}\nreturn [{\n  json: {\n    root_cause: rootCause,\n    confidence: initBlocked ? 'high' : (rc.confidence || 'low'),\n    fix_type: fixType,\n    summary_de: summary,\n    recommended_action: action,\n    memory_current: rc.memory_current || '',\n    memory_suggested: rc.memory_suggested || '',\n    cpu_current: rc.cpu_current || '',\n    cpu_suggested: rc.cpu_suggested || '',\n    alertname: alert.alertname,\n    namespace: alert.namespace,\n    instance: alert.instance,\n    deployment_name: depName,\n    skip_auto_fix: initBlocked,\n  }\n}];"
       }
     },
     {
@@ -726,6 +771,35 @@
     },
     "Call Investigate": {
       "main": [
+        [
+          {
+            "node": "Guard Auto-Fix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guard Auto-Fix": {
+      "main": [
+        [
+          {
+            "node": "Init fix blocked?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init fix blocked?": {
+      "main": [
+        [
+          {
+            "node": "Format Investigate Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "LLM Root Cause",

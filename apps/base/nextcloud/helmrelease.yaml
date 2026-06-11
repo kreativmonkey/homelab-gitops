@@ -222,35 +222,46 @@ spec:
                   --database-user "${POSTGRES_USER}" \
                   --database-pass "${POSTGRES_PASSWORD}"
               fi
-              php occ config:system:set dbtype --value=pgsql
-              php occ config:system:set dbhost --value="${POSTGRES_HOST}"
-              php occ config:system:set dbname --value="${POSTGRES_DB}"
-              php occ config:system:set dbuser --value="${POSTGRES_USER}"
-              php occ config:system:set dbpassword --value="${POSTGRES_PASSWORD}"
-              php occ config:system:set redis host --value=nextcloud-redis-master
-              php occ config:system:set redis port --value=6379
-              php occ config:system:set overwritehost --value="${NEXTCLOUD_PUBLIC_HOST}"
-              php occ config:system:set overwriteprotocol --value=https
-              php occ config:system:set overwrite.cli.url --value="https://${NEXTCLOUD_PUBLIC_HOST}"
-              php occ config:system:set trusted_domains 0 --value="${NEXTCLOUD_PUBLIC_HOST}"
-              php occ config:system:set trusted_proxies 0 --value="127.0.0.1"
-              php occ config:system:set trusted_proxies 1 --value="10.0.0.0/8"
-              php occ config:system:set forwarded_for_headers 0 --value="HTTP_X_FORWARDED_FOR"
-              php occ config:system:set forwarded_for_headers 1 --value="HTTP_X_REAL_IP"
-              php occ config:system:set maintenance_window_start --value=2 --type=integer
-              php occ config:system:set default_phone_region --value=DE
-              php occ config:system:set serverid --value=1 --type=integer
+              # Fast path: do not rewrite config.php on every pod start (Recreate = outage if this fails).
+              php occ maintenance:mode --off 2>/dev/null || true
+              if php occ status 2>/dev/null | grep -q 'installed: true'; then
+                echo "occ-db-sync: healthy install, skipping config rewrite"
+                exit 0
+              fi
+              echo "occ-db-sync: recovery — applying config sync"
+              occ_set() {
+                php occ config:system:set "$@" --update-only 2>/dev/null || \
+                php occ config:system:set "$@" 2>/dev/null || true
+              }
+              occ_set dbtype --value=pgsql
+              occ_set dbhost --value="${POSTGRES_HOST}"
+              occ_set dbname --value="${POSTGRES_DB}"
+              occ_set dbuser --value="${POSTGRES_USER}"
+              occ_set dbpassword --value="${POSTGRES_PASSWORD}"
+              occ_set redis host --value=nextcloud-redis-master
+              occ_set redis port --value=6379
+              occ_set overwritehost --value="${NEXTCLOUD_PUBLIC_HOST}"
+              occ_set overwriteprotocol --value=https
+              occ_set overwrite.cli.url --value="https://${NEXTCLOUD_PUBLIC_HOST}"
+              occ_set trusted_domains 0 --value="${NEXTCLOUD_PUBLIC_HOST}"
+              occ_set trusted_proxies 0 --value="127.0.0.1"
+              occ_set trusted_proxies 1 --value="10.0.0.0/8"
+              occ_set forwarded_for_headers 0 --value="HTTP_X_FORWARDED_FOR"
+              occ_set forwarded_for_headers 1 --value="HTTP_X_REAL_IP"
+              occ_set maintenance_window_start --value=2 --type=integer
+              occ_set default_phone_region --value=DE
+              occ_set serverid --value=1 --type=integer
               # integrity cleanup leftover from NFS dot-prefixed temp files
               find /var/www/html/dist /var/www/html/core/dist -maxdepth 1 -type f -name '.*.*' -delete 2>/dev/null || true
               find /var/www/html/apps -path '*/img/*' -type f -name '.*.*' -delete 2>/dev/null || true
-              php occ maintenance:update:htaccess --no-interaction
+              php occ maintenance:update:htaccess --no-interaction 2>/dev/null || true
               MARKER=/var/www/html/data/.occ-mime-repair-done
               if [ ! -f "${MARKER}" ]; then
                 echo "occ-db-sync: running one-time MIME type repair (expensive)"
-                php occ maintenance:repair --include-expensive --no-interaction && touch "${MARKER}"
+                php occ maintenance:repair --include-expensive --no-interaction && touch "${MARKER}" || true
               fi
-              php occ maintenance:mode --off || true
-              php occ status
+              php occ maintenance:mode --off 2>/dev/null || true
+              php occ status 2>/dev/null || true
           volumeMounts:
             - name: nextcloud-main
               mountPath: /var/www/html

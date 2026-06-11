@@ -126,6 +126,58 @@ data:
             detail = e.read().decode()[:500]
             raise HTTPException(e.code, f"GitHub API error: {detail}")
 
+    def _init_waiting_reason(st):
+        if not st or not st.state:
+            return ""
+        if st.state.waiting:
+            return st.state.waiting.reason or ""
+        if st.state.terminated and (st.state.terminated.exit_code or 0) != 0:
+            return st.state.terminated.reason or "Error"
+        return ""
+
+    def _pod_has_init_failure(pod):
+        failed = []
+        for s in pod.status.init_container_statuses or []:
+            reason = _init_waiting_reason(s)
+            if not s.ready and (
+                s.restart_count > 0
+                or reason in ("CrashLoopBackOff", "Error", "StartError", "ImagePullBackOff")
+            ):
+                failed.append(s.name)
+        if failed:
+            return failed, (
+                f"Init-Container {'/'.join(failed)} fehlgeschlagen — "
+                "Neustart ändert die Init-Logik nicht (GitOps/Config-Fix nötig)"
+            )
+        for cond in pod.status.conditions or []:
+            if cond.type == "Initialized" and cond.status == "False":
+                return ["<uninitialized>"], "Pod nicht initialisiert — Init-Container muss zuerst repariert werden"
+        return [], ""
+
+    def _logs_indicate_config_error(text):
+        markers = (
+            "Can't write into config",
+            "Read-only file system",
+            "config:system:set",
+            "Init:CrashLoopBackOff",
+        )
+        lower = (text or "").lower()
+        for marker in markers:
+            if marker.lower() in lower:
+                return f"Logs zeigen Konfigurationsfehler ({marker}) — Restart hilft nicht"
+        return ""
+
+    def _deployment_pods(core, apps, namespace, deployment_name):
+        try:
+            dep = apps.read_namespaced_deployment(deployment_name, namespace)
+        except Exception:
+            return []
+        labels = dep.spec.selector.match_labels or {}
+        if not labels:
+            return []
+        selector = ",".join(f"{k}={v}" for k, v in labels.items())
+        return core.list_namespaced_pod(namespace, label_selector=selector).items
+
     # ── Investigate ──────────────────────────────────────────────
     @app.post("/v1/investigate")
     def investigate(req: InvestigateRequest, _=Depends(verify_token)):
@@ -159,7 +211,7 @@ data:
             elif ref.kind in ("DaemonSet", "StatefulSet", "Job"):
                 owner = {"kind": ref.kind, "name": ref.name}
 
-        # Logs
+        # Logs (main containers)
         logs = ""
         prev_logs = ""
         if cs:
@@ -171,6 +223,50 @@ data:
                 prev_logs = core.read_namespaced_pod_log(req.pod, req.namespace, tail_lines=100, previous=True)
             except Exception:
                 pass
+
+        # Init container state + logs (main app may never have started)
+        init_container_statuses = []
+        failed_init_containers = []
+        init_logs = ""
+        for s in pod.status.init_container_statuses or []:
+            reason = _init_waiting_reason(s)
+            init_container_statuses.append({
+                "name": s.name,
+                "ready": s.ready,
+                "restart_count": s.restart_count,
+                "state": str(s.state),
+                "waiting_reason": reason,
+            })
+            if not s.ready and (
+                s.restart_count > 0
+                or reason in ("CrashLoopBackOff", "Error", "StartError", "ImagePullBackOff")
+            ):
+                failed_init_containers.append(s.name)
+
+        if not statuses or not all(s.ready for s in statuses):
+            for ic in pod.spec.init_containers or []:
+                try:
+                    chunk = core.read_namespaced_pod_log(
+                        req.pod, req.namespace, container=ic.name, tail_lines=80
+                    )
+                    init_logs += f"\n--- {ic.name} ---\n" + chunk
+                except Exception:
+                    pass
+
+        combined_logs = (init_logs + "\n" + logs + "\n" + prev_logs)[-12000:]
+
+        restart_recommended = True
+        restart_not_recommended_reason = ""
+        failed_init, init_reason = _pod_has_init_failure(pod)
+        if failed_init:
+            failed_init_containers = failed_init
+            restart_recommended = False
+            restart_not_recommended_reason = init_reason
+        else:
+            log_reason = _logs_indicate_config_error(combined_logs)
+            if log_reason:
+                restart_recommended = False
+                restart_not_recommended_reason = log_reason
 
         # Events
         try:
@@ -205,6 +301,7 @@ data:
         return {
             "pod": req.pod,
             "namespace": req.namespace,
+            "phase": pod.status.phase or "",
             "owner": owner,
             "container_statuses": [
                 {"name": s.name, "ready": s.ready, "restart_count": s.restart_count,
@@ -212,10 +309,15 @@ data:
                  "termination_reason": termination_reason}
                 for s in statuses
             ],
+            "init_container_statuses": init_container_statuses,
+            "failed_init_containers": failed_init_containers,
+            "restart_recommended": restart_recommended,
+            "restart_not_recommended_reason": restart_not_recommended_reason,
             "resources": resources,
             "image": pod.spec.containers[0].image if pod.spec.containers else "",
             "node": pod.spec.node_name or "",
             "logs": logs[-8000:] if logs else "",
+            "init_logs": init_logs[-8000:] if init_logs else "",
             "previous_logs": prev_logs[-8000:] if prev_logs else "",
             "events": evt_list,
         }
@@ -396,7 +498,22 @@ data:
     @app.post("/v1/fix-resources")
     def fix_resources(req: FixResourcesRequest, _=Depends(verify_token)):
         load_k8s()
+        core = client.CoreV1Api()
+        apps = client.AppsV1Api()
         container = req.container or ""
+
+        for pod in _deployment_pods(core, apps, req.namespace, req.deployment):
+            failed_init, reason = _pod_has_init_failure(pod)
+            if failed_init:
+                raise HTTPException(
+                    409,
+                    f"Resource patch blocked: {reason}",
+                )
+            log_reason = _logs_indicate_config_error(
+                (pod.status.message or "") + str(pod.status.init_container_statuses or "")
+            )
+            if log_reason:
+                raise HTTPException(409, f"Resource patch blocked: {log_reason}")
 
         # 1. Immediate fix: patch deployment resources
         new_val = patch_deployment_resources(
@@ -469,6 +586,40 @@ data:
 
         load_k8s()
         triggered_by = req.triggered_by or "unknown"
+        core = client.CoreV1Api()
+        apps = client.AppsV1Api()
+
+        if req.action in ("rollout-restart", "delete-pod"):
+            pods_to_check = []
+            if req.action == "rollout-restart":
+                pods_to_check = _deployment_pods(core, apps, req.namespace, req.resource)
+            else:
+                try:
+                    pods_to_check = [core.read_namespaced_pod(req.resource, req.namespace)]
+                except client.exceptions.ApiException as e:
+                    if e.status == 404:
+                        raise HTTPException(404, f"Pod {req.resource} not found")
+                    raise
+            for pod in pods_to_check:
+                failed_init, reason = _pod_has_init_failure(pod)
+                if failed_init:
+                    raise HTTPException(409, f"Restart blocked: {reason}")
+                try:
+                    init_log = ""
+                    for ic in pod.spec.init_containers or []:
+                        try:
+                            init_log += core.read_namespaced_pod_log(
+                                pod.metadata.name, req.namespace, container=ic.name, tail_lines=40
+                            )
+                        except Exception:
+                            pass
+                    log_reason = _logs_indicate_config_error(init_log)
+                    if log_reason:
+                        raise HTTPException(409, f"Restart blocked: {log_reason}")
+                except HTTPException:
+                    raise
+                except Exception:
+                    pass
 
         try:
             if req.action == "rollout-restart":
