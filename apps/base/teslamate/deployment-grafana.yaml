@@ -23,6 +23,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: grafana
+          # renovate: datasource=docker depName=docker.io/teslamate/grafana
           image: docker.io/teslamate/grafana:latest
           imagePullPolicy: Always
           ports:
