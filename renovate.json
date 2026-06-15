@@ -154,6 +154,28 @@
       "allowedVersions": "/^\\d+\\.\\d+\\.\\d+\\.\\d+$/"
     },
     {
+      "description": "readeck is hosted on Codeberg (Forgejo); gitea-tags defaults to gitea.com",
+      "matchDatasources": [
+        "gitea-tags"
+      ],
+      "matchPackageNames": [
+        "readeck/readeck"
+      ],
+      "registryUrls": [
+        "https://codeberg.org"
+      ]
+    },
+    {
+      "description": "readeck image lives on Codeberg's registry, unresolvable via docker datasource; tracked via gitea-tags instead",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "codeberg.org/readeck/readeck"
+      ],
+      "enabled": false
+    },
+    {
       "description": "Grafana plugins: only catalog versions; short soak before bump",
       "matchManagers": [
         "custom.regex"
