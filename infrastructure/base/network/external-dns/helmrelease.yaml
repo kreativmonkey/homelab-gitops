@@ -20,15 +20,15 @@ spec:
       webhook:
         image:
           repository: ghcr.io/mconfalonieri/external-dns-hetzner-webhook
-          tag: v0.12.1
+          tag: v1.0.0
         env:
           - name: HETZNER_API_KEY
             valueFrom:
               secretKeyRef:
                 name: hetzner-api-token
                 key: api-token
-          - name: USE_CLOUD_API
-            value: "true"
+          # USE_CLOUD_API dropped: v1.0.0 removed the legacy DNS provider,
+          # the Cloud API is now the only supported provider.
         livenessProbe:
           httpGet:
             path: /health
