@@ -333,6 +333,119 @@ spec:
              - "[RESPONSE_TIME] < 5000"
 
         # ──────────────────────────────────────────────
+        #  External: gleiche Endpoints, aber von extern getriggert
+        # ──────────────────────────────────────────────
+        # Erzwingt öffentliche DNS-Auflösung (Cloudflare 1.1.1.1)
+        # statt Split-Horizon, um die externe Erreichbarkeit über
+        # den öffentlichen Reverse-Proxy/Ingress zu verifizieren.
+        # Interne Trigger oben bleiben unangetastet.
+        # ──────────────────────────────────────────────
+        - name: audiobookshelf
+          group: external
+          url: https://audible.f4mily.net/healthcheck
+          interval: 60s
+          client: &external-dns
+            dns-resolver: tcp://1.1.1.1:53
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+             - '[BODY] == OK'
+
+        - name: kavita
+          group: external
+          url: https://books.f4mily.net/api/health
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+             - '[BODY] == Ok'
+
+        - name: fitness
+          group: external
+          url: https://fitness.f4mily.net
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
+
+        - name: git
+          group: external
+          url: https://git.f4mily.net
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
+        - name: goloom
+          group: external
+          url: https://goloom.cluster.f4mily.net/healthz
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
+        - name: immich
+          group: external
+          url: https://immich.f4mily.net
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
+        - name: jellyfin
+          group: external
+          url: https://jellyfin.f4mily.net/health
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+             - '[BODY] == Healthy'
+
+        - name: nextcloud
+          group: external
+          url: https://nc.f4mily.net
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
+        - name: outline
+          group: external
+          url: https://outline.f4mily.net/_health
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
+        - name: readeck
+          group: external
+          url: https://readeck.f4mily.net
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
+
+        - name: tandoor
+          group: external
+          url: https://rezepte.f4mily.net
+          interval: 60s
+          client:
+            dns-resolver: tcp://1.1.1.1:53
+            timeout: 180s
+          conditions:
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
+
+        # ──────────────────────────────────────────────
         # Externe Services
         # ──────────────────────────────────────────────
 
