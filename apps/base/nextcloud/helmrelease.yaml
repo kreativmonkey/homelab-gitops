@@ -45,10 +45,12 @@ spec:
     global:
       security:
         allowInsecureImages: true
-    # PVC has data from 33.0.4.1 — must match to avoid downgrade error.
+    # Major upgrade 33 -> 34 (one major step, no skipping). Keep in lockstep with
+    # the occ-* init containers below; the tag must never be below the PVC's data
+    # version to avoid a downgrade error.
     # renovate: datasource=docker depName=docker.io/library/nextcloud
     image:
-      tag: 33.0.5
+      tag: 34.0.0
     ingress:
       enabled: false
     service:
@@ -169,7 +171,7 @@ spec:
 
         # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-db-sync
-          image: docker.io/library/nextcloud:33.0.5-apache
+          image: docker.io/library/nextcloud:34.0.0-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -322,7 +324,7 @@ spec:
 
         # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-oidc-setup
-          image: docker.io/library/nextcloud:33.0.5-apache
+          image: docker.io/library/nextcloud:34.0.0-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -377,7 +379,7 @@ spec:
 
         # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-collab-setup
-          image: docker.io/library/nextcloud:33.0.5-apache
+          image: docker.io/library/nextcloud:34.0.0-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
