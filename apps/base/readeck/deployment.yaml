@@ -19,7 +19,9 @@ spec:
       enableServiceLinks: false
       containers:
         - name: readeck
-          # renovate: datasource=docker depName=codeberg.org/readeck/readeck
+          # Codeberg's container registry is not reliably resolvable by Renovate's
+          # docker datasource; track the matching git tags via the Forgejo/Gitea API instead.
+          # renovate: datasource=gitea-tags depName=readeck/readeck
           image: codeberg.org/readeck/readeck:0.22.3
           imagePullPolicy: IfNotPresent
           ports:
