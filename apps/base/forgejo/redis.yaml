@@ -16,6 +16,7 @@ spec:
       containers:
         - name: redis
           # bitnami/redis moved to bitnamilegacy; tag must be full version (7.4 does not exist)
+          # renovate: datasource=docker depName=docker.io/bitnamilegacy/redis versioning=docker
           image: docker.io/bitnamilegacy/redis:8.2.1-debian-12-r0
           env:
             - name: ALLOW_EMPTY_PASSWORD
