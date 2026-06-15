@@ -23,7 +23,7 @@ spec:
       containers:
         - name: appapi-harp
           # renovate: datasource=docker depName=ghcr.io/nextcloud/nextcloud-appapi-harp
-          image: ghcr.io/nextcloud/nextcloud-appapi-harp:release
+          image: ghcr.io/nextcloud/nextcloud-appapi-harp:v0.4.2
           ports:
             - name: exapps
               containerPort: 8780
