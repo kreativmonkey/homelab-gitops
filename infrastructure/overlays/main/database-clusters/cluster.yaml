@@ -13,7 +13,10 @@ spec:
   # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql versioning=loose
   imageName: ghcr.io/cloudnative-pg/postgresql:18.4
 
-  instances: 1
+  # HA across the 3 Talos nodes. CNPG auto-creates a minAvailable:2 PDB at >=2
+  # instances, so a node drain (system-upgrade-controller) evicts one replica at
+  # a time with failover instead of taking the database down.
+  instances: 3
 
   postgresql:
     parameters:
