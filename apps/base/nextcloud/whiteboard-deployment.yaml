@@ -22,7 +22,7 @@ spec:
       containers:
         - name: whiteboard
           # renovate: datasource=docker depName=ghcr.io/nextcloud-releases/whiteboard
-          image: ghcr.io/nextcloud-releases/whiteboard:stable
+          image: ghcr.io/nextcloud-releases/whiteboard:v1.5.3
           ports:
             - name: http
               containerPort: 3002
