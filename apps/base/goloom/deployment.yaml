@@ -22,8 +22,11 @@ spec:
       #   - name: goloom-registry
       containers:
         - name: goloom
-          # renovate: datasource=docker depName=git.f4mily.net/kreativmonkey/goloon
-          image: git.f4mily.net/kreativmonkey/goloon:latest
+          # Own app image on a self-hosted Forgejo registry with no version tags.
+          # Pin to a digest so reschedules cannot silently change the running build;
+          # bump the digest on release (CI or manually). No Renovate marker: the
+          # private registry is not reliably resolvable by Renovate's docker datasource.
+          image: git.f4mily.net/kreativmonkey/goloon:latest@sha256:72273e3f5052fbd09865826e7a23fdae5b7051fdbf3893b9e1095319442657ca
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
