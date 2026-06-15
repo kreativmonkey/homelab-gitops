@@ -458,7 +458,7 @@ spec:
               - "[RESPONSE_TIME] < 5000"
               - '[BODY] == pat(*Binärgewitter*)'
        
-       - name: Download Server 1
+        - name: Download Server 1
           group: Binaergewitter
           url: https://download.binaergewitter.de/
           interval: 60s

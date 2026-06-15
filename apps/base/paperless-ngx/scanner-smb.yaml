@@ -28,6 +28,7 @@ spec:
               subPath: paperless/consume
       containers:
         - name: samba
+          # renovate: datasource=docker depName=ghcr.io/dockur/samba
           image: ghcr.io/dockur/samba:4.22.6
           env:
             - name: NAME
