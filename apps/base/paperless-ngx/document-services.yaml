@@ -66,7 +66,7 @@ spec:
       containers:
         - name: tika
           # renovate: datasource=docker depName=docker.io/apache/tika versioning=loose
-          image: docker.io/apache/tika:3.3.1.0
+          image: docker.io/apache/tika:4.0.0-alpha-1.0-full
           ports:
             - name: http
               containerPort: 9998
