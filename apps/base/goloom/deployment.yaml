@@ -26,7 +26,7 @@ spec:
           # Pin to a digest so reschedules cannot silently change the running build;
           # bump the digest on release (CI or manually). No Renovate marker: the
           # private registry is not reliably resolvable by Renovate's docker datasource.
-          image: git.f4mily.net/kreativmonkey/goloon:latest@sha256:72273e3f5052fbd09865826e7a23fdae5b7051fdbf3893b9e1095319442657ca
+          image: git.f4mily.net/kreativmonkey/goloon:latest@sha256:4c3cc4cd3946db5491a1dc59f695a37a31d9a32b328a7da3f22c95b61500fe2a
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
