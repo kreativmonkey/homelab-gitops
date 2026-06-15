@@ -144,6 +144,16 @@
   },
   "packageRules": [
     {
+      "description": "apache/tika: only stable 4-part numeric slim tags (no -full/-alpha/-SNAPSHOT)",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "docker.io/apache/tika"
+      ],
+      "allowedVersions": "/^\\d+\\.\\d+\\.\\d+\\.\\d+$/"
+    },
+    {
       "description": "Grafana plugins: only catalog versions; short soak before bump",
       "matchManagers": [
         "custom.regex"
