@@ -17,6 +17,7 @@ spec:
     spec:
       containers:
         - name: gotenberg
+          # renovate: datasource=docker depName=docker.io/gotenberg/gotenberg
           image: docker.io/gotenberg/gotenberg:8.7
           args:
             - gotenberg
@@ -64,6 +65,7 @@ spec:
     spec:
       containers:
         - name: tika
+          # renovate: datasource=docker depName=docker.io/apache/tika
           image: docker.io/apache/tika:latest
           ports:
             - name: http

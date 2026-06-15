@@ -19,6 +19,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: mosquitto
+          # renovate: datasource=docker depName=docker.io/library/eclipse-mosquitto versioning=docker
           image: docker.io/eclipse-mosquitto:2
           imagePullPolicy: IfNotPresent
           args:
