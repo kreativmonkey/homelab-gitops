@@ -381,7 +381,7 @@ spec:
 
         - name: goloom
           group: external
-          url: https://goloom.cluster.f4mily.net/healthz
+          url: https://goloom.f4mily.net/healthz
           interval: 60s
           client: *external-dns
           conditions:
