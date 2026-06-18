@@ -1,5 +1,5 @@
 # Talos OS upgrade Plan for Rancher System Upgrade Controller.
-# Opt-in: label nodes with `talos.dev/upgrade=true` (see README in repo docs / cluster-access).
+# Fully automatic: triggers on all nodes as soon as Renovate bumps the version.
 #
 # Installer image must match homelab-infrastructure/talos (main.tf machine.install.image):
 # factory.talos.dev/nocloud-installer/<talos_schematic_id>:<talos_version>
@@ -14,23 +14,28 @@ metadata:
     app.kubernetes.io/name: system-upgrade-controller
     app.kubernetes.io/component: talos-upgrade
 spec:
-  # One node at a time — safe for stacked control-plane + K3s workloads.
+  # One node at a time — safe for 3-node stacked control-plane.
   concurrency: 1
   exclusive: true
   serviceAccountName: system-upgrade
-  # 1h timeout: drain (10min default) + talosctl upgrade + reboot + node rejoin.
-  # Default 15min (900s) is too short for control-plane nodes with many pods.
+  # 1h timeout: drain (10min) + talosctl upgrade + reboot + node rejoin.
   jobActiveDeadlineSecs: 3600
   version: v1.13.4 # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
   nodeSelector:
     matchLabels:
-      talos.dev/upgrade: "true"
+      kubernetes.io/os: linux
   cordon: true
+  # talosconfig (client mTLS) for the upgrade job's apid call. Provisioned by
+  # Terraform (homelab-infrastructure/talos/envs/homelab-kube/system-upgrade.tf),
+  # not committed here — it is regenerated on every cluster deployment.
+  secrets:
+    - name: talosconfig
+      path: /var/run/secrets/talos.dev
   drain:
     force: true
     ignoreDaemonSets: true
     deleteLocalData: true
-    timeout: 600
+    timeout: 600s
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -43,12 +48,16 @@ spec:
   upgrade:
     # Direct /talosctl binary: talosctl image is scratch-based (no shell).
     # $(SYSTEM_UPGRADE_PLAN_LATEST_VERSION) expanded by K8s, not shell.
+    # Connects to the local node's apid over the host Unix socket and authenticates
+    # via mTLS using the talosconfig secret (--insecure / maintenance API only works
+    # pre-boot, never on a running node).
     # Keep schematic ID in sync with homelab-infrastructure/talos/cluster.auto.tfvars
     # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
     image: ghcr.io/siderolabs/talosctl:v1.13.4
     command:
       - /talosctl
     args:
+      - --talosconfig=/var/run/secrets/talos.dev/talosconfig
       - -e
       - unix:///host/system/run/apid/apid.sock
       - upgrade
@@ -59,7 +68,7 @@ spec:
     securityContext:
       privileged: true
     volumes:
-      # Explicit apid socket mount (SUC also mounts host / at /host; this documents Talos API access).
+      # apid socket: Talos API on the host node (mTLS auth via the talosconfig secret).
       - name: apid-sock
         source: /system/run/apid
         destination: /host/system/run/apid
