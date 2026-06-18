@@ -79,7 +79,7 @@ spec:
         registry: quay.io
       env:
         - name: VM_CONFIG_RELOADER_IMAGE
-          value: "quay.io/victoriametrics/operator:config-reloader-v0.68.3"
+          value: "quay.io/victoriametrics/operator:config-reloader-v0.72.0"
         - name: VM_VMSINGLEDEFAULT_IMAGE
           value: "quay.io/victoriametrics/victoria-metrics"
         - name: VM_VMAGENTDEFAULT_IMAGE
