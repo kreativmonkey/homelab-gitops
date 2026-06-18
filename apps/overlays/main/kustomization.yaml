@@ -54,6 +54,9 @@ resources:
   - ../../base/watchyourlan
   - ../../base/gatus
 
+  # --- Smart Home -------------------------------------------------------
+  - ../../base/spectrumknx
+
   # --- Development / Misc -----------------------------------------------
   - ../../base/teslamate
   - ../../base/goloom
@@ -310,6 +313,16 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.host_spectrumknx
+    targets:
+      - select: {kind: Ingress, name: spectrumknx}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.publicTlsSecret
     targets:
       - select: {kind: Ingress, name: outline}
@@ -361,4 +374,6 @@ replacements:
       - select: {kind: Ingress, name: watchyourlan}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: gatus}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: spectrumknx}
         fieldPaths: [spec.tls.0.secretName]

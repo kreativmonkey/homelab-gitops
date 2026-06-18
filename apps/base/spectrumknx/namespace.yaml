@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spectrumknx
+  labels:
+    app.kubernetes.io/name: spectrumknx
+    app.kubernetes.io/part-of: homelab-apps
