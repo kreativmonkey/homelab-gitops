@@ -332,6 +332,15 @@ spec:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
 
+        - name: spectrumknx
+          group: automation
+          url: https://knx.cluster.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
+
         # ──────────────────────────────────────────────
         #  External: gleiche Endpoints, aber von extern getriggert
         # ──────────────────────────────────────────────

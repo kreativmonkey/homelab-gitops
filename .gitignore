@@ -12,3 +12,6 @@ talosconfig
 
 # OpenCode session files
 ses_*
+
+# ETS project exports — location-revealing, never commit (upload via SpectrumKNX web UI)
+*.knxproj
