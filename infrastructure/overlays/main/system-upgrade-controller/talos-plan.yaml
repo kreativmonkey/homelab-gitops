@@ -16,7 +16,11 @@ metadata:
 spec:
   # One node at a time — safe for 3-node stacked control-plane.
   concurrency: 1
-  exclusive: true
+  # No `exclusive: true`: it adds a required pod-anti-affinity against other
+  # `upgrade.cattle.io/exclusive` pods, which deadlocks the last node — the upgrade
+  # job for the node running system-upgrade-controller stays Pending, and that job
+  # is exactly what would drain/relocate the controller (circular). With a single
+  # plan and concurrency 1 the exclusivity is redundant.
   serviceAccountName: system-upgrade
   # 1h timeout: drain (10min) + talosctl upgrade + reboot + node rejoin.
   jobActiveDeadlineSecs: 3600
