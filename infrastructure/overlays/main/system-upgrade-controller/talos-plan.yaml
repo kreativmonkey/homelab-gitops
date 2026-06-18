@@ -51,15 +51,25 @@ spec:
     # Connects to the local node's apid over the host Unix socket and authenticates
     # via mTLS using the talosconfig secret (--insecure / maintenance API only works
     # pre-boot, never on a running node).
+    # Authenticated mode (unlike --insecure) needs an explicit -n target: the
+    # talosconfig has no `nodes`, so pass the node's own IP via NODE_IP (downward
+    # API status.hostIP; the job runs hostNetwork=true on the target node).
     # Keep schematic ID in sync with homelab-infrastructure/talos/cluster.auto.tfvars
     # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
     image: ghcr.io/siderolabs/talosctl:v1.13.4
+    envs:
+      - name: NODE_IP
+        valueFrom:
+          fieldRef:
+            fieldPath: status.hostIP
     command:
       - /talosctl
     args:
       - --talosconfig=/var/run/secrets/talos.dev/talosconfig
       - -e
       - unix:///host/system/run/apid/apid.sock
+      - -n
+      - $(NODE_IP)
       - upgrade
       - --image=factory.talos.dev/nocloud-installer/10f9392d7091b30abf573524649756e5bc894f653af525836e9ab0297f301fc2:$(SYSTEM_UPGRADE_PLAN_LATEST_VERSION)
       - --drain=false
