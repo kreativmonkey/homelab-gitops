@@ -40,7 +40,7 @@ spec:
           expr: |
             (
               time() - cnpg_collector_last_available_backup_timestamp{namespace="cnpg-system"}
-            ) > 48 * 3600
+            ) > 50 * 3600
           for: 1h
           labels:
             severity: warning
