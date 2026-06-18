@@ -75,6 +75,7 @@ here so it is obvious what is **planned** but not deployed:
 | authentik          | on     | HelmRelease, CNPG, login.f4mily.net (production IdP)            |
 | forgejo            | on     | Deployment, NFS, git.f4mily.net (Git + CI + Renovate CronJob), SSH :22/:2222 |
 | goloom             | on     | Deployment, CNPG PostgreSQL, goloom.cluster.f4mily.net |
+| spectrumknx        | on     | StatefulSet + own TimescaleDB, KNX bus monitor, knx.cluster.f4mily.net |
 | pcm                | wip    | ingress only, missing HelmRelease         |
 
 ## 2. The config file (`apps/overlays/main/cluster-config.yaml`)
