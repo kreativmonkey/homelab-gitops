@@ -21,7 +21,7 @@ spec:
   # 1h timeout: drain (10min default) + talosctl upgrade + reboot + node rejoin.
   # Default 15min (900s) is too short for control-plane nodes with many pods.
   jobActiveDeadlineSecs: 3600
-  version: v1.13.3 # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
+  version: v1.13.4 # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
   nodeSelector:
     matchLabels:
       talos.dev/upgrade: "true"
@@ -45,7 +45,7 @@ spec:
     # $(SYSTEM_UPGRADE_PLAN_LATEST_VERSION) expanded by K8s, not shell.
     # Keep schematic ID in sync with homelab-infrastructure/talos/cluster.auto.tfvars
     # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
-    image: ghcr.io/siderolabs/talosctl:v1.13.3
+    image: ghcr.io/siderolabs/talosctl:v1.13.4
     command:
       - /talosctl
     args:
