@@ -48,12 +48,14 @@ spec:
   upgrade:
     # Direct /talosctl binary: talosctl image is scratch-based (no shell).
     # $(SYSTEM_UPGRADE_PLAN_LATEST_VERSION) expanded by K8s, not shell.
-    # Connects to the local node's apid over the host Unix socket and authenticates
-    # via mTLS using the talosconfig secret (--insecure / maintenance API only works
-    # pre-boot, never on a running node).
-    # Authenticated mode (unlike --insecure) needs an explicit -n target: the
-    # talosconfig has no `nodes`, so pass the node's own IP via NODE_IP (downward
-    # API status.hostIP; the job runs hostNetwork=true on the target node).
+    # Connects to the node's own apid over TCP and authenticates via mTLS using the
+    # talosconfig secret (--insecure / maintenance API only works pre-boot, never on
+    # a running node).
+    # The job runs hostNetwork=true on the target node, so NODE_IP (downward API
+    # status.hostIP) is the local apid. We use it for BOTH the endpoint (-e) and the
+    # target node (-n): the apid serving cert is valid for the node IP, but not for
+    # "localhost" — so the Unix socket endpoint fails TLS verification in this
+    # authenticated mode (it only worked with --insecure, which skips it).
     # Keep schematic ID in sync with homelab-infrastructure/talos/cluster.auto.tfvars
     # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
     image: ghcr.io/siderolabs/talosctl:v1.13.4
@@ -67,7 +69,7 @@ spec:
     args:
       - --talosconfig=/var/run/secrets/talos.dev/talosconfig
       - -e
-      - unix:///host/system/run/apid/apid.sock
+      - $(NODE_IP)
       - -n
       - $(NODE_IP)
       - upgrade
@@ -77,8 +79,3 @@ spec:
       - --timeout=15m
     securityContext:
       privileged: true
-    volumes:
-      # apid socket: Talos API on the host node (mTLS auth via the talosconfig secret).
-      - name: apid-sock
-        source: /system/run/apid
-        destination: /host/system/run/apid
