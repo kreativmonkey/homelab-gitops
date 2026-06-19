@@ -48,10 +48,10 @@ spec:
               value: INFO
             # KNX_PASSWORD / KNX_PROJECT_PATH intentionally unset: the .knxproj
             # is uploaded via the web UI on first start and persisted to /project.
-            # AUTO scans the LAN for a KNXnet/IP gateway. If multicast discovery
-            # fails across the Cilium overlay, set an explicit gateway IP here.
+            # Explicit gateway: multicast AUTO-discovery does not cross the
+            # Cilium overlay reliably.
             - name: KNX_GATEWAY_IP
-              value: AUTO
+              value: 192.168.10.20
           ports:
             - name: http
               containerPort: 8000
