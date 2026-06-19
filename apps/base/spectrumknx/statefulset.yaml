@@ -57,6 +57,10 @@ spec:
             # endpoint and the gateway can't reach it.
             - name: KNX_ROUTE_BACK
               value: "true"
+            # KNX IP Secure tunneling is TCP-based per spec; UDP TUNNELING +
+            # secure cannot establish a session.
+            - name: KNX_CONNECTION_TYPE
+              value: TUNNELING_TCP_SECURE
           ports:
             - name: http
               containerPort: 8000
