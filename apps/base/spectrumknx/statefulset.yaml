@@ -62,11 +62,11 @@ spec:
             - name: KNX_CONNECTION_TYPE
               value: TUNNELING_TCP_SECURE
             # Selects the secure tunnel entry from the keyring. Must match an
-            # interface address present in the uploaded keyring. Tunnel 4 =
-            # user 5 = 1.1.252 (free); 1.1.253 is permanently held by Home
-            # Assistant (user 3).
+            # interface address present in the uploaded keyring. Tunnel 1 =
+            # user 2 = 1.1.251 (free, primary channel); 1.1.253 (tunnel 3 /
+            # user 4) is permanently held by Home Assistant.
             - name: KNX_INDIVIDUAL_ADDRESS
-              value: 1.1.252
+              value: 1.1.251
           ports:
             - name: http
               containerPort: 8000
