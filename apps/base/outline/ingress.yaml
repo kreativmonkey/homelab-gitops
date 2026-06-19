@@ -8,7 +8,7 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: Outline
     gethomepage.dev/description: Knowledge base & wiki
-    gethomepage.dev/group: Documents
+    gethomepage.dev/group: Office
     gethomepage.dev/icon: outline.png
     gethomepage.dev/app: outline
     nginx.org/ssl-redirect: "false"
