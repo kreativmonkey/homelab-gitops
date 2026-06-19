@@ -28,6 +28,21 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  name: forgejo-runner-dind
+  namespace: forgejo
+spec:
+  # Persistent Docker storage for the dind sidecar: pulled images (golang, node24,
+  # action images) and build layers survive pod restarts instead of being re-pulled.
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi
+  resources:
+    requests:
+      storage: 40Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
   name: renovate-data
   namespace: forgejo
 spec:
