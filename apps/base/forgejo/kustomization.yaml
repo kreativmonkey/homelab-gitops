@@ -6,8 +6,11 @@ resources:
   - deployment.yaml
   - redis.yaml
   - comments-tmpl.configmap.yaml
-  # Runner: enable after SOPS-encrypting forgejo-runner-register.secret.yaml (see docs/migrations.md#5-first-time-deploy-fresh-app).
-  # - runner-deployment.yaml
+  # Forgejo Actions runner (see docs/migrations/forgejo-docker-to-kubernetes.md#phase-4).
+  - runner-priorityclass.yaml
+  - runner-config.configmap.yaml
+  - runner-register.secret.yaml
+  - runner-deployment.yaml
   - service.yaml
   - ingress.yaml
   - transportserver.yaml

@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forgejo-runner-config
+  namespace: forgejo
+data:
+  config.yaml: |
+    log:
+      level: info
+      job_level: info
+
+    runner:
+      # Registration state lives on the PVC (mounted at /data, the image WORKDIR).
+      file: /data/.runner
+      # Concurrent jobs. The aggregate resource ceiling is enforced by the dind
+      # sidecar limits in runner-deployment.yaml, so this can be >1 safely;
+      # raise/lower together with the dind cpu/memory limits.
+      capacity: 3
+      # Per-job hard timeout (Forgejo instance also caps at 3h by default).
+      timeout: 1h
+      # Grace period for running jobs on shutdown; keep <= the pod's
+      # terminationGracePeriodSeconds (130s).
+      shutdown_timeout: 2m
+      fetch_timeout: 5s
+      fetch_interval: 2s
+      report_interval: 1s
+      # Must match RUNNER_LABELS in runner-deployment.yaml.
+      labels:
+        - docker:docker://node:20-bookworm
+
+    cache:
+      # Disabled: the internal cache server's auto-detected host is not reliably
+      # reachable from job containers running inside dind. Jobs work fine without
+      # it (just no actions/cache). Enable later with an explicit cache.host.
+      enabled: false
+
+    container:
+      # Auto-create a network per job.
+      network: ""
+      # Job containers themselves are not privileged.
+      privileged: false
+      # Use the dind sidecar reached via DOCKER_HOST.
+      docker_host: "-"
+      # No host volumes may be bind-mounted into job containers.
+      valid_volumes: []
+      force_pull: false

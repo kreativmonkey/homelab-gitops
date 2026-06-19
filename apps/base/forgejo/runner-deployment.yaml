@@ -17,10 +17,35 @@ spec:
         app.kubernetes.io/name: forgejo-runner
     spec:
       enableServiceLinks: false
+      # CI is best-effort: this pod is the first to be preempted/evicted under
+      # node pressure and never preempts other workloads (see runner-priorityclass.yaml).
+      priorityClassName: forgejo-runner-low
+      # Allow in-flight jobs a short window to finish on rollout/restart
+      # (must be >= runner.shutdown_timeout in config.yaml).
+      terminationGracePeriodSeconds: 130
       containers:
         - name: runner
           # renovate: datasource=docker depName=data.forgejo.org/forgejo/runner versioning=semver
           image: data.forgejo.org/forgejo/runner:6.4.0
+          # The image CMD is only `/bin/forgejo-runner` (prints help and exits),
+          # so we drive registration + daemon ourselves. Registration is idempotent:
+          # it only runs when /data/.runner (on the PVC) is absent.
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              if [ ! -f /data/.runner ]; then
+                echo "No .runner file found - registering runner with Forgejo..."
+                forgejo-runner register --no-interactive \
+                  --instance "$GITEA_INSTANCE_URL" \
+                  --token "$GITEA_RUNNER_REGISTRATION_TOKEN" \
+                  --name "$RUNNER_NAME" \
+                  --labels "$RUNNER_LABELS"
+              fi
+              # Give the dind sidecar a moment to accept connections
+              # (blessed pattern from the upstream docker-compose example).
+              sleep 5
+              exec forgejo-runner daemon --config /config/config.yaml
           env:
             - name: DOCKER_HOST
               value: tcp://127.0.0.1:2375
@@ -31,15 +56,26 @@ spec:
                 secretKeyRef:
                   name: forgejo-runner-register
                   key: token
+            - name: RUNNER_NAME
+              value: talos-cluster
+            # Must match runner.labels in runner-config.configmap.yaml.
+            - name: RUNNER_LABELS
+              value: docker:docker://node:20-bookworm
           volumeMounts:
             - name: runner-data
               mountPath: /data
+            - name: runner-config
+              mountPath: /config
+              readOnly: true
+          # Orchestrator only — the actual job workloads run inside the dind
+          # sidecar and are bounded by *its* limits, not these.
           resources:
             requests:
-              cpu: 50m
+              cpu: 100m
               memory: 128Mi
             limits:
-              memory: 1Gi
+              cpu: "1"
+              memory: 512Mi
         - name: dind
           # renovate: datasource=docker depName=docker.io/library/docker
           image: docker.io/library/docker:27-dind
@@ -51,9 +87,25 @@ spec:
           volumeMounts:
             - name: dind-storage
               mountPath: /var/lib/docker
+          # This is the real cap on all CI jobs combined: every job container the
+          # runner starts is nested in this container's cgroup. Sized to use spare
+          # node capacity (nodes are 3-6 vCPU / 16Gi) without starving the cluster.
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 4Gi
       volumes:
         - name: runner-data
           persistentVolumeClaim:
             claimName: forgejo-runner-data
+        - name: runner-config
+          configMap:
+            name: forgejo-runner-config
+        # Layer/build scratch for dind. sizeLimit guards node ephemeral storage:
+        # the pod is evicted if it grows past this instead of filling the disk.
         - name: dind-storage
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: 20Gi
