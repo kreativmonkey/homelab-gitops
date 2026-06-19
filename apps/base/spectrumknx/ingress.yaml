@@ -14,6 +14,8 @@ metadata:
     nginx.org/redirect-to-https: "true"
     # Real-time live monitor streams telegrams over WebSocket.
     nginx.org/websocket-services: spectrumknx
+    # .knxproj uploads (ETS exports) run ~30MB+; lift the 1MB nginx default.
+    nginx.org/client-max-body-size: "256m"
 spec:
   ingressClassName: nginx
   tls:
