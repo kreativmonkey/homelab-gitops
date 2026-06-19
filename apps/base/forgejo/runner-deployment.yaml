@@ -17,6 +17,11 @@ spec:
         app.kubernetes.io/name: forgejo-runner
     spec:
       enableServiceLinks: false
+      # The runner image runs as uid/gid 1000, but the iSCSI PVC mounts root-owned.
+      # fsGroup 1000 makes /data group-writable so the runner can persist .runner.
+      # Set only fsGroup (not runAsUser) at pod level — the dind sidecar must stay root.
+      securityContext:
+        fsGroup: 1000
       # CI is best-effort: this pod is the first to be preempted/evicted under
       # node pressure and never preempts other workloads (see runner-priorityclass.yaml).
       priorityClassName: forgejo-runner-low
