@@ -1,0 +1,11 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: forgejo-runner-low
+# Negative value: lower than the default (0) used by normal workloads, so the
+# scheduler/kubelet evicts CI runner pods before anything else under node
+# pressure. preemptionPolicy Never ensures this pod never evicts others.
+value: -100
+preemptionPolicy: Never
+globalDefault: false
+description: "Best-effort priority for Forgejo CI runners: first to be preempted, never preempts."
