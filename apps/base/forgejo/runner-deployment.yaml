@@ -31,7 +31,8 @@ spec:
       containers:
         - name: runner
           # renovate: datasource=docker depName=data.forgejo.org/forgejo/runner versioning=semver
-          image: data.forgejo.org/forgejo/runner:6.4.0
+          # >= 12.10.2 required for node24 JS actions (e.g. actions/checkout@v7).
+          image: data.forgejo.org/forgejo/runner:12.11.1
           # The image CMD is only `/bin/forgejo-runner` (prints help and exits),
           # so we drive registration + daemon ourselves. Registration is idempotent:
           # it only runs when /data/.runner (on the PVC) is absent.
