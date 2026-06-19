@@ -7,7 +7,7 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: SpectrumKNX
     gethomepage.dev/description: KNX bus monitor
-    gethomepage.dev/group: Smart Home
+    gethomepage.dev/group: Tools
     gethomepage.dev/icon: mdi-home-automation
     gethomepage.dev/pod-selector: app=spectrumknx
     nginx.org/ssl-redirect: "false"
