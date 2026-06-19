@@ -45,7 +45,7 @@ spec:
                   name: spectrumknx-secret
                   key: POSTGRES_PASSWORD
             - name: LOG_LEVEL
-              value: INFO
+              value: DEBUG
             # KNX_PASSWORD / KNX_PROJECT_PATH intentionally unset: the .knxproj
             # is uploaded via the web UI on first start and persisted to /project.
             # Explicit gateway: multicast AUTO-discovery does not cross the
