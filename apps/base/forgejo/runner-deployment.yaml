@@ -47,9 +47,17 @@ spec:
                   --name "$RUNNER_NAME" \
                   --labels "$RUNNER_LABELS"
               fi
-              # Give the dind sidecar a moment to accept connections
-              # (blessed pattern from the upstream docker-compose example).
-              sleep 5
+              # Wait for the dind sidecar's Docker API before starting the daemon
+              # (it pings docker on startup and exits if unreachable). dind needs
+              # more than a few seconds to init storage on first boot.
+              echo "Waiting for dind Docker API..."
+              i=0
+              until wget -q -O /dev/null http://127.0.0.1:2375/_ping 2>/dev/null; do
+                i=$((i+1))
+                [ "$i" -ge 120 ] && echo "dind not ready after 120s, giving up" && exit 1
+                sleep 1
+              done
+              echo "dind is up."
               exec forgejo-runner daemon --config /config/config.yaml
           env:
             - name: DOCKER_HOST
