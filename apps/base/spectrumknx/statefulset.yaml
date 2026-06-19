@@ -52,6 +52,11 @@ spec:
             # Cilium overlay reliably.
             - name: KNX_GATEWAY_IP
               value: 192.168.10.20
+            # Pod sits behind Cilium masquerade (NAT); without route-back the
+            # client advertises its unroutable pod IP as the tunnel data
+            # endpoint and the gateway can't reach it.
+            - name: KNX_ROUTE_BACK
+              value: "true"
           ports:
             - name: http
               containerPort: 8000
