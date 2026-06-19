@@ -61,11 +61,11 @@ spec:
             # secure cannot establish a session.
             - name: KNX_CONNECTION_TYPE
               value: TUNNELING_TCP_SECURE
-            # Request a specific free tunnel slot; without it the gateway
-            # assigns the secure user's bound slot (1.1.253), which is occupied
-            # → E_NO_MORE_CONNECTIONS despite other slots being free.
+            # Selects the secure tunnel entry from the keyring. Must match an
+            # interface address present in the uploaded keyring. Tunnel 2 =
+            # 1.1.254 (free); 1.1.253 is permanently held by Home Assistant.
             - name: KNX_INDIVIDUAL_ADDRESS
-              value: 1.1.255
+              value: 1.1.254
           ports:
             - name: http
               containerPort: 8000
