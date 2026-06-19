@@ -29,14 +29,22 @@ data:
         - docker:docker://node:20-bookworm
 
     cache:
-      # Disabled: the internal cache server's auto-detected host is not reliably
-      # reachable from job containers running inside dind. Jobs work fine without
-      # it (just no actions/cache). Enable later with an explicit cache.host.
-      enabled: false
+      # Internal cache server for actions/cache (speeds up e.g. setup-go module
+      # and build caches). The cache server listens in the pod network namespace
+      # (shared with dind); job containers reach it via the docker0 bridge gateway.
+      enabled: true
+      # Persist cache data on the runner PVC so it survives pod restarts.
+      dir: /data/actcache
+      # Address job containers use to reach the cache server. With
+      # container.network=bridge below, jobs sit on dind's default bridge whose
+      # gateway (172.17.0.1) routes into the pod netns where the server listens.
+      host: "172.17.0.1"
 
     container:
-      # Auto-create a network per job.
-      network: ""
+      # Use dind's default bridge so the cache-server gateway IP is deterministic
+      # (172.17.0.1). Trade-off vs auto-created per-job networks: no automatic
+      # container-name DNS, which only matters for workflows using `services:`.
+      network: bridge
       # Job containers themselves are not privileged.
       privileged: false
       # Use the dind sidecar reached via DOCKER_HOST.

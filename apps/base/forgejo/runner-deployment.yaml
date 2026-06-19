@@ -22,6 +22,9 @@ spec:
       # Set only fsGroup (not runAsUser) at pod level — the dind sidecar must stay root.
       securityContext:
         fsGroup: 1000
+        # Only chown volumes whose top-level group differs, so the dind PVC
+        # (large image store, root-owned) isn't recursively re-chowned each boot.
+        fsGroupChangePolicy: OnRootMismatch
       # CI is best-effort: this pod is the first to be preempted/evicted under
       # node pressure and never preempts other workloads (see runner-priorityclass.yaml).
       priorityClassName: forgejo-runner-low
@@ -118,8 +121,8 @@ spec:
         - name: runner-config
           configMap:
             name: forgejo-runner-config
-        # Layer/build scratch for dind. sizeLimit guards node ephemeral storage:
-        # the pod is evicted if it grows past this instead of filling the disk.
+        # Persistent Docker image/layer store for dind so pulled images and build
+        # layers are cached across pipeline runs instead of re-pulled every time.
         - name: dind-storage
-          emptyDir:
-            sizeLimit: 20Gi
+          persistentVolumeClaim:
+            claimName: forgejo-runner-dind
