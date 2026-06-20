@@ -42,7 +42,16 @@ spec:
     enablePodMonitor: false
 
   affinity:
-    podAntiAffinityType: preferred
+    # required (hard): exactly one instance per node across the 3 Talos nodes. A node
+    # drain (autonomous Talos/SUC upgrade) then only ever evicts ONE instance of this
+    # cluster — a single clean switchover instead of a cascading failover storm.
+    # Trade-off: while a node is down/cordoned the 3rd instance stays Pending (2/3 HA)
+    # until it returns — expected and safe.
+    podAntiAffinityType: required
+
+  # Ride out transient primary blips (e.g. node-reboot network flap) for 30s before
+  # failing over, instead of reacting instantly (default 0).
+  failoverDelay: 30
 
   env:
     - name: AWS_DEFAULT_REGION
