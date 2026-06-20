@@ -42,6 +42,17 @@ spec:
     # Metrics scraped via apps/base/monitoring/extra-scrapes/cnpg-vmpodscrape.yaml
     enablePodMonitor: false
 
+  affinity:
+    # required (hard): exactly one instance per node across the 3 Talos nodes. A node
+    # drain (autonomous Talos/SUC upgrade) then only ever evicts ONE instance of this
+    # cluster — a single clean switchover instead of a cascading failover storm.
+    # Default was "preferred" (soft), which let 2 instances co-locate on one node.
+    podAntiAffinityType: required
+
+  # Ride out transient primary blips (e.g. node-reboot network flap) for 30s before
+  # failing over, instead of reacting instantly (default 0).
+  failoverDelay: 30
+
   env:
     - name: AWS_DEFAULT_REGION
       value: garage
