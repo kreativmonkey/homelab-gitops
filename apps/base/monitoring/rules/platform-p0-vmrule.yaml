@@ -41,6 +41,8 @@ spec:
             (
               time() - cnpg_collector_last_available_backup_timestamp{namespace="cnpg-system"}
             ) > 50 * 3600
+            and
+              cnpg_collector_last_available_backup_timestamp{namespace="cnpg-system"} > 0
           for: 1h
           labels:
             severity: warning
@@ -48,7 +50,7 @@ spec:
             homelab/owner: platform
           annotations:
             summary: "CNPG-Backup veraltet: {{ $labels.cluster }}"
-            description: "Letztes verfügbares Backup für Cluster {{ $labels.cluster }} ist älter als 48 Stunden."
+            description: "Letztes verfügbares Backup für Cluster {{ $labels.cluster }} ist älter als 50 Stunden."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/cnpg-backup-stale.md"
 
     - name: homelab.platform.velero
