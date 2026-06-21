@@ -59,6 +59,7 @@ resources:
 
   # --- Development / Misc -----------------------------------------------
   - ../../base/teslamate
+  - ../../base/dawarich
   - ../../base/goloom
   # - ../../base/pcm                 # wip: ingress only, no workload
 
@@ -323,6 +324,16 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.host_dawarich
+    targets:
+      - select: {kind: Ingress, name: dawarich}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.publicTlsSecret
     targets:
       - select: {kind: Ingress, name: outline}
@@ -350,6 +361,8 @@ replacements:
       - select: {kind: Ingress, name: immich}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: teslamate}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: dawarich}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: authentik}
         fieldPaths: [spec.tls.0.secretName]

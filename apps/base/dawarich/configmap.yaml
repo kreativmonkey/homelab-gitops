@@ -1,0 +1,37 @@
+# Non-secret runtime config shared by the app + sidekiq containers.
+# Secrets (DB credentials, SECRET_KEY_BASE) are injected separately via secretKeyRef.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dawarich-env
+  namespace: dawarich
+data:
+  RAILS_ENV: "production"
+  # Hostname is also enforced on the Ingress via the cluster-config replacement.
+  APPLICATION_HOST: "locate.f4mily.net"
+  APPLICATION_HOSTS: "locate.f4mily.net,localhost,127.0.0.1,::1"
+  APPLICATION_PROTOCOL: "https"
+  TIME_ZONE: "Europe/Berlin"
+  REDIS_URL: "redis://dawarich-valkey:6379/0"
+  DATABASE_HOST: "dawarich-postgres-rw.cnpg-system.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "dawarich"
+  RAILS_LOG_TO_STDOUT: "true"
+  SELF_HOSTED: "true"
+  STORE_GEODATA: "true"
+  PROMETHEUS_EXPORTER_ENABLED: "false"
+  RAILS_MIN_THREADS: "5"
+  RAILS_MAX_THREADS: "10"
+  # Reverse geocoding via Komoot's public Photon (self-host later if rate-limited).
+  PHOTON_API_HOST: "photon.komoot.io"
+  PHOTON_API_USE_HTTPS: "true"
+  # --- OIDC SSO via Authentik (client id/secret injected from secret) ---------
+  OIDC_PROVIDER_NAME: "Authentik"
+  # Authentik issuer; Dawarich appends /.well-known/openid-configuration itself.
+  OIDC_ISSUER: "https://login.f4mily.net/application/o/dawarich/"
+  OIDC_REDIRECT_URI: "https://locate.f4mily.net/users/auth/openid_connect/callback"
+  # Auto-provision a Dawarich account on first successful OIDC login.
+  OIDC_AUTO_REGISTER: "true"
+  # Keep the built-in email/password login working (admin bootstrap); only new
+  # self-service email registration is disabled.
+  ALLOW_EMAIL_PASSWORD_REGISTRATION: "false"
