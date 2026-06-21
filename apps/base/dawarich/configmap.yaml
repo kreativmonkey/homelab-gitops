@@ -27,8 +27,15 @@ data:
   PHOTON_API_USE_HTTPS: "true"
   # --- OIDC SSO via Authentik (client id/secret injected from secret) ---------
   OIDC_PROVIDER_NAME: "Authentik"
-  # Authentik issuer; Dawarich appends /.well-known/openid-configuration itself.
-  OIDC_ISSUER: "https://login.f4mily.net/application/o/dawarich/"
+  # Trailing DOUBLE slash is intentional. Dawarich's OidcConfig.normalize_issuer
+  # does .chomp('/'), which strips exactly ONE trailing slash, leaving
+  # ".../dawarich/". Authentik's discovery document always reports the issuer
+  # WITH a trailing slash, and openid_connect's discovery validates the issuer
+  # by exact string match. A single slash here would be chomped to
+  # ".../dawarich" and fail login with "Issuer mismatch"; the doubled slash
+  # survives the chomp and matches Authentik exactly. (File.join collapses the
+  # extra slash when building the .well-known URL, so discovery still resolves.)
+  OIDC_ISSUER: "https://login.f4mily.net/application/o/dawarich//"
   OIDC_REDIRECT_URI: "https://locate.f4mily.net/users/auth/openid_connect/callback"
   # Auto-provision a Dawarich account on first successful OIDC login.
   OIDC_AUTO_REGISTER: "true"
