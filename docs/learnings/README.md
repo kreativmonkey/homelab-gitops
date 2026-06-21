@@ -57,6 +57,7 @@ How to avoid this in the future. Include specific checks or guardrails.
 | [nextcloud-iscsi-emergency-readonly.md](nextcloud-iscsi-emergency-readonly.md) | Nextcloud iSCSI: Emergency Read-Only Remount | 2026-06-13 |
 | [netbird-reverse-proxy-traefik-grpc-timeout.md](netbird-reverse-proxy-traefik-grpc-timeout.md) | NetBird Reverse Proxy: 404/502 from Traefik gRPC Stream Timeout | 2026-06-14 |
 | [talos-automatic-upgrade-suc-auth.md](talos-automatic-upgrade-suc-auth.md) | Automatic Talos OS Upgrades via System Upgrade Controller | 2026-06-18 |
+| [cnpg-failover-storm-soft-antiaffinity.md](cnpg-failover-storm-soft-antiaffinity.md) | CNPG Failover Storm from Soft Pod Anti-Affinity on Node Drain | 2026-06-21 |
 
 ---
 
