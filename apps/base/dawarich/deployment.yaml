@@ -20,6 +20,11 @@ spec:
     metadata:
       labels:
         app: dawarich
+      annotations:
+        # Bump when dawarich-env ConfigMap changes — the app reads env via
+        # configMapRef at startup, so a pod-template change is needed to roll
+        # new env (no Reloader in-cluster). Increment on each config edit.
+        config.dawarich/env-revision: "2"
     spec:
       containers:
         # ---------------------------------------------------------------- web
