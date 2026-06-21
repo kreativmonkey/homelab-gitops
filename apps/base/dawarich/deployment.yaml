@@ -68,11 +68,29 @@ spec:
               mountPath: /var/app/tmp/imports/watched
             - name: storage
               mountPath: /var/app/storage
+          # APPLICATION_PROTOCOL=https sets Rails config.force_ssl, which 301-redirects
+          # plain HTTP to https:// — the kubelet then does a TLS handshake against the
+          # plain-HTTP Puma ("SSL connection to non-SSL Puma") and the probe fails. The
+          # X-Forwarded-Proto header makes Rails treat the probe as already-secure → 200.
+          # startupProbe gates liveness during the (slow) first-boot DB migration.
+          startupProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+              httpHeaders:
+                - name: X-Forwarded-Proto
+                  value: https
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
           livenessProbe:
             httpGet:
               path: /api/v1/health
               port: http
-            initialDelaySeconds: 90
+              httpHeaders:
+                - name: X-Forwarded-Proto
+                  value: https
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 5
@@ -80,7 +98,9 @@ spec:
             httpGet:
               path: /api/v1/health
               port: http
-            initialDelaySeconds: 30
+              httpHeaders:
+                - name: X-Forwarded-Proto
+                  value: https
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 5
