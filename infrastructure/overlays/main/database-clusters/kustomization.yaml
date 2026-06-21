@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - cluster.yaml
   - immich-postgres
+  - dawarich-postgres
   - scheduled-backup.yaml
   - barman-s3-credentials.secret.yaml
   - credentials

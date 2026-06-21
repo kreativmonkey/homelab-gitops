@@ -1,0 +1,12 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: dawarich-postgres-daily
+  namespace: cnpg-system
+spec:
+  schedule: "0 50 2 * * *"
+  backupOwnerReference: cluster
+  cluster:
+    name: dawarich-postgres
+  method: barmanObjectStore
+  target: prefer-standby

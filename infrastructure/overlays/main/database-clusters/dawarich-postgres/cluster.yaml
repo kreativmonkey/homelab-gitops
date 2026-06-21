@@ -1,0 +1,72 @@
+# Dedicated PostgreSQL for Dawarich — requires the PostGIS extension, which the
+# stock CNPG image (homelab-postgres) does not ship. Mirrors the immich-postgres
+# pattern. Image: CNPG operand build of PostgreSQL 17 + PostGIS 3.5.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: dawarich-postgres
+  namespace: cnpg-system
+  labels:
+    app.kubernetes.io/name: dawarich-postgres
+    app.kubernetes.io/managed-by: cnpg
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/cnpg-system/cnpg
+spec:
+  description: "Dawarich PostgreSQL with PostGIS"
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgis versioning=loose
+  imageName: ghcr.io/cloudnative-pg/postgis:17-3.5
+  instances: 1
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: 256MB
+      effective_cache_size: 512MB
+
+  storage:
+    storageClass: truenas-iscsi
+    size: 10Gi
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+
+  monitoring:
+    # Metrics scraped via apps/base/monitoring/extra-scrapes/cnpg-vmpodscrape.yaml
+    enablePodMonitor: false
+
+  env:
+    - name: AWS_DEFAULT_REGION
+      value: garage
+    - name: AWS_REGION
+      value: garage
+
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://cnpg-backups/dawarich-postgres
+      endpointURL: http://192.168.10.94:30188
+      serverName: dawarich-postgres
+      s3Credentials:
+        accessKeyId:
+          name: cnpg-barman-s3-credentials
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: cnpg-barman-s3-credentials
+          key: ACCESS_SECRET_KEY
+      wal:
+        compression: gzip
+        maxParallel: 4
+      data:
+        compression: gzip
+    retentionPolicy: 30d
+
+  managed:
+    roles:
+      - name: dawarich
+        ensure: present
+        login: true
+        passwordSecret:
+          name: dawarich-db-credentials

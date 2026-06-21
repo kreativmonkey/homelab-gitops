@@ -48,6 +48,7 @@ This cluster runs a variety of self-hosted applications. Uptime is monitored via
 | **goloom** | Automation | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_goloom/uptimes/30d/badge.svg) |
 | [**SpectrumKNX**](https://github.com/martinhoefling/SpectrumKNX) | Smart Home | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_spectrumknx/uptimes/30d/badge.svg) |
 | [**teslamate**](https://github.com/adriankumpf/teslamate) | Car Tracking | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_teslamate/uptimes/30d/badge.svg) |
+| [**dawarich**](https://dawarich.app/) | Location Tracking | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_dawarich/uptimes/30d/badge.svg) |
 | [**watchyourlan**](https://github.com/aceberg/WatchYourLAN) | Network | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_watchyourlan/uptimes/30d/badge.svg) |
 | [**homer**](https://github.com/bastienwirtz/homer) | Dashboard | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_homer/uptimes/30d/badge.svg) |
 | [**grafana**](https://grafana.com/) | Observability | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_grafana/uptimes/30d/badge.svg) |

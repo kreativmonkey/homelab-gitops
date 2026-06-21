@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dawarich
+  namespace: dawarich
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Dawarich
+    gethomepage.dev/description: Location history tracking
+    gethomepage.dev/href: "https://locate.f4mily.net/"
+    gethomepage.dev/group: Tools
+    gethomepage.dev/icon: dawarich.png
+    gethomepage.dev/app: dawarich
+    gethomepage.dev/pod-selector: app=dawarich
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+    # Large GPS/import uploads (Google Takeout, GPX, etc.)
+    nginx.org/client-max-body-size: "1000m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - locate.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: locate.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dawarich
+                port:
+                  number: 3000

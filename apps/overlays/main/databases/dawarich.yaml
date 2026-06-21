@@ -1,0 +1,14 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  # Name matches secret homelab-postgres-dawarich in namespace dawarich.
+  name: homelab-postgres-dawarich
+  namespace: cnpg-system
+spec:
+  name: dawarich
+  owner: dawarich
+  cluster:
+    name: dawarich-postgres
+  extensions:
+    - name: postgis
+      ensure: present

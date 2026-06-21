@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-dawarich-blueprint
+  namespace: authentik
+  labels:
+    app.kubernetes.io/part-of: authentik
+data:
+  dawarich.yaml: |
+    version: 1
+    metadata:
+      name: Homelab Dawarich OIDC
+      labels:
+        blueprints.goauthentik.io/description: OAuth2 provider and application for Dawarich location tracker
+    entries:
+      - model: authentik_providers_oauth2.oauth2provider
+        id: dawarich-provider
+        identifiers:
+          client_id: homelab-dawarich
+        attrs:
+          name: Provider for Dawarich
+          client_type: confidential
+          client_id: homelab-dawarich
+          client_secret: REMOVED_BY_HISTORY_REWRITE
+          grant_types:
+            - authorization_code
+            - refresh_token
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          encryption_key: null
+          redirect_uris:
+            - matching_mode: strict
+              url: https://locate.f4mily.net/users/auth/openid_connect/callback
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+      - model: authentik_core.application
+        identifiers:
+          slug: dawarich
+        attrs:
+          name: Dawarich
+          slug: dawarich
+          provider: !KeyOf dawarich-provider
+          launch_url: https://locate.f4mily.net
+          meta_launch_url: https://locate.f4mily.net
+          icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/dawarich.svg

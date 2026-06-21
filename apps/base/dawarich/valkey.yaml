@@ -1,0 +1,73 @@
+# Redis-compatible cache + Sidekiq queue backend for Dawarich.
+# Valkey is a drop-in Redis replacement; Dawarich talks to it via REDIS_URL.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dawarich-valkey
+  namespace: dawarich
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dawarich-valkey
+  template:
+    metadata:
+      labels:
+        app: dawarich-valkey
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: valkey
+          image: docker.io/valkey/valkey:9.1.0-alpine
+          imagePullPolicy: IfNotPresent
+          args:
+            - valkey-server
+            - --save
+            - "900"
+            - "1"
+            - --appendonly
+            - "no"
+          ports:
+            - containerPort: 6379
+              name: valkey
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          livenessProbe:
+            tcpSocket:
+              port: valkey
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            tcpSocket:
+              port: valkey
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dawarich-valkey
+  namespace: dawarich
+spec:
+  selector:
+    app: dawarich-valkey
+  ports:
+    - name: valkey
+      port: 6379
+      targetPort: valkey
+      protocol: TCP
+  type: ClusterIP
