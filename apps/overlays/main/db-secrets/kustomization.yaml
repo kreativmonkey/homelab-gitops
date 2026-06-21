@@ -14,6 +14,7 @@ resources:
   # - linkwarden-db-credentials.secret.yaml
   - tandoor-db-credentials.secret.yaml
   - outline-db-credentials.secret.yaml
+  - dawarich-db-credentials.secret.yaml
 patches:
   - target:
       kind: Secret
@@ -125,3 +126,13 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: sparkyfitness
+  - target:
+      kind: Secret
+      name: dawarich-db-credentials
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: homelab-postgres-dawarich
+      - op: replace
+        path: /metadata/namespace
+        value: dawarich

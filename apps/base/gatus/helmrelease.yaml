@@ -218,6 +218,16 @@ spec:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
 
+        - name: dawarich
+          group: application
+          url: https://locate.f4mily.net/api/v1/health
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[BODY].status == ok"
+             - "[RESPONSE_TIME] < 5000"
+
         - name: teslamate
           group: observability
           url: https://teslamate.f4mily.net

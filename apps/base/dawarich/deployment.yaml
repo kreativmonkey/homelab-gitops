@@ -1,0 +1,160 @@
+# Single pod with two containers (web app + Sidekiq worker), mirroring the
+# upstream k8s guide. Both share the RWO PVCs, so they MUST co-locate in one
+# pod. strategy: Recreate avoids two pods racing for the same iSCSI volumes
+# during rollouts.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dawarich
+  namespace: dawarich
+  labels:
+    app: dawarich
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: dawarich
+  template:
+    metadata:
+      labels:
+        app: dawarich
+    spec:
+      containers:
+        # ---------------------------------------------------------------- web
+        - name: dawarich-app
+          # renovate: datasource=docker depName=freikin/dawarich versioning=semver
+          image: freikin/dawarich:1.8.1
+          imagePullPolicy: IfNotPresent
+          command: ["web-entrypoint.sh"]
+          args: ["bin/rails", "server", "-p", "3000", "-b", "::"]
+          envFrom:
+            - configMapRef:
+                name: dawarich-env
+          env:
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-dawarich
+                  key: username
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-dawarich
+                  key: password
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: dawarich-app
+                  key: SECRET_KEY_BASE
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: dawarich-authentik-oauth
+                  key: client-id
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: dawarich-authentik-oauth
+                  key: client-secret
+          ports:
+            - containerPort: 3000
+              name: http
+          volumeMounts:
+            - name: public
+              mountPath: /var/app/public
+            - name: watched
+              mountPath: /var/app/tmp/imports/watched
+            - name: storage
+              mountPath: /var/app/storage
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 90
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              memory: 3Gi
+        # ------------------------------------------------------------ sidekiq
+        - name: dawarich-sidekiq
+          # renovate: datasource=docker depName=freikin/dawarich versioning=semver
+          image: freikin/dawarich:1.8.1
+          imagePullPolicy: IfNotPresent
+          command: ["sidekiq-entrypoint.sh"]
+          args: ["bundle", "exec", "sidekiq"]
+          envFrom:
+            - configMapRef:
+                name: dawarich-env
+          env:
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-dawarich
+                  key: username
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-dawarich
+                  key: password
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: dawarich-app
+                  key: SECRET_KEY_BASE
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: dawarich-authentik-oauth
+                  key: client-id
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: dawarich-authentik-oauth
+                  key: client-secret
+            - name: BACKGROUND_PROCESSING_CONCURRENCY
+              value: "10"
+          volumeMounts:
+            - name: public
+              mountPath: /var/app/public
+            - name: watched
+              mountPath: /var/app/tmp/imports/watched
+            - name: storage
+              mountPath: /var/app/storage
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pgrep -f sidekiq"]
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              memory: 3Gi
+      volumes:
+        - name: public
+          persistentVolumeClaim:
+            claimName: dawarich-public
+        - name: watched
+          persistentVolumeClaim:
+            claimName: dawarich-watched
+        - name: storage
+          persistentVolumeClaim:
+            claimName: dawarich-storage
