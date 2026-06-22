@@ -29,7 +29,7 @@ spec:
       initContainers:
         - name: bootstrap-config
           # renovate: datasource=docker depName=docker.io/searxng/searxng versioning=loose
-          image: docker.io/searxng/searxng:2026.6.11-a1490676e
+          image: docker.io/searxng/searxng:2026.6.15-cf1410af8
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -56,7 +56,7 @@ spec:
       containers:
         - name: searxng
           # renovate: datasource=docker depName=docker.io/searxng/searxng versioning=loose
-          image: docker.io/searxng/searxng:2026.6.11-a1490676e
+          image: docker.io/searxng/searxng:2026.6.15-cf1410af8
           imagePullPolicy: IfNotPresent
           env:
             - name: GRANIAN_HOST
