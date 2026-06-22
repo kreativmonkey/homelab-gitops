@@ -61,6 +61,7 @@ resources:
   - ../../base/teslamate
   - ../../base/dawarich
   - ../../base/goloom
+  - ../../base/workshops
   # - ../../base/pcm                 # wip: ingress only, no workload
 
   # --- Standalone workloads (already-deployed) --------------------------
@@ -334,6 +335,16 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.host_workshops
+    targets:
+      - select: {kind: Ingress, name: workshops}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.publicTlsSecret
     targets:
       - select: {kind: Ingress, name: outline}
@@ -369,6 +380,8 @@ replacements:
       - select: {kind: Ingress, name: nextcloud}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: tandoor}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: workshops}
         fieldPaths: [spec.tls.0.secretName]
 
   - source:

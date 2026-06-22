@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: workshops
+  labels:
+    app.kubernetes.io/name: workshops
+    app.kubernetes.io/part-of: homelab
