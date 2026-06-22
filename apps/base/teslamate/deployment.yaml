@@ -25,7 +25,7 @@ spec:
         - name: teslamate
           # Pin version (DB already on 4.x migrations); bump via Renovate, not :latest.
           # v4.0.0: fixes Owner-API 403 (fleet-api) — TeslaMate #5384/#5391. Major upgrade, DB migrated.
-          image: docker.io/teslamate/teslamate:4.0.0
+          image: docker.io/teslamate/teslamate:4.0.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000
