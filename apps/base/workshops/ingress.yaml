@@ -1,0 +1,33 @@
+# Public HTTPS access (public wildcard TLS).
+# Host + TLS secret are injected by the overlay via replacements
+# (host_workshops / publicTlsSecret); the literals below are defaults.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: workshops
+  namespace: workshops
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Workshops
+    gethomepage.dev/description: Hands-on Kurse (Forgejo, GitLab, Kubernetes)
+    gethomepage.dev/group: Development
+    gethomepage.dev/icon: mdi-school
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - workshop.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: workshop.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: workshops
+                port:
+                  number: 80
