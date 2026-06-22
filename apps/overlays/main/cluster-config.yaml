@@ -69,6 +69,7 @@ data:
   url_readeck: https://readeck.f4mily.net
   host_sparkyfitness: fitness.f4mily.net
   url_sparkyfitness: https://fitness.f4mily.net
+  host_workshops: workshop.f4mily.net
 
   # Cluster-internal apps (covered by *.cluster.f4mily.net wildcard):
   host_goloom: goloom.cluster.f4mily.net

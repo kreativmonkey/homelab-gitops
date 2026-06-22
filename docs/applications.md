@@ -77,6 +77,7 @@ here so it is obvious what is **planned** but not deployed:
 | goloom             | on     | Deployment, CNPG PostgreSQL, goloom.cluster.f4mily.net |
 | spectrumknx        | on     | StatefulSet + own TimescaleDB, KNX bus monitor, knx.cluster.f4mily.net |
 | pcm                | wip    | ingress only, missing HelmRelease         |
+| workshops          | on     | nginx + git-sync sidecar, static courses from git.f4mily.net/kreativmonkey/workshops, workshop.f4mily.net |
 
 ## 2. The config file (`apps/overlays/main/cluster-config.yaml`)
 
