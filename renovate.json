@@ -331,6 +331,37 @@
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
+    },
+    {
+      "description": "searxng: rolling release (multiple CalVer+hash tags per day) — short soak + automerge so PRs don't perpetually backlog. Managed by the kubernetes manager (image: in deployment.yaml); no marker needed.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "docker.io/searxng/searxng"
+      ],
+      "versioning": "loose",
+      "groupName": "searxng",
+      "groupSlug": "searxng",
+      "minimumReleaseAge": "2 days",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Renovate self-update: several releases per day — short soak + automerge so PRs don't perpetually backlog",
+      "matchDepNames": [
+        "renovate"
+      ],
+      "matchFileNames": [
+        "apps/base/renovate/**"
+      ],
+      "groupName": "renovate",
+      "groupSlug": "renovate",
+      "minimumReleaseAge": "2 days",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
     }
   ],
   "prHourlyLimit": 2,
