@@ -377,6 +377,20 @@
       "groupSlug": "nextcloud",
       "minimumReleaseAge": "7 days",
       "automerge": false
+    },
+    {
+      "description": "Teslamate: the app image (docker.io/teslamate/teslamate) and the dashboards image (docker.io/teslamate/grafana) ship in lockstep with identical version tags. Bump them together so the Grafana dashboards never drift from the app's DB schema (same coupling rationale as immich). Manual merge, major upgrades one at a time.",
+      "matchFileNames": [
+        "apps/base/teslamate/**"
+      ],
+      "matchPackageNames": [
+        "docker.io/teslamate/teslamate",
+        "docker.io/teslamate/grafana"
+      ],
+      "groupName": "teslamate",
+      "groupSlug": "teslamate",
+      "minimumReleaseAge": "7 days",
+      "automerge": false
     }
   ],
   "prHourlyLimit": 2,
