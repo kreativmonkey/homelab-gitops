@@ -14,7 +14,14 @@ spec:
       interval: 30s
       rules:
         - alert: KubePodOOMKilled
-          expr: kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+          # Fire only on a *recent* OOM (a restart in the last 15m). The
+          # last_terminated_reason series stays "OOMKilled" until the pod is
+          # recreated, so without the changes() guard a single one-off OOM
+          # alerts forever and keeps re-notifying.
+          expr: |
+            kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+            and on (namespace, pod, container)
+            changes(kube_pod_container_status_restarts_total[15m]) > 0
           for: 1m
           labels:
             severity: critical

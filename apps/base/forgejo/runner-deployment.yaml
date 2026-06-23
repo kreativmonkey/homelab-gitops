@@ -85,14 +85,16 @@ spec:
               mountPath: /config
               readOnly: true
           # Orchestrator only — the actual job workloads run inside the dind
-          # sidecar and are bounded by *its* limits, not these.
+          # sidecar and are bounded by *its* limits, not these. Idle usage is
+          # ~15Mi; headroom is for log/output buffering spikes when dind jobs
+          # stall (e.g. the 2026-06-23 storage hiccup OOM-killed it at 512Mi).
           resources:
             requests:
               cpu: 100m
               memory: 128Mi
             limits:
               cpu: "1"
-              memory: 512Mi
+              memory: 768Mi
         - name: dind
           # renovate: datasource=docker depName=docker.io/library/docker
           image: docker.io/library/docker:27-dind
