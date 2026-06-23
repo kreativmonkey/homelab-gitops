@@ -19,7 +19,7 @@ spec:
           labels:
             severity: critical
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "Blackbox-Probe fehlgeschlagen: {{ $labels.instance }}"
             description: "Der Endpunkt {{ $labels.instance }} ist nicht erreichbar oder antwortet mit einem Fehlerstatus. HTTP/SSL-Prüfung fehlgeschlagen."
@@ -30,7 +30,7 @@ spec:
           labels:
             severity: warning
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "SSL-Zertifikat läuft bald ab: {{ $labels.instance }}"
             description: "Das SSL-Zertifikat für {{ $labels.instance }} läuft in weniger als 7 Tagen ab. Läuft ab am {{ $value | humanizeTimestamp }}."
