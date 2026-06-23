@@ -1,0 +1,106 @@
+# TrueNAS SCALE alerts (metrics from the in-cluster truenas-exporter).
+# The `homelab_owner: platform` alert label routes to ntfy + n8n triage.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: homelab-truenas
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.platform.truenas
+      interval: 30s
+      rules:
+        - alert: TruenasExporterDown
+          # Exporter cannot reach the TrueNAS API (or is not scrapeable).
+          expr: |
+            truenas_up == 0 or absent(truenas_up)
+          for: 5m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "TrueNAS-Exporter/API nicht erreichbar"
+            description: "truenas_up=0 oder keine Metriken seit 5 Minuten. Storage-Backend (iSCSI für CNPG & Co.) nicht überwacht — bei Wiederholung der I/O-Störung blind."
+
+        - alert: TruenasPoolUnhealthy
+          expr: truenas_pool_healthy == 0
+          for: 5m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "TrueNAS-Pool {{ $labels.pool }} nicht healthy"
+            description: "ZFS-Pool {{ $labels.pool }} meldet healthy=0. Datenbank-/App-Volumes (iSCSI) können betroffen sein."
+
+        - alert: TruenasPoolIOErrors
+          # read/write/checksum error counters are normally 0; any nonzero is notable.
+          expr: |
+            (truenas_pool_read_errors + truenas_pool_write_errors + truenas_pool_checksum_errors) > 0
+          for: 5m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "TrueNAS-Pool {{ $labels.pool }}: ZFS-I/O-Fehler"
+            description: "Pool {{ $labels.pool }} zeigt read/write/checksum-Fehler > 0. Disk/vdev oder Transport prüfen (zpool status -v)."
+
+        - alert: TruenasScrubErrors
+          expr: truenas_pool_scan_errors > 0
+          for: 5m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "TrueNAS-Pool {{ $labels.pool }}: Scrub-Fehler"
+            description: "Letzter Scrub von Pool {{ $labels.pool }} meldet {{ $value }} Fehler."
+
+        - alert: TruenasPoolCapacityHigh
+          expr: truenas_pool_capacity_ratio > 0.85
+          for: 30m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "TrueNAS-Pool {{ $labels.pool }} > 85% voll"
+            description: "Pool {{ $labels.pool }} ist zu {{ $value | humanizePercentage }} belegt. ZFS-Performance leidet bei hoher Auslastung (relevant für iSCSI-Latenz)."
+
+        - alert: TruenasPoolCapacityCritical
+          expr: truenas_pool_capacity_ratio > 0.90
+          for: 10m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "TrueNAS-Pool {{ $labels.pool }} > 90% voll"
+            description: "Pool {{ $labels.pool }} ist zu {{ $value | humanizePercentage }} belegt — dringend aufräumen/erweitern."
+
+        - alert: TruenasAlertActiveCritical
+          expr: truenas_alerts_active{level="CRITICAL"} > 0
+          for: 5m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "TrueNAS meldet {{ $value }} kritische Alert(s)"
+            description: "Das TrueNAS-System hat aktive CRITICAL-Alerts. In der TrueNAS-UI (Alerts) nachsehen."
+
+        - alert: TruenasAlertActiveWarning
+          expr: truenas_alerts_active{level="WARNING"} > 0
+          for: 15m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "TrueNAS meldet {{ $value }} Warning-Alert(s)"
+            description: "Das TrueNAS-System hat aktive WARNING-Alerts. In der TrueNAS-UI (Alerts) nachsehen."
