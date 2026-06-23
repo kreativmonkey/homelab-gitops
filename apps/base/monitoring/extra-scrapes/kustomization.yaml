@@ -7,3 +7,4 @@ resources:
   - cnpg-vmpodscrape.yaml
   - blackbox-vmprobe.yaml
   - blackbox-vmprobe-tandoor.yaml
+  - truenas-exporter-vmservicescrape.yaml

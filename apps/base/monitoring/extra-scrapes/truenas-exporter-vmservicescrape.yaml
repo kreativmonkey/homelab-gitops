@@ -1,0 +1,16 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: truenas-exporter
+  namespace: monitoring
+  labels:
+    release: victoriametrics
+spec:
+  endpoints:
+    - interval: 60s
+      scrapeTimeout: 30s
+      path: /metrics
+      port: metrics
+  selector:
+    matchLabels:
+      app: truenas-exporter

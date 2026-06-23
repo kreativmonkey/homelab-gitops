@@ -53,6 +53,8 @@ resources:
   # - ../../base/speedtest-tracker   # wip: ingress only, no workload
   - ../../base/watchyourlan
   - ../../base/gatus
+  - ../../base/truenas-exporter
+  - truenas-exporter.secret.yaml
 
   # --- Smart Home -------------------------------------------------------
   - ../../base/spectrumknx
