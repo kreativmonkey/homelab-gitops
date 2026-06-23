@@ -24,7 +24,7 @@ spec:
       containers:
         - name: grafana
           # renovate: datasource=docker depName=docker.io/teslamate/grafana
-          image: docker.io/teslamate/grafana:3.1.0
+          image: docker.io/teslamate/grafana:4.0.1
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
