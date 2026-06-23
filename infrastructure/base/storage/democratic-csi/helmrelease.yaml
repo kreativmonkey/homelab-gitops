@@ -29,6 +29,15 @@ spec:
         driver: freenas-api-iscsi
       existingConfigSecret: truenas-iscsi-driver-config
     controller:
+      # The chart's controller liveness probe calls the CSI Probe RPC, which
+      # pings the TrueNAS API. Transient TrueNAS API 500s (NAS VM under load /
+      # storage stall) made the otherwise-healthy controller restart-loop (94x)
+      # and page KubePodCrashLoopBackOff. failureThreshold/periodSeconds are
+      # hardcoded in the chart (not tunable), and restarting never fixes the
+      # backend — so disable the backend-coupled liveness. Real process crashes
+      # still exit the container and get restarted by the kubelet normally.
+      livenessProbe:
+        enabled: false
       driver:
         image:
           tag: next
