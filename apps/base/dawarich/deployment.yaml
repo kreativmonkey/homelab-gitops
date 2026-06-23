@@ -30,7 +30,7 @@ spec:
         # ---------------------------------------------------------------- web
         - name: dawarich-app
           # renovate: datasource=docker depName=freikin/dawarich versioning=semver
-          image: freikin/dawarich:1.8.1
+          image: freikin/dawarich:1.9.1
           imagePullPolicy: IfNotPresent
           command: ["web-entrypoint.sh"]
           args: ["bin/rails", "server", "-p", "3000", "-b", "::"]
@@ -118,7 +118,7 @@ spec:
         # ------------------------------------------------------------ sidekiq
         - name: dawarich-sidekiq
           # renovate: datasource=docker depName=freikin/dawarich versioning=semver
-          image: freikin/dawarich:1.8.1
+          image: freikin/dawarich:1.9.1
           imagePullPolicy: IfNotPresent
           command: ["sidekiq-entrypoint.sh"]
           args: ["bundle", "exec", "sidekiq"]
