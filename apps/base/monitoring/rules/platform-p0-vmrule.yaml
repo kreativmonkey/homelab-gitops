@@ -18,7 +18,7 @@ spec:
           labels:
             severity: critical
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "CNPG: keine Metriken in cnpg-system"
             description: "Der CNPG-Exporter liefert seit 5 Minuten keine Daten. Datenbank-Apps können betroffen sein."
@@ -30,7 +30,7 @@ spec:
           labels:
             severity: critical
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "CNPG-Instanz {{ $labels.pod }} offline"
             description: "Pod {{ $labels.pod }} in {{ $labels.namespace }} meldet cnpg_collector_up=0."
@@ -47,7 +47,7 @@ spec:
           labels:
             severity: warning
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "CNPG-Backup veraltet: {{ $labels.cluster }}"
             description: "Letztes verfügbares Backup für Cluster {{ $labels.cluster }} ist älter als 50 Stunden."
@@ -62,7 +62,7 @@ spec:
           labels:
             severity: warning
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "Velero-Backup fehlgeschlagen"
             description: "In der letzten Stunde wurden fehlgeschlagene Velero-Backups gezählt."
@@ -74,7 +74,7 @@ spec:
           labels:
             severity: warning
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "Velero: kein erfolgreiches Backup seit 36h"
             description: "Schedule {{ $labels.schedule }} — letzter Erfolg zu lange her."
@@ -93,7 +93,7 @@ spec:
           labels:
             severity: critical
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "Node {{ $labels.instance }}: Speicher kritisch (<10 % frei)"
             description: "Verfügbarer RAM unter 10 % seit 10 Minuten."
@@ -109,7 +109,7 @@ spec:
           labels:
             severity: critical
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "Node {{ $labels.instance }}: Disk {{ $labels.mountpoint }} <10 % frei"
             description: "Filesystem fast voll — Longhorn/CNPG/VM-Daten prüfen."
@@ -124,7 +124,7 @@ spec:
           labels:
             severity: critical
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "VMAlert scrape down ({{ $labels.job }})"
             description: "Alert-Auswertung ausgefallen — es werden ggf. keine neuen Alerts erzeugt."
@@ -136,7 +136,7 @@ spec:
           labels:
             severity: critical
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
           annotations:
             summary: "Alertmanager scrape down ({{ $labels.job }})"
             description: "Benachrichtigungen nach ntfy werden nicht zugestellt."
@@ -150,7 +150,7 @@ spec:
           labels:
             severity: critical
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
             homelab/auto_triage: "true"
           annotations:
             summary: "ntfy-bridge nicht verfügbar"

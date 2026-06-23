@@ -19,7 +19,7 @@ spec:
           labels:
             severity: critical
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
             homelab_auto_remediate: "true"
           annotations:
             summary: "OOMKilled: {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }})"
@@ -32,7 +32,7 @@ spec:
           labels:
             severity: critical
             cluster: homelab
-            homelab/owner: platform
+            homelab_owner: platform
             homelab_auto_remediate: "true"
           annotations:
             summary: "CrashLoopBackOff: {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }})"
