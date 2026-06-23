@@ -169,7 +169,7 @@ spec:
 
         # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-db-sync
-          image: docker.io/library/nextcloud:33.0.5-apache
+          image: docker.io/library/nextcloud:34.0.0-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -322,7 +322,7 @@ spec:
 
         # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-oidc-setup
-          image: docker.io/library/nextcloud:33.0.5-apache
+          image: docker.io/library/nextcloud:34.0.0-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -377,7 +377,7 @@ spec:
 
         # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-collab-setup
-          image: docker.io/library/nextcloud:33.0.5-apache
+          image: docker.io/library/nextcloud:34.0.0-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
