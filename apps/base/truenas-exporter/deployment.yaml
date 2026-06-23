@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: truenas-exporter
+  namespace: monitoring
+  labels:
+    app: truenas-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: truenas-exporter
+  template:
+    metadata:
+      labels:
+        app: truenas-exporter
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: exporter
+          image: python:3.13-slim
+          command: ["python3", "/app/exporter.py"]
+          ports:
+            - containerPort: 9849
+              name: metrics
+          env:
+            - name: LISTEN_PORT
+              value: "9849"
+            - name: TRUENAS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: truenas-exporter-credentials
+                  key: TRUENAS_URL
+            - name: TRUENAS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: truenas-exporter-credentials
+                  key: TRUENAS_API_KEY
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: script
+              mountPath: /app
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      volumes:
+        - name: script
+          configMap:
+            name: truenas-exporter-script
