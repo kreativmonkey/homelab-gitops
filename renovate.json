@@ -244,14 +244,15 @@
       "automerge": false
     },
     {
-      "description": "Group all flux Helm chart bumps (except kite / sparkyfitness)",
+      "description": "Group all flux Helm chart bumps (except kite / sparkyfitness / nextcloud)",
       "matchManagers": [
         "flux"
       ],
       "matchFileNames": [
         "!apps/base/kite/**",
         "!apps/base/authentik/**",
-        "!apps/base/sparkyfitness/**"
+        "!apps/base/sparkyfitness/**",
+        "!apps/base/nextcloud/**"
       ],
       "groupName": "flux helm releases",
       "groupSlug": "flux-helm-releases",
@@ -362,6 +363,20 @@
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
+    },
+    {
+      "description": "Nextcloud: keep the Helm chart, the app image, and the occ-* init-container images in ONE PR. They share a single major version — a partial bump (e.g. occ init containers ahead of the app image) corrupts the data directory and trips Nextcloud's downgrade/skip-major guard. The refs are detected by helm-values AND the custom.regex markers; this rule (last, so it overrides the broad groups) collapses them into a single 'nextcloud' PR. Major upgrades stay manual and one major at a time.",
+      "matchFileNames": [
+        "apps/base/nextcloud/**"
+      ],
+      "matchPackageNames": [
+        "docker.io/library/nextcloud",
+        "nextcloud"
+      ],
+      "groupName": "nextcloud",
+      "groupSlug": "nextcloud",
+      "minimumReleaseAge": "7 days",
+      "automerge": false
     }
   ],
   "prHourlyLimit": 2,
