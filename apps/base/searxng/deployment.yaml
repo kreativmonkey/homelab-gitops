@@ -28,7 +28,6 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: bootstrap-config
-          # renovate: datasource=docker depName=docker.io/searxng/searxng versioning=loose
           image: docker.io/searxng/searxng:2026.6.15-cf1410af8
           imagePullPolicy: IfNotPresent
           command:
@@ -55,7 +54,6 @@ spec:
               readOnly: true
       containers:
         - name: searxng
-          # renovate: datasource=docker depName=docker.io/searxng/searxng versioning=loose
           image: docker.io/searxng/searxng:2026.6.15-cf1410af8
           imagePullPolicy: IfNotPresent
           env:
