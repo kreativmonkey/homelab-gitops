@@ -14,7 +14,7 @@ metadata:
 spec:
   description: "Dawarich PostgreSQL with PostGIS"
   # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgis versioning=loose
-  imageName: ghcr.io/cloudnative-pg/postgis:17-3.5
+  imageName: ghcr.io/cloudnative-pg/postgis:17.10-3.6.4-system-trixie
   instances: 1
 
   postgresql:
