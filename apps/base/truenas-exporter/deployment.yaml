@@ -31,6 +31,10 @@ spec:
           env:
             - name: LISTEN_PORT
               value: "9849"
+            - name: TRUENAS_TIMEOUT
+              # Bound the two sequential API calls so a full scrape (2x) stays
+              # well under the probe timeoutSeconds below.
+              value: "8"
             - name: TRUENAS_URL
               valueFrom:
                 secretKeyRef:
@@ -55,13 +59,20 @@ spec:
               path: /metrics
               port: metrics
             initialDelaySeconds: 10
-            periodSeconds: 30
+            periodSeconds: 60
+            # The exporter is single-threaded and blocks on synchronous TrueNAS
+            # API calls per scrape; timeoutSeconds must exceed a full scrape
+            # (2 x TRUENAS_TIMEOUT) or the probe kills a healthy pod.
+            timeoutSeconds: 20
+            failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /metrics
               port: metrics
             initialDelaySeconds: 5
-            periodSeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 20
+            failureThreshold: 3
           resources:
             requests:
               cpu: 10m
