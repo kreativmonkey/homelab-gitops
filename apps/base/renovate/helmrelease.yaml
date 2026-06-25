@@ -9,7 +9,7 @@ spec:
     spec:
       chart: renovate
       # renovate: datasource=helm registryUrl=https://docs.renovatebot.com/helm-charts depName=renovate
-      version: "46.202.1"
+      version: "46.203.0"
       sourceRef:
         kind: HelmRepository
         name: renovate-repo
