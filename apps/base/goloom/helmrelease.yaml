@@ -1,0 +1,124 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: goloom
+  namespace: goloom
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-goloom
+spec:
+  interval: 1h
+  timeout: 10m
+  releaseName: goloom
+  chart:
+    spec:
+      chart: ./deploy/helm/goloom
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: goloom
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Official image. The chart at tag v0.1.3 still pins appVersion 0.1.2, so we
+    # pin the image explicitly to the matching app release and let Renovate bump
+    # it from the GitHub releases of the Goloom repo.
+    image:
+      repository: ghcr.io/goloom-app/goloom
+      # renovate: datasource=github-releases depName=Goloom-App/goloom extractVersion=^v(?<version>.+)$
+      tag: "0.1.3"
+      pullPolicy: IfNotPresent
+
+    replicaCount: 1
+
+    # --- Database: central CloudNativePG (CNPG) -----------------------------
+    # DATABASE_URL (full DSN incl. password) is provided via the SOPS secret
+    # goloom-app, because the chart consumes the DSN as a single key.
+    database:
+      type: postgres
+
+    secret:
+      create: false
+      existingSecret: goloom-app
+
+    # --- Persistent media storage (uploads) ---------------------------------
+    persistence:
+      enabled: true
+      storageClass: truenas-iscsi
+      accessMode: ReadWriteOnce
+      size: 5Gi
+      mountPath: /app/data
+
+    # --- Application configuration (non-secret) -----------------------------
+    config:
+      publicBaseUrl: https://goloom.cluster.f4mily.net
+      allowedOrigins: https://goloom.cluster.f4mily.net
+      appEnv: production
+      logLevel: info
+      logFormat: json
+      mcpEnabled: true
+
+    bootstrap:
+      adminEmail: admin@goloom.local
+      adminName: Homelab Administrator
+
+    # --- OIDC SSO via Authentik ---------------------------------------------
+    # clientSecret comes from the goloom-app secret (key OIDC_CLIENT_SECRET).
+    oidc:
+      enabled: true
+      issuerUrl: https://login.f4mily.net/application/o/goloom/
+      clientId: puyEXnuOwuIWyTaTMI0Cx290jlfbklmNJFKe4xGJ
+      # redirectUri defaults to {publicBaseUrl}/v1/oauth/oidc/callback
+      redirectUri: ""
+      clientSecret: ""
+
+    # --- Extra environment (scheduler, rate limit, Mastodon, AI) ------------
+    extraEnv:
+      - name: TZ
+        value: Europe/Berlin
+      - name: SCHEDULER_POLL_INTERVAL
+        value: 15s
+      - name: SCHEDULER_WORKERS
+        value: "4"
+      - name: RATE_LIMIT_PER_MINUTE
+        value: "120"
+      - name: MASTODON_APP_NAME
+        value: goloom
+      - name: MASTODON_DEFAULT_SCOPES
+        value: read,write
+      - name: MASTODON_REDIRECT_URI
+        value: https://goloom.cluster.f4mily.net/v1/oauth/mastodon/callback
+      - name: OPENAI_BASE_URL
+        value: https://opencode.ai
+      - name: OPENAI_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: goloom-app
+            key: OPENAI_API_KEY
+      - name: GOLOOM_API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: goloom-app
+            key: GOLOOM_API_TOKEN
+
+    service:
+      type: ClusterIP
+      port: 8080
+
+    # Own Ingress (ingress.yaml) + cluster-config replacement; chart Ingress off.
+    ingress:
+      enabled: false
+
+    serviceAccount:
+      create: true
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 256Mi
