@@ -72,7 +72,7 @@ data:
   host_workshops: workshop.f4mily.net
 
   # Cluster-internal apps (covered by *.cluster.f4mily.net wildcard):
-  host_goloom: goloom.cluster.f4mily.net
+  host_goloom: goloom.f4mily.net
   host_nextcloud: nc.f4mily.net
   url_nextcloud: https://nc.f4mily.net
   host_homer: homer.cluster.f4mily.net

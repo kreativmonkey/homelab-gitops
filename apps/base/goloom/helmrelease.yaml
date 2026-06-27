@@ -55,8 +55,8 @@ spec:
 
     # --- Application configuration (non-secret) -----------------------------
     config:
-      publicBaseUrl: https://goloom.cluster.f4mily.net
-      allowedOrigins: https://goloom.cluster.f4mily.net
+      publicBaseUrl: https://goloom.f4mily.net
+      allowedOrigins: https://goloom.f4mily.net
       appEnv: production
       logLevel: info
       logFormat: json
@@ -91,7 +91,7 @@ spec:
       - name: MASTODON_DEFAULT_SCOPES
         value: read,write
       - name: MASTODON_REDIRECT_URI
-        value: https://goloom.cluster.f4mily.net/v1/oauth/mastodon/callback
+        value: https://goloom.f4mily.net/v1/oauth/mastodon/callback
       - name: OPENAI_BASE_URL
         value: https://opencode.ai
       - name: OPENAI_API_KEY
