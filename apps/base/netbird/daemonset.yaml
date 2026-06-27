@@ -71,3 +71,17 @@ spec:
               memory: 32Mi
             limits:
               memory: 128Mi
+          volumeMounts:
+            # Persist the netbird identity/state across pod restarts so each node's
+            # peer keeps a STABLE netbird IP + FQDN. Without it, every rollout
+            # (image bump, node reboot, reconcile) re-registers as a NEW peer with
+            # a new IP, breaking external routes through this peer (504 gateway
+            # timeout) and leaving stale peers behind in the management server.
+            - name: state
+              mountPath: /var/lib/netbird
+      volumes:
+        # Per-node hostPath; Talos /var survives reboots and fits a DaemonSet.
+        - name: state
+          hostPath:
+            path: /var/lib/netbird-agent
+            type: DirectoryOrCreate
