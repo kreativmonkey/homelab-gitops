@@ -306,7 +306,7 @@ spec:
 
         - name: goloom
           group: automation
-          url: https://goloom.cluster.f4mily.net/healthz
+          url: https://goloom.f4mily.net/healthz
           interval: 60s
           client: *default-dns
           conditions:
