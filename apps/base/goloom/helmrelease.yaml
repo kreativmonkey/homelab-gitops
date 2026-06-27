@@ -26,11 +26,12 @@ spec:
   values:
     # Official image. The chart at tag v0.1.3 still pins appVersion 0.1.2, so we
     # pin the image explicitly to the matching app release and let Renovate bump
-    # it from the GitHub releases of the Goloom repo.
+    # it from the GitHub releases of the Goloom repo. GHCR tags are v-prefixed
+    # (v0.1.3); the chart's appVersion default (0.1.2, no "v") does not exist.
     image:
       repository: ghcr.io/goloom-app/goloom
-      # renovate: datasource=github-releases depName=Goloom-App/goloom extractVersion=^v(?<version>.+)$
-      tag: "0.1.3"
+      # renovate: datasource=github-releases depName=Goloom-App/goloom
+      tag: "v0.1.3"
       pullPolicy: IfNotPresent
 
     replicaCount: 1
@@ -55,8 +56,8 @@ spec:
 
     # --- Application configuration (non-secret) -----------------------------
     config:
-      publicBaseUrl: https://goloom.cluster.f4mily.net
-      allowedOrigins: https://goloom.cluster.f4mily.net
+      publicBaseUrl: https://goloom.f4mily.net
+      allowedOrigins: https://goloom.f4mily.net
       appEnv: production
       logLevel: info
       logFormat: json
@@ -91,7 +92,7 @@ spec:
       - name: MASTODON_DEFAULT_SCOPES
         value: read,write
       - name: MASTODON_REDIRECT_URI
-        value: https://goloom.cluster.f4mily.net/v1/oauth/mastodon/callback
+        value: https://goloom.f4mily.net/v1/oauth/mastodon/callback
       - name: OPENAI_BASE_URL
         value: https://opencode.ai
       - name: OPENAI_API_KEY
