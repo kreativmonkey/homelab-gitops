@@ -28,4 +28,4 @@ spec:
               service:
                 name: goloom
                 port:
-                  number: 80
+                  number: 8080

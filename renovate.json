@@ -244,7 +244,21 @@
       "automerge": false
     },
     {
-      "description": "Group all flux Helm chart bumps (except kite / sparkyfitness / nextcloud)",
+      "description": "Goloom: track the official GitHub repo (Goloom-App/goloom) — group chart GitRepository tag + image tag into one PR",
+      "matchFileNames": [
+        "apps/base/goloom/**"
+      ],
+      "matchManagers": [
+        "flux",
+        "custom.regex"
+      ],
+      "groupName": "goloom",
+      "groupSlug": "goloom",
+      "minimumReleaseAge": "3 days",
+      "automerge": false
+    },
+    {
+      "description": "Group all flux Helm chart bumps (except kite / sparkyfitness / nextcloud / goloom)",
       "matchManagers": [
         "flux"
       ],
@@ -252,7 +266,8 @@
         "!apps/base/kite/**",
         "!apps/base/authentik/**",
         "!apps/base/sparkyfitness/**",
-        "!apps/base/nextcloud/**"
+        "!apps/base/nextcloud/**",
+        "!apps/base/goloom/**"
       ],
       "groupName": "flux helm releases",
       "groupSlug": "flux-helm-releases",
@@ -284,12 +299,13 @@
       "automerge": false
     },
     {
-      "description": "Group renovate marker bumps (custom.regex, except sparkyfitness)",
+      "description": "Group renovate marker bumps (custom.regex, except sparkyfitness / goloom)",
       "matchManagers": [
         "custom.regex"
       ],
       "matchFileNames": [
-        "!apps/base/sparkyfitness/**"
+        "!apps/base/sparkyfitness/**",
+        "!apps/base/goloom/**"
       ],
       "groupName": "renovate markers",
       "groupSlug": "renovate-markers",

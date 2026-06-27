@@ -2,9 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - namespace.yaml
-  - configmap.yaml
   - goloom-app.secret.yaml
-  - deployment.yaml
-  - service.yaml
+  - gitrepository.yaml
+  - helmrelease.yaml
   - ingress.yaml
   - vmservicescrape.yaml
