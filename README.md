@@ -45,7 +45,7 @@ This cluster runs a variety of self-hosted applications. Uptime is monitored via
 | [**tandoor**](https://tandoor.dev/) | Recipes | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_tandoor/uptimes/30d/badge.svg) |
 | [**SparkyFitness**](https://github.com/codewithcj/SparkyFitness) | Fitness | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_fitness/uptimes/30d/badge.svg) |
 | [**n8n**](https://n8n.io/) | Automation | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_n8n/uptimes/30d/badge.svg) |
-| **goloom** | Automation | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_goloom/uptimes/30d/badge.svg) |
+| [**goloom**](https://github.com/Goloom-App/goloom) | Automation | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_goloom/uptimes/30d/badge.svg) |
 | [**SpectrumKNX**](https://github.com/martinhoefling/SpectrumKNX) | Smart Home | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_spectrumknx/uptimes/30d/badge.svg) |
 | [**teslamate**](https://github.com/adriankumpf/teslamate) | Car Tracking | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_teslamate/uptimes/30d/badge.svg) |
 | [**dawarich**](https://dawarich.app/) | Location Tracking | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_dawarich/uptimes/30d/badge.svg) |
