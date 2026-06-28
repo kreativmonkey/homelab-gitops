@@ -5,3 +5,4 @@ resources:
   - workload-remediation-vmrule.yaml
   - blackbox-vmrule.yaml
   - truenas-vmrule.yaml
+  - iscsi-storage-vmrule.yaml

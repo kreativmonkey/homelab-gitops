@@ -81,6 +81,11 @@ spec:
             - --link=current
             - --depth=1
             - --period=60s
+            # Retry forever instead of exiting on transient fetch failures. forgejo shares
+            # homelab-postgres, so during an iSCSI/CNPG storage cascade git.f4mily.net briefly
+            # 502s; the default --max-failures=0 made this sidecar abort -> pod restart-loop
+            # (52 restarts). The initial clone (init container, --one-time) must still succeed.
+            - --max-failures=-1
           volumeMounts:
             - name: web
               mountPath: /git

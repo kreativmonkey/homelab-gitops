@@ -1,0 +1,50 @@
+# Cluster-side storage alerts that complement the ZFS-side truenas-vmrule.
+# The recurring iSCSI cascade (FastStorage SSD shared with other Proxmox VMs)
+# surfaces as initiator-side write-latency spikes / -EIO and a CNPG failover
+# storm, while TrueNAS' own ZFS error counters stay 0 — so these are detected
+# here, on the nodes and CNPG, not on the NAS.
+# `homelab_owner: platform` routes to ntfy + n8n triage.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: homelab-iscsi-storage
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.platform.iscsi
+      interval: 30s
+      rules:
+        - alert: NodeISCSIDiskWriteLatencyHigh
+          # Avg write service time per op on the iSCSI block devices (sd*). Baseline ~1ms;
+          # >250ms sustained means the initiator is waiting on the contended SSD/transport,
+          # the precursor to FUA-write timeouts (-EIO) that abort Postgres. clamp_min keeps
+          # idle/low-write devices (ratio ~0) from producing noise.
+          expr: |
+            rate(node_disk_write_time_seconds_total{device=~"sd.*"}[5m])
+              / clamp_min(rate(node_disk_writes_completed_total{device=~"sd.*"}[5m]), 1)
+              > 0.25
+          for: 10m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Hohe iSCSI-Write-Latenz: {{ $labels.instance }} {{ $labels.device }}"
+            description: "Avg Write-Latenz {{ $value | humanizeDuration }}/op auf {{ $labels.device }} ({{ $labels.instance }}) seit 10m > 250ms (Baseline ~1ms). Deutet auf SSD-/iSCSI-Contention (shared FastStorage) — die Ursache, die die ZFS-Fehler-Counter NICHT sehen. Proxmox-seitig I/O der anderen VMs prüfen."
+
+        - alert: CNPGPostgresFlapping
+          # >=3 restarts in 15min on a CNPG postgres instance = the failover-cascade
+          # signature (iSCSI stall -> -EIO -> abort -> failover; DB-backed apps flap with it).
+          expr: |
+            increase(kube_pod_container_status_restarts_total{namespace="cnpg-system", container="postgres"}[15m]) >= 3
+          for: 2m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "CNPG-Instanz {{ $labels.pod }} flappt ({{ $value }} Restarts/15m)"
+            description: "{{ $labels.pod }} hat in 15min >= 3 Restarts — typische iSCSI-Contention-Failover-Kaskade. Korreliert mit NodeISCSIDiskWriteLatencyHigh; ZFS-Counter bleiben dabei 0. Echter Fix = dedizierte DB-SSD."
