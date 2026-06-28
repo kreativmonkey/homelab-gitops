@@ -32,8 +32,8 @@ spec:
         - https://readeck.f4mily.net
         - https://fitness.f4mily.net
         - https://nc.f4mily.net
+        - https://goloom.f4mily.net/healthz
         # Cluster-internal (cluster.f4mily.net)
-        - https://goloom.cluster.f4mily.net/healthz
         - https://grafana.cluster.f4mily.net/api/health
         - https://metrics.cluster.f4mily.net
         - https://n8n.cluster.f4mily.net

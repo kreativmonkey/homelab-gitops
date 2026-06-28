@@ -74,7 +74,7 @@ here so it is obvious what is **planned** but not deployed:
 | teslamate          | on     | Deployment, Mosquitto, CNPG, teslamate.f4mily.net (/grafana/) |
 | authentik          | on     | HelmRelease, CNPG, login.f4mily.net (production IdP)            |
 | forgejo            | on     | Deployment, NFS, git.f4mily.net (Git + CI + Renovate CronJob), SSH :22/:2222 |
-| goloom             | on     | Deployment, CNPG PostgreSQL, goloom.cluster.f4mily.net |
+| goloom             | on     | Deployment, CNPG PostgreSQL, goloom.f4mily.net |
 | spectrumknx        | on     | StatefulSet + own TimescaleDB, KNX bus monitor, knx.cluster.f4mily.net |
 | pcm                | wip    | ingress only, missing HelmRelease         |
 | workshops          | on     | nginx + git-sync sidecar, static courses from git.f4mily.net/kreativmonkey/workshops, workshop.f4mily.net |
