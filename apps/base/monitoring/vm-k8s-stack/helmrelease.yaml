@@ -150,6 +150,23 @@ spec:
                 - alertname="NtfyBridgeDown"
               receiver: ntfy-emergency
               repeat_interval: 3h
+            # Blackbox EndpointDown: notify per endpoint, not as one bundled list.
+            # The root group_by lacks `instance`, so every simultaneously-failing probe
+            # otherwise collapses into a single ntfy message (whole blast radius instead of
+            # the one URL that is down). These two routes mirror the platform fan-out below
+            # (n8n-triage + ntfy-monitoring, critical repeat 6h) but grouped by instance, and
+            # MUST stay before the generic severity routes so the alert is consumed here and
+            # does not fall through (which would re-send it with the bundled grouping).
+            - matchers:
+                - alertname="EndpointDown"
+              group_by: ["alertname", "instance"]
+              receiver: n8n-triage
+              continue: true
+            - matchers:
+                - alertname="EndpointDown"
+              group_by: ["alertname", "instance"]
+              receiver: ntfy-monitoring
+              repeat_interval: 6h
             # n8n KI-Triage: Alertmanager → n8n → LLM → Telegram (requires alertmanager-n8n-webhook secret)
             # GitOps auto-PR (webhook/vmalert) is opt-in — see docs/integrations/alerting-n8n-gitops-remediation.md
             - matchers:
