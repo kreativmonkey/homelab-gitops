@@ -23,8 +23,17 @@ spec:
       # Shared by many apps (Authentik, TeslaMate, SparkyFitness, …). 50 was exhausted
       # (SparkyFitness alone: owner + app + Better Auth pools up to ~30 per replica).
       max_connections: "100"
-      shared_buffers: 64MB
-      effective_cache_size: 256MB
+      # Write-smoothing while the DB zvols live on a shared (contended) Proxmox SSD with
+      # no dedicated DB SSD yet. A bigger cache cuts read I/O; less frequent, spread-out
+      # checkpoints shrink the FUA/fsync write bursts that stall under cross-VM contention,
+      # exceed the 30s SCSI cmd timeout and surface as -EIO -> Postgres abort -> CNPG
+      # failover cascade. See memory truenas-iscsi-spof-storage-incident; real fix = own SSD.
+      shared_buffers: 256MB
+      effective_cache_size: 768MB
+      max_wal_size: "2GB"
+      min_wal_size: "256MB"
+      checkpoint_timeout: "15min"
+      checkpoint_completion_target: "0.9"
 
   storage:
     storageClass: truenas-iscsi
@@ -33,9 +42,11 @@ spec:
   resources:
     requests:
       cpu: 50m
-      memory: 512Mi
+      # Raised with shared_buffers 64MB->256MB: 256MB SB + up to 100 conns*work_mem made the
+      # old 1Gi limit OOM-prone (see KubePodOOMKilled band-aid #313). 2Gi gives headroom.
+      memory: 768Mi
     limits:
-      memory: 1Gi
+      memory: 2Gi
 
   monitoring:
     # Metrics scraped via apps/base/monitoring/extra-scrapes/cnpg-vmpodscrape.yaml
