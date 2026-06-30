@@ -101,7 +101,7 @@ just validate   # from gitops-homelab, nix develop
 ## Optional: reduce blast radius during DR
 
 - Disable heavy apps in `apps/overlays/main/kustomization.yaml` (comment `resources`) before resume.
-- Keep **uptime-kuma** / **unifi-controller** off if they stress disk/network during recovery.
+- Keep **unifi-controller** off if it stresses disk/network during recovery.
 
 ## Related
 
