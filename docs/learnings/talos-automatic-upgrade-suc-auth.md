@@ -119,10 +119,86 @@ the next `tofu apply`.
   `kubectl uncordon <node>` before running tofu.
 - Expect CNPG to dip to 2/3 after each node reboot — wait for self-heal.
 
+## Update 2026-06-30 — three more stall modes (v1.13.4 → v1.13.5)
+
+The auth fixes above were necessary but not sufficient. The v1.13.5 rollout exposed
+three further blockers, each of which silently stalls the autonomous upgrade.
+
+**5. The SUC controller blocks the upgrade of its OWN node (anti-affinity self-block).**
+The per-node upgrade job pods *and* the controller pod both carry the label
+`app.kubernetes.io/name=system-upgrade-controller`. The controller Deployment has a
+`required` podAntiAffinity on that label (topologyKey `kubernetes.io/hostname`), so the
+upgrade job pod for the node currently hosting the controller can **never** schedule
+there:
+
+```
+FailedScheduling: 1 node(s) didn't satisfy existing pods anti-affinity rules,
+                  2 node(s) didn't match Pod's node affinity/selector
+```
+
+That node never cordons/drains and the Plan sits `applying: [<that-node>]`. **Fix:**
+relocate the controller onto an *already-upgraded* node and leave it there for the rest
+of the rollout — it then blocks nothing:
+
+```bash
+# cordon the other free nodes so the controller can only land on the done node, then:
+kubectl -n system-upgrade delete pod -l app.kubernetes.io/name=system-upgrade-controller
+# uncordon afterwards
+```
+
+Caveat: that label selector **also matches the live upgrade job pod**. A
+`--field-selector status.phase!=Running` to "only kill the broken controller" can
+delete a mid-reboot upgrade pod too — harmless (the Job re-reconciles), but don't be
+surprised.
+
+**6. The controller image was pinned to a tag that was never released.**
+`infrastructure/base/system-upgrade-controller/kustomization.yaml` had
+`images.newTag: v0.20.0`. That tag does not exist — upstream shipped only
+`v0.20.0-rc.1`; latest stable (and the manifest `?ref=`) is `v0.19.2`.
+`docker.io/rancher/system-upgrade-controller:v0.20.0` returns **NotFound**. The
+controller only kept running off **cached containerd layers** on the nodes that had
+pulled it earlier; the moment its pod rescheduled onto an uncached / freshly-rebooted
+node it hit `ErrImagePull (NotFound)` — stalling the rollout *at the orchestrator
+itself*. Fixed to `v0.19.2` (PR #358). **Rule: `images.newTag` must equal the manifest
+`?ref=` and be a published stable tag** — a `renovate:` hint + comment now guards it.
+
+**7. The CNPG operator FREEZES while a primary sits on a cordoned node.**
+When SUC cordons a node whose CNPG cluster has its primary there, the operator logs:
+
+```
+Primary is running on an unschedulable node, will try switching over
+Current primary is running on unschedulable node and something is already in progress
+```
+
+…and **stops all other reconciliation** — including re-bootstrapping a replica you just
+deleted. So the documented "delete the broken replica's PVC, let CNPG re-clone via
+`pg_basebackup`" recovery does *nothing* until the node is uncordoned. Chicken-and-egg
+with the stuck upgrade cordon. **Always pause SUC and `uncordon` the node before doing
+any CNPG replica repair.** Sequence that worked:
+
+```bash
+kubectl -n system-upgrade scale deploy system-upgrade-controller --replicas=0
+kubectl uncordon <node>                       # unfreezes the CNPG operator
+# now delete the broken replica's pod+PVC → CNPG re-bootstraps it cleanly
+# once all clusters are healthy, scale the controller back to 1
+```
+
+Underlying trigger this time: a TrueNAS iSCSI blip left the immich replicas' WAL
+diverged with a zeroed record, so `pg_rewind` could never rejoin
+(`invalid record length ... expected at least 24, got 0`) → permanent CrashLoop, no
+failover target, primary PDB `allowed=0` → drain blocked → `jobActiveDeadlineSecs`
+(`DeadlineExceeded`). The single-instance `dawarich-postgres` was a second, structural
+drain blocker — a 1-instance cluster has no switchover target, so its primary PDB blocks
+every drain of its node. Scaled to `instances: 2` with `required` pod-anti-affinity
+(PR #355). Same pattern as `immich-postgres`; both keep dedicated clusters because they
+need extensions the shared `homelab-postgres` (vanilla `postgresql:18.4`) does not ship
+(`postgis` / vector `vchord`).
+
 ## Related
 
 - PRs: #268 (talosconfig mTLS auth), #269 (`-n $(NODE_IP)`),
-  #270 (`-e $(NODE_IP)` over TCP), #271 (drop `exclusive: true`)
+  #270 (`-e $(NODE_IP)` over TCP), #271 (drop `exclusive: true`),
+  #355 (dawarich-postgres `instances: 2`), #358 (SUC image pin `v0.20.0` → `v0.19.2`)
 - Terraform module `kreativmonkey/terraform-module` **v0.2.0** (per-node `storage_id`,
   `etcd_advertised_subnets`)
 - `infrastructure/overlays/main/system-upgrade-controller/talos-plan.yaml`
