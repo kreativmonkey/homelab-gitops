@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-external
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Egress to anywhere on HTTP/HTTPS only. Covers OIDC to login.f4mily.net
+    # (resolves to the ingress LB) and outbound web fetches. Lateral movement
+    # on other ports stays blocked by default-deny.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
