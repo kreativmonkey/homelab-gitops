@@ -28,7 +28,11 @@ spec:
       effective_cache_size: 512MB
 
   storage:
-    storageClass: truenas-iscsi
+    # Node-local storage (see local-path-provisioner): CNPG replicates at the DB
+    # layer, so local-path is faster and removes the truenas-iscsi SPOF from the DB
+    # path. storageClass applies to NEW instances; existing iscsi PVCs are migrated
+    # by rolling instance replacement (delete pod+PVC -> CNPG re-bootstraps locally).
+    storageClass: local-path
     size: 10Gi
 
   resources:
