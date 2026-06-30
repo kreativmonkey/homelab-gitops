@@ -62,8 +62,14 @@ Standard tools (Helm charts, Docker images) are managed by Renovate. GitHub is t
 Talos nodes run Cilium CNI. Ingress is handled by the NGINX Ingress Controller. SSL certificates are automated via cert-manager (Let's Encrypt).
 
 ### 3. Persistence Strategy
-* **High Performance (iSCSI):** Used for databases (PostgreSQL, Redis) and application configs via Democratic CSI on TrueNAS. These provide high IOPS and are backed up via Velero.
-* **Mass Storage (NFS):** Used for large media files (Photos, Videos, Books) and large-scale document storage.
+Storage is matched to each workload's **own** replication model — not a one-size-fits-all default.
+
+* **Databases — node-local `local-path` (NOT iSCSI):** CloudNativePG (PostgreSQL) clusters run on per-node `local-path` storage. CNPG replicates at the database layer (3 instances + continuous S3/barman backups), so node-local disks are both faster *and* keep the shared-NAS **single point of failure out of the database path**. This is the CNPG-recommended pattern; the previous setup ran every DB on one TrueNAS iSCSI target, which repeatedly cascaded (a single iSCSI blip → WAL corruption → cluster-wide CNPG outage). Provisioner: `infrastructure/base/storage/local-path-provisioner/`; class `local-path` (non-default).
+  > ⚠️ **Legacy mount path:** the backing data disk is still mounted at `/var/lib/longhorn` (a misleading leftover — Longhorn was never deployed). Grep **`LEGACY-MOUNT-PATH`** for the pending rename to `/var/mnt/local-storage` (already in the IaC, awaiting a Talos `tofu apply`).
+* **App RWO volumes (iSCSI):** Application config/data volumes that have **no app-level replication** use Democratic CSI on TrueNAS (`truenas-iscsi`, the default class), backed up via Velero. (Such volumes are better served by replicated storage — Longhorn — than node-pinned `local-path`; a future improvement.)
+* **Mass Storage (NFS):** Large media files (Photos, Videos, Books) and bulk document storage.
+
+**Migrating a CNPG cluster's storage** — a `storageClass` change applies to **new** instances only. Roll existing instances one at a time (`kubectl -n cnpg-system delete pvc <inst> --wait=false && kubectl -n cnpg-system delete pod <inst>`); CNPG re-bootstraps each via `pg_basebackup`. Wait for `N/N` healthy between steps; do the **primary last** (brief failover).
 
 ### 4. GitOps (FluxCD)
 Flux reconciles the cluster state against the GitHub repository. Changes are applied via PRs to the `main` branch.
