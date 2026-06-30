@@ -24,7 +24,7 @@ spec:
   serviceAccountName: system-upgrade
   # 1h timeout: drain (10min) + talosctl upgrade + reboot + node rejoin.
   jobActiveDeadlineSecs: 3600
-  version: v1.13.4 # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
+  version: v1.13.5 # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
   nodeSelector:
     matchLabels:
       kubernetes.io/os: linux
@@ -62,7 +62,7 @@ spec:
     # authenticated mode (it only worked with --insecure, which skips it).
     # Keep schematic ID in sync with homelab-infrastructure/talos/cluster.auto.tfvars
     # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
-    image: ghcr.io/siderolabs/talosctl:v1.13.4
+    image: ghcr.io/siderolabs/talosctl:v1.13.5
     envs:
       - name: NODE_IP
         valueFrom:
