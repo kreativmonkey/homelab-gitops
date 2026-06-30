@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: victoria-logs
+  namespace: monitoring
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: VictoriaLogs
+    gethomepage.dev/description: Log aggregation & VLUI
+    gethomepage.dev/group: Cluster Management
+    gethomepage.dev/icon: victoriametrics.png
+    gethomepage.dev/app: victoria-logs-single-server
+    # TLS: wildcard-cluster-f4mily-net-tls via reflector (no cluster-issuer).
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+  labels:
+    app.kubernetes.io/part-of: vm-k8s-stack
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - logs.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
+  rules:
+    - host: logs.cluster.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: victoria-logs-single-server
+                port:
+                  number: 9428
