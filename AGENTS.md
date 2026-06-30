@@ -7,7 +7,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 - **OS / K8s**: Talos Linux (upstream Kubernetes, resource‑optimized)
 - **GitOps Controller**: FluxCD
 - **Ingress / Networking**: NGINX Ingress Controller with `nginx.org/*` annotations (or Gateway API) + Cilium CNI
-- **Storage**: Democratic CSI (TrueNAS iSCSI) for fast workloads (e.g., databases) and NFS for large media files
+- **Storage**: CNPG databases on **node-local `local-path`** (off the TrueNAS iSCSI SPOF — CNPG replicates at the DB layer); Democratic CSI (TrueNAS iSCSI) for app RWO volumes; NFS for large media. See README "Persistence Strategy".
 - **Database Operator**: CloudNativePG (central PostgreSQL)
 - **VCS / CI‑CD**: GitHub (Leading) + Forgejo (Mirror) + GitHub Runners
 - **Dependency Management**: Renovate
@@ -43,6 +43,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 - Deploy single **CloudNativePG** cluster in `infrastructure/base/database/cnpg/`.
 - For each app needing PostgreSQL, create a dedicated CNPG `Cluster` (or bootstrap job) that provisions its own database and user; no extra DB pod required.
 - Store DB credentials as **SOPS‑encrypted** secrets in `apps/overlays/main/db-secrets/` and inject via ExternalSecrets/SealedSecrets.
+- **Storage = `local-path` (node-local), NOT truenas-iscsi.** Postgres replicates at the DB layer, so node-local is the CNPG-recommended pattern and removes the NAS SPOF. To migrate/recover an instance (a `storageClass` change only affects *new* instances), roll one at a time: delete its pod+PVC → CNPG re-bootstraps via `pg_basebackup` (primary last). Node-local PVs are node-pinned; a node loss is recovered by re-cloning onto a survivor.
 
 ---
 
