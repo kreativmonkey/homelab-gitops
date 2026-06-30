@@ -396,6 +396,8 @@ replacements:
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: victoria-metrics}
         fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: victoria-logs}
+        fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: n8n}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: watchyourlan}

@@ -300,6 +300,17 @@ spec:
       plugins:
         # renovate: datasource=custom.grafana-plugins depName=victoriametrics-metrics-datasource
         - victoriametrics-metrics-datasource@0.25.0
+        # renovate: datasource=custom.grafana-plugins depName=victoriametrics-logs-datasource
+        - victoriametrics-logs-datasource@0.29.0
+
+      # VictoriaLogs datasource (sidecar.datasources is disabled — provision here).
+      additionalDataSources:
+        - name: VictoriaLogs
+          type: victoriametrics-logs-datasource
+          access: proxy
+          url: http://victoria-logs-single-server.monitoring.svc.cluster.local:9428
+          jsonData:
+            maxLines: 1000
 
       priorityClassName: homelab-infrastructure
 
