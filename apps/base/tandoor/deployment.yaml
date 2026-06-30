@@ -22,7 +22,7 @@ spec:
         fsGroup: 0
       containers:
         - name: tandoor
-          image: docker.io/vabene1111/recipes:2.6.9
+          image: docker.io/vabene1111/recipes:2.6.11
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
