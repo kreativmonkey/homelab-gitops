@@ -35,7 +35,6 @@ resources:
   - ../../base/netbird
   # - ../../base/backrest            # wip: ingress only, no workload
   - ../../base/searxng
-  # - ../../base/uptime-kuma         # disabled: dropped from catalog (DR test)
   # - ../../base/unifi-controller    # disabled: dropped from catalog (DR test)
 
   # --- Cloud & Management -----------------------------------------------

@@ -41,7 +41,7 @@ the cluster.
 resources:
   - ../../base/audiobookshelf        # enabled
   - ../../base/jellyfin              # enabled
-  # - ../../base/uptime-kuma         # disabled (line commented)
+  # - ../../base/linkwarden          # disabled (line commented)
 ```
 
 - **Enable an app**: remove the leading `#` of its line.
@@ -64,7 +64,6 @@ here so it is obvious what is **planned** but not deployed:
 | netbird            | on     | DaemonSet (hostNetwork), routing to cluster |
 | backrest           | wip    | ingress only, missing HelmRelease         |
 | searxng            | on     | Deployment + ingress at search.f4mily.net |
-| uptime-kuma        | off    | removed from catalog (DR test)            |
 | unifi-controller   | off    | removed from catalog (DR test)            |
 | nextcloud          | on     | HelmRelease + CNPG + NFS at cluster domain  |
 | linkwarden         | off    | temporarily removed from catalog          |
