@@ -1,0 +1,13 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  # Empty podSelector = applies to every Pod in the namespace.
+  podSelector: {}
+  # Deny everything; the allow-* policies below add back the required flows.
+  # (Kubelet health probes are host-local and exempt under Cilium's
+  # --allow-localhost=always default, so readiness/liveness keep working.)
+  policyTypes:
+    - Ingress
+    - Egress

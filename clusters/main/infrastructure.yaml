@@ -108,3 +108,24 @@ spec:
     secretRef:
       name: sops-age
   force: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infra-network-policies
+  namespace: flux-system
+spec:
+  # Isolated from infra-base so the NetworkPolicy pilot can be rolled back with a
+  # single `flux suspend kustomization infra-network-policies`. Phase 1 only
+  # covers self-contained namespaces; extend via the network-policies overlay.
+  dependsOn:
+    - name: infra-base
+  interval: 1h
+  retryInterval: 1m
+  timeout: 5m
+  path: ./infrastructure/base/network/network-policies
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  wait: true

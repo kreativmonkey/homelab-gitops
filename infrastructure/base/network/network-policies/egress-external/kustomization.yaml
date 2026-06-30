@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+# Optional add-on for namespaces whose workloads must reach the outside world
+# on HTTP/HTTPS — e.g. OIDC redirects to login.f4mily.net, or apps that fetch
+# arbitrary URLs (bookmark/web archiving). Combine with the baseline component.
+resources:
+  - 50-allow-egress-external.yaml
