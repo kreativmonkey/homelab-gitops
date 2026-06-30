@@ -15,7 +15,19 @@ spec:
   description: "Dawarich PostgreSQL with PostGIS"
   # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgis versioning=loose
   imageName: ghcr.io/cloudnative-pg/postgis:17.10-3.6.4-system-trixie
-  instances: 1
+  # 2 instances so a node drain (autonomous Talos/SUC upgrade) has a failover target.
+  # A single-instance cluster has none — its primary PDB blocks every drain of its node,
+  # which stalled the v1.13.5 rollout until cp1 hung on jobActiveDeadlineSecs.
+  instances: 2
+
+  affinity:
+    # required (hard): one instance per node, so a drain only ever evicts ONE instance —
+    # a clean switchover instead of co-located both going down. Mirrors immich-postgres.
+    podAntiAffinityType: required
+
+  # Ride out transient primary blips (e.g. node-reboot network flap) for 30s before
+  # failing over, instead of reacting instantly (default 0).
+  failoverDelay: 30
 
   postgresql:
     parameters:
