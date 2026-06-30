@@ -1,0 +1,16 @@
+# Node-local storage backed by each node's data disk. Primary consumer: CNPG
+# (Postgres replicates at the DB layer, so node-local beats networked storage and
+# removes the truenas-iscsi single-point-of-failure from the database path).
+#
+# Backing path is the LEGACY-MOUNT-PATH /var/lib/longhorn/local-path — see
+# configmap.yaml. Not the default class (truenas-iscsi stays default); opt in via
+# storageClassName: local-path.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path
+provisioner: rancher.io/local-path
+# Bind only once a pod is scheduled, so the PV lands on the node that runs it.
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+allowVolumeExpansion: false

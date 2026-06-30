@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-path-config
+  namespace: local-path-storage
+data:
+  # ===========================================================================
+  # LEGACY-MOUNT-PATH — grep this marker when renaming the node data-disk mount.
+  #
+  # The node data disk is currently mounted at /var/lib/longhorn (a misleading
+  # leftover name — Longhorn was never deployed). The real rename target is
+  # /var/mnt/local-storage; it already lives in the IaC
+  # (homelab-infrastructure terraform-module v0.3.0, env homelab-kube
+  # cluster.auto.tfvars: default_data_disks), but the running Talos mount has not
+  # been switched yet (needs a rolling `tofu apply` / node reboot).
+  #
+  # WHEN the Talos mount is renamed to /var/mnt/local-storage, update the `paths`
+  # below to /var/mnt/local-storage/local-path (and migrate existing PVs).
+  # ===========================================================================
+  config.json: |-
+    {
+      "nodePathMap": [
+        {
+          "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
+          "paths": ["/var/lib/longhorn/local-path"]
+        }
+      ]
+    }
+  setup: |-
+    #!/bin/sh
+    set -eu
+    mkdir -m 0777 -p "$VOL_DIR"
+  teardown: |-
+    #!/bin/sh
+    set -eu
+    rm -rf "$VOL_DIR"
+  helperPod.yaml: |-
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      priorityClassName: system-node-critical
+      tolerations:
+        - key: node.kubernetes.io/disk-pressure
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        # renovate: datasource=docker depName=docker.io/library/busybox
+        - name: helper-pod
+          image: docker.io/library/busybox:1.37.0
+          imagePullPolicy: IfNotPresent
