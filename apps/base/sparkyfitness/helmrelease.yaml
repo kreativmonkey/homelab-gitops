@@ -55,7 +55,7 @@ spec:
       image:
         # renovate: datasource=docker depName=codewithcj/sparkyfitness_server versioning=semver
         repository: codewithcj/sparkyfitness_server
-        tag: v0.16.9
+        tag: v0.17.1
       secrets:
         generate: false
       appDatabase:
@@ -79,7 +79,7 @@ spec:
       image:
         # renovate: datasource=docker depName=codewithcj/sparkyfitness versioning=semver
         repository: codewithcj/sparkyfitness
-        tag: v0.16.9
+        tag: v0.17.1
       # Docker Hub `codewithcj/sparkyfitness` listens on 8080 (not chart default :80 / ghcr frontend image).
       port: 8080
       service:
@@ -120,7 +120,7 @@ spec:
       image:
         # renovate: datasource=docker depName=codewithcj/sparkyfitness_garmin versioning=semver
         repository: codewithcj/sparkyfitness_garmin
-        tag: v0.16.8
+        tag: v0.17.1
       # Sized from cluster metrics (idle): ~3m CPU, ~95Mi RAM.
       resources:
         requests:
