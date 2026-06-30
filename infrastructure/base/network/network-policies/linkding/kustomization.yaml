@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# linkding = SQLite (no cross-ns DB) but uses OIDC against login.f4mily.net,
+# so it needs outbound HTTPS in addition to the baseline.
+namespace: linkding
+components:
+  - ../baseline
+  - ../egress-external

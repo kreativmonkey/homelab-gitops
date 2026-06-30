@@ -32,6 +32,7 @@ trap 'rm -rf "$BUILD_DIR"' EXIT
 KUSTOMIZE_PATHS=(
   infrastructure/base
   infrastructure/base/backup-schedules
+  infrastructure/base/network/network-policies
   infrastructure/overlays/main
   apps/overlays/main
 )
