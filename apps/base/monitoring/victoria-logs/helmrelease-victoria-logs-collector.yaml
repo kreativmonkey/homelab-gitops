@@ -1,0 +1,33 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-logs-collector
+  namespace: monitoring
+spec:
+  interval: 1h
+  timeout: 10m
+  chart:
+    spec:
+      chart: victoria-logs-collector
+      # renovate: registryUrl=https://victoriametrics.github.io/helm-charts
+      version: "0.3.6"
+      sourceRef:
+        kind: HelmRepository
+        name: victoriametrics-repo
+        namespace: flux-system
+  values:
+    # DaemonSet (vlagent): auto-discovers Pod logs via the ServiceAccount and
+    # tails /var/log (hostPath, read-only). Needs the monitoring NS PSA
+    # `privileged` to mount host paths and read root-owned container logs.
+    priorityClassName: homelab-infrastructure
+
+    # Ship enriched logs to the single-node VictoriaLogs server.
+    remoteWrite:
+      - url: http://victoria-logs-single-server.monitoring.svc.cluster.local:9428
+
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi

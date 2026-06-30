@@ -1,0 +1,50 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-logs-single
+  namespace: monitoring
+spec:
+  interval: 1h
+  timeout: 10m
+  chart:
+    spec:
+      chart: victoria-logs-single
+      # renovate: registryUrl=https://victoriametrics.github.io/helm-charts
+      version: "0.13.8"
+      sourceRef:
+        kind: HelmRepository
+        name: victoriametrics-repo
+        namespace: flux-system
+  values:
+    # ============================================
+    # SERVER - single-node VictoriaLogs (StatefulSet)
+    # ============================================
+    server:
+      enabled: true
+      priorityClassName: homelab-infrastructure
+
+      # Retention: 30 days OR 18 GiB on disk, whichever hits first.
+      # The disk guard keeps VictoriaLogs from filling the 20Gi PVC.
+      retentionPeriod: "30d"
+      retentionDiskSpaceUsage: "18GiB"
+
+      persistentVolume:
+        enabled: true
+        storageClassName: truenas-iscsi
+        size: 20Gi
+
+      service:
+        # Pin the service port so the collector remoteWrite URL is stable.
+        servicePort: 9428
+
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 1Gi
+
+    # No Velero backup: log data is reproducible and short-lived (30d); snapshotting
+    # it would only add iSCSI churn. DR re-collects from running pods.
+    # Chart Ingress stays disabled (chart default) — we use a dedicated Ingress
+    # resource (ingress-victoria-logs.yaml) to match the repo convention.
