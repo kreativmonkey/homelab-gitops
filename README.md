@@ -32,6 +32,21 @@ in-cluster mirror.
 
 ---
 
+## Table of Contents
+
+- [How it works](#how-it-works)
+- [Infrastructure Overview](#infrastructure-overview)
+- [Applications & Status](#applications--status)
+- [Infrastructure Principles](#infrastructure-principles)
+- [Repository Structure](#repository-structure)
+- [Development Environment (Nix Shell)](#development-environment-nix-shell)
+- [Secrets (SOPS + age)](#secrets-sops--age)
+- [Bootstrap & Recovery](#bootstrap--recovery)
+- [Governance](#governance)
+- [Further Documentation](#further-documentation)
+
+---
+
 ## How it works
 
 ```text
