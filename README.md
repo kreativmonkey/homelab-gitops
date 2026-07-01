@@ -71,32 +71,32 @@ Flux reconciles it every hour (or on demand). Changes land via **PRs to
 This cluster runs a variety of self-hosted applications. Uptime is monitored
 via [Gatus](https://status.cluster.f4mily.net).
 
-| Application | Category | Uptime |
+| Application | Description | Uptime |
 | :--- | :--- | :--- |
-| [**authentik**](https://goauthentik.io/) | Security | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_authentik/uptimes/30d/badge.svg) |
-| [**forgejo**](https://forgejo.org/) | Git Mirror | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_git/uptimes/30d/badge.svg) |
-| [**nextcloud**](https://nextcloud.com/) | Productivity | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_nextcloud/uptimes/30d/badge.svg) |
-| [**homepage**](https://gethomepage.dev/) | Dashboard | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_homepage/uptimes/30d/badge.svg) |
-| [**searxng**](https://docs.searxng.org/) | Search | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_searxng/uptimes/30d/badge.svg) |
-| [**audiobookshelf**](https://www.audiobookshelf.org/) | Media | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_audiobookshelf/uptimes/30d/badge.svg) |
-| [**immich**](https://immich.app/) | Media | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_immich/uptimes/30d/badge.svg) |
-| [**jellyfin**](https://jellyfin.org/) | Media | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_jellyfin/uptimes/30d/badge.svg) |
-| [**kavita**](https://www.kavitareader.com/) | Media | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_kavita/uptimes/30d/badge.svg) |
-| [**paperless-ngx**](https://docs.paperless-ngx.com/) | Documents | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/documents_paperless/uptimes/30d/badge.svg) |
-| [**readeck**](https://readeck.org/) | Documents | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/documents_readeck/uptimes/30d/badge.svg) |
-| [**Stirling-PDF**](https://github.com/Stirling-Tools/Stirling-PDF) | Documents | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/documents_sterling-pdf/uptimes/30d/badge.svg) |
-| [**Outline**](https://www.getoutline.com/) | Knowledge Base | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_outline/uptimes/30d/badge.svg) |
-| [**linkding**](https://github.com/sissis-m/linkding) | Bookmarks | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_linkding/uptimes/30d/badge.svg) |
-| [**tandoor**](https://tandoor.dev/) | Recipes | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_tandoor/uptimes/30d/badge.svg) |
-| [**SparkyFitness**](https://github.com/codewithcj/SparkyFitness) | Fitness | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_fitness/uptimes/30d/badge.svg) |
-| [**n8n**](https://n8n.io/) | Automation | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_n8n/uptimes/30d/badge.svg) |
-| [**goloom**](https://github.com/Goloom-App/goloom) | Automation | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_goloom/uptimes/30d/badge.svg) |
-| [**SpectrumKNX**](https://github.com/martinhoefling/SpectrumKNX) | Smart Home | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_spectrumknx/uptimes/30d/badge.svg) |
-| [**teslamate**](https://github.com/adriankumpf/teslamate) | Car Tracking | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_teslamate/uptimes/30d/badge.svg) |
-| [**dawarich**](https://dawarich.app/) | Location Tracking | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_dawarich/uptimes/30d/badge.svg) |
-| [**watchyourlan**](https://github.com/aceberg/WatchYourLAN) | Network | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_watchyourlan/uptimes/30d/badge.svg) |
-| [**homer**](https://github.com/bastienwirtz/homer) | Dashboard | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_homer/uptimes/30d/badge.svg) |
-| [**grafana**](https://grafana.com/) | Observability | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_grafana/uptimes/30d/badge.svg) |
+| [**audiobookshelf**](https://www.audiobookshelf.org/) | Audiobook & podcast streaming server | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_audiobookshelf/uptimes/30d/badge.svg) |
+| [**authentik**](https://goauthentik.io/) | Central SSO & identity provider (OIDC) | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_authentik/uptimes/30d/badge.svg) |
+| [**dawarich**](https://dawarich.app/) | Self-hosted location history (Google Timeline alternative) | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_dawarich/uptimes/30d/badge.svg) |
+| [**forgejo**](https://forgejo.org/) | In-cluster Git forge & mirror of GitHub | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_git/uptimes/30d/badge.svg) |
+| [**goloom**](https://github.com/Goloom-App/goloom) | Plan & schedule social-media posts (Mastodon, Bluesky, …) | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_goloom/uptimes/30d/badge.svg) |
+| [**grafana**](https://grafana.com/) | Metrics dashboards & visualization | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_grafana/uptimes/30d/badge.svg) |
+| [**homepage**](https://gethomepage.dev/) | Central start page / service dashboard | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_homepage/uptimes/30d/badge.svg) |
+| [**homer**](https://github.com/bastienwirtz/homer) | Static services dashboard | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_homer/uptimes/30d/badge.svg) |
+| [**immich**](https://immich.app/) | Self-hosted photo & video backup | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_immich/uptimes/30d/badge.svg) |
+| [**jellyfin**](https://jellyfin.org/) | Movie & TV media server | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_jellyfin/uptimes/30d/badge.svg) |
+| [**kavita**](https://www.kavitareader.com/) | Ebook, comic & manga reader | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_kavita/uptimes/30d/badge.svg) |
+| [**linkding**](https://github.com/sissis-m/linkding) | Minimal bookmark manager | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_linkding/uptimes/30d/badge.svg) |
+| [**n8n**](https://n8n.io/) | Workflow automation & integrations | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_n8n/uptimes/30d/badge.svg) |
+| [**nextcloud**](https://nextcloud.com/) | File sync, share & collaboration | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_nextcloud/uptimes/30d/badge.svg) |
+| [**Outline**](https://www.getoutline.com/) | Team wiki & knowledge base | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_outline/uptimes/30d/badge.svg) |
+| [**paperless-ngx**](https://docs.paperless-ngx.com/) | Document management with OCR & archiving | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/documents_paperless/uptimes/30d/badge.svg) |
+| [**readeck**](https://readeck.org/) | Read-it-later & web article archive | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/documents_readeck/uptimes/30d/badge.svg) |
+| [**searxng**](https://docs.searxng.org/) | Privacy-respecting metasearch engine | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_searxng/uptimes/30d/badge.svg) |
+| [**SparkyFitness**](https://github.com/codewithcj/SparkyFitness) | Fitness & nutrition tracker | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_fitness/uptimes/30d/badge.svg) |
+| [**SpectrumKNX**](https://github.com/martinhoefling/SpectrumKNX) | KNX bus monitor for smart-home | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_spectrumknx/uptimes/30d/badge.svg) |
+| [**Stirling-PDF**](https://github.com/Stirling-Tools/Stirling-PDF) | Browser-based PDF toolbox | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/documents_sterling-pdf/uptimes/30d/badge.svg) |
+| [**tandoor**](https://tandoor.dev/) | Recipe manager & meal planner | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_tandoor/uptimes/30d/badge.svg) |
+| [**teslamate**](https://github.com/adriankumpf/teslamate) | Tesla data logger & analytics | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_teslamate/uptimes/30d/badge.svg) |
+| [**watchyourlan**](https://github.com/aceberg/WatchYourLAN) | LAN device discovery & monitoring | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_watchyourlan/uptimes/30d/badge.svg) |
 
 ---
 
