@@ -12,7 +12,6 @@ spec:
     spec:
       chart: authentik
       # Upgrade path: 2026.2.3 → 2026.5.x (see docs/migrations/authentik-upgrade-2026.md)
-      # renovate: datasource=helm registryUrl=https://charts.goauthentik.io depName=authentik
       version: "2026.5.0"
       sourceRef:
         kind: HelmRepository
@@ -76,7 +75,6 @@ spec:
         fsGroup: 1000
       initContainers:
         - name: media-init
-          # renovate: datasource=docker depName=docker.io/library/busybox
           image: docker.io/library/busybox:1.38
           command:
             - sh

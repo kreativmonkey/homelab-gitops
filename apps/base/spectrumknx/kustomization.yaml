@@ -3,6 +3,6 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - spectrumknx-secret.secret.yaml
-  - timescaledb.yaml
+  - timescaledb-statefulset.yaml
   - statefulset.yaml
   - ingress.yaml

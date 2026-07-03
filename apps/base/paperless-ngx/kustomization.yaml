@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - consume-pvc.yaml
-  - document-services.yaml
+  - document-services-deployment.yaml
   - helmrelease.yaml
   - ingress.yaml
-  - scanner-smb.yaml
+  - scanner-smb-deployment.yaml

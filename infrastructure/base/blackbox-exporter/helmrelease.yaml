@@ -9,7 +9,6 @@ spec:
   chart:
     spec:
       chart: prometheus-blackbox-exporter
-      # renovate: datasource=helm depName=prometheus-blackbox-exporter registryUrl=https://prometheus-community.github.io/helm-charts
       version: "11.13.0"
       sourceRef:
         kind: HelmRepository

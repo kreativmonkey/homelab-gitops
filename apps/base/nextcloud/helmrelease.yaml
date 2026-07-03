@@ -167,7 +167,6 @@ spec:
             - name: php-confd
               mountPath: /mnt
 
-        # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-db-sync
           image: docker.io/library/nextcloud:33.0.5-apache
           securityContext:
@@ -320,7 +319,6 @@ spec:
 
               echo "cleanup-mounts: done"
 
-        # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-oidc-setup
           image: docker.io/library/nextcloud:33.0.5-apache
           securityContext:
@@ -375,7 +373,6 @@ spec:
               mountPath: /var/www/html/config
               subPath: config
 
-        # renovate: datasource=docker depName=docker.io/library/nextcloud
         - name: occ-collab-setup
           image: docker.io/library/nextcloud:33.0.5-apache
           securityContext:

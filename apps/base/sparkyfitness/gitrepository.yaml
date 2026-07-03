@@ -7,5 +7,4 @@ spec:
   interval: 24h
   url: https://github.com/CodeWithCJ/SparkyFitness
   ref:
-    # renovate: datasource=github-releases depName=CodeWithCJ/SparkyFitness versioning=semver
     tag: v0.17.2
