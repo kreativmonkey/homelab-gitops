@@ -106,15 +106,20 @@ fi
 
 # 5. github-releases depName must be a real GitHub repo (plugin id != repo name)
 echo -e "\n${YELLOW}Validating github-releases depName markers...${NC}"
+auth_args=()
+[[ -n "${GITHUB_TOKEN:-}" ]] && auth_args=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
 while IFS= read -r marker_line; do
     dep_name=$(echo "$marker_line" | sed -n 's/.*depName=\([^[:space:]]*\).*/\1/p')
     [[ -n "$dep_name" ]] || continue
-    http_code=$(curl -fsS -o /dev/null -w '%{http_code}' \
+    http_code=$(curl -fsS -o /dev/null -w '%{http_code}' "${auth_args[@]}" \
         "https://api.github.com/repos/${dep_name}" 2>/dev/null || echo "000")
-    if [[ "$http_code" != "200" ]]; then
+    if [[ "$http_code" == "404" ]]; then
         echo -e "${RED}Invalid github-releases depName (GitHub repo not found):${NC} ${dep_name}"
         echo "  ${marker_line}"
         EXIT_CODE=1
+    elif [[ "$http_code" != "200" ]]; then
+        # 403/429 = anonymous rate limit, 000 = network — not a repo problem, don't fail the PR
+        echo -e "${YELLOW}WARN: could not verify ${dep_name} (HTTP ${http_code}), skipping${NC}"
     fi
 done < <(grep -rn 'datasource=github-releases' apps/ infrastructure/ clusters/ --include="*.yaml" || true)
 if [[ "$EXIT_CODE" -eq 0 ]]; then
