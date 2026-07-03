@@ -17,7 +17,7 @@ spec:
     spec:
       initContainers:
         - name: seed-consume-dir
-          image: docker.io/library/busybox:1.37
+          image: docker.io/library/busybox:1.38
           command:
             - sh
             - -c
