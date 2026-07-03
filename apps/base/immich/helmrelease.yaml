@@ -57,7 +57,7 @@ spec:
               # VectorChord on immich-postgres; omit DB_VECTOR_EXTENSION so Immich auto-detects vchord.
             image:
               # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server versioning=semver
-              tag: v2.7.5
+              tag: v3.0.1
     server:
       controllers:
         main:
@@ -66,7 +66,7 @@ spec:
               image:
                 repository: ghcr.io/immich-app/immich-server
                 # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server versioning=semver
-                tag: v2.7.5
+                tag: v3.0.1
       persistence:
         data:
           accessMode: ReadWriteOnce
@@ -97,7 +97,7 @@ spec:
               image:
                 repository: ghcr.io/immich-app/immich-machine-learning
                 # renovate: datasource=docker depName=ghcr.io/immich-app/immich-machine-learning versioning=semver
-                tag: v2.7.5
+                tag: v3.0.1
       persistence:
         cache:
           enabled: true
