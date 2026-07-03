@@ -29,7 +29,7 @@ spec:
       containers:
         # ---------------------------------------------------------------- web
         - name: dawarich-app
-          image: freikin/dawarich:1.9.1
+          image: freikin/dawarich:1.9.2
           imagePullPolicy: IfNotPresent
           command: ["web-entrypoint.sh"]
           args: ["bin/rails", "server", "-p", "3000", "-b", "::"]
@@ -116,7 +116,7 @@ spec:
               memory: 3Gi
         # ------------------------------------------------------------ sidekiq
         - name: dawarich-sidekiq
-          image: freikin/dawarich:1.9.1
+          image: freikin/dawarich:1.9.2
           imagePullPolicy: IfNotPresent
           command: ["sidekiq-entrypoint.sh"]
           args: ["bundle", "exec", "sidekiq"]
