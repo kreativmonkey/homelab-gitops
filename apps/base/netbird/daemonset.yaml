@@ -19,7 +19,7 @@ spec:
         - operator: Exists
       containers:
         - name: netbird
-          image: netbirdio/netbird:0.73.2
+          image: netbirdio/netbird:0.74.2
           imagePullPolicy: IfNotPresent
           env:
             - name: NB_SETUP_KEY
