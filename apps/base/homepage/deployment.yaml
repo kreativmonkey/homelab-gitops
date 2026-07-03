@@ -45,7 +45,7 @@ spec:
             drop: ["ALL"]
       containers:
       - name: homepage
-        image: ghcr.io/gethomepage/homepage:v1.13.1
+        image: ghcr.io/gethomepage/homepage:v1.13.2
         ports:
         - containerPort: 3000
           name: http
