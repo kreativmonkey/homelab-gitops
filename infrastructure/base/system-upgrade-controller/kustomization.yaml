@@ -9,7 +9,6 @@ patches:
   - path: patch-deployment-strategy.yaml
 images:
   - name: rancher/system-upgrade-controller
-    # renovate: datasource=github-releases depName=rancher/system-upgrade-controller
     # Must be a published stable tag. v0.20.0 was never released (only v0.20.0-rc.1),
     # so its image 404s on docker.io — the controller only survived on cached layers
     # and would fail to reschedule onto a freshly-rebooted (cache-wiped) Talos node

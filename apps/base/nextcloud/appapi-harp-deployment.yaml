@@ -22,7 +22,6 @@ spec:
       enableServiceLinks: false
       containers:
         - name: appapi-harp
-          # renovate: datasource=docker depName=ghcr.io/nextcloud/nextcloud-appapi-harp
           image: ghcr.io/nextcloud/nextcloud-appapi-harp:v0.4.2
           ports:
             - name: exapps

@@ -23,7 +23,6 @@ spec:
           type: RuntimeDefault
       containers:
         - name: grafana
-          # renovate: datasource=docker depName=docker.io/teslamate/grafana
           # Pinned in lockstep with the teslamate app image (same version tag); bump both together.
           image: docker.io/teslamate/grafana:4.0.1
           imagePullPolicy: Always

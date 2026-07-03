@@ -9,7 +9,6 @@ spec:
   chart:
     spec:
       chart: victoria-logs-single
-      # renovate: registryUrl=https://victoriametrics.github.io/helm-charts
       version: "0.13.8"
       sourceRef:
         kind: HelmRepository

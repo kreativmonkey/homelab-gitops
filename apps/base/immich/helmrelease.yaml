@@ -65,7 +65,6 @@ spec:
             main:
               image:
                 repository: ghcr.io/immich-app/immich-server
-                # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server versioning=semver
                 tag: v2.7.5
       persistence:
         data:
@@ -96,7 +95,6 @@ spec:
             main:
               image:
                 repository: ghcr.io/immich-app/immich-machine-learning
-                # renovate: datasource=docker depName=ghcr.io/immich-app/immich-machine-learning versioning=semver
                 tag: v2.7.5
       persistence:
         cache:

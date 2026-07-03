@@ -25,7 +25,6 @@ spec:
           type: RuntimeDefault
       containers:
         - name: mcp-server
-          # renovate: datasource=docker depName=quay.io/containers/kubernetes_mcp_server
           image: quay.io/containers/kubernetes_mcp_server:v0.0.63
           args:
             - --port

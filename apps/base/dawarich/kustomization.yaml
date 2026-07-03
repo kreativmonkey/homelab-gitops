@@ -5,7 +5,7 @@ resources:
   - configmap.yaml
   - dawarich-app.secret.yaml
   - dawarich-authentik-oauth.secret.yaml
-  - valkey.yaml
+  - valkey-deployment.yaml
   - pvc.yaml
   - deployment.yaml
   - service.yaml

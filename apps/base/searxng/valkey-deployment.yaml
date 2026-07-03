@@ -22,7 +22,6 @@ spec:
           type: RuntimeDefault
       containers:
         - name: valkey
-          # renovate: datasource=docker depName=docker.io/valkey/valkey versioning=docker
           image: docker.io/valkey/valkey:9.1.0-alpine
           imagePullPolicy: IfNotPresent
           args:

@@ -29,7 +29,6 @@ spec:
       containers:
         # ---------------------------------------------------------------- web
         - name: dawarich-app
-          # renovate: datasource=docker depName=freikin/dawarich versioning=semver
           image: freikin/dawarich:1.9.1
           imagePullPolicy: IfNotPresent
           command: ["web-entrypoint.sh"]
@@ -117,7 +116,6 @@ spec:
               memory: 3Gi
         # ------------------------------------------------------------ sidekiq
         - name: dawarich-sidekiq
-          # renovate: datasource=docker depName=freikin/dawarich versioning=semver
           image: freikin/dawarich:1.9.1
           imagePullPolicy: IfNotPresent
           command: ["sidekiq-entrypoint.sh"]
