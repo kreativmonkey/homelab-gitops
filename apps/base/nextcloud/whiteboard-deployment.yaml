@@ -21,7 +21,6 @@ spec:
       enableServiceLinks: false
       containers:
         - name: whiteboard
-          # renovate: datasource=docker depName=ghcr.io/nextcloud-releases/whiteboard
           image: ghcr.io/nextcloud-releases/whiteboard:v1.5.9
           ports:
             - name: http

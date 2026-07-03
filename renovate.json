@@ -4,10 +4,10 @@
     "config:recommended"
   ],
   "rebaseWhen": "behind-base-branch",
+  "minimumReleaseAge": "7 days",
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 10,
   "nix": {
-    "enabled": true
-  },
-  "kustomize": {
     "enabled": true
   },
   "lockFileMaintenance": {
@@ -15,64 +15,32 @@
     "automerge": true
   },
   "flux": {
-    "enabled": true,
     "managerFilePatterns": [
-      "/(^|/).+\\.ya?ml$/"
-    ]
-  },
-  "helm-values": {
-    "enabled": true,
-    "managerFilePatterns": [
-      "/(^|/).+/helmrelease\\.ya?ml$/",
-      "/(^|/).+/values\\.ya?ml$/"
+      "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
     ]
   },
   "kubernetes": {
-    "enabled": true,
     "managerFilePatterns": [
-      "/(^|/).+/(deployment|daemonset|statefulset|job|cronjob)\\.ya?ml$/"
+      "/(^|/)(apps|infrastructure)/.+(deployment|daemonset|statefulset|job|cronjob)\\.ya?ml$/"
     ]
   },
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Generic '# renovate: datasource=X depName=Y [versioning=Z] [extractVersion=R]' marker — covers tag-only fields (tag: vX) AND fully-qualified image refs (imageName: repo:tag, value: \"repo:tag\")",
+      "description": "Marker '# renovate: datasource=X depName=Y [versioning=Z]' — nur für Felder ohne nativen Manager (siehe docs/renovate.md): tag-only values, imageName/image-Strings direkt unter dem Marker, 'version: X # marker' (Talos-Plan)",
       "managerFilePatterns": [
         "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
       ],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n(?:[^\\n]*\\n)*?\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*(?:#.*)?",
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n[^\\n]*?:\\s*[\"']?[^:\\s\"']+:(?<currentValue>[^\"'\\s]+)[\"']?\\s*(?:#.*)?",
-        "\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*"
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n(?:[^\\n]*\\n)*?\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?",
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*(?:-\\s+)?(?:image|imageName):\\s*[\"']?[^:\\s\"']+:(?<currentValue>[^\"'\\s]+)[\"']?",
+        "\\sversion:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
     {
       "customType": "regex",
-      "description": "Generic '# renovate: datasource=X depName=Y' marker for version fields",
-      "managerFilePatterns": [
-        "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
-      ],
-      "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*version:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*(?:#.*)?",
-        "\\s*version:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*"
-      ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
-    },
-    {
-      "customType": "regex",
-      "description": "Generic '# renovate: datasource=X depName=Y' marker for list items with @version",
-      "managerFilePatterns": [
-        "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
-      ],
-      "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*-\\s+[^@\\s]+@(?<currentValue>[^\\s#]+)"
-      ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
-    },
-    {
-      "customType": "regex",
-      "description": "Grafana plugins — versions from grafana.com catalog (Grafana installs from catalog, not GitHub)",
+      "description": "Grafana-Plugins — Versionen aus dem grafana.com-Katalog (Grafana installiert aus dem Katalog, nicht von GitHub)",
       "managerFilePatterns": [
         "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
       ],
@@ -84,20 +52,7 @@
     },
     {
       "customType": "regex",
-      "description": "Immich shared image.tag (values.image.tag — avoids false match on redis/bitnami tags)",
-      "managerFilePatterns": [
-        "/apps/base/immich/helmrelease\\.yaml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=docker depName=ghcr\\.io/immich-app/immich-server[^\\n]*\\n\\s+tag:\\s*[\"']?(?<currentValue>v[^\\s\"']+)[\"']?"
-      ],
-      "datasourceTemplate": "docker",
-      "depNameTemplate": "ghcr.io/immich-app/immich-server",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "description": "VictoriaMetrics operator env-var images (`- name: VM_*_IMAGE` followed by `value: \"repo:tag\"`)",
+      "description": "VictoriaMetrics-Operator env-var-Images (`- name: VM_*_IMAGE` gefolgt von `value: \"repo:tag\"`)",
       "managerFilePatterns": [
         "/(^|/)apps/base/monitoring/vm-k8s-stack/.*\\.ya?ml$/"
       ],
@@ -106,31 +61,6 @@
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "loose"
-    },
-    {
-      "customType": "regex",
-      "description": "Authentik Helm chart (CalVer YYYY.MM.P on charts.goauthentik.io)",
-      "managerFilePatterns": [
-        "/apps/base/authentik/helmrelease\\.yaml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=helm registryUrl=https://charts\\.goauthentik\\.io depName=authentik\\s*\\n\\s+version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
-      ],
-      "datasourceTemplate": "helm",
-      "depNameTemplate": "authentik",
-      "registryUrlTemplate": "https://charts.goauthentik.io",
-      "versioningTemplate": "loose"
-    },
-    {
-      "customType": "regex",
-      "description": "CI workflow action versions (Forgejo and GitHub)",
-      "managerFilePatterns": [
-        "/^\\.(forgejo|github)/workflows/.*\\.ya?ml$/"
-      ],
-      "matchStrings": [
-        "uses:\\s*(?:https://github\\.com/)?(?<depName>[^@\\s/]+/[^@\\s]+)@(?<currentValue>[^\\s#]+)"
-      ],
-      "datasourceTemplate": "github-tags"
     }
   ],
   "customDatasources": {
@@ -144,17 +74,52 @@
   },
   "packageRules": [
     {
-      "description": "apache/tika: only stable 4-part numeric slim tags (no -full/-alpha/-SNAPSHOT)",
-      "matchDatasources": [
-        "docker"
+      "description": "Ein PR pro App-Verzeichnis — Chart, Images und Marker desselben Verzeichnisses landen zusammen (Lockstep: nextcloud occ, teslamate grafana, immich server+ml, sparkyfitness, SUC ref+newTag)",
+      "matchFileNames": [
+        "apps/**",
+        "infrastructure/**",
+        "clusters/**"
       ],
+      "groupName": "{{parentDir}}"
+    },
+    {
+      "description": "Talos-OS-Upgrade nicht mit dem SUC-Controller mischen",
+      "matchDepNames": [
+        "siderolabs/talos"
+      ],
+      "groupName": "talos linux"
+    },
+    {
+      "description": "CNPG: Postgres-Major = manuelle Migration; Pin auf aktuelle Major filtert auch Betas (19beta1). Für ein Major-Upgrade die Regex anheben.",
+      "matchPackageNames": [
+        "ghcr.io/cloudnative-pg/postgresql"
+      ],
+      "allowedVersions": "/^18\\.\\d+$/"
+    },
+    {
+      "description": "CNPG postgis: Pin auf PG-17-Major",
+      "matchPackageNames": [
+        "ghcr.io/cloudnative-pg/postgis"
+      ],
+      "allowedVersions": "/^17\\.\\d+-/"
+    },
+    {
+      "description": "CNPG vectorchord: Pin auf PG-16-Major",
+      "matchPackageNames": [
+        "ghcr.io/tensorchord/cloudnative-vectorchord"
+      ],
+      "allowedVersions": "/^16\\.\\d+$/"
+    },
+    {
+      "description": "apache/tika: nur stabile 4-teilige numerische slim-Tags (kein -full/-alpha/-SNAPSHOT)",
       "matchPackageNames": [
         "docker.io/apache/tika"
       ],
+      "versioning": "loose",
       "allowedVersions": "/^\\d+\\.\\d+\\.\\d+\\.\\d+$/"
     },
     {
-      "description": "readeck is hosted on Codeberg (Forgejo); gitea-tags defaults to gitea.com",
+      "description": "readeck liegt auf Codeberg (Forgejo); gitea-tags zeigt per Default auf gitea.com",
       "matchDatasources": [
         "gitea-tags"
       ],
@@ -166,7 +131,7 @@
       ]
     },
     {
-      "description": "readeck image lives on Codeberg's registry, unresolvable via docker datasource; tracked via gitea-tags instead",
+      "description": "readeck-Image ist per Docker-Datasource nicht auflösbar (Codeberg-Registry); Tracking läuft über den gitea-tags-Marker",
       "matchDatasources": [
         "docker"
       ],
@@ -176,239 +141,53 @@
       "enabled": false
     },
     {
-      "description": "Grafana plugins: only catalog versions; short soak before bump",
-      "matchManagers": [
-        "custom.regex"
-      ],
-      "matchDatasources": [
-        "custom.grafana-plugins"
-      ],
-      "minimumReleaseAge": "3 days",
-      "automerge": false
-    },
-    {
-      "description": "Kite: bump Helm chart via flux only (appVersion sets container image)",
-      "matchFileNames": [
-        "apps/base/kite/**"
-      ],
-      "matchManagers": [
-        "flux"
-      ],
-      "groupName": "kite",
-      "groupSlug": "kite",
-      "minimumReleaseAge": "3 days",
-      "automerge": false
-    },
-    {
-      "description": "Do not let helm-values override kite image tag out of sync with chart",
-      "matchFileNames": [
-        "apps/base/kite/**"
-      ],
-      "matchManagers": [
-        "helm-values"
-      ],
-      "enabled": false
-    },
-    {
-      "description": "Authentik Helm chart uses CalVer (YYYY.MM.P) — dedicated PRs",
-      "matchManagers": [
-        "custom.regex",
-        "flux"
-      ],
+      "description": "Authentik: CalVer, gepinnt auf 2026.5.x — für ein Upgrade den Pin anheben",
       "matchDepNames": [
         "authentik"
       ],
-      "matchFileNames": [
-        "apps/base/authentik/**"
-      ],
-      "versioning": "loose",
-      "groupName": "authentik",
-      "groupSlug": "authentik",
-      "minimumReleaseAge": "7 days",
-      "allowedVersions": "2026.5.*",
-      "automerge": false
+      "allowedVersions": "/^2026\\.5\\./"
     },
     {
-      "description": "SparkyFitness: group chart ref + image tags in one PR to prevent version drift",
-      "matchFileNames": [
-        "apps/base/sparkyfitness/**"
-      ],
+      "description": "Nix-Flake-Inputs gruppiert + Automerge",
       "matchManagers": [
-        "flux",
-        "helm-values",
-        "custom.regex"
-      ],
-      "groupName": "sparkyfitness",
-      "groupSlug": "sparkyfitness",
-      "minimumReleaseAge": "7 days",
-      "automerge": false
-    },
-    {
-      "description": "Goloom: track the official GitHub repo (Goloom-App/goloom) — group chart GitRepository tag + image tag into one PR",
-      "matchFileNames": [
-        "apps/base/goloom/**"
-      ],
-      "matchManagers": [
-        "flux",
-        "custom.regex"
-      ],
-      "groupName": "goloom",
-      "groupSlug": "goloom",
-      "minimumReleaseAge": "3 days",
-      "automerge": false
-    },
-    {
-      "description": "Group all flux Helm chart bumps (except kite / sparkyfitness / nextcloud / goloom)",
-      "matchManagers": [
-        "flux"
-      ],
-      "matchFileNames": [
-        "!apps/base/kite/**",
-        "!apps/base/authentik/**",
-        "!apps/base/sparkyfitness/**",
-        "!apps/base/nextcloud/**",
-        "!apps/base/goloom/**"
-      ],
-      "groupName": "flux helm releases",
-      "groupSlug": "flux-helm-releases",
-      "minimumReleaseAge": "7 days",
-      "automerge": false
-    },
-    {
-      "description": "Group all helm-values image bumps (except kite / sparkyfitness)",
-      "matchManagers": [
-        "helm-values"
-      ],
-      "matchFileNames": [
-        "!apps/base/kite/**",
-        "!apps/base/sparkyfitness/**"
-      ],
-      "groupName": "helm chart values",
-      "groupSlug": "helm-chart-values",
-      "minimumReleaseAge": "7 days",
-      "automerge": false
-    },
-    {
-      "description": "Group raw kubernetes Deployment image bumps",
-      "matchManagers": [
-        "kubernetes"
-      ],
-      "groupName": "kubernetes deployments",
-      "groupSlug": "kubernetes-deployments",
-      "minimumReleaseAge": "7 days",
-      "automerge": false
-    },
-    {
-      "description": "Group renovate marker bumps (custom.regex, except sparkyfitness / goloom)",
-      "matchManagers": [
-        "custom.regex"
-      ],
-      "matchFileNames": [
-        "!apps/base/sparkyfitness/**",
-        "!apps/base/goloom/**"
-      ],
-      "groupName": "renovate markers",
-      "groupSlug": "renovate-markers",
-      "minimumReleaseAge": "7 days",
-      "automerge": false
-    },
-    {
-      "matchManagers": [
-        "nix",
-        "lockFileMaintenance"
+        "nix"
       ],
       "groupName": "nix packages",
       "automerge": true
     },
     {
-      "description": "Talos SUC Plan + Talos terraform inputs grouped",
-      "matchManagers": [
-        "custom.regex"
-      ],
-      "matchDepNames": [
-        "siderolabs/talos"
-      ],
-      "groupName": "talos linux",
-      "automerge": false
-    },
-    {
-      "description": "Auto-merge patch updates for low-risk dashboards",
-      "matchManagers": [
-        "flux",
-        "kubernetes",
-        "docker"
+      "description": "Homepage: Patch-Updates automergen",
+      "matchFileNames": [
+        "apps/base/homepage/**"
       ],
       "matchUpdateTypes": [
         "patch"
       ],
-      "matchFileNames": [
-        "apps/base/homepage/**",
-        "apps/base/uptime-kuma/**"
-      ],
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
     },
     {
-      "description": "searxng: rolling release (multiple CalVer+hash tags per day) — short soak + automerge so PRs don't perpetually backlog. Managed by the kubernetes manager (image: in deployment.yaml); no marker needed.",
-      "matchDatasources": [
-        "docker"
+      "description": "Renovate-Selbstupdate: mehrere Releases pro Tag — kurzer Soak + Automerge gegen PR-Backlog",
+      "matchFileNames": [
+        "apps/base/renovate/**"
       ],
+      "minimumReleaseAge": "2 days",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "searxng: Rolling Release (mehrere CalVer+Hash-Tags pro Tag) — kurzer Soak + Automerge; eigene Gruppe, damit valkey-Bumps den Automerge nicht blockieren",
       "matchPackageNames": [
         "docker.io/searxng/searxng"
       ],
       "versioning": "loose",
-      "groupName": "searxng",
-      "groupSlug": "searxng",
+      "groupName": "searxng rolling",
       "minimumReleaseAge": "2 days",
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
-    },
-    {
-      "description": "Renovate self-update: several releases per day — short soak + automerge so PRs don't perpetually backlog",
-      "matchDepNames": [
-        "renovate"
-      ],
-      "matchFileNames": [
-        "apps/base/renovate/**"
-      ],
-      "groupName": "renovate",
-      "groupSlug": "renovate",
-      "minimumReleaseAge": "2 days",
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true
-    },
-    {
-      "description": "Nextcloud: keep the Helm chart, the app image, and the occ-* init-container images in ONE PR. They share a single major version — a partial bump (e.g. occ init containers ahead of the app image) corrupts the data directory and trips Nextcloud's downgrade/skip-major guard. The refs are detected by helm-values AND the custom.regex markers; this rule (last, so it overrides the broad groups) collapses them into a single 'nextcloud' PR. Major upgrades stay manual and one major at a time.",
-      "matchFileNames": [
-        "apps/base/nextcloud/**"
-      ],
-      "matchPackageNames": [
-        "docker.io/library/nextcloud",
-        "nextcloud"
-      ],
-      "groupName": "nextcloud",
-      "groupSlug": "nextcloud",
-      "minimumReleaseAge": "7 days",
-      "automerge": false
-    },
-    {
-      "description": "Teslamate: the app image (docker.io/teslamate/teslamate) and the dashboards image (docker.io/teslamate/grafana) ship in lockstep with identical version tags. Bump them together so the Grafana dashboards never drift from the app's DB schema (same coupling rationale as immich). Manual merge, major upgrades one at a time.",
-      "matchFileNames": [
-        "apps/base/teslamate/**"
-      ],
-      "matchPackageNames": [
-        "docker.io/teslamate/teslamate",
-        "docker.io/teslamate/grafana"
-      ],
-      "groupName": "teslamate",
-      "groupSlug": "teslamate",
-      "minimumReleaseAge": "7 days",
-      "automerge": false
     }
-  ],
-  "prHourlyLimit": 2,
-  "prConcurrentLimit": 10
+  ]
 }

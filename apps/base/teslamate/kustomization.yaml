@@ -7,10 +7,10 @@ resources:
   - teslamate-grafana-oauth.secret.yaml
   - teslamate-app.secret.yaml
   - mosquitto-config.configmap.yaml
-  - mosquitto.yaml
+  - mosquitto-deployment.yaml
   - mosquitto-external-service.yaml
   - deployment.yaml
-  - deployment-grafana.yaml
+  - grafana-deployment.yaml
   - service.yaml
   - service-grafana.yaml
   - ingress.yaml

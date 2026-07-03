@@ -15,7 +15,6 @@ spec:
     spec:
       serviceAccountName: local-path-provisioner-service-account
       containers:
-        # renovate: datasource=github-releases depName=rancher/local-path-provisioner
         - name: local-path-provisioner
           image: docker.io/rancher/local-path-provisioner:v0.0.36
           imagePullPolicy: IfNotPresent
