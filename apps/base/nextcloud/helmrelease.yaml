@@ -48,7 +48,7 @@ spec:
     # PVC has data from 33.0.4.1 — must match to avoid downgrade error.
     # renovate: datasource=docker depName=docker.io/library/nextcloud
     image:
-      tag: 33.0.5
+      tag: 34.0.1
     ingress:
       enabled: false
     service:
@@ -168,7 +168,7 @@ spec:
               mountPath: /mnt
 
         - name: occ-db-sync
-          image: docker.io/library/nextcloud:33.0.5-apache
+          image: docker.io/library/nextcloud:34.0.1-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -320,7 +320,7 @@ spec:
               echo "cleanup-mounts: done"
 
         - name: occ-oidc-setup
-          image: docker.io/library/nextcloud:33.0.5-apache
+          image: docker.io/library/nextcloud:34.0.1-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -374,7 +374,7 @@ spec:
               subPath: config
 
         - name: occ-collab-setup
-          image: docker.io/library/nextcloud:33.0.5-apache
+          image: docker.io/library/nextcloud:34.0.1-apache
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
