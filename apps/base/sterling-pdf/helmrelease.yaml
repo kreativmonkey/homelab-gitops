@@ -50,7 +50,7 @@ spec:
     replicaCount: 1
     image:
       repository: stirlingtools/stirling-pdf
-      tag: "2.13.2"
+      tag: "2.14.0"
     envs:
       - name: DOCKER_ENABLE_SECURITY
         value: "false"
