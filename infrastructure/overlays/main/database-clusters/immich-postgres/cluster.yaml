@@ -14,7 +14,7 @@ metadata:
 spec:
   description: "Immich PostgreSQL with VectorChord"
   # renovate: datasource=docker depName=ghcr.io/tensorchord/cloudnative-vectorchord versioning=loose
-  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16.13
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16.14
   # HA across the 3 Talos nodes; CNPG auto-creates a minAvailable:2 PDB at >=2
   # instances so node drains evict one replica at a time with failover.
   instances: 3
