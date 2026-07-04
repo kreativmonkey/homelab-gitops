@@ -23,7 +23,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: forgejo
-          image: codeberg.org/forgejo/forgejo:15.0.2
+          image: codeberg.org/forgejo/forgejo:15.0.3
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
