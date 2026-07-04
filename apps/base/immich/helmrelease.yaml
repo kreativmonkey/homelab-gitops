@@ -69,15 +69,21 @@ spec:
       persistence:
         data:
           accessMode: ReadWriteOnce
-          subPath: Bilder
+          # bjw-s common v4 (Chart 0.10+): subPath gehört IN den globalMounts-Eintrag.
+          # Ein subPath auf Persistence-Ebene wird stillschweigend ignoriert — /data
+          # zeigt dann auf die Share-Root statt auf die Immich-Library (Folder-Check
+          # stoppt den Start; genau das blockierte das Upgrade von Chart 0.9.3).
+          globalMounts:
+            - path: /data
+              subPath: Bilder
         fotos:
           enabled: true
           type: persistentVolumeClaim
           existingClaim: immich-fotos
           accessMode: ReadWriteOnce
-          subPath: Fotos
           globalMounts:
             - path: /fotos
+              subPath: Fotos
       ingress:
         main:
           enabled: false
