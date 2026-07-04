@@ -95,7 +95,7 @@ spec:
               cpu: "1"
               memory: 768Mi
         - name: dind
-          image: docker.io/library/docker:27-dind
+          image: docker.io/library/docker:29-dind
           securityContext:
             privileged: true
           env:
