@@ -24,6 +24,11 @@ spec:
         name: runix-repo
         namespace: flux-system
   values:
+    # RWO-PVC (iSCSI): RollingUpdate kann nie durchkommen — der neue Pod wartet
+    # ewig auf das Volume des alten (Multi-Attach). Blockierte das Chart-Upgrade
+    # auf 1.65.0 vier Mal, bis Helm zurückrollte.
+    strategy:
+      type: Recreate
     existingSecret: pgadmin-credentials
     secretKeys:
       emailKey: email
