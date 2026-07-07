@@ -30,7 +30,7 @@ spec:
     # (v0.1.3); the chart's appVersion default (0.1.2, no "v") does not exist.
     image:
       repository: ghcr.io/goloom-app/goloom
-      tag: "v0.2.4"
+      tag: "v0.2.5"
       pullPolicy: IfNotPresent
 
     replicaCount: 1
