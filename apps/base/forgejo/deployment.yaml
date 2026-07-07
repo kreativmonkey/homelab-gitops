@@ -37,6 +37,14 @@ spec:
               value: "1000"
             - name: USER_GID
               value: "1000"
+            # CORS für browserbasierte OAuth2-PKCE-Clients (Sveltia CMS):
+            # der Token-Exchange läuft im Browser gegen /login/oauth/access_token
+            # und braucht CORS-Header. Bei Bedarf auf die finale Site-Domain
+            # einschränken (kommagetrennte Liste statt *).
+            - name: GITEA__cors__ENABLED
+              value: "true"
+            - name: GITEA__cors__ALLOW_DOMAIN
+              value: "*"
             - name: GITEA__cache__ADAPTER
               value: redis
             - name: GITEA__cache__HOST
