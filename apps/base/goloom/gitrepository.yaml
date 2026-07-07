@@ -10,7 +10,7 @@ spec:
   # OCI/HTTP chart repo), so Flux pulls the chart straight from a release tag.
   # Renovate's flux manager tracks this tag against the GitHub repo and bumps it.
   ref:
-    tag: v0.2.4
+    tag: v0.2.5
   # Only the chart directory is needed to build the HelmRelease artifact.
   ignore: |
     /*
