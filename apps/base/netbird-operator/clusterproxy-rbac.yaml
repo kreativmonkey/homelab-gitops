@@ -41,8 +41,10 @@ subjects:
     namespace: netbird
 ---
 # Zugriffsrechte der NetBird-User: Die Gruppennamen aus NetBird landen als
-# K8s-Gruppen in der impersonierten Anfrage. Mitglieder der NetBird-Gruppe
-# "Admin" (aktuell: kreativmonkey) bekommen cluster-admin.
+# K8s-Gruppen in der impersonierten Anfrage (case-sensitiv!). "admin" ist
+# die per JWT-Sync aus Authentik kommende Gruppe (issued: jwt); die alte
+# manuelle NetBird-Gruppe "Admin" fliegt raus, sobald der Umzug auf
+# Authentik-verwaltete Gruppen abgeschlossen ist.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -54,4 +56,7 @@ roleRef:
 subjects:
   - kind: Group
     name: Admin
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: admin
     apiGroup: rbac.authorization.k8s.io
