@@ -1,0 +1,16 @@
+# Exponiert den Kubernetes-API-Server als "homelab" im NetBird-Netz.
+# Client-Seite (netbird-Client aktuell halten):
+#   netbird kubernetes list
+#   netbird kubernetes write-kubeconfig homelab
+#   kubectl --context homelab get pods -A
+# Keine eigene NetBird-Policy nötig: die Default-Policy (All ↔ All) macht
+# den Proxy-Peer erreichbar; spec.groups daher bewusst weggelassen.
+apiVersion: netbird.io/v1alpha1
+kind: ClusterProxy
+metadata:
+  name: homelab
+  namespace: netbird
+spec:
+  clusterName: homelab
+  apiServer: https://kubernetes.default.svc.cluster.local/
+  serviceAccountName: clusterproxy-homelab
