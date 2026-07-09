@@ -1,0 +1,57 @@
+# RBAC für den API-Server-Proxy: Der Proxy hängt die NetBird-Identität
+# (User + Gruppen) per Impersonation an jede Anfrage. Diese Rechte kann
+# der Operator nicht selbst anlegen (Privilege-Escalation), daher hier.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: clusterproxy-homelab
+  namespace: netbird
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: netbird-clusterproxy-homelab
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - users
+      - groups
+    verbs:
+      - impersonate
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - userextras/*
+      - uids
+    verbs:
+      - impersonate
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: netbird-clusterproxy-homelab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: netbird-clusterproxy-homelab
+subjects:
+  - kind: ServiceAccount
+    name: clusterproxy-homelab
+    namespace: netbird
+---
+# Zugriffsrechte der NetBird-User: Die Gruppennamen aus NetBird landen als
+# K8s-Gruppen in der impersonierten Anfrage. Mitglieder der NetBird-Gruppe
+# "Admin" (aktuell: kreativmonkey) bekommen cluster-admin.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: netbird-admin-cluster-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: Group
+    name: Admin
+    apiGroup: rbac.authorization.k8s.io
