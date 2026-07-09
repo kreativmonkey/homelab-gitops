@@ -303,15 +303,6 @@ spec:
         # renovate: datasource=custom.grafana-plugins depName=victoriametrics-logs-datasource
         - victoriametrics-logs-datasource@0.29.0
 
-      # VictoriaLogs datasource (sidecar.datasources is disabled — provision here).
-      additionalDataSources:
-        - name: VictoriaLogs
-          type: victoriametrics-logs-datasource
-          access: proxy
-          url: http://victoria-logs-single-server.monitoring.svc.cluster.local:9428
-          jsonData:
-            maxLines: 1000
-
       priorityClassName: homelab-infrastructure
 
       resources:
@@ -373,12 +364,15 @@ spec:
       podAnnotations:
         backup.velero.io/backup-volumes: grafana-storage
 
-      # Sidecar watches dashboard ConfigMaps only; defaultDatasources below
-      # provisions VM datasource — enabling the datasource sidecar duplicates
-      # provisioning and prevented Grafana from starting (exit 1 ~2s).
+      # Der Datasource-Sidecar ist der EINZIGE Provisioning-Weg dieses Charts
+      # (templates/grafana/datasource.yaml rendert nur mit aktiviertem
+      # Sidecar). Ohne ihn verwalten die Values gar keine Datasources und in
+      # Grafanas DB veralten die zuletzt provisionierten Einträge — so
+      # geschehen bei der vmcluster-Migration: Dashboards zeigten "no such
+      # host" auf den toten vmsingle-Service.
       sidecar:
         datasources:
-          enabled: false
+          enabled: true
         dashboards:
           enabled: true
           label: grafana_dashboard
@@ -387,11 +381,21 @@ spec:
     # ============================================
     # DATASOURCE - chart manages this natively
     # ============================================
+    # Chart-Defaults provisionieren uid=VictoriaMetrics (prometheus, Default)
+    # und uid=VictoriaMetricsDS (natives VM-Plugin) mit der zum Topologie-
+    # Modus (vmsingle/vmcluster) passenden URL; Alertmanager kommt ebenfalls
+    # automatisch. Die Dashboards des Charts referenzieren uid=VictoriaMetrics.
     defaultDatasources:
-      enabled: true
-      victoriametrics:
-        # Use native VM datasource plugin as default
-        datasourceType: victoriametrics-metrics-datasource
+      # VictoriaLogs ist ein eigenes HelmRelease — seine URL kennt der Chart
+      # nicht, daher explizit als Extra-Datasource.
+      extra:
+        - name: VictoriaLogs
+          type: victoriametrics-logs-datasource
+          access: proxy
+          uid: VictoriaLogs
+          url: http://victoria-logs-single-server.monitoring.svc.cluster.local:9428
+          jsonData:
+            maxLines: 1000
 
     # ============================================
     # KUBELET SCRAPING
