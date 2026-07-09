@@ -39,10 +39,10 @@ data:
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, entitlements]]
       - model: authentik_core.application
         identifiers:
-          slug: grafana
+          slug: grafana-talos-cluster
         attrs:
           name: Grafana
-          slug: grafana
+          slug: grafana-talos-cluster
           provider: !KeyOf grafana-provider
           launch_url: https://grafana.cluster.f4mily.net
           meta_launch_url: https://grafana.cluster.f4mily.net
