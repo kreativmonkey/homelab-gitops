@@ -4,4 +4,3 @@ resources:
   - netbird-mgmt-api-key.secret.yaml
   - helmrelease.yaml
   - clusterproxy-rbac.yaml
-  - clusterproxy.yaml

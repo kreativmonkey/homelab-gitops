@@ -1,0 +1,8 @@
+# Eigene Flux-Kustomization (apps-netbird-clusterproxy, dependsOn: apps):
+# Die ClusterProxy-CRD kommt erst mit dem netbird-operator-HelmRelease —
+# läge die CR mit in der apps-Kustomization, ließe deren Dry-Run
+# ("no matches for kind ClusterProxy") ALLE Apps blockieren (Henne-Ei).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - clusterproxy.yaml
