@@ -33,6 +33,7 @@ resources:
 
   # --- Infrastructure & Tools -------------------------------------------
   - ../../base/netbird
+  - ../../base/netbird-operator
   # - ../../base/backrest            # wip: ingress only, no workload
   - ../../base/searxng
   # - ../../base/unifi-controller    # disabled: dropped from catalog (DR test)
