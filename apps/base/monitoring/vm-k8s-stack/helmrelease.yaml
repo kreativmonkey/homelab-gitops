@@ -334,7 +334,7 @@ spec:
       ingress:
         enabled: false
 
-      # Generic OAuth via Authentik (login.f4mily.net, application slug: grafana)
+      # Generic OAuth via Authentik (login.f4mily.net, application slug: grafana-talos-cluster)
       # Requires Secret grafana-authentik-oauth — create with: just grafana-authentik-oauth
       envValueFrom:
         GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
@@ -352,14 +352,16 @@ spec:
           auto_assign_org: true
           auto_assign_org_role: Viewer
         auth:
-          signout_redirect_url: https://login.f4mily.net/application/o/grafana/end-session/
+          signout_redirect_url: https://login.f4mily.net/application/o/grafana-talos-cluster/end-session/
         auth.generic_oauth:
           enabled: true
           name: Authentik
           scopes: openid profile email entitlements
-          auth_url: https://login.f4mily.net/application/o/grafana/authorize/
-          token_url: https://login.f4mily.net/application/o/grafana/token/
-          api_url: https://login.f4mily.net/application/o/grafana/userinfo/
+          # Authentik: authorize/token/userinfo sind global (nicht slug-scoped),
+          # nur end-session trägt den Application-Slug.
+          auth_url: https://login.f4mily.net/application/o/authorize/
+          token_url: https://login.f4mily.net/application/o/token/
+          api_url: https://login.f4mily.net/application/o/userinfo/
           allow_sign_up: true
           use_pkce: true
           role_attribute_path: >-
