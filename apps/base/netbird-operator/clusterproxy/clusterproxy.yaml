@@ -3,8 +3,11 @@
 #   netbird kubernetes list
 #   netbird kubernetes write-kubeconfig homelab
 #   kubectl --context homelab get pods -A
-# Keine eigene NetBird-Policy nötig: die Default-Policy (All ↔ All) macht
-# den Proxy-Peer erreichbar; spec.groups daher bewusst weggelassen.
+# Der Operator erzeugt den Setup-Key für die Proxy-Peers selbst (via
+# Management-PAT); spec.groups steuert deren NetBird-Gruppen. Die
+# Default-Policy (All ↔ All) ist seit 2026-07-09 deaktiviert — erreichbar
+# sind die Proxy-Peers über die Policy "Admin → K8S-Cluster" (tcp/443,
+# im NetBird-Dashboard gepflegt, nicht in GitOps).
 apiVersion: netbird.io/v1alpha1
 kind: ClusterProxy
 metadata:
@@ -14,3 +17,6 @@ spec:
   clusterName: homelab
   apiServer: https://kubernetes.default.svc.cluster.local/
   serviceAccountName: clusterproxy-homelab
+  groups:
+    # K8S-Cluster (per ID, überlebt Umbenennungen der Gruppe)
+    - id: d86n1a4vln0s739sq9tg

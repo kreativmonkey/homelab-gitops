@@ -1,0 +1,21 @@
+# Separat von 'apps', weil die ClusterProxy-CRD erst existiert, wenn das
+# netbird-operator-HelmRelease (Teil von 'apps') installiert ist. dependsOn
+# ordnet nur die Reihenfolge; das kurze Rennen bis zur CRD-Installation
+# überbrückt retryInterval.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-netbird-clusterproxy
+  namespace: flux-system
+spec:
+  interval: 1h
+  retryInterval: 1m
+  timeout: 5m
+  dependsOn:
+    - name: apps
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/base/netbird-operator/clusterproxy
+  prune: true
+  wait: false
