@@ -41,8 +41,10 @@ subjects:
     namespace: netbird
 ---
 # Zugriffsrechte der NetBird-User: Die Gruppennamen aus NetBird landen als
-# K8s-Gruppen in der impersonierten Anfrage. Mitglieder der NetBird-Gruppe
-# "Admin" (aktuell: kreativmonkey) bekommen cluster-admin.
+# K8s-Gruppen in der impersonierten Anfrage (case-sensitiv!). "admin" ist
+# die per JWT-Sync aus Authentik kommende Gruppe (issued: jwt); die alte
+# manuelle NetBird-Gruppe "Admin" fliegt raus, sobald der Umzug auf
+# Authentik-verwaltete Gruppen abgeschlossen ist.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -54,4 +56,69 @@ roleRef:
 subjects:
   - kind: Group
     name: Admin
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: admin
+    apiGroup: rbac.authorization.k8s.io
+---
+# Eingeschränkte Zugriffsstufe: Mitglieder der Authentik-Gruppe
+# "User-K8S-View" bekommen cluster-weiten Lesezugriff OHNE Secrets
+# (Built-in-ClusterRole "view"). Die Gruppe entsteht in NetBird beim
+# ersten Login eines Mitglieds (JWT-Sync); zusätzlich braucht sie die
+# NetBird-Policy User-K8S-View → K8S-API-Proxy tcp/443.
+# Weitere Stufen nach demselben Muster: z. B. Namespace-beschränktes
+# Bearbeiten via RoleBinding auf die Built-in-ClusterRole "edit" im
+# jeweiligen Namespace für eine Gruppe "User-K8S-Edit-<ns>".
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: netbird-k8s-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: Group
+    name: User-K8S-View
+    apiGroup: rbac.authorization.k8s.io
+---
+# Ops-Stufe ("User-K8S-Ops"): lesen wie view PLUS Pods löschen — reicht,
+# um z. B. CrashLoop-Pods abzuräumen (der Controller erstellt sie neu).
+# Bewusst NICHT enthalten: exec/logs-Secrets/Workload-Änderungen.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: netbird-k8s-ops
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: netbird-k8s-ops-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: Group
+    name: User-K8S-Ops
+    apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: netbird-k8s-ops
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: netbird-k8s-ops
+subjects:
+  - kind: Group
+    name: User-K8S-Ops
     apiGroup: rbac.authorization.k8s.io

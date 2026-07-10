@@ -5,9 +5,13 @@
 #   kubectl --context homelab get pods -A
 # Der Operator erzeugt den Setup-Key für die Proxy-Peers selbst (via
 # Management-PAT); spec.groups steuert deren NetBird-Gruppen. Die
-# Default-Policy (All ↔ All) ist seit 2026-07-09 deaktiviert — erreichbar
-# sind die Proxy-Peers über die Policy "Admin → K8S-Cluster" (tcp/443,
-# im NetBird-Dashboard gepflegt, nicht in GitOps).
+# Default-Policy (All ↔ All) ist seit 2026-07-09 deaktiviert — Zugriff
+# regeln NetBird-Policies (im Dashboard gepflegt, nicht in GitOps):
+#   Admin K8S-API-Proxy:      admin → K8S-Cluster tcp/443 (voller Zugriff)
+#   User-K8S-View-Policy:     User-K8S-View → K8S-API-Proxy tcp/443
+#   User-K8S-Ops-Policy:      User-K8S-Ops → K8S-API-Proxy tcp/443
+# K8S-API-Proxy enthält NUR die Proxy-Pods — eingeschränkte User erreichen
+# damit nicht Port 443 der Talos-Nodes (Ingress).
 apiVersion: netbird.io/v1alpha1
 kind: ClusterProxy
 metadata:
@@ -18,5 +22,8 @@ spec:
   apiServer: https://kubernetes.default.svc.cluster.local/
   serviceAccountName: clusterproxy-homelab
   groups:
-    # K8S-Cluster (per ID, überlebt Umbenennungen der Gruppe)
+    # per ID, überlebt Umbenennungen der Gruppen
+    # K8S-Cluster (Talos-Nodes + Proxy)
     - id: d86n1a4vln0s739sq9tg
+    # K8S-API-Proxy (nur Proxy-Pods, Ziel für eingeschränkte RBAC-Stufen)
+    - id: d98cu2svln0g00e7cv8g
