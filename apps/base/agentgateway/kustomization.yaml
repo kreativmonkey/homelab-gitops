@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: agentgateway
+
+resources:
+  - namespace.yaml
+  - agentgateway-forgejo.secret.yaml
+  - deployment.yaml
+  - ingress.yaml
+
+# Gateway config + the trimmed Forgejo OpenAPI spec are mounted at /cfg. The
+# content hash in the generated name rolls the Deployment when either changes.
+configMapGenerator:
+  - name: agentgateway-config
+    files:
+      - config/config.yaml
+      - config/forgejo-openapi.json

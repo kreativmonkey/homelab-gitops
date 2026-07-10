@@ -351,6 +351,17 @@ spec:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
 
+        # agentgateway MCP endpoint is auth-gated: an unauthenticated GET
+        # returning 401 means the gateway is up AND enforcing Authentik auth.
+        - name: agentgateway
+          group: automation
+          url: https://mcp.cluster.f4mily.net/mcp
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[STATUS] == 401"
+             - "[RESPONSE_TIME] < 5000"
+
         # ──────────────────────────────────────────────
         #  External: gleiche Endpoints, aber von extern getriggert
         # ──────────────────────────────────────────────

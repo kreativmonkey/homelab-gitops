@@ -66,6 +66,7 @@ spec:
         - authentik-gatus-blueprint
         - authentik-linkding-blueprint
         - authentik-dawarich-blueprint
+        - authentik-mcp-gateway-blueprint
     server:
       ingress:
         enabled: false

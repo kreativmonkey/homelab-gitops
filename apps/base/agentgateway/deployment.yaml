@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentgateway
+  namespace: agentgateway
+  labels:
+    app: agentgateway
+spec:
+  selector:
+    app: agentgateway
+  ports:
+    # MCP endpoint (streamable HTTP / SSE) — fronted by the Ingress.
+    - name: http
+      port: 3000
+      targetPort: mcp
+    # Prometheus metrics (scraped in-cluster; not exposed via Ingress).
+    - name: metrics
+      port: 15020
+      targetPort: metrics
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentgateway
+  namespace: agentgateway
+  labels:
+    app: agentgateway
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: agentgateway
+  template:
+    metadata:
+      labels:
+        app: agentgateway
+    spec:
+      priorityClassName: homelab-infrastructure
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: agentgateway
+          # Standalone data-plane, pinned by digest (tag v1.3.1, 2026-06-22).
+          # `latest` intentionally avoided: it tracks the alpha dev tip.
+          image: cr.agentgateway.dev/agentgateway:v1.3.1@sha256:c3ce7b75da90fef70239befcc1c3adc05152d7b9dd21fcb8351178026a2c4381
+          args:
+            - -f
+            - /cfg/config.yaml
+          env:
+            - name: FORGEJO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: agentgateway-forgejo
+                  key: FORGEJO_TOKEN
+          ports:
+            - name: mcp
+              containerPort: 3000
+            - name: admin
+              containerPort: 15000
+            - name: metrics
+              containerPort: 15020
+          # The proxy bind is the meaningful readiness signal; a valid Authentik
+          # JWKS is required for it to come up at all (see config.yaml ORDERING).
+          readinessProbe:
+            tcpSocket:
+              port: mcp
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: mcp
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: config
+              mountPath: /cfg
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: agentgateway-config
+        - name: tmp
+          emptyDir: {}
