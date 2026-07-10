@@ -1,0 +1,161 @@
+# Cluster-Zugriff für die KI-Agents auf clawd — ein eigener
+# ServiceAccount + Token pro Agent (getrennt widerrufbar, im Audit-Log
+# unterscheidbar). Rechte: lesen (view + cluster-read) plus Pods löschen
+# (ai-agents-pod-ops, z. B. CrashLoop-Pods abräumen — der Controller
+# erstellt sie neu). Bewusst NICHT: exec, Secrets, Workload-Änderungen.
+# Die Token-Secrets werden vom Controller befüllt und landen als
+# kubeconfig beim jeweiligen Agent-User auf clawd.
+# Ersetzt den früher ad-hoc angelegten, geteilten SA "k8s-mcp".
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ai-agents-cluster-read
+rules:
+  # Ergänzt die Built-in-Rolle "view" um cluster-weite Objekte,
+  # die view nicht abdeckt (Nodes, Namespaces, PVs, StorageClasses, CRDs).
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - namespaces
+      - persistentvolumes
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - storageclasses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ai-agents-pod-ops
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - delete
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcp-openclaw
+  namespace: ai-agents
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mcp-openclaw-token
+  namespace: ai-agents
+  annotations:
+    kubernetes.io/service-account.name: mcp-openclaw
+type: kubernetes.io/service-account-token
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcp-hermes
+  namespace: ai-agents
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mcp-hermes-token
+  namespace: ai-agents
+  annotations:
+    kubernetes.io/service-account.name: mcp-hermes
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ai-agents-view-openclaw
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: mcp-openclaw
+    namespace: ai-agents
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ai-agents-cluster-read-openclaw
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ai-agents-cluster-read
+subjects:
+  - kind: ServiceAccount
+    name: mcp-openclaw
+    namespace: ai-agents
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ai-agents-pod-ops-openclaw
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ai-agents-pod-ops
+subjects:
+  - kind: ServiceAccount
+    name: mcp-openclaw
+    namespace: ai-agents
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ai-agents-view-hermes
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: mcp-hermes
+    namespace: ai-agents
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ai-agents-cluster-read-hermes
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ai-agents-cluster-read
+subjects:
+  - kind: ServiceAccount
+    name: mcp-hermes
+    namespace: ai-agents
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ai-agents-pod-ops-hermes
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ai-agents-pod-ops
+subjects:
+  - kind: ServiceAccount
+    name: mcp-hermes
+    namespace: ai-agents
