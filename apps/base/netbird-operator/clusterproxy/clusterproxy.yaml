@@ -9,6 +9,7 @@
 # regeln NetBird-Policies (im Dashboard gepflegt, nicht in GitOps):
 #   Admin K8S-API-Proxy:      admin → K8S-Cluster tcp/443 (voller Zugriff)
 #   User-K8S-View-Policy:     User-K8S-View → K8S-API-Proxy tcp/443
+#   User-K8S-Ops-Policy:      User-K8S-Ops → K8S-API-Proxy tcp/443
 # K8S-API-Proxy enthält NUR die Proxy-Pods — eingeschränkte User erreichen
 # damit nicht Port 443 der Talos-Nodes (Ingress).
 apiVersion: netbird.io/v1alpha1
