@@ -60,3 +60,24 @@ subjects:
   - kind: Group
     name: admin
     apiGroup: rbac.authorization.k8s.io
+---
+# Eingeschränkte Zugriffsstufe: Mitglieder der Authentik-Gruppe
+# "User-K8S-View" bekommen cluster-weiten Lesezugriff OHNE Secrets
+# (Built-in-ClusterRole "view"). Die Gruppe entsteht in NetBird beim
+# ersten Login eines Mitglieds (JWT-Sync); zusätzlich braucht sie die
+# NetBird-Policy User-K8S-View → K8S-API-Proxy tcp/443.
+# Weitere Stufen nach demselben Muster: z. B. Namespace-beschränktes
+# Bearbeiten via RoleBinding auf die Built-in-ClusterRole "edit" im
+# jeweiligen Namespace für eine Gruppe "User-K8S-Edit-<ns>".
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: netbird-k8s-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: Group
+    name: User-K8S-View
+    apiGroup: rbac.authorization.k8s.io
