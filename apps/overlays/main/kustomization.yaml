@@ -32,6 +32,7 @@ resources:
   - ../../base/immich
 
   # --- Infrastructure & Tools -------------------------------------------
+  - ../../base/ai-agents
   - ../../base/netbird
   - ../../base/netbird-operator
   # - ../../base/backrest            # wip: ingress only, no workload
