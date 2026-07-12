@@ -1,14 +1,28 @@
 # Created by https://www.toptal.com/developers/gitignore/api/helm
 # Edit at https://www.toptal.com/developers/gitignore?templates=helm
 keys.txt
+kubeconfig
+talosconfig
+
+# Local SOPS/secret material
+*.secret.yaml
+!*.secret.yaml.template
+age.agekey
+sops-age-key.txt
+
+# Local and generated security/audit reports
+gitleak*.json
+gitleaks*.json
+audit/gitleak*.json
+audit/gitleaks*.json
+audit/*gitleaks*.json
+audit/*gitleak*.json
 
 ### Helm ###
 # Chart dependencies
 **/charts/*.tgz
 
 # End of https://www.toptal.com/developers/gitignore/api/helm
-kubeconfig
-talosconfig
 
 # OpenCode session files
 ses_*

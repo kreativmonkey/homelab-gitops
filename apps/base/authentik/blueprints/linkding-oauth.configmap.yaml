@@ -21,7 +21,7 @@ data:
           name: Provider for Linkding
           client_type: confidential
           client_id: homelab-linkding
-          client_secret: REMOVED_BY_HISTORY_REWRITE
+          client_secret: <placeholder-change-me>
           grant_types:
             - authorization_code
             - refresh_token
