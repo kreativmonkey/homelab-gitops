@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-mcp-gateway-blueprint
+  namespace: authentik
+  labels:
+    app.kubernetes.io/part-of: authentik
+data:
+  mcp-gateway.yaml: |
+    version: 1
+    metadata:
+      name: Homelab MCP Gateway OIDC
+      labels:
+        blueprints.goauthentik.io/description: OAuth2 provider + application for the agentgateway MCP endpoint
+    entries:
+      # OAuth2 provider. agentgateway validates Bearer JWTs against this
+      # provider's JWKS, so a signing_key (RS256, asymmetric) is REQUIRED —
+      # without it the JWKS is empty and the gateway cannot validate tokens.
+      # client_type: public + PKCE because MCP clients (Claude Code, …) are
+      # public CLI apps that authenticate interactively via localhost callbacks.
+      - model: authentik_providers_oauth2.oauth2provider
+        id: mcp-gateway-provider
+        identifiers:
+          name: Provider for MCP Gateway
+        attrs:
+          name: Provider for MCP Gateway
+          client_type: public
+          # aud of issued tokens = client_id; must match config.yaml audiences.
+          client_id: mcp-gateway
+          # issuer becomes https://login.f4mily.net/application/o/mcp-gateway/
+          sub_mode: user_username
+          include_claims_in_id_token: true
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          # MCP clients bind a random localhost port for the OAuth redirect.
+          redirect_uris:
+            - matching_mode: regex
+              url: "http://(127\\.0\\.0\\.1|localhost)(:[0-9]+)?/.*"
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+      - model: authentik_core.application
+        identifiers:
+          slug: mcp-gateway
+        attrs:
+          name: MCP Gateway
+          slug: mcp-gateway
+          provider: !KeyOf mcp-gateway-provider
+          meta_description: Central MCP endpoint for AI agents (agentgateway)
+          meta_launch_url: https://mcp.cluster.f4mily.net

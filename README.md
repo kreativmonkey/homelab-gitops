@@ -88,6 +88,7 @@ via [Gatus](https://status.cluster.f4mily.net).
 
 | Application | Description | Uptime |
 | :--- | :--- | :--- |
+| [**agentgateway**](https://agentgateway.dev/) | Central MCP gateway — one Authentik-secured endpoint aggregating MCP servers for AI agents | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_agentgateway/uptimes/30d/badge.svg) |
 | [**audiobookshelf**](https://www.audiobookshelf.org/) | Audiobook & podcast streaming server | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_audiobookshelf/uptimes/30d/badge.svg) |
 | [**authentik**](https://goauthentik.io/) | Central SSO & identity provider (OIDC) | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_authentik/uptimes/30d/badge.svg) |
 | [**dawarich**](https://dawarich.app/) | Self-hosted location history (Google Timeline alternative) | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_dawarich/uptimes/30d/badge.svg) |
