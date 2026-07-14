@@ -7,4 +7,4 @@ spec:
   interval: 24h
   url: https://github.com/CodeWithCJ/SparkyFitness
   ref:
-    tag: v0.17.2
+    tag: v0.17.3
