@@ -15,6 +15,10 @@ Flux Kustomization entry points. `main/` wires the cluster: `infrastructure.yaml
 - `private-gitops.yaml` is a temporary migration seed: it wires the private repo
   as an additional source with `prune: false`; remove it after private root
   bootstrap owns the live cluster.
+- During the private-root migration, `flux-system/gotk-sync.yaml` pivots the
+  bootstrap `GitRepository/flux-system` to `homelab-gitops-private`; the
+  private repo then owns live entrypoints and includes this public repo as
+  source material.
 
 # Work Guidance
 
