@@ -12,6 +12,9 @@ Flux Kustomization entry points. `main/` wires the cluster: `infrastructure.yaml
 - Entry-point Kustomizations point at `infrastructure/` and `apps/` overlays.
 - Respect dependency chain: infrastructure reconciles before dependent apps (`dependsOn`).
 - New top-level overlay → add a Kustomization here.
+- `private-gitops.yaml` is a temporary migration seed: it wires the private repo
+  as an additional source with `prune: false`; remove it after private root
+  bootstrap owns the live cluster.
 
 # Work Guidance
 
