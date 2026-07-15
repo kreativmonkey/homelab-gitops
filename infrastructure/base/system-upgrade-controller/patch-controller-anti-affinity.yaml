@@ -1,0 +1,22 @@
+# Upstream matches app.kubernetes.io/name=system-upgrade-controller. Talos Plan
+# labels are copied to per-node upgrade Jobs, so those Jobs can inherit the same
+# label and fail to schedule on the node running the controller. Match only the
+# controller component instead.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-upgrade-controller
+  namespace: system-upgrade
+spec:
+  template:
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                      - controller
+              topologyKey: kubernetes.io/hostname

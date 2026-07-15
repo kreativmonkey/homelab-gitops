@@ -11,7 +11,9 @@ metadata:
   name: talos
   namespace: system-upgrade
   labels:
-    app.kubernetes.io/name: system-upgrade-controller
+    # SUC copies Plan labels to upgrade Jobs. Do not reuse the controller name:
+    # the controller Deployment has required podAntiAffinity for that workload.
+    app.kubernetes.io/name: talos-upgrade
     app.kubernetes.io/component: talos-upgrade
 spec:
   # One node at a time — safe for 3-node stacked control-plane.
