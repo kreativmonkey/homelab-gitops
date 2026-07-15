@@ -137,19 +137,19 @@ FailedScheduling: 1 node(s) didn't satisfy existing pods anti-affinity rules,
 ```
 
 That node never cordons/drains and the Plan sits `applying: [<that-node>]`. **Fix:**
-relocate the controller onto an *already-upgraded* node and leave it there for the rest
-of the rollout — it then blocks nothing:
+make the controller anti-affinity match only controller pods, and make the Talos Plan
+use its own app name:
 
-```bash
-# cordon the other free nodes so the controller can only land on the done node, then:
-kubectl -n system-upgrade delete pod -l app.kubernetes.io/name=system-upgrade-controller
-# uncordon afterwards
-```
+- Patch the SUC Deployment anti-affinity to select
+  `app.kubernetes.io/component=controller` instead of
+  `app.kubernetes.io/name=system-upgrade-controller`.
+- Label the Talos Plan `app.kubernetes.io/name=talos-upgrade`; SUC copies Plan labels
+  to upgrade Jobs, so those Jobs must never look like controller pods.
 
-Caveat: that label selector **also matches the live upgrade job pod**. A
-`--field-selector status.phase!=Running` to "only kill the broken controller" can
-delete a mid-reboot upgrade pod too — harmless (the Job re-reconciles), but don't be
-surprised.
+With that split, the upgrade job can schedule on the node that currently runs the
+controller. SUC's drain already ignores its own controller pod, so Kubernetes evicts
+and recreates the controller through the Deployment while the node reboots; no manual
+controller relocation is needed.
 
 **6. The controller image was pinned to a tag that was never released.**
 `infrastructure/base/system-upgrade-controller/kustomization.yaml` had
