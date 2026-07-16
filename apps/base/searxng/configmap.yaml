@@ -19,3 +19,6 @@ data:
     search:
       safe_search: 0
       default_lang: "de-DE"
+      formats:
+        - html
+        - json
