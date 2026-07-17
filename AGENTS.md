@@ -49,6 +49,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 
 # Ingress & HelmRelease Conventions
 - Every public app uses a **HelmRelease**.
+- Cluster has no IPv6 egress to the mail VPS: Nextcloud pins `mail.f4mily.net` → `91.99.145.19` via HelmRelease `postRenderers`/`hostAliases` (AAAA would time out IMAP).
 - Ingress must include:
   - `nginx.org/ssl-redirect: "false"`
   - `nginx.org/redirect-to-https: "true"`

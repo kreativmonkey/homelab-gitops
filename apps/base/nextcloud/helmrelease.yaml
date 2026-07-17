@@ -8,6 +8,23 @@ metadata:
 spec:
   interval: 1h
   timeout: 20m
+  # Cluster hat kein IPv6-Egress zur VPS; AAAA für mail.f4mily.net → IMAP-Timeouts.
+  # hostAliases pinnt A-Record, Happy-Eyeballs fällt nicht auf unreachable v6.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: nextcloud
+            patch: |
+              - op: add
+                path: /spec/template/spec/hostAliases
+                value:
+                  - ip: "91.99.145.19"
+                    hostnames:
+                      - mail.f4mily.net
   install:
     disableWait: true
     remediation:
