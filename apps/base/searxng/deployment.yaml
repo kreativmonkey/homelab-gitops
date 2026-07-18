@@ -28,7 +28,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: bootstrap-config
-          image: docker.io/searxng/searxng:2026.7.15-9c49b7e0d
+          image: docker.io/searxng/searxng:2026.7.17-de8f73f43
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -54,7 +54,7 @@ spec:
               readOnly: true
       containers:
         - name: searxng
-          image: docker.io/searxng/searxng:2026.7.15-9c49b7e0d
+          image: docker.io/searxng/searxng:2026.7.17-de8f73f43
           imagePullPolicy: IfNotPresent
           env:
             - name: GRANIAN_HOST
