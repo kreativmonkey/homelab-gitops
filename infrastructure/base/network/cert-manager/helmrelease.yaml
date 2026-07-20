@@ -44,7 +44,7 @@ spec:
   chart:
     spec:
       chart: cert-manager-webhook-hetzner
-      version: "0.7.0"
+      version: "0.8.0"
       sourceRef:
         kind: HelmRepository
         name: hetzner-webhook-repo
