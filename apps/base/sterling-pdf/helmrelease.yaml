@@ -109,6 +109,10 @@ spec:
         # TLS: wildcard-f4mily-net-tls replicated from cert-manager (reflector)
         nginx.org/ssl-redirect: "false"
         nginx.org/redirect-to-https: "true"
+        # default client_max_body_size (1m) blocks merging larger PDF sets with 413
+        nginx.org/client-max-body-size: "100m"
+        nginx.org/proxy-read-timeout: "300"
+        nginx.org/proxy-send-timeout: "300"
       hosts:
         - name: pdf.f4mily.net
           path: /
