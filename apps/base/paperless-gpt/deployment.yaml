@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless-gpt
+  namespace: paperless-ngx
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: paperless-gpt
+  template:
+    metadata:
+      labels:
+        app: paperless-gpt
+        app.kubernetes.io/name: paperless-gpt
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: paperless-gpt
+          image: icereed/paperless-gpt:v0.27.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: TZ
+              value: Europe/Berlin
+            # Paperless API (internes ClusterIP; Service hört auf Port 80)
+            - name: PAPERLESS_BASE_URL
+              value: http://paperless-ngx:80
+            - name: PAPERLESS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-gpt-secrets
+                  key: PAPERLESS_API_TOKEN
+            # Textbasierte Metadaten (Titel/Tags/Korrespondent/Datum)
+            - name: LLM_PROVIDER
+              value: openai
+            - name: LLM_MODEL
+              value: gpt-4o
+            # LLM-OCR über Vision-Modell (verarbeitet Dokument-Bilder)
+            - name: OCR_PROVIDER
+              value: llm
+            - name: VISION_LLM_PROVIDER
+              value: openai
+            - name: VISION_LLM_MODEL
+              value: gpt-4o
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-gpt-secrets
+                  key: OPENAI_API_KEY
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-gpt
+  namespace: paperless-ngx
+spec:
+  ports:
+    - port: 8080
+      targetPort: http
+      name: http
+  selector:
+    app: paperless-gpt
