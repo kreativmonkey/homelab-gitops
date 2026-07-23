@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - paperless-gpt-secrets.secret.yaml
   - deployment.yaml
+  - ingress.yaml
