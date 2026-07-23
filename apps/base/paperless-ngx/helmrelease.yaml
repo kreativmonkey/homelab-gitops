@@ -155,8 +155,11 @@ spec:
           value: Europe/Berlin
         - name: PAPERLESS_OCR_LANGUAGE
           value: eng
+        # paperless-ngx = interner Service-Name; nötig, damit In-Cluster-Clients
+        # (paperless-gpt) die API über http://paperless-ngx erreichen, ohne dass
+        # Django den Host als DisallowedHost mit 400 ablehnt.
         - name: PAPERLESS_ALLOWED_HOSTS
-          value: paperless.f4mily.net
+          value: paperless.f4mily.net,paperless-ngx
         - name: PAPERLESS_CSRF_TRUSTED_ORIGINS
           value: https://paperless.f4mily.net
         - name: PAPERLESS_TASK_WORKERS
