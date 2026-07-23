@@ -156,12 +156,31 @@
       "automerge": true
     },
     {
-      "description": "Homepage: Patch-Updates automergen",
+      "description": "Stufe 1: risikoarme Updates (digest/pin/patch) global automergen — nach 7d-Soak + grünem validate-Check. Majors/Minors bleiben manuell (außer Stufe-2-Allowlist unten).",
+      "matchUpdateTypes": [
+        "digest",
+        "pin",
+        "patch"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Stufe 2: minor-Updates unkritischer, zustandsarmer Leaf-Apps automergen. Bewusst OHNE stateful/kritische Dienste (nextcloud, immich, authentik, forgejo, netbird, DBs).",
       "matchFileNames": [
-        "apps/base/homepage/**"
+        "apps/base/homepage/**",
+        "apps/base/homer/**",
+        "apps/base/linkding/**",
+        "apps/base/readeck/**",
+        "apps/base/gatus/**",
+        "apps/base/speedtest-tracker/**",
+        "apps/base/sterling-pdf/**",
+        "apps/base/jellyfin/**",
+        "apps/base/kite/**"
       ],
       "matchUpdateTypes": [
-        "patch"
+        "minor"
       ],
       "automerge": true,
       "automergeType": "pr",
