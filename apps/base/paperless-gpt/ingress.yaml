@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: paperless-gpt
+  namespace: paperless-ngx
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Paperless-GPT
+    gethomepage.dev/description: AI OCR & metadata assistant for Paperless-ngx.
+    gethomepage.dev/group: Cluster Management
+    gethomepage.dev/icon: paperless-ngx.png
+    gethomepage.dev/pod-selector: app.kubernetes.io/name=paperless-gpt
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - paperless-gpt.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
+  rules:
+    - host: paperless-gpt.cluster.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: paperless-gpt
+                port:
+                  number: 8080
