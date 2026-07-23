@@ -187,6 +187,11 @@ spec:
           value: "true"
         - name: PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS
           value: "true"
+        # Datums-Erkennung aus dem Dokumentinhalt abschalten: neue Dokumente
+        # erhalten das Consumption-/Scan-Datum als created-Datum statt eines aus
+        # dem OCR-Text geratenen (das lag reihenweise daneben, u.a. 1988er-Daten).
+        - name: PAPERLESS_NUMBER_OF_SUGGESTED_DATES
+          value: "0"
       ingress:
         enabled: false
       volumes:
