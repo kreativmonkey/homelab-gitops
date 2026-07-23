@@ -207,6 +207,14 @@
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
+    },
+    {
+      "description": "Guard: 0.x-Versionen — bei 0.y.z ist laut Semver das minor-Feld (y) die Breaking-Stelle. Minor-Automerge (Stufe 2) hier zurücknehmen, damit ein potenziell breaking 0.x-Minor nicht automatisch durchrutscht. Patch (0.y.Z) bleibt automerge.",
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "matchCurrentVersion": "/^0\\./",
+      "automerge": false
     }
   ]
 }
