@@ -29,6 +29,7 @@ resources:
   - ../../base/kavita
   - ../../base/tandoor
   - ../../base/paperless-ngx
+  - ../../base/paperless-gpt
   - ../../base/immich
 
   # --- Infrastructure & Tools -------------------------------------------
