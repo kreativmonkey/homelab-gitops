@@ -110,15 +110,6 @@ spec:
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
-  name: breuerfelix-repo
-  namespace: flux-system
-spec:
-  interval: 24h
-  url: https://breuerfelix.github.io/helm-charts
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
   name: immich-charts
   namespace: flux-system
 spec:
@@ -160,4 +151,13 @@ metadata:
 spec:
   interval: 24h
   url: https://nextcloud.github.io/helm/
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: zekker6-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://zekker6.github.io/helm-charts
 

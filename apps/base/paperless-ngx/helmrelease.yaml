@@ -8,214 +8,143 @@ metadata:
 spec:
   interval: 1h
   timeout: 15m
-  postRenderers:
-    - kustomize:
-        patches:
-          # Static NFS PVs (nfs-media-static has no provisioner — bind by volumeName).
-          - target:
-              version: v1
-              kind: PersistentVolumeClaim
-              name: paperless-ngx-data
-            patch: |
-              - op: add
-                path: /spec/volumeName
-                value: pv-nfs-paperless-data-documents
-          - target:
-              version: v1
-              kind: PersistentVolumeClaim
-              name: paperless-ngx-media
-            patch: |
-              - op: add
-                path: /spec/volumeName
-                value: pv-nfs-paperless-media-documents
-          - target:
-              version: v1
-              kind: PersistentVolumeClaim
-              name: paperless-ngx-export
-            patch: |
-              - op: add
-                path: /spec/volumeName
-                value: pv-nfs-paperless-export-documents
-          - target:
-              group: apps
-              version: v1
-              kind: Deployment
-              name: paperless-ngx
-            patch: |
-              apiVersion: apps/v1
-              kind: Deployment
-              metadata:
-                name: paperless-ngx
-              spec:
-                template:
-                  spec:
-                    containers:
-                      - name: paperless-ngx
-                        volumeMounts:
-                          - name: data
-                            mountPath: /usr/src/paperless/data
-                            subPath: paperless/data
-                          - name: media
-                            mountPath: /usr/src/paperless/media
-                            subPath: paperless/media
-                          - name: export
-                            mountPath: /usr/src/paperless/export
-                            subPath: paperless/export
-                          - name: consume
-                            mountPath: /usr/src/paperless/consume
-                            subPath: paperless/consume
-          - target:
-              group: apps
-              version: v1
-              kind: Deployment
-              name: paperless-ngx
-            patch: |
-              - op: add
-                path: /spec/template/spec/volumes/-
-                value:
-                  name: consume
-                  persistentVolumeClaim:
-                    claimName: paperless-ngx-consume
-          - target:
-              group: apps
-              version: v1
-              kind: Deployment
-              name: redis
-            patch: |
-              - op: replace
-                path: /spec/template/spec/volumes
-                value:
-                  - name: data
-                    emptyDir: {}
-              - op: replace
-                path: /spec/template/spec/containers/0/volumeMounts
-                value:
-                  - name: data
-                    mountPath: /data
-          - target:
-              group: apps
-              version: v1
-              kind: Deployment
-              name: paperless-ngx
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/resources
-                value:
-                  requests:
-                    cpu: 200m
-                    memory: 1Gi
-                  limits:
-                    memory: 2Gi
-          - target:
-              group: apps
-              version: v1
-              kind: Deployment
-              name: redis
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/resources
-                value:
-                  requests:
-                    cpu: 10m
-                    memory: 64Mi
-                  limits:
-                    memory: 256Mi
-              - op: replace
-                path: /spec/replicas
-                value: 1
+  # Release-Name = paperless-ngx enthält den String "paperless" → common.names.fullname
+  # rendert Service/Deployment exakt als "paperless-ngx" (nötig für Ingress-Backend,
+  # paperless-gpt PAPERLESS_BASE_URL und PAPERLESS_ALLOWED_HOSTS). Nicht umbenennen.
   chart:
     spec:
-      chart: paperless-ngx
-      version: "0.0.3"
+      chart: paperless
+      version: "11.0.0"
       sourceRef:
         kind: HelmRepository
-        name: breuerfelix-repo
+        name: zekker6-repo
         namespace: flux-system
-  valuesFrom:
-    - kind: Secret
-      name: homelab-postgres-paperless
-      valuesKey: password
-      targetPath: paperless.env[4].value
   values:
-    paperless:
-      env:
-        - name: PAPERLESS_DBHOST
-          value: homelab-postgres-rw.cnpg-system.svc.cluster.local
-        - name: PAPERLESS_DBPORT
-          value: "5432"
-        - name: PAPERLESS_DBNAME
-          value: paperless
-        - name: PAPERLESS_DBUSER
-          value: paperless
-        - name: PAPERLESS_DBPASS
-          value: ""
-        - name: PAPERLESS_REDIS
-          value: redis://redis:80
-        - name: PAPERLESS_TIME_ZONE
-          value: Europe/Berlin
-        - name: PAPERLESS_OCR_LANGUAGE
-          value: eng
-        # paperless-ngx = interner Service-Name; nötig, damit In-Cluster-Clients
-        # (paperless-gpt) die API über http://paperless-ngx erreichen, ohne dass
-        # Django den Host als DisallowedHost mit 400 ablehnt.
-        - name: PAPERLESS_ALLOWED_HOSTS
-          value: paperless.f4mily.net,paperless-ngx
-        - name: PAPERLESS_CSRF_TRUSTED_ORIGINS
-          value: https://paperless.f4mily.net
-        - name: PAPERLESS_TASK_WORKERS
-          value: "2"
-        - name: PAPERLESS_THREADS_PER_WORKER
-          value: "1"
-        - name: PAPERLESS_CONSUMER_POLLING
-          value: "60"
-        - name: PAPERLESS_TIKA_ENABLED
-          value: "1"
-        - name: PAPERLESS_TIKA_GOTENBERG_ENDPOINT
-          value: http://gotenberg:3000
-        - name: PAPERLESS_TIKA_ENDPOINT
-          value: http://tika:9998
-        - name: PAPERLESS_CONSUMER_ENABLE_BARCODES
-          value: "true"
-        - name: PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE
-          value: "true"
-        - name: PAPERLESS_CONSUMER_ENABLE_TAG_BARCODE
-          value: "true"
-        - name: PAPERLESS_CONSUMER_TAG_BARCODE_MAPPING
-          value: '{ "ASN13.*": "Hausbau" }'
-        - name: PAPERLESS_APPS
-          value: allauth.socialaccount.providers.openid_connect
-        - name: PAPERLESS_LOGOUT_REDIRECT_URL
-          value: https://login.f4mily.net/application/o/paperless/end-session/
-        - name: PAPERLESS_SOCIAL_AUTO_SIGNUP
-          value: "true"
-        - name: PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS
-          value: "true"
-        # Datums-Erkennung aus dem Dokumentinhalt abschalten: neue Dokumente
-        # erhalten das Consumption-/Scan-Datum als created-Datum statt eines aus
-        # dem OCR-Text geratenen (das lag reihenweise daneben, u.a. 1988er-Daten).
-        - name: PAPERLESS_NUMBER_OF_SUGGESTED_DATES
-          value: "0"
-      ingress:
+    image:
+      repository: ghcr.io/paperless-ngx/paperless-ngx
+      # Major-Upgrade v2.20.15 -> v3 (v3 ist nur ab exakt 2.20.15 migrierbar; Suche
+      # wechselt Whoosh -> Tantivy, Index wird beim ersten Start neu gebaut). App-Image
+      # wird via customManager (datasource=docker) von Renovate getrackt.
+      # renovate: datasource=docker depName=ghcr.io/paperless-ngx/paperless-ngx
+      tag: "3.0.2"
+
+    controller:
+      type: deployment
+      replicas: 1
+
+    env:
+      # --- v3-Chart-Pflichtfelder (harmlos auch unter 2.20.15) ---
+      PAPERLESS_DBENGINE: postgresql
+      PAPERLESS_PORT: "8000"
+      # --- Datenbank (CNPG) ---
+      PAPERLESS_DBHOST: homelab-postgres-rw.cnpg-system.svc.cluster.local
+      PAPERLESS_DBPORT: "5432"
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_DBPASS:
+        valueFrom:
+          secretKeyRef:
+            name: homelab-postgres-paperless
+            key: password
+      # --- Redis (jetzt eigenständiges Deployment im selben Namespace) ---
+      PAPERLESS_REDIS: redis://redis:6379
+      # --- Secrets aus SOPS-Secrets ---
+      PAPERLESS_SECRET_KEY:
+        valueFrom:
+          secretKeyRef:
+            name: paperless-ngx
+            key: PAPERLESS_SECRET_KEY
+      PAPERLESS_URL:
+        valueFrom:
+          secretKeyRef:
+            name: paperless-ngx
+            key: PAPERLESS_URL
+      PAPERLESS_SOCIALACCOUNT_PROVIDERS:
+        valueFrom:
+          secretKeyRef:
+            name: paperless-ngx-integrations
+            key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+      # --- App-Konfiguration (1:1 aus dem bisherigen Setup übernommen) ---
+      PAPERLESS_TIME_ZONE: Europe/Berlin
+      PAPERLESS_OCR_LANGUAGE: eng
+      # paperless-ngx = interner Service-Name; nötig, damit In-Cluster-Clients
+      # (paperless-gpt) die API über http://paperless-ngx erreichen, ohne dass
+      # Django den Host als DisallowedHost mit 400 ablehnt.
+      PAPERLESS_ALLOWED_HOSTS: paperless.f4mily.net,paperless-ngx
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: https://paperless.f4mily.net
+      PAPERLESS_TASK_WORKERS: "2"
+      PAPERLESS_THREADS_PER_WORKER: "1"
+      # NFS-Consume: inotify greift dort nicht -> Polling zwingend (v3 hat
+      # PAPERLESS_CONSUMER_POLLING in ..._POLLING_INTERVAL umbenannt; 0 = inotify).
+      PAPERLESS_CONSUMER_POLLING_INTERVAL: "60"
+      PAPERLESS_TIKA_ENABLED: "1"
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_CONSUMER_ENABLE_BARCODES: "true"
+      PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE: "true"
+      PAPERLESS_CONSUMER_ENABLE_TAG_BARCODE: "true"
+      PAPERLESS_CONSUMER_TAG_BARCODE_MAPPING: '{ "ASN13.*": "Hausbau" }'
+      PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
+      PAPERLESS_LOGOUT_REDIRECT_URL: https://login.f4mily.net/application/o/paperless/end-session/
+      PAPERLESS_SOCIAL_AUTO_SIGNUP: "true"
+      PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS: "true"
+      # Datums-Erkennung aus dem Dokumentinhalt abschalten: neue Dokumente erhalten
+      # das Consumption-/Scan-Datum als created-Datum statt eines aus dem OCR-Text
+      # geratenen (das lag reihenweise daneben, u.a. 1988er-Daten).
+      PAPERLESS_NUMBER_OF_SUGGESTED_DATES: "0"
+      # --- Interne KI (v3): nur LLM-Vorschläge (Titel/Tags/Correspondent), KEINE
+      # Embeddings/RAG -> kein Massen-Upload von Dokumentinhalten. Modell + Key
+      # identisch zu paperless-gpt (gpt-4o-mini, OpenAI). Key aus dessen Secret.
+      PAPERLESS_AI_ENABLED: "true"
+      PAPERLESS_AI_LLM_BACKEND: openai-like
+      PAPERLESS_AI_LLM_MODEL: gpt-4o-mini
+      PAPERLESS_AI_LLM_OUTPUT_LANGUAGE: German
+      PAPERLESS_AI_LLM_API_KEY:
+        valueFrom:
+          secretKeyRef:
+            name: paperless-gpt-secrets
+            key: OPENAI_API_KEY
+
+    service:
+      main:
+        ports:
+          http:
+            port: 80          # In-Cluster: http://paperless-ngx (Port 80)
+            targetPort: 8000   # App-Port (= containerPort)
+
+    # Statische NFS-PVs werden von kustomize-verwalteten PVCs (volumeName-Bindung)
+    # gehalten und hier nur referenziert (existingClaim). subPath ist zwingend: alle
+    # PVs teilen sich den NFS-Pfad /mnt/Storagepool/Documents.
+    persistence:
+      data:
+        enabled: true
+        existingClaim: paperless-ngx-data
+        mountPath: /usr/src/paperless/data
+        subPath: paperless/data
+      media:
+        enabled: true
+        existingClaim: paperless-ngx-media
+        mountPath: /usr/src/paperless/media
+        subPath: paperless/media
+      export:
+        enabled: true
+        existingClaim: paperless-ngx-export
+        mountPath: /usr/src/paperless/export
+        subPath: paperless/export
+      consume:
+        enabled: true
+        existingClaim: paperless-ngx-consume
+        mountPath: /usr/src/paperless/consume
+        subPath: paperless/consume
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        memory: 2Gi
+
+    # Ingress läuft separat (apps/base/paperless-ngx/ingress.yaml).
+    ingress:
+      main:
         enabled: false
-      volumes:
-        - name: data
-          path: /usr/src/paperless/data
-          size: 5Gi
-          storageClassName: nfs-media-static
-        - name: media
-          path: /usr/src/paperless/media
-          size: 15Gi
-          storageClassName: nfs-media-static
-        - name: export
-          path: /usr/src/paperless/export
-          size: 20Gi
-          storageClassName: nfs-media-static
-      secretRefs:
-        - key: PAPERLESS_SECRET_KEY
-          name: paperless-ngx
-        - key: PAPERLESS_URL
-          name: paperless-ngx
-        - key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
-          name: paperless-ngx-integrations
-    redis:
-      volumes: []

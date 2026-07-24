@@ -39,7 +39,9 @@ spec:
             - name: LLM_PROVIDER
               value: openai
             - name: LLM_MODEL
-              value: gpt-4o
+              value: gpt-4o-mini
+            - name: LLM_LANGUAGE
+              value: German
             # LLM-OCR über Vision-Modell (verarbeitet Dokument-Bilder)
             - name: OCR_PROVIDER
               value: llm
@@ -52,6 +54,22 @@ spec:
                 secretKeyRef:
                   name: paperless-gpt-secrets
                   key: OPENAI_API_KEY
+            # Deterministische OCR, keine neuen Tags anlegen (nur bestehende nutzen)
+            - name: VISION_LLM_TEMPERATURE
+              value: "0"
+            - name: CREATE_NEW_TAGS
+              value: "false"
+            - name: PAPERLESS_PUBLIC_URL
+              value: https://paperless.f4mily.net
+            # Verbessertes durchsuchbares PDF zurückschreiben und Original ersetzen.
+            # Original wandert in den Paperless-Papierkorb (30 Tage wiederherstellbar);
+            # Metadaten werden auf das neue PDF übernommen.
+            - name: PDF_UPLOAD
+              value: "true"
+            - name: PDF_REPLACE
+              value: "true"
+            - name: PDF_COPY_METADATA
+              value: "true"
           readinessProbe:
             tcpSocket:
               port: http
