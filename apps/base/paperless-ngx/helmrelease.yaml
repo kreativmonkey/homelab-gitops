@@ -92,6 +92,18 @@ spec:
       # das Consumption-/Scan-Datum als created-Datum statt eines aus dem OCR-Text
       # geratenen (das lag reihenweise daneben, u.a. 1988er-Daten).
       PAPERLESS_NUMBER_OF_SUGGESTED_DATES: "0"
+      # --- Interne KI (v3): nur LLM-Vorschläge (Titel/Tags/Correspondent), KEINE
+      # Embeddings/RAG -> kein Massen-Upload von Dokumentinhalten. Modell + Key
+      # identisch zu paperless-gpt (gpt-4o-mini, OpenAI). Key aus dessen Secret.
+      PAPERLESS_AI_ENABLED: "true"
+      PAPERLESS_AI_LLM_BACKEND: openai-like
+      PAPERLESS_AI_LLM_MODEL: gpt-4o-mini
+      PAPERLESS_AI_LLM_OUTPUT_LANGUAGE: German
+      PAPERLESS_AI_LLM_API_KEY:
+        valueFrom:
+          secretKeyRef:
+            name: paperless-gpt-secrets
+            key: OPENAI_API_KEY
 
     service:
       main:
