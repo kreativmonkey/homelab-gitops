@@ -35,8 +35,9 @@ spec:
   values:
     replicaCount: 1
     # Recreate strategy required for RWO volumes
-    strategy:
+    deploymentStrategy:
       type: Recreate
+      rollingUpdate: null
     # Image tag defaults to chart appVersion (v0.12.2) — do not override via Renovate helm-values
     service:
       port: 8080
