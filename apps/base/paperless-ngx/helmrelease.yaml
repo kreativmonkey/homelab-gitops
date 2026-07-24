@@ -22,11 +22,11 @@ spec:
   values:
     image:
       repository: ghcr.io/paperless-ngx/paperless-ngx
-      # Chart-Migration bleibt bewusst auf 2.20.15 (verhaltensneutral). Der Marker
-      # macht das App-Image für Renovate sichtbar (customManager, datasource=docker) —
-      # das v3-Major-Upgrade kommt danach als eigener PR (DB-Backup + Migration-Guide).
+      # Major-Upgrade v2.20.15 -> v3 (v3 ist nur ab exakt 2.20.15 migrierbar; Suche
+      # wechselt Whoosh -> Tantivy, Index wird beim ersten Start neu gebaut). App-Image
+      # wird via customManager (datasource=docker) von Renovate getrackt.
       # renovate: datasource=docker depName=ghcr.io/paperless-ngx/paperless-ngx
-      tag: "2.20.15"
+      tag: "3.0.2"
 
     controller:
       type: deployment
@@ -74,7 +74,9 @@ spec:
       PAPERLESS_CSRF_TRUSTED_ORIGINS: https://paperless.f4mily.net
       PAPERLESS_TASK_WORKERS: "2"
       PAPERLESS_THREADS_PER_WORKER: "1"
-      PAPERLESS_CONSUMER_POLLING: "60"
+      # NFS-Consume: inotify greift dort nicht -> Polling zwingend (v3 hat
+      # PAPERLESS_CONSUMER_POLLING in ..._POLLING_INTERVAL umbenannt; 0 = inotify).
+      PAPERLESS_CONSUMER_POLLING_INTERVAL: "60"
       PAPERLESS_TIKA_ENABLED: "1"
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
       PAPERLESS_TIKA_ENDPOINT: http://tika:9998
