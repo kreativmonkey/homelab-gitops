@@ -58,6 +58,9 @@ How to avoid this in the future. Include specific checks or guardrails.
 | [netbird-reverse-proxy-traefik-grpc-timeout.md](netbird-reverse-proxy-traefik-grpc-timeout.md) | NetBird Reverse Proxy: 404/502 from Traefik gRPC Stream Timeout | 2026-06-14 |
 | [talos-automatic-upgrade-suc-auth.md](talos-automatic-upgrade-suc-auth.md) | Automatic Talos OS Upgrades via System Upgrade Controller | 2026-06-18 |
 | [cnpg-failover-storm-soft-antiaffinity.md](cnpg-failover-storm-soft-antiaffinity.md) | CNPG Failover Storm from Soft Pod Anti-Affinity on Node Drain | 2026-06-21 |
+| [renovate-calver-docker-image-not-detected.md](renovate-calver-docker-image-not-detected.md) | Renovate: CalVer Docker Image Updates Not Detected | 2026-06-22 |
+| [forgejo-500-nil-pullrequest.md](forgejo-500-nil-pullrequest.md) | Forgejo: Pull Request 500 from Nil PullRequest | 2026-07-23 |
+| [goloom-rwo-upgrade-race.md](goloom-rwo-upgrade-race.md) | Goloom RWO Upgrade Race | 2026-07-24 |
 
 ---
 
