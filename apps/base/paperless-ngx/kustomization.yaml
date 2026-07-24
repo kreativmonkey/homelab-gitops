@@ -3,6 +3,8 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - consume-pvc.yaml
+  - paperless-pvcs.yaml
+  - redis-deployment.yaml
   - document-services-deployment.yaml
   - helmrelease.yaml
   - ingress.yaml
