@@ -9,7 +9,7 @@ spec:
   ports:
     - name: http
       port: 80
-      targetPort: 8000
+      targetPort: 8765
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: spectrumknx
-          image: ghcr.io/martinhoefling/spectrumknx:latest
+          image: ghcr.io/martinhoefling/spectrumknx:1.16.2
           env:
             - name: POSTGRES_USER
               value: knxuser
@@ -69,17 +69,17 @@ spec:
               value: 1.1.251
           ports:
             - name: http
-              containerPort: 8000
+              containerPort: 8765
           readinessProbe:
             httpGet:
               path: /
-              port: 8000
+              port: 8765
             initialDelaySeconds: 15
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /
-              port: 8000
+              port: 8765
             initialDelaySeconds: 30
             periodSeconds: 30
           resources:
