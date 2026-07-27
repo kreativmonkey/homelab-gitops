@@ -4,6 +4,10 @@
 
 This directory contains distilled knowledge from past operations that did not work on the first attempt. These are not generic tutorials but specific pitfalls and solutions discovered the hard way.
 
+> **Looking for the generalized rules** rather than the per-incident stories?
+> See [`../rulebook.md`](../rulebook.md) — the "build it right from day one"
+> ruleset harvested from every learning below.
+
 ## When to Create a New Learning
 
 **Create a learning when:**

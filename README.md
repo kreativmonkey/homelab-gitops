@@ -267,6 +267,7 @@ S3 on a fresh deploy.
 
 ## Further Documentation
 
+- [`docs/rulebook.md`](./docs/rulebook.md) — distilled build rules (avoid the mistakes we already made)
 - [`docs/cluster-access.md`](./docs/cluster-access.md) — get a kubeconfig
 - [`docs/applications.md`](./docs/applications.md) — enable/disable apps & hostnames
 - [`docs/disaster-recovery/README.md`](./docs/disaster-recovery/README.md) — recovery runbook
