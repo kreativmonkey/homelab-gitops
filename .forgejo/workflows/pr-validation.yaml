@@ -9,14 +9,32 @@ on:
       - main
 
 jobs:
-  validate:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
-
       - name: Install Nix
         uses: https://github.com/cachix/install-nix-action@v31.11.0
+      - name: Renovate audit + YAML lint
+        run: nix develop -c just ci-lint
 
-      - name: Run validation (includes Renovate audit)
-        run: nix develop -c just validate
+  kustomize-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Install Nix
+        uses: https://github.com/cachix/install-nix-action@v31.11.0
+      - name: Kustomize build + kubeconform
+        run: nix develop -c just kustomize-validate
+
+  helm-render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Install Nix
+        uses: https://github.com/cachix/install-nix-action@v31.11.0
+      - name: Helm chart render + kubeconform
+        run: nix develop -c just helm-render
