@@ -38,10 +38,16 @@ fi
 
 CLUSTER_NAME="gitops-homelab-ci"
 BUILD_DIR="$(mktemp -d)"
+
+# talosctl's docker provisioner needs root (it sets up CNI networking on the
+# host) — "please run as root user" otherwise. `sudo -E env "PATH=$PATH"`
+# keeps the nix-shell PATH intact under sudo; kind needs no such elevation.
+talosctl_sudo() { sudo -E env "PATH=$PATH" talosctl "$@"; }
+
 cleanup() {
   rm -rf "$BUILD_DIR"
   if [[ "$CLUSTER_PROVISIONER" == "talos" ]]; then
-    talosctl cluster destroy --provisioner=docker --name "$CLUSTER_NAME" 2>/dev/null || true
+    talosctl_sudo cluster destroy --provisioner=docker --name "$CLUSTER_NAME" 2>/dev/null || true
   else
     kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || true
   fi
@@ -50,10 +56,15 @@ trap cleanup EXIT
 
 log "${CLUSTER_PROVISIONER} cluster bootstrap"
 if [[ "$CLUSTER_PROVISIONER" == "talos" ]]; then
-  talosctl cluster destroy --provisioner=docker --name "$CLUSTER_NAME" 2>/dev/null || true
-  talosctl cluster create --provisioner=docker --name "$CLUSTER_NAME" \
+  talosctl_sudo cluster destroy --provisioner=docker --name "$CLUSTER_NAME" 2>/dev/null || true
+  talosctl_sudo cluster create --provisioner=docker --name "$CLUSTER_NAME" \
     --kubernetes-version "$K8S_VERSION" --wait
-  talosctl kubeconfig --provisioner=docker --name "$CLUSTER_NAME" --force
+  TALOS_KUBECONFIG="${BUILD_DIR}/talos-kubeconfig"
+  talosctl_sudo kubeconfig "$TALOS_KUBECONFIG" --provisioner=docker --name "$CLUSTER_NAME" --force
+  # kubeconfig was written by root (via sudo) — hand it back so plain kubectl
+  # calls below (not running under sudo) can read it.
+  sudo chown "$(id -u):$(id -g)" "$TALOS_KUBECONFIG"
+  export KUBECONFIG="$TALOS_KUBECONFIG"
 else
   KIND_IMAGE="kindest/node:v${K8S_VERSION}"
   kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || true
