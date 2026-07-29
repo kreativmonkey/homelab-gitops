@@ -43,7 +43,7 @@ trap cleanup EXIT
 # rather than a real semantic error — treat that as a skip, not a failure.
 dry_run_server() {
   local file="$1" out
-  if ! out="$(kubectl apply --dry-run=server --force-conflicts -f "$file" 2>&1)"; then
+  if ! out="$(kubectl apply --dry-run=server -f "$file" 2>&1)"; then
     if grep -qE 'no matches for kind|the server doesn.t have a resource type' <<<"$out"; then
       echo "WARN: dry-run skipped for $(basename "$file") (CRD not installed in CI kind cluster): $(head -1 <<<"$out")"
       return 0
