@@ -57,7 +57,9 @@ if [[ "$CLUSTER_PROVISIONER" == "talos" ]]; then
   # needs no root. It also has no --wait flag, so poll for API reachability
   # ourselves before handing off to the Flux install + dry-run steps below.
   talosctl cluster destroy --name "$CLUSTER_NAME" 2>/dev/null || true
-  talosctl cluster create docker --name "$CLUSTER_NAME" \
+  # cluster create docker has no --wait and no --debug flag, so a hard
+  # timeout is the only guard against it hanging silently.
+  timeout 300 talosctl cluster create docker --name "$CLUSTER_NAME" \
     --kubernetes-version "$K8S_VERSION"
   TALOS_KUBECONFIG="${BUILD_DIR}/talos-kubeconfig"
   talosctl kubeconfig "$TALOS_KUBECONFIG" --force

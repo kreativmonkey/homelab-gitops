@@ -58,6 +58,7 @@ jobs:
   # once that's confirmed.
   server-dry-run-talos:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
