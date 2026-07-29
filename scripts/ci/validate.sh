@@ -41,9 +41,15 @@ trap cleanup EXIT
 # Server-side dry-run against objects whose CRDs aren't installed in the
 # bare-bones kind cluster (only Flux's are) fails with "no matches for kind"
 # rather than a real semantic error — treat that as a skip, not a failure.
+#
+# Uses --server-side (matching how Flux's own controllers apply resources)
+# rather than client-side apply: client-side apply stores the full previous
+# config in a last-applied-configuration annotation, which large CRDs (e.g.
+# CNPG's Cluster CRD) blow past the 262144-byte annotation size limit with —
+# a real Kubernetes limitation, not a bug in our manifests.
 dry_run_server() {
   local file="$1" out
-  if ! out="$(kubectl apply --dry-run=server -f "$file" 2>&1)"; then
+  if ! out="$(kubectl apply --server-side --force-conflicts --dry-run=server -f "$file" 2>&1)"; then
     if grep -qE 'no matches for kind|the server doesn.t have a resource type' <<<"$out"; then
       echo "WARN: dry-run skipped for $(basename "$file") (CRD not installed in CI kind cluster): $(head -1 <<<"$out")"
       return 0
@@ -91,10 +97,16 @@ for path in "${KUSTOMIZE_PATHS[@]}"; do
   kubeconform "${KUBECONFORM_ARGS[@]}" -summary -output text "$out"
 
   if [[ "$KIND_AVAILABLE" == "1" ]]; then
+    # SOPS-encrypted Secrets are ciphertext in git — they can never pass
+    # admission (illegal base64, unknown "sops" field) and CI never decrypts
+    # them, so they're a permanent, meaningless source of noise here. Drop
+    # them before the dry-run; kubeconform above already ignores Secret kind.
+    NOSECRETS="${out%.yaml}-nosecrets.yaml"
+    yq 'select(.kind != "Secret")' "$out" > "$NOSECRETS" 2>/dev/null || cp "$out" "$NOSECRETS"
     # Non-fatal for now: this covers the whole repo's Kustomize output, which
     # hasn't had a verified clean server-side dry-run run yet. Promote to a
     # hard failure once a real CI run confirms no pre-existing false positives.
-    dry_run_server "$out" || echo "WARN: server-side dry-run failed for $path (see above)"
+    dry_run_server "$NOSECRETS" || echo "WARN: server-side dry-run failed for $path (see above)"
   fi
 done
 
@@ -106,70 +118,83 @@ while IFS= read -r -d '' file; do
   # both documents' values, which breaks every equality check below and makes
   # the release silently `continue` out of the loop with no diagnostic at
   # all (this is exactly how kite went unrendered/unvalidated).
-  chart="$(yq -r 'select(.kind == "HelmRelease") | .spec.chart.spec.chart // ""' "$file")"
-  version="$(yq -r 'select(.kind == "HelmRelease") | .spec.chart.spec.version // ""' "$file")"
-  repo_kind="$(yq -r 'select(.kind == "HelmRelease") | .spec.chart.spec.sourceRef.kind // ""' "$file")"
-  repo_name="$(yq -r 'select(.kind == "HelmRelease") | .spec.chart.spec.sourceRef.name // ""' "$file")"
-  release_ns="$(yq -r 'select(.kind == "HelmRelease") | .metadata.namespace // "default"' "$file")"
-  release_name="$(yq -r 'select(.kind == "HelmRelease") | .metadata.name' "$file")"
+  #
+  # A file can also hold *more than one* HelmRelease document (cert-manager +
+  # cert-manager-webhook-hetzner) — select(.kind == "HelmRelease") alone still
+  # yields one multi-doc blob per field in that case, corrupting every value
+  # with an embedded "---". List the release names first, then re-select by
+  # name so each release is extracted as its own single document.
+  release_names="$(yq -r 'select(.kind == "HelmRelease") | .metadata.name' "$file")"
+  [[ -n "$release_names" ]] || continue
 
-  [[ -n "$chart" && "$chart" != "null" ]] || continue
-  if [[ "$repo_kind" != "HelmRepository" ]]; then
-    echo "WARN: skip helm template for $release_name (chart sourced from $repo_kind, not HelmRepository)"
-    continue
-  fi
+  while IFS= read -r release_name; do
+    [[ -n "$release_name" ]] || continue
+    sel="select(.kind == \"HelmRelease\" and .metadata.name == \"$release_name\")"
 
-  # HelmRepository may be defined in the same file, or centrally.
-  repo_url="$(yq -r "
-    select(.kind == \"HelmRepository\" and .metadata.name == \"$repo_name\") |
-    .spec.url
-  " "$file" 2>/dev/null | head -1)"
+    chart="$(yq -r "$sel | .spec.chart.spec.chart // \"\"" "$file")"
+    version="$(yq -r "$sel | .spec.chart.spec.version // \"\"" "$file")"
+    repo_kind="$(yq -r "$sel | .spec.chart.spec.sourceRef.kind // \"\"" "$file")"
+    repo_name="$(yq -r "$sel | .spec.chart.spec.sourceRef.name // \"\"" "$file")"
+    release_ns="$(yq -r "$sel | .metadata.namespace // \"default\"" "$file")"
 
-  if [[ -z "$repo_url" || "$repo_url" == "null" ]]; then
+    [[ -n "$chart" && "$chart" != "null" ]] || continue
+    if [[ "$repo_kind" != "HelmRepository" ]]; then
+      echo "WARN: skip helm template for $release_name (chart sourced from $repo_kind, not HelmRepository)"
+      continue
+    fi
+
+    # HelmRepository may be defined in the same file, or centrally.
     repo_url="$(yq -r "
       select(.kind == \"HelmRepository\" and .metadata.name == \"$repo_name\") |
       .spec.url
-    " infrastructure/base/sources/helm-repositories.yaml 2>/dev/null | head -1)"
-  fi
+    " "$file" 2>/dev/null | head -1)"
 
-  if [[ -z "$repo_url" || "$repo_url" == "null" ]]; then
-    echo "WARN: skip helm template for $release_name (repo $repo_name not resolved)"
-    continue
-  fi
+    if [[ -z "$repo_url" || "$repo_url" == "null" ]]; then
+      repo_url="$(yq -r "
+        select(.kind == \"HelmRepository\" and .metadata.name == \"$repo_name\") |
+        .spec.url
+      " infrastructure/base/sources/helm-repositories.yaml 2>/dev/null | head -1)"
+    fi
 
-  if [[ "$repo_url" == oci://* ]]; then
-    echo "WARN: skip OCI chart $release_name ($repo_url)"
-    continue
-  fi
+    if [[ -z "$repo_url" || "$repo_url" == "null" ]]; then
+      echo "WARN: skip helm template for $release_name (repo $repo_name not resolved)"
+      continue
+    fi
 
-  log "helm template: $release_name ($chart@$version)"
-  helm repo add "ci-${repo_name}" "$repo_url" --force-update >/dev/null 2>&1 || true
-  helm repo update "ci-${repo_name}" >/dev/null 2>&1 || helm repo update >/dev/null
+    if [[ "$repo_url" == oci://* ]]; then
+      echo "WARN: skip OCI chart $release_name ($repo_url)"
+      continue
+    fi
 
-  # Extract values to a temporary file for better template rendering
-  VALUES_FILE=$(mktemp)
-  yq -r 'select(.kind == "HelmRelease") | .spec.values // {}' "$file" > "$VALUES_FILE"
+    log "helm template: $release_name ($chart@$version)"
+    helm repo add "ci-${repo_name}" "$repo_url" --force-update >/dev/null 2>&1 || true
+    helm repo update "ci-${repo_name}" >/dev/null 2>&1 || helm repo update >/dev/null
 
-  RENDERED="${BUILD_DIR}/helm-${release_name}.yaml"
-  if ! helm template "$release_name" "ci-${repo_name}/${chart}" \
-    --version "$version" \
-    --namespace "$release_ns" \
-    -f "$VALUES_FILE" \
-    >"$RENDERED"; then
-    echo "WARN: helm template failed for $release_name"
+    # Extract values to a temporary file for better template rendering
+    VALUES_FILE=$(mktemp)
+    yq -r "$sel | .spec.values // {}" "$file" > "$VALUES_FILE"
+
+    RENDERED="${BUILD_DIR}/helm-${release_name}.yaml"
+    if ! helm template "$release_name" "ci-${repo_name}/${chart}" \
+      --version "$version" \
+      --namespace "$release_ns" \
+      -f "$VALUES_FILE" \
+      >"$RENDERED"; then
+      echo "WARN: helm template failed for $release_name"
+      rm -f "$VALUES_FILE"
+      continue
+    fi
     rm -f "$VALUES_FILE"
-    continue
-  fi
-  rm -f "$VALUES_FILE"
 
-  kubeconform "${KUBECONFORM_ARGS[@]}" -summary -output text "$RENDERED" \
-    || echo "WARN: kubeconform failed for $release_name"
+    kubeconform "${KUBECONFORM_ARGS[@]}" -summary -output text "$RENDERED" \
+      || echo "WARN: kubeconform failed for $release_name"
 
-  if [[ "$KIND_AVAILABLE" == "1" ]]; then
-    kubectl create namespace "$release_ns" --dry-run=client -o yaml \
-      | kubectl apply -f - >/dev/null
-    dry_run_server "$RENDERED"
-  fi
+    if [[ "$KIND_AVAILABLE" == "1" ]]; then
+      kubectl create namespace "$release_ns" --dry-run=client -o yaml \
+        | kubectl apply -f - >/dev/null
+      dry_run_server "$RENDERED"
+    fi
+  done <<< "$release_names"
 done < <(find infrastructure apps -name helmrelease.yaml -print0 2>/dev/null)
 
 log "All validation stages passed."
