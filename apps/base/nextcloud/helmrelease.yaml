@@ -160,30 +160,13 @@ spec:
         runAsNonRoot: true
       podSecurityContext:
         fsGroup: 1000
-      # php-confd emptyDir for Redis session config (non-root cannot write to conf.d).
-      extraVolumes:
-        - name: php-confd
-          emptyDir: {}
-      extraVolumeMounts:
-        # Non-root cannot create redis-session.ini in image-owned conf.d (nextcloud/helm#187).
-        - name: php-confd
-          mountPath: /usr/local/etc/php/conf.d/redis-session.ini
-          subPath: redis-session.ini
+      # Chart >=9.x already ships its own php-confd emptyDir + init-redis-session-ini
+      # container when redis.enabled=true (nextcloud/helm#187 fix landed upstream).
+      # Do not re-add extraVolumes/extraVolumeMounts/extraInitContainers for this —
+      # it duplicates the chart's own "php-confd" volume name and the Deployment
+      # is rejected with ".spec.template.spec.volumes: duplicate entries for key
+      # [name=\"php-confd\"]".
       extraInitContainers:
-        - name: create-redis-session-ini
-          image: docker.io/library/busybox:1.38
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-          command:
-            - sh
-            - -c
-            - touch /mnt/redis-session.ini
-          volumeMounts:
-            - name: php-confd
-              mountPath: /mnt
-
         - name: occ-db-sync
           image: docker.io/library/nextcloud:34.0.1-apache
           securityContext:
