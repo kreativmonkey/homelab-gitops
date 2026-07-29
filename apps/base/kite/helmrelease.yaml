@@ -34,10 +34,13 @@ spec:
         namespace: flux-system
   values:
     replicaCount: 1
-    # Recreate strategy required for RWO volumes
+    # Recreate strategy required for RWO volumes.
+    # Do NOT add `rollingUpdate: null` here - the chart's `with .Values.deploymentStrategy`
+    # renders the whole map via toYaml regardless of nil leaves, so an explicit
+    # `rollingUpdate: null` still shows up in the Deployment spec and Kubernetes
+    # rejects it as Forbidden when type is Recreate. Omit the key entirely instead.
     deploymentStrategy:
       type: Recreate
-      rollingUpdate: null
     # Image tag defaults to chart appVersion (v0.12.2) — do not override via Renovate helm-values
     service:
       port: 8080
