@@ -50,3 +50,21 @@ jobs:
         env:
           ENABLE_KIND_CI: "1"
         run: nix develop -c just server-dry-run
+
+  # Experimental — not a required check. Exercises the same server-dry-run
+  # stage against Talos-in-Docker instead of kind, to see whether talosctl's
+  # docker provisioner works cleanly on a GitHub-hosted runner. Remove this
+  # job (or promote it to replace/parallel the kind job as a required check)
+  # once that's confirmed.
+  server-dry-run-talos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31.11.0
+      - name: Server-side dry-run (talos)
+        env:
+          ENABLE_KIND_CI: "1"
+          CLUSTER_PROVISIONER: "talos"
+        run: nix develop -c just server-dry-run
