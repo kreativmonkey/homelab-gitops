@@ -12,12 +12,31 @@ help:
     @echo "  cd <dir> && just sops-create my-secret flux-system api-token=xxx"
 
 # --- Validation & builds ---
+# CI is split into independent stages so a lint failure surfaces in seconds
+# instead of waiting on the ~2min cluster bootstrap. Each stage below maps
+# 1:1 to a CI job (see .github/workflows/pr-validation.yaml).
 
-validate:
-    SKIP_KIND=1 ./scripts/ci/validate.sh
+# Stage: Renovate dependency audit + YAML lint (no Docker required)
+ci-lint: renovate-audit lint
 
-validate-full:
-    ./scripts/ci/validate.sh
+# Stage: kustomize build + kubeconform schema check (no Docker required)
+kustomize-validate:
+    ./scripts/ci/kustomize-validate.sh
+
+# Stage: helm template render + kubeconform schema check (no Docker required)
+helm-render:
+    ./scripts/ci/helm-render.sh
+
+# Stage: bootstrap a throwaway cluster (kind, or talos via CLUSTER_PROVISIONER=talos)
+# and run kubectl --dry-run=server admission checks. The only stage needing Docker.
+server-dry-run:
+    ./scripts/ci/server-dry-run.sh
+
+# All schema-only stages (no Docker) — matches the old `just validate`.
+validate: ci-lint kustomize-validate helm-render
+
+# Everything, including the server-side dry-run (needs Docker; local or ENABLE_KIND_CI=1).
+validate-full: validate server-dry-run
 
 renovate-audit:
     ./scripts/ci/renovate-audit.sh
