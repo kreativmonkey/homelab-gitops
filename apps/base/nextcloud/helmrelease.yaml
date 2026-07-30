@@ -25,6 +25,22 @@ spec:
                   - ip: "91.99.145.19"
                     hostnames:
                       - mail.f4mily.net
+              # Chart declares the php-confd volume + init-redis-session-ini container, but
+              # never mounts php-confd into the APP container (only into the cron *sidecar*,
+              # which we don't use — cronjob.type is "cronjob"). The image entrypoint then
+              # writes redis-session.ini into the image's root-owned conf.d and dies with
+              # "Permission denied" under runAsUser 1000 → CrashLoopBackOff.
+              # Must be a postRenderer, not values: nextcloud.extraVolumeMounts is appended
+              # to the CronJob container too, where php-confd does not exist ("volumeMounts
+              # name Not found"), and nextcloud.extraVolumes duplicates the chart's own
+              # volume ("duplicate entries for key [name=php-confd]"). Patching the
+              # Deployment alone hits neither.
+              - op: add
+                path: /spec/template/spec/containers/0/volumeMounts/-
+                value:
+                  name: php-confd
+                  mountPath: /usr/local/etc/php/conf.d/redis-session.ini
+                  subPath: redis-session.ini
   install:
     disableWait: true
     remediation:
