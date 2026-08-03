@@ -1,0 +1,30 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mcp-hermes-cnpg-backup
+  namespace: cnpg-system
+  labels:
+    app.kubernetes.io/name: mcp-server
+rules:
+  - apiGroups: ["postgresql.cnpg.io"]
+    resources: ["clusters", "scheduledbackups", "backups"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["postgresql.cnpg.io"]
+    resources: ["backups"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mcp-hermes-cnpg-backup
+  namespace: cnpg-system
+  labels:
+    app.kubernetes.io/name: mcp-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mcp-hermes-cnpg-backup
+subjects:
+  - kind: User
+    name: mcp-hermes
+    apiGroup: rbac.authorization.k8s.io
