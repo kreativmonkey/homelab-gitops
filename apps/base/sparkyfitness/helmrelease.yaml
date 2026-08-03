@@ -77,9 +77,11 @@ spec:
           memory: 768Mi
     frontend:
       image:
-        repository: docker.io/codewithcj/sparkyfitness
-        tag: v1.6.0
-      # Docker Hub `codewithcj/sparkyfitness` listens on 8080 (not chart default :80 / ghcr frontend image).
+        # Temporary frontend from the same upstream PR commit as the test server.
+        # Keeps the strict frontend API schemas compatible with the newer server response.
+        repository: ghcr.io/kreativmonkey/sparkyfitness-server
+        tag: pr-2019-frontend
+        digest: sha256:45047939f089c5b6dad51904dfd48d45a0b0538035da640e6fba567b3081385d
       port: 8080
       service:
         port: 8080
