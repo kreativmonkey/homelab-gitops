@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - rbac.yaml
+  - hermes-cnpg-backup-rbac.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml
