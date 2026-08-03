@@ -39,9 +39,9 @@ spec:
       valuesKey: SPARKY_FITNESS_OIDC_CLIENT_SECRET
       targetPath: config.oidc.secrets.clientSecret
   values:
-    # Public GHCR app images require auth; Docker Hub mirrors match upstream split server/frontend.
+    # Test PR #2019 uses public GHCR images for server/Garmin while frontend stays on Docker Hub.
     global:
-      imageRegistry: docker.io
+      imageRegistry: ""
     postgresql:
       enabled: false
     externalDatabase:
@@ -53,8 +53,9 @@ spec:
     server:
       replicas: 1
       image:
-        repository: codewithcj/sparkyfitness_server
-        tag: v1.6.0
+        repository: ghcr.io/kreativmonkey/sparkyfitness-server
+        tag: pr-2019
+        digest: sha256:f1cc3b7c1a1ec2d9faa3b9b24a04b8837913a1068aabcf37b5166aadf866c902
       secrets:
         generate: false
       appDatabase:
@@ -76,7 +77,7 @@ spec:
           memory: 768Mi
     frontend:
       image:
-        repository: codewithcj/sparkyfitness
+        repository: docker.io/codewithcj/sparkyfitness
         tag: v1.6.0
       # Docker Hub `codewithcj/sparkyfitness` listens on 8080 (not chart default :80 / ghcr frontend image).
       port: 8080
@@ -114,10 +115,11 @@ spec:
         enabled: true
         isChinaRegion: false
     garmin:
-      # Docker Hub image uses underscore (not chart default sparkyfitness-garmin).
+      # Temporary image built from SparkyFitness PR #2019.
       image:
-        repository: codewithcj/sparkyfitness_garmin
-        tag: v1.6.0
+        repository: ghcr.io/kreativmonkey/sparkyfitness-garmin
+        tag: pr-2019
+        digest: sha256:2e57f0781c1c62bdc8c4691e212474ecff43b8b2a038af66e4ded1bd25f09be5
       # Sized from cluster metrics (idle): ~3m CPU, ~95Mi RAM.
       resources:
         requests:
