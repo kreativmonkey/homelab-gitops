@@ -41,6 +41,23 @@ spec:
                   name: php-confd
                   mountPath: /usr/local/etc/php/conf.d/redis-session.ini
                   subPath: redis-session.ini
+          - target:
+              group: batch
+              version: v1
+              kind: CronJob
+              name: nextcloud-cron
+            patch: |
+              # Chart 9.2.5's cronjob.yaml never templates spec.suspend, so there is no
+              # values knob for it. On 2026-06-13, during the TrueNAS iSCSI outage, someone
+              # manually suspended this CronJob to stop failed-job alert spam and never
+              # reverted it. Since the field is absent from the rendered manifest, Helm's
+              # 3-way merge never touches it — the manual suspend survives every upgrade
+              # forever, invisible to Flux. Declaring it explicitly here puts it back under
+              # Helm/Flux ownership: a future manual "kubectl patch --suspend" gets reverted
+              # on the next reconcile instead of silently sticking.
+              - op: add
+                path: /spec/suspend
+                value: false
   install:
     disableWait: true
     remediation:
