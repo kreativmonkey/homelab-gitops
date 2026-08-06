@@ -41,8 +41,51 @@ spec:
       driver:
         image:
           tag: next
+        # p95/p99-derived (14d/7d VictoriaMetrics history), previously unset
+        # (Burstable, first-to-be-OOM-killed). No CPU limit by convention.
+        resources:
+          requests:
+            cpu: 10m
+            memory: 112Mi
+          limits:
+            memory: 192Mi
+      externalAttacher:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+      externalProvisioner:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 48Mi
+          limits:
+            memory: 128Mi
+      externalResizer:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 48Mi
+          limits:
+            memory: 128Mi
+      externalSnapshotter:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 48Mi
+          limits:
+            memory: 128Mi
     node:
       hostPID: true
+      cleanup:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
       driver:
         image:
           tag: next
@@ -53,6 +96,29 @@ spec:
             value: /usr/local/sbin/iscsiadm
         iscsiDirHostPath: /var/iscsi
         iscsiDirHostPathType: ""
+        resources:
+          requests:
+            cpu: 40m
+            memory: 192Mi
+          limits:
+            memory: 320Mi
+      driverRegistrar:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+    # Shared csi-grpc-proxy sidecar injected into both the controller and node
+    # pods (single top-level key, no per-pod override in the chart). Both
+    # pods measured to the same target, so one value covers both.
+    csiProxy:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
     storageClasses:
       - name: truenas-iscsi
         defaultClass: true

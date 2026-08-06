@@ -46,6 +46,18 @@ spec:
           enabled: true
           type: emptyDir
           accessMode: ReadWriteOnce
+      controllers:
+        main:
+          containers:
+            main:
+              # p95/p99-derived (14d/7d VictoriaMetrics history), previously unset.
+              # Cache container -> Guaranteed QoS (request == limit).
+              resources:
+                requests:
+                  cpu: 20m
+                  memory: 128Mi
+                limits:
+                  memory: 128Mi
     controllers:
       main:
         containers:
@@ -66,6 +78,18 @@ spec:
               image:
                 repository: ghcr.io/immich-app/immich-server
                 tag: v3.1.0
+              # p95/p99-derived (14d/7d VictoriaMetrics history). Previously
+              # nested as a sibling of `controllers` under `server:` — that
+              # key does not exist in this bjw-s-common-based chart, so Helm
+              # silently dropped it and the container ran with no resources
+              # at all (confirmed via `helm template`). Correct path is here,
+              # under controllers.main.containers.main.
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 1552Mi
+                limits:
+                  memory: 2432Mi
       persistence:
         data:
           accessMode: ReadWriteOnce
@@ -87,12 +111,6 @@ spec:
       ingress:
         main:
           enabled: false
-      resources:
-        requests:
-          cpu: 50m
-          memory: 768Mi
-        limits:
-          memory: 1Gi
     machine-learning:
       enabled: true
       controllers:
@@ -102,14 +120,18 @@ spec:
               image:
                 repository: ghcr.io/immich-app/immich-machine-learning
                 tag: v3.1.0
+              # p95/p99-derived (14d/7d VictoriaMetrics history). Previously
+              # nested as a sibling of `controllers` under `machine-learning:`
+              # — same dead-key mistake as immich-server above (see comment
+              # there); silently dropped by Helm, container ran unbounded.
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 592Mi
+                limits:
+                  memory: 1408Mi
       persistence:
         cache:
           enabled: true
           type: emptyDir
           accessMode: ReadWriteMany
-      resources:
-        requests:
-          cpu: 200m
-          memory: 512Mi
-        limits:
-          memory: 1Gi

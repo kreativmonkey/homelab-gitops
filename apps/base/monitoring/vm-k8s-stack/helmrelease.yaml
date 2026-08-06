@@ -6,6 +6,43 @@ metadata:
 spec:
   interval: 1h
   timeout: 10m
+  postRenderers:
+    - kustomize:
+        patches:
+          # The grafana subchart wires both k8s-sidecar containers
+          # (sc-dashboard, sc-datasources) to a single shared
+          # `sidecar.resources` values key — no per-sidecar override exists
+          # (verified in templates/_pod.tpl of the grafana chart). Since the
+          # two containers need different measured values, values: alone
+          # cannot express this; patch each container directly by name.
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: vm-k8s-stack-grafana
+            patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: vm-k8s-stack-grafana
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: grafana-sc-dashboard
+                        resources:
+                          requests:
+                            cpu: 10m
+                            memory: 96Mi
+                          limits:
+                            memory: 192Mi
+                      - name: grafana-sc-datasources
+                        resources:
+                          requests:
+                            cpu: 10m
+                            memory: 80Mi
+                          limits:
+                            memory: 128Mi
   chart:
     spec:
       chart: victoria-metrics-k8s-stack
@@ -75,6 +112,14 @@ spec:
       # Avoid install deadlock when operator pod is not up yet (webhook connection refused).
       admissionWebhooks:
         enabled: false
+      # p95/p99-derived (14d/7d VictoriaMetrics history), previously unset
+      # (Burstable, first-to-be-OOM-killed). No CPU limit by convention.
+      resources:
+        requests:
+          cpu: 50m
+          memory: 112Mi
+        limits:
+          memory: 192Mi
       image:
         registry: quay.io
       env:
@@ -102,6 +147,16 @@ spec:
             memory: 64Mi
           limits:
             memory: 512Mi
+        # config-reloader sidecar, injected by the VM operator from this CR
+        # field (not a plain Deployment `resources:` — there is no chart
+        # values path for it). p95/p99-derived (14d/7d VictoriaMetrics
+        # history); already had a 25Mi request (operator default), no limit.
+        configReloaderResources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
 
     # ============================================
     # VMALERT - Alerting
@@ -115,6 +170,13 @@ spec:
             memory: 64Mi
           limits:
             memory: 256Mi
+        # config-reloader sidecar (see vmagent.spec.configReloaderResources comment above).
+        configReloaderResources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
 
     # ============================================
     # ALERTMANAGER - ntfy via homelab-monitoring topic
@@ -129,6 +191,13 @@ spec:
           - alertmanager-ntfy-credentials
           - alertmanager-n8n-webhook
         resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+        # config-reloader sidecar (see vmagent.spec.configReloaderResources comment above).
+        configReloaderResources:
           requests:
             cpu: 10m
             memory: 32Mi
@@ -217,12 +286,26 @@ spec:
     # ============================================
     prometheus-node-exporter:
       enabled: true
+      # p95/p99-derived (14d/7d VictoriaMetrics history), previously unset
+      # (Burstable, first-to-be-OOM-killed). No CPU limit by convention.
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
 
     # ============================================
     # KUBE STATE METRICS
     # ============================================
     kube-state-metrics:
       enabled: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
 
     # ============================================
     # DEFAULT DASHBOARDS & RULES
