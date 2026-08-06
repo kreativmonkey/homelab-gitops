@@ -510,6 +510,23 @@ spec:
         successfulJobsHistoryLimit: 2
         activeDeadlineSeconds: 1800
         backoffLimit: 2
+        # nextcloud-app-iscsi ist ReadWriteOnce auf truenas-iscsi. Der CronJob mountet
+        # dasselbe Volume wie der App-Pod, kann es aber nur auf DESSEN Node attachen.
+        # Ohne Affinity verteilt der Scheduler die Job-Pods über alle drei Nodes; die
+        # ~2/3, die nicht auf dem App-Node landen, hängen mit "Multi-Attach error" bis
+        # activeDeadlineSeconds (30 min) greift — und blockieren wegen
+        # concurrencyPolicy=Forbid solange alle weiteren Läufe.
+        # requiredDuringScheduling, nicht preferred: ein Job auf dem falschen Node
+        # läuft nicht langsamer, er läuft gar nicht.
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: nextcloud
+                    app.kubernetes.io/instance: nextcloud
+                    app.kubernetes.io/component: app
         resources:
           requests:
             cpu: 50m
