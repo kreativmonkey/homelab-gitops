@@ -1,0 +1,20 @@
+# p95/p99-derived (14d/7d VictoriaMetrics history), previously unset
+# (Burstable, first-to-be-OOM-killed). No CPU limit by convention.
+# Plain kustomize base (fetched from upstream GitHub), no Helm values path —
+# resources are set via this strategic-merge patch on the container by name.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-upgrade-controller
+  namespace: system-upgrade
+spec:
+  template:
+    spec:
+      containers:
+        - name: system-upgrade-controller
+          resources:
+            requests:
+              cpu: 10m
+              memory: 48Mi
+            limits:
+              memory: 128Mi

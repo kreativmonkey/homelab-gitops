@@ -43,6 +43,14 @@ spec:
           timeoutSeconds: 5
         service:
           port: 8888
+        # p95/p99-derived (14d/7d VictoriaMetrics history), previously unset
+        # (Burstable, first-to-be-OOM-killed). No CPU limit by convention.
+        resources:
+          requests:
+            cpu: 10m
+            memory: 48Mi
+          limits:
+            memory: 128Mi
     extraArgs:
       - --webhook-provider-url=http://localhost:8888
     domainFilters:

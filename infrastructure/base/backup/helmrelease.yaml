@@ -55,15 +55,23 @@ spec:
         limits:
           cpu: 200m
           memory: 128Mi
+    # `velero:` is not a top-level key in this chart (verified via `helm
+    # template` against a clean checkout: the pre-existing `resources:`
+    # below rendered as nothing on the velero container, matching Phase-1's
+    # metrics finding of no current request/limit). priorityClassName is a
+    # separate, real pre-existing bug left untouched here (out of scope for
+    # this memory-requests change) — the correct resources path is the
+    # top-level `resources:` key below.
     velero:
       priorityClassName: "homelab-infrastructure"
-      resources:
-        requests:
-          cpu: 50m
-          memory: 64Mi
-        limits:
-          cpu: 200m
-          memory: 128Mi
+    # p95/p99-derived (14d/7d VictoriaMetrics history), previously unset
+    # (Burstable, first-to-be-OOM-killed). No CPU limit by convention.
+    resources:
+      requests:
+        cpu: 20m
+        memory: 80Mi
+      limits:
+        memory: 256Mi
     metrics:
       enabled: true
       service:

@@ -8,6 +8,7 @@ resources:
 patches:
   - path: patch-deployment-strategy.yaml
   - path: patch-controller-anti-affinity.yaml
+  - path: patch-resources.yaml
 images:
   - name: rancher/system-upgrade-controller
     # Must be a published stable tag. v0.20.0 was never released (only v0.20.0-rc.1),
