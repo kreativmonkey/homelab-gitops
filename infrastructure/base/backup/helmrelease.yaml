@@ -66,12 +66,14 @@ spec:
       priorityClassName: "homelab-infrastructure"
     # p95/p99-derived (14d/7d VictoriaMetrics history), previously unset
     # (Burstable, first-to-be-OOM-killed). No CPU limit by convention.
+    # Limit = 28d-Peak (214Mi) + 35 %; Backup-Läufe sind schubweise, und ein
+    # OOM mitten im Lauf kostet das Backup.
     resources:
       requests:
         cpu: 20m
         memory: 80Mi
       limits:
-        memory: 256Mi
+        memory: 320Mi
     metrics:
       enabled: true
       service:

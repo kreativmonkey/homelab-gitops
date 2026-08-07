@@ -84,12 +84,14 @@ spec:
               # silently dropped it and the container ran with no resources
               # at all (confirmed via `helm template`). Correct path is here,
               # under controllers.main.containers.main.
+              # Limit auf Peak (1998Mi) + 35 % statt knapp darüber — siehe die
+              # ausführliche Begründung bei machine-learning weiter unten.
               resources:
                 requests:
                   cpu: 10m
                   memory: 1552Mi
                 limits:
-                  memory: 2432Mi
+                  memory: 2752Mi
       persistence:
         data:
           accessMode: ReadWriteOnce
@@ -124,12 +126,21 @@ spec:
               # nested as a sibling of `controllers` under `machine-learning:`
               # — same dead-key mistake as immich-server above (see comment
               # there); silently dropped by Helm, container ran unbounded.
+              #
+              # Limit war zunächst 1408Mi = exakt der beobachtete 28d-Peak. Das
+              # war zu knapp: der Container erreicht beim Batch-Processing
+              # regelmäßig 1136–1407Mi (über viele Pod-Generationen gemessen),
+              # der Peak ist also kein Ausreißer, sondern der Normalfall. Ein
+              # Limit AUF dem Peak statt DARÜBER führte prompt zum OOMKill.
+              # Für einen zuvor unlimitierten Container ist das Maximum aus der
+              # Historie nur das, was er zufällig gebraucht hat — keine
+              # Bedarfsobergrenze. Daher Peak + 35 %.
               resources:
                 requests:
                   cpu: 10m
                   memory: 592Mi
                 limits:
-                  memory: 1408Mi
+                  memory: 1920Mi
       persistence:
         cache:
           enabled: true
