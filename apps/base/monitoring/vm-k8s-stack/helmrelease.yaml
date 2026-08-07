@@ -300,12 +300,15 @@ spec:
     # ============================================
     kube-state-metrics:
       enabled: true
+      # Limit = 28d-Peak (107Mi) + 35 %. Vorher 128Mi, also nur 19 % über dem
+      # Peak — zu knapp, sobald mehr Objekte im Cluster entstehen (kube-state-
+      # metrics skaliert mit der Objektzahl).
       resources:
         requests:
           cpu: 10m
           memory: 64Mi
         limits:
-          memory: 128Mi
+          memory: 192Mi
 
     # ============================================
     # DEFAULT DASHBOARDS & RULES
