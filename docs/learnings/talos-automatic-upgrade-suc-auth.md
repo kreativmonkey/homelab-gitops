@@ -194,11 +194,118 @@ every drain of its node. Scaled to `instances: 2` with `required` pod-anti-affin
 need extensions the shared `homelab-postgres` (vanilla `postgresql:18.4`) does not ship
 (`postgis` / vector `vchord`).
 
+## Update 2026-08-07 — the CNI deadlock (v1.13.7 → v1.13.8)
+
+The single most damaging stall so far, and the most portable lesson in this document:
+**a fail-closed admission webhook can prevent the cluster from rebuilding its own
+networking on a rebooted node.** Nothing about it is homelab-specific — any cluster
+running a mutating webhook on `pods` is exposed.
+
+**8. A `failurePolicy: Fail` webhook on `CREATE pods` without a `kube-system`
+exemption bricks CNI on every node reboot.**
+
+The netbird operator ships this:
+
+```yaml
+name:              mpod-v1.netbird.io
+failurePolicy:     Fail        # fail closed
+namespaceSelector: {}          # every namespace, including kube-system
+rules:             [{apiGroups: [""], resources: [pods], operations: [CREATE], scope: "*"}]
+objectSelector:    # only exempts the operator's OWN pods
+  matchExpressions: [{key: app.kubernetes.io/name, operator: NotIn, values: [netbird-operator]}]
+```
+
+Sequence: SUC upgrades cp2 → node reboots → its `kube-flannel` and `kube-proxy`
+DaemonSet pods are deleted → the DaemonSet controller tries to recreate them → the
+API server calls the webhook → the webhook's only backend pod is itself down (it was
+scheduled on that same node) → **admission fails closed** → flannel is never
+recreated → the node has no CNI → the operator pod can never start there → the
+webhook stays down. A closed loop that does not resolve on its own:
+
+```
+FailedCreate  daemonset/kube-flannel  Internal error occurred: failed calling webhook
+"mpod-v1.netbird.io": dial tcp 10.105.0.227:443: connect: connection refused
+```
+
+The blast radius is cluster-wide, not node-local: `kube-flannel`, `kube-proxy`,
+`coredns`, the CNPG operator and pgadmin all failed to create pods in every
+namespace. From there it cascaded into the drain: CNPG replicas pinned to cp2 could
+not start → every CNPG PDB sat at `disruptionsAllowed: 0` → the drain of cp1 retried
+`Cannot evict pod ... would violate the pod's disruption budget` for its full 10 min
+and the init container exited 1.
+
+**Manual unblock** (breaks the loop; everything else then self-heals in order —
+flannel → operators → CNPG replicas → PDB → drain):
+
+```bash
+kubectl patch mutatingwebhookconfiguration netbird-netbird-operator-mpod-webhook \
+  --type=json -p '[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Ignore"}]'
+```
+
+**Durable rule — audit this on every cluster before enabling autonomous upgrades:**
+no webhook may be `failurePolicy: Fail` on core `pods` without a `namespaceSelector`
+that excludes `kube-system` and the infrastructure namespaces. Sidecar injection is
+never important enough to hard-block pod admission cluster-wide.
+
+```bash
+kubectl get mutatingwebhookconfiguration,validatingwebhookconfiguration -o json | jq -r '
+  .items[].webhooks[] | select(.failurePolicy=="Fail")
+  | select([.rules[]?.resources[]?] | index("pods"))
+  | "\(.name) namespaceSelector=\(.namespaceSelector)"'
+```
+
+**9. A single-replica webhook backend is a single point of failure for everything it
+gates.** `netbird-operator` and `cnpg-cloudnative-pg` both run 1 replica with no
+anti-affinity. The netbird pod happened to land on the very node whose CNI had
+broken, so no endpoint survived anywhere. Any webhook backend that gates pod
+admission needs ≥2 replicas with `podAntiAffinity` on `kubernetes.io/hostname` — or
+`failurePolicy: Ignore`.
+
+**10. After fixing the cause, the DaemonSet controller still waits out its backoff.**
+Once the webhook was patched, ordinary pods were admitted again immediately, but
+`kube-flannel` stayed at 2/3 for a further **16 minutes**. The DaemonSet controller's
+`failedPodsBackoff` grows to a 15-minute cap after repeated `FailedCreate`, and it
+does not reset when the underlying cause disappears. Do not conclude the fix failed
+and start deleting things — verify that ordinary pods are being created again, then
+wait.
+
+**11. Node-pinned storage turns a CPU shortage into an unschedulable pod.**
+After the reboots `immich-postgres-8` sat `Pending`:
+
+```
+0/3 nodes are available: 1 Insufficient cpu,
+                         2 node(s) didn't match PersistentVolume's node affinity
+```
+
+Its `local-path` PV has hard `nodeAffinity` to exactly one node, and that node was at
+97 % of CPU **requests**. With node-local storage a replica has exactly one candidate
+node — so any resource pressure there is not a scheduling delay, it is a permanent
+stall. Two consequences for upgrade planning: keep meaningful CPU headroom on every
+node that hosts node-pinned volumes, and remember that `local-path` instances can
+never migrate — they can only be deleted and re-bootstrapped elsewhere.
+
+**12. Operational: a guest reboot does not apply a hypervisor CPU/RAM change.**
+Proxmox marks `cores`/`sockets` edits on a running VM as *pending* and applies them
+only on a full stop/start. `talosctl reboot` keeps the same qemu process, so the node
+comes back with the old capacity. Use `talosctl shutdown` + start the VM, one node at
+a time, cordoning first and verifying `capacity.cpu` after each.
+
+### Checklist before trusting an autonomous upgrade on a new cluster
+
+1. No `failurePolicy: Fail` webhook matches `pods` without excluding `kube-system` (#8).
+2. Every webhook backend that gates pod admission has ≥2 replicas + anti-affinity (#9).
+3. Every stateful cluster has ≥2 instances and a switchover target (#7).
+4. No node hosting node-pinned volumes runs near its CPU/memory request ceiling (#11).
+5. All node requests still fit on N-1 nodes.
+6. SUC controller anti-affinity does not match the upgrade Job labels (#5).
+7. Controller `images.newTag` is a published tag and equals the manifest `?ref=` (#6).
+
 ## Related
 
 - PRs: #268 (talosconfig mTLS auth), #269 (`-n $(NODE_IP)`),
   #270 (`-e $(NODE_IP)` over TCP), #271 (drop `exclusive: true`),
-  #355 (dawarich-postgres `instances: 2`), #358 (SUC image pin `v0.20.0` → `v0.19.2`)
+  #355 (dawarich-postgres `instances: 2`), #358 (SUC image pin `v0.20.0` → `v0.19.2`),
+  #634 (nextcloud cron podAffinity — RWO co-scheduling, same drain-blocker class)
 - Terraform module `kreativmonkey/terraform-module` **v0.2.0** (per-node `storage_id`,
   `etcd_advertised_subnets`)
 - `infrastructure/overlays/main/system-upgrade-controller/talos-plan.yaml`
