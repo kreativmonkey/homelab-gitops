@@ -127,20 +127,35 @@ spec:
               # — same dead-key mistake as immich-server above (see comment
               # there); silently dropped by Helm, container ran unbounded.
               #
-              # Limit war zunächst 1408Mi = exakt der beobachtete 28d-Peak. Das
-              # war zu knapp: der Container erreicht beim Batch-Processing
-              # regelmäßig 1136–1407Mi (über viele Pod-Generationen gemessen),
-              # der Peak ist also kein Ausreißer, sondern der Normalfall. Ein
-              # Limit AUF dem Peak statt DARÜBER führte prompt zum OOMKill.
-              # Für einen zuvor unlimitierten Container ist das Maximum aus der
-              # Historie nur das, was er zufällig gebraucht hat — keine
-              # Bedarfsobergrenze. Daher Peak + 35 %.
+              # Limit-Historie: 1408Mi (= beobachteter 28d-Peak) → OOMKill,
+              # dann 1920Mi (Peak + 35 %) → am 2026-08-07 erneut OOMKill.
+              #
+              # Beide Werte stammten aus container_memory_working_set_bytes.
+              # Das war die falsche Metrik: cAdvisor scrapet alle 30s, der
+              # Bedarf hier ist aber ein Burst von wenigen Sekunden. Im
+              # 30s-Raster blieb die Serie über den OOM hinweg flach bei
+              # 265Mi — der Spike ist zwischen zwei Scrapes komplett
+              # unsichtbar. Maßgeblich ist stattdessen der cgroup-Highwater
+              # container_memory_max_usage_bytes: die früheren, noch
+              # unlimitierten Pod-Generationen lagen dort bei 2357–2829Mi.
+              #
+              # Auslöser des Bursts ist der Cold-Start der Modelle: der
+              # Container lädt in ~15s vier ONNX-Sessions gleichzeitig
+              # (buffalo_l detection + recognition, CLIP ViT-B-32, seit v3
+              # zusätzlich OCR PP-OCRv5) bei 4 Request-Threads. Die alten
+              # Messwerte kannten das OCR-Modell noch gar nicht.
+              #
+              # Daher Limit über den unlimitierten Highwater (2829Mi) statt
+              # über einen Working-Set-Peak. Requests bleiben bei 592Mi:
+              # talos-cp1 liegt bei 95 % Memory-Requests, eine Anhebung
+              # würde die Schedulebarkeit gefährden — Limits sind ohnehin
+              # übercommitted.
               resources:
                 requests:
                   cpu: 10m
                   memory: 592Mi
                 limits:
-                  memory: 1920Mi
+                  memory: 3072Mi
       persistence:
         cache:
           enabled: true
