@@ -57,6 +57,8 @@ resources:
   - ../../base/gatus
   - ../../base/truenas-exporter
   - truenas-exporter.secret.yaml
+  - ../../base/proxmox-exporter
+  - proxmox-exporter.secret.yaml
 
   # --- Smart Home -------------------------------------------------------
   - ../../base/spectrumknx
