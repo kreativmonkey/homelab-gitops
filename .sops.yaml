@@ -1,8 +1,11 @@
 creation_rules:
   # Regel: Alle Dateien, die auf .secret.yaml oder .secret.yml enden, werden verschlüsselt
   - path_regex: .*\.secret\.ya?ml$
-    # Der LOKALE Age Public Key (Beginnt meist mit age1...)
-    # Der zugehörige Private Key wurde über Terraform ins Cluster deployt
-    age: "REMOVED_BY_HISTORY_REWRITE"
+    # Age Public Key des Clusters. Der zugehörige Private Key liegt als Secret
+    # sops-age in flux-system und wird von Terraform deployt; er verlässt den
+    # Cluster nicht. Recipient prüfen mit:
+    #   kubectl -n flux-system get secret sops-age \
+    #     -o jsonpath='{.data.age\.agekey}' | base64 -d | age-keygen -y
+    age: "age1u5lcvuuwd4lk7f3xewjk70j75yuh68myr89qkd0e8d44zgyjleeqw03vqs"
     # Nur Werte in data und stringData verschlüsseln, nicht die YAML-Struktur
     encrypted_regex: '^(data|stringData)$'
