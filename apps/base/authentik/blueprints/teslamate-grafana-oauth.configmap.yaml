@@ -21,8 +21,11 @@ data:
           name: Provider for TeslaMate Grafana
           client_type: confidential
           client_id: fa6de72374e823c83b6d5aa0f209a9a29a01b6ba
-          # Set to teslamate-grafana-oauth secret client-secret after reconcile (see docs/integrations/teslamate-grafana-authentik.md)
-          client_secret: teslamate-grafana-change-me
+          # Injected into the worker from the authentik-oidc-client-secrets Secret,
+          # which mirrors teslamate secret teslamate-grafana-oauth (key client-secret).
+          # Never hardcode it here: every reconcile would overwrite the real
+          # secret in Authentik and break the login with invalid_client.
+          client_secret: !Env OIDC_TESLAMATE_GRAFANA_CLIENT_SECRET
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
           signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]

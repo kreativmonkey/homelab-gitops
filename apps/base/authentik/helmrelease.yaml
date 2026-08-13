@@ -99,6 +99,42 @@ spec:
         - name: data
           mountPath: /data
     worker:
+      # OIDC client secrets for the blueprints above. Only the worker applies
+      # blueprints, so only it needs them. The blueprints read these via
+      # `!Env [...]`; if a variable is missing the blueprint fails instead of
+      # writing an empty secret into Authentik.
+      # Secret comes from the private repo (apps/overlays/main/authentik-private).
+      env:
+        - name: OIDC_LINKDING_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-client-secrets
+              key: linkding-client-secret
+        - name: OIDC_DAWARICH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-client-secrets
+              key: dawarich-client-secret
+        - name: OIDC_GATUS_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-client-secrets
+              key: gatus-client-secret
+        - name: OIDC_GRAFANA_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-client-secrets
+              key: grafana-client-secret
+        - name: OIDC_PAPERLESS_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-client-secrets
+              key: paperless-client-secret
+        - name: OIDC_TESLAMATE_GRAFANA_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-client-secrets
+              key: teslamate-grafana-client-secret
       # 2026-06-09: limit raised 2Gi→4Gi (OOMKilled, exit 137)
       #   Previous pod ran 3.5d then OOM. DockerException spam
       #   (outpost_service_connection_monitor → Docker) on Talos

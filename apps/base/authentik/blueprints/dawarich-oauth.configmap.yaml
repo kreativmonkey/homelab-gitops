@@ -21,7 +21,10 @@ data:
           name: Provider for Dawarich
           client_type: confidential
           client_id: homelab-dawarich
-          client_secret: <placeholder-change-me>
+          # Injected into the worker from the authentik-oidc-client-secrets Secret.
+          # Never hardcode it here: every reconcile would overwrite the real
+          # secret in Authentik and break the login with invalid_client.
+          client_secret: !Env OIDC_DAWARICH_CLIENT_SECRET
           grant_types:
             - authorization_code
             - refresh_token
