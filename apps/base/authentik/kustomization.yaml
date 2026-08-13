@@ -9,6 +9,7 @@ resources:
   - blueprints/dawarich-oauth.configmap.yaml
   - blueprints/grafana-oauth.configmap.yaml
   - blueprints/teslamate-grafana-oauth.configmap.yaml
+  - blueprints/goloom-oauth.configmap.yaml
   - media-pvc.yaml
   - helmrelease.yaml
   - ingress.yaml
