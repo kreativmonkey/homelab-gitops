@@ -1,0 +1,79 @@
+# Watchdog for Authentik blueprint reconciliation.
+#
+# A blueprint that fails to apply is invisible otherwise: Flux reports Ready
+# (the ConfigMap rolled out fine), the apply task raises no exception, and no
+# Authentik event is created — the failure only lives in the BlueprintInstance
+# status. Two blueprints sat in `error` for weeks that way, which is how the
+# Linkding login stayed broken.
+#
+# Runs `ak shell` against the same database as the worker, so it needs no API
+# token and no RBAC. Exits non-zero on any blueprint that is not `successful`;
+# the failed Job is what the AuthentikBlueprintCheckFailed alert fires on.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: authentik-blueprint-check
+  namespace: authentik
+  labels:
+    app.kubernetes.io/name: authentik
+    app.kubernetes.io/component: blueprint-check
+spec:
+  schedule: "17 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  # Keep failed runs around — the alert reads the Job, and the pod logs name
+  # which blueprint broke.
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 600
+  jobTemplate:
+    spec:
+      # No retries: a real failure should stay failed and visible, not be
+      # papered over by a lucky rerun.
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: authentik
+            app.kubernetes.io/component: blueprint-check
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: check
+              # Must track the chart version in helmrelease.yaml — a mismatched
+              # image talks to a different Django schema. Renovate keeps both on
+              # the same pin (see renovate.json).
+              image: ghcr.io/goauthentik/server:2026.5.6
+              args:
+                - shell
+                - -c
+                - |
+                  from authentik.blueprints.models import BlueprintInstance
+                  bad = [(b.name, b.status) for b in BlueprintInstance.objects.exclude(status="successful")]
+                  total = BlueprintInstance.objects.count()
+                  if bad:
+                      for name, status in sorted(bad):
+                          print(f"BLUEPRINT NOT OK: {name} -> {status}")
+                      raise SystemExit(1)
+                  print(f"OK: all {total} blueprints successful")
+              # Database and Redis credentials, same Secret the chart gives the
+              # server and worker.
+              envFrom:
+                - secretRef:
+                    name: authentik
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+                limits:
+                  memory: 1Gi
