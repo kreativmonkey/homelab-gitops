@@ -6,3 +6,4 @@ resources:
   - blackbox-vmrule.yaml
   - truenas-vmrule.yaml
   - iscsi-storage-vmrule.yaml
+  - authentik-vmrule.yaml

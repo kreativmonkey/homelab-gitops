@@ -12,3 +12,4 @@ resources:
   - media-pvc.yaml
   - helmrelease.yaml
   - ingress.yaml
+  - blueprint-check.cronjob.yaml
