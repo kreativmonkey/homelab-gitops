@@ -1,0 +1,28 @@
+# prometheus-pve-exporter is a blackbox-style multi-target exporter: the PVE
+# node to query comes from the ?target= query param, not from its own config.
+# One cluster-wide credential ("default" module) covers all 4 nodes.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMProbe
+metadata:
+  name: proxmox-exporter
+  namespace: monitoring
+  labels:
+    release: victoriametrics
+spec:
+  jobName: proxmox
+  vmProberSpec:
+    url: http://proxmox-exporter.monitoring.svc.cluster.local:9221
+  path: /pve
+  module: default
+  params:
+    cluster: ["1"]
+    node: ["1"]
+  targets:
+    static:
+      targets:
+        - 192.168.10.240 # red
+        - 192.168.10.241 # white
+        - 192.168.10.5 # pve
+        - 192.168.10.10 # ugos
+  interval: 60s
+  scrapeTimeout: 30s
