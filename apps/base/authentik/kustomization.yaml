@@ -10,6 +10,13 @@ resources:
   - blueprints/grafana-oauth.configmap.yaml
   - blueprints/teslamate-grafana-oauth.configmap.yaml
   - blueprints/goloom-oauth.configmap.yaml
+  - blueprints/kavita-oauth.configmap.yaml
+  - blueprints/kite-oauth.configmap.yaml
+  - blueprints/linkwarden-oauth.configmap.yaml
+  - blueprints/pcm-oauth.configmap.yaml
+  - blueprints/sparky-fitness-oauth.configmap.yaml
+  - blueprints/tandoor-oauth.configmap.yaml
+  - blueprints/outline-oauth.configmap.yaml
   - media-pvc.yaml
   - helmrelease.yaml
   - ingress.yaml
