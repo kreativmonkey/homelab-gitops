@@ -69,6 +69,13 @@ spec:
         - authentik-grafana-blueprint
         - authentik-teslamate-grafana-blueprint
         - authentik-goloom-blueprint
+        - authentik-kavita-blueprint
+        - authentik-kite-blueprint
+        - authentik-linkwarden-blueprint
+        - authentik-pcm-blueprint
+        - authentik-sparky-fitness-blueprint
+        - authentik-tandoor-blueprint
+        - authentik-outline-blueprint
     server:
       ingress:
         enabled: false
