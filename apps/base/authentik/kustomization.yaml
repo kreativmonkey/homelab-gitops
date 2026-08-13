@@ -7,6 +7,8 @@ resources:
   - blueprints/gatus-oauth.configmap.yaml
   - blueprints/linkding-oauth.configmap.yaml
   - blueprints/dawarich-oauth.configmap.yaml
+  - blueprints/grafana-oauth.configmap.yaml
+  - blueprints/teslamate-grafana-oauth.configmap.yaml
   - media-pvc.yaml
   - helmrelease.yaml
   - ingress.yaml

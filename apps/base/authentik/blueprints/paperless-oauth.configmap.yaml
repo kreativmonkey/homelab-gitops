@@ -15,10 +15,13 @@ data:
     entries:
       - model: authentik_providers_oauth2.oauth2provider
         id: paperless-provider
+        # Match on client_id, not name: the name is an attribute the blueprint
+        # itself sets, so any rename turns the update into a create and hits the
+        # unique constraint.
         identifiers:
-          name: Provider for Paperless
+          client_id: qKeg0wbITh8B8r3OUdlLCzATt6nODf8UeUnC9grv
         attrs:
-          name: Provider for Paperless
+          name: Provider for Paperless-NGX
           client_type: confidential
           client_id: qKeg0wbITh8B8r3OUdlLCzATt6nODf8UeUnC9grv
           # Injected into the worker from the authentik-oidc-client-secrets Secret,
@@ -41,7 +44,7 @@ data:
         identifiers:
           slug: paperless
         attrs:
-          name: Paperless
+          name: Paperless-NGX
           slug: paperless
           provider: !KeyOf paperless-provider
           launch_url: https://paperless.f4mily.net

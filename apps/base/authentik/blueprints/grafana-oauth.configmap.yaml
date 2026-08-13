@@ -15,10 +15,13 @@ data:
     entries:
       - model: authentik_providers_oauth2.oauth2provider
         id: grafana-provider
+        # Match on client_id, not name: the name is an attribute the blueprint
+        # itself sets, so any rename turns the update into a create and hits the
+        # unique constraint.
         identifiers:
-          name: Provider for Grafana
+          client_id: homelab-grafana
         attrs:
-          name: Provider for Grafana
+          name: Provider for Grafana Talos Cluster
           client_type: confidential
           client_id: homelab-grafana
           # Injected into the worker from the authentik-oidc-client-secrets Secret,
@@ -26,9 +29,12 @@ data:
           # Never hardcode it here: every reconcile would overwrite the real
           # secret in Authentik and break the login with invalid_client.
           client_secret: !Env OIDC_GRAFANA_CLIENT_SECRET
-          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          # Flow and signing key mirror the live provider, which was maintained
+          # by hand while this blueprint never applied. Keeps the first apply a
+          # no-op; change deliberately, not as a side effect.
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
-          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          signing_key: null
           redirect_uris:
             - matching_mode: strict
               url: https://grafana.cluster.f4mily.net/login/generic_oauth
@@ -38,12 +44,14 @@ data:
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
-            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, entitlements]]
+            # entitlements was listed here but the live provider never had it —
+            # the blueprint had never applied. Left out so the first apply is a
+            # no-op; add it back deliberately if the claim is actually wanted.
       - model: authentik_core.application
         identifiers:
           slug: grafana-talos-cluster
         attrs:
-          name: Grafana
+          name: Grafana Talos Cluster
           slug: grafana-talos-cluster
           provider: !KeyOf grafana-provider
           launch_url: https://grafana.cluster.f4mily.net

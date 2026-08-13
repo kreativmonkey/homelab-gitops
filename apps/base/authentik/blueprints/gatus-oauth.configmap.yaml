@@ -16,11 +16,14 @@ data:
       - model: authentik_providers_oauth2.oauth2provider
         id: gatus-provider
         identifiers:
-          client_id: homelab-gatus
+          # The live provider (and the gatus-authentik-oauth secret) use this
+          # generated id — `homelab-gatus` never existed, so this blueprint had
+          # been failing to create a duplicate provider all along.
+          client_id: Pp2APHT3Zh9LBwC2qVMK3n9YmyCujamFiPzZbAwQ
         attrs:
           name: Provider for Gatus
           client_type: confidential
-          client_id: homelab-gatus
+          client_id: Pp2APHT3Zh9LBwC2qVMK3n9YmyCujamFiPzZbAwQ
           # Injected into the worker from the authentik-oidc-client-secrets Secret,
           # which mirrors apps/base/gatus/gatus-authentik-oauth.secret.yaml (client-secret).
           # Never hardcode it here: every reconcile would overwrite the real

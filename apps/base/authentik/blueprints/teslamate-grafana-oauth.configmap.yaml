@@ -15,10 +15,13 @@ data:
     entries:
       - model: authentik_providers_oauth2.oauth2provider
         id: teslamate-grafana-provider
+        # Match on client_id, not name: the name is an attribute the blueprint
+        # itself sets, so any rename turns the update into a create and hits the
+        # unique constraint.
         identifiers:
-          name: Provider for TeslaMate Grafana
+          client_id: fa6de72374e823c83b6d5aa0f209a9a29a01b6ba
         attrs:
-          name: Provider for TeslaMate Grafana
+          name: Provider for Teslamate Grafana
           client_type: confidential
           client_id: fa6de72374e823c83b6d5aa0f209a9a29a01b6ba
           # Injected into the worker from the authentik-oidc-client-secrets Secret,
@@ -32,19 +35,24 @@ data:
           redirect_uris:
             - matching_mode: strict
               url: https://teslamate.f4mily.net/grafana/login/generic_oauth
-          post_logout_redirect_uris:
-            - https://teslamate.f4mily.net/grafana/logout
+            # Second host the provider is reachable under. Listed here because
+            # the blueprint replaces the whole list — dropping it would break
+            # that login path.
+            - matching_mode: strict
+              url: https://teslamate-grafana.cluster.f4mily.net/grafana/login/generic_oauth
           property_mappings:
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
-            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, entitlements]]
+            # entitlements was listed here but the live provider never had it —
+            # the blueprint had never applied. Left out so the first apply is a
+            # no-op; add it back deliberately if the claim is actually wanted.
       - model: authentik_core.application
         identifiers:
-          slug: tesla-grafana
+          slug: teslamate-grafana
         attrs:
-          name: TeslaMate Grafana
-          slug: tesla-grafana
+          name: Teslamate Grafana
+          slug: teslamate-grafana
           provider: !KeyOf teslamate-grafana-provider
-          launch_url: https://teslamate.f4mily.net/grafana/
-          meta_launch_url: https://teslamate.f4mily.net/grafana/
+          launch_url: https://teslamate.f4mily.net/grafana
+          meta_launch_url: https://teslamate.f4mily.net/grafana
