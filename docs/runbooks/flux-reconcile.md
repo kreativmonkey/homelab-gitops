@@ -246,10 +246,20 @@ getrennte Regeln statt einer gemeinsamen `!= "True"`-Regel.
    `FluxReconcileFailing`, um langsame Helm-Installationen nicht
    fälschlicherweise als Stall zu melden — ein sehr kurzer echter Hang bleibt
    in diesem Fenster unbemerkt.
-3. **Kein CI-Check der Alert-Queries.** Wie beim Job-Watchdog gibt es keinen
-   VMRule-Admission-Webhook und keine Expression-Validierung in der
-   CI-Pipeline. Nach jeder Änderung an diesem VMRule die vmalert-Rules-API
-   prüfen:
+3. **Kein CI-Check der Alert-Queries.** Wie beim Job-Watchdog validiert die
+   CI-Pipeline kein MetricsQL. Nach jeder Änderung **zuerst** prüfen, ob der
+   VM-Operator die Regel akzeptiert hat — schlägt eine einzige Annotation fehl,
+   wird die komplette VMRule abgelehnt und keine ihrer vier Regeln ist aktiv
+   (am 15.08.2026 genau so passiert, ein `{{ $labels.kind | lower }}` in
+   `FluxSuspended` legte alle vier still; die Template-Engine kennt `lower`
+   nicht):
+
+   ```bash
+   kubectl -n monitoring get vmrule homelab-flux            # STATUS: operational
+   kubectl -n monitoring get vmrule homelab-flux -o jsonpath='{.status.reason}'
+   ```
+
+   Danach die vmalert-Rules-API:
    ```bash
    kubectl -n monitoring exec deploy/vmalert-vm-k8s-stack-victoria-metrics-k8s-stack -c vmalert -- \
      wget -qO- http://127.0.0.1:8080/api/v1/rules
