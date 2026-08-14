@@ -29,7 +29,7 @@ data:
           # Never hardcode it here: every reconcile would overwrite the real
           # secret in Authentik and break the login with invalid_client.
           client_secret: !Env OIDC_GATUS_CLIENT_SECRET
-          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
           signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
           encryption_key: null

@@ -29,9 +29,10 @@ data:
           # Never hardcode it here: every reconcile would overwrite the real
           # secret in Authentik and break the login with invalid_client.
           client_secret: !Env OIDC_GRAFANA_CLIENT_SECRET
-          # Flow and signing key mirror the live provider, which was maintained
-          # by hand while this blueprint never applied. Keeps the first apply a
-          # no-op; change deliberately, not as a side effect.
+          # signing_key mirrors the live provider, which was maintained by hand
+          # while this blueprint never applied. The flow is explicit-consent for
+          # every provider by policy — consent is stored for 4 weeks, so it is
+          # one dialog per app and month, not per login.
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
           signing_key: null
