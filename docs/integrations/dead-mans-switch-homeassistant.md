@@ -14,13 +14,13 @@ flowchart LR
   VM[VMRule Watchdog<br/>expr: vector(1)]
   AM[Alertmanager<br/>Route alertname=Watchdog]
   HA[Home Assistant<br/>Webhook]
-  Timer[timer.k8s_watchdog_herzschlag<br/>15 Min, restore: true]
+  Timer[timer.k8s_watchdog_herzschlag<br/>60 Min, restore: true]
   Push[Mobile Push +<br/>persistent_notification]
 
   VM -->|alle 60s| AM
   AM -->|alle 5 Min, POST| HA
   HA -->|timer.start| Timer
-  Timer -->|timer.finished ODER<br/>time_pattern /15, idle| Push
+  Timer -->|timer.finished| Push
 ```
 
 - **VMRule** `apps/base/monitoring/rules/dead-mans-switch-vmrule.yaml`: Alert
@@ -29,7 +29,15 @@ flowchart LR
   darf nur den Herzschlag auslösen, nicht dauerhaft pushen.
 - **Alertmanager-Route**: erste Kind-Route unter der Root-Route,
   `matchers: [alertname="Watchdog"]` → Receiver `homeassistant-watchdog`,
-  `group_wait: 0s`, `group_interval: 5m`, `repeat_interval: 5m`,
+  `group_wait: 0s`, `group_interval: 1m`, `repeat_interval: 5m`,
+
+  > `group_interval` steht bewusst auf `1m`. Alertmanager prüft die
+  > Wiederholung **nur an `group_interval`-Ticks**. Steht `group_interval` auf
+  > demselben Wert wie `repeat_interval`, verfehlt der erste Tick die Bedingung
+  > knapp und der Herzschlag kommt erst beim zweiten — am 14.08.2026 gemessen:
+  > 11 Minuten Abstand statt der konfigurierten 5. Mit `1m` liegt der Takt da,
+  > wo `repeat_interval` ihn hinlegen soll.
+
   `send_resolved: false`. Der Receiver ruft
   `url_file: /etc/vm/secrets/alertmanager-homeassistant-webhook/url` auf — das
   SOPS-Secret `alertmanager-homeassistant-webhook` (Key `url`) liegt in
@@ -39,18 +47,44 @@ flowchart LR
   in Klartext in Git.
 - **Home Assistant** (separates System, nicht in diesem Repo, nicht per GitOps
   verwaltet):
-  - `timer.k8s_watchdog_herzschlag` — Dauer 15 Minuten, `restore: true`.
+  - `timer.k8s_watchdog_herzschlag` — Dauer 60 Minuten, `restore: true`. Bei
+    einem Herzschlag alle 5 Minuten toleriert das 11 verpasste Zustellungen,
+    bevor alarmiert wird — kurze Reconciles, AM-Neustarts und Netz-Blips lösen
+    also keinen Fehlalarm aus.
   - `automation.k8s_watchdog_herzschlag_empfangen` — Trigger: Webhook (POST,
     `local_only: true`) → Aktion: `timer.start`.
-  - `automation.k8s_watchdog_herzschlag_fehlt` — Trigger: `timer.finished` **und**
-    `time_pattern` `/15` als wiederholende Erinnerung; Condition: Timer-Zustand
-    ist `idle`. Aktion: Push an `notify.mobile_app_pixel_10_pro_xl_sebastian` +
+  - `automation.k8s_watchdog_herzschlag_fehlt` — Trigger: **ausschließlich**
+    `timer.finished`, ohne Condition. Aktion: Push an
+    `notify.mobile_app_pixel_10_pro_xl_sebastian` +
     `persistent_notification.create` mit fester `notification_id:
-    k8s_heartbeat_missing`.
+    k8s_heartbeat_missing`. Es gibt bewusst **eine** Meldung pro Ausfall und
+    keine Wiederholung.
+
+    > **Nicht wieder einbauen:** Ein zusätzlicher `time_pattern`-Trigger mit
+    > Condition „Timer ist `idle`" als Erinnerung sieht naheliegend aus, ist
+    > aber falsch. Ein Timer, der **nie gestartet** wurde, steht ebenfalls auf
+    > `idle` — die Condition kann „abgelaufen" und „noch nie gelaufen" nicht
+    > unterscheiden. Genau das ist am 14.08.2026 passiert: die HA-Seite stand,
+    > die Cluster-Seite hing noch im Flux-Reconcile, also kam nie ein
+    > Herzschlag, der Timer blieb seit Erstellung `idle` und die Automation
+    > pushte 2,5 Stunden lang alle 15 Minuten. `timer.finished` setzt dagegen
+    > voraus, dass der Timer tatsächlich lief.
+  - `input_boolean.k8s_heartbeat_alarm_aktiv` — Merker „es steht ein
+    Heartbeat-Alarm". Automation B schaltet ihn ein, Automation C wieder aus.
   - `automation.k8s_watchdog_herzschlag_zuruck` — Trigger: `timer.started`
     (feuert nur beim Übergang idle→active, nicht bei jedem Neustart des
-    Timers). Condition: `persistent_notification.k8s_heartbeat_missing` ist
-    im Zustand `notifying`. Aktion: Entwarnung + Dismiss der Notification.
+    Timers). Condition: `input_boolean.k8s_heartbeat_alarm_aktiv` ist `on`.
+    Aktion: Entwarnung + Dismiss der Notification + Merker aus.
+
+    > **Nicht auf `persistent_notification.<id>` prüfen.** Naheliegend wäre,
+    > als Merker die Notification selbst zu nehmen
+    > (`persistent_notification.k8s_heartbeat_missing == notifying`). Home
+    > Assistant führt persistent notifications aber seit Jahren **nicht mehr
+    > als Entitäten** im State-Machine — die Bedingung ist damit dauerhaft
+    > falsch, die Entwarnung käme nie und die Meldung bliebe für immer stehen.
+    > Die Notification wird sehr wohl erzeugt (sichtbar über den
+    > WebSocket-Befehl `persistent_notification/get`), sie hat nur keinen
+    > Zustand, den eine Condition lesen kann. Deshalb der `input_boolean`.
 
 ## Warum `restore: true`
 
@@ -82,7 +116,7 @@ Zerstörungsfrei, ohne auf den echten 5-Minuten-Zyklus zu warten:
 
 1. In Home Assistant `timer.finish` auf `timer.k8s_watchdog_herzschlag`
    aufrufen (Entwickler-Tools → Aktionen, oder `ha_call_service`). Das
-   entspricht dem Ablauf eines echten Timers, ohne 15 Minuten zu warten.
+   entspricht dem Ablauf eines echten Timers, ohne eine Stunde zu warten.
 2. Erwartung: Push-Benachrichtigung an `notify.mobile_app_pixel_10_pro_xl_sebastian`
    und eine `persistent_notification` mit ID `k8s_heartbeat_missing` erscheinen
    sofort.

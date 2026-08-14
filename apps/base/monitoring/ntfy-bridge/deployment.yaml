@@ -33,6 +33,13 @@ spec:
             - name: http
               containerPort: 8080
           env:
+            # Ohne das puffert Python stdout, sobald es kein TTY ist. Beim
+            # Watchdog-Rollout am 14.08.2026 hinkten die Bridge-Logs dadurch
+            # ueber eine Stunde hinterher: eine korrekt zugestellte Meldung sah
+            # im Log aus, als waere sie nie angekommen. Genau im Stoerfall, wo
+            # man der Bridge zuschauen will, ist das Log damit wertlos.
+            - name: PYTHONUNBUFFERED
+              value: "1"
             - name: HTTP_ADDRESS
               value: "0.0.0.0"
             - name: HTTP_PORT

@@ -1,0 +1,33 @@
+# Flux-Controller-Metriken (gotk_*). Ohne diesen Scrape gibt es keine einzige
+# gotk-Serie und die Regeln in rules/flux-vmrule.yaml sind blind — geprueft:
+# vor diesem Objekt lieferte __name__=~"gotk.*" null Ergebnisse.
+#
+# Die Controller haben keinen Service, nur den Container-Port http-prom (8080).
+# Die bestehende NetworkPolicy flux-system/allow-scraping erlaubt Ingress auf
+# 8080 aus allen Namespaces, es ist also nichts weiter freizuschalten.
+#
+# honorLabels: true ist hier bewusst gesetzt. gotk_reconcile_condition traegt
+# ein eigenes `namespace`-Label: den Namespace des ueberwachten OBJEKTS (eine
+# HelmRelease liegt z. B. in monitoring oder cnpg-system), nicht den des
+# Controller-Pods. Ohne honorLabels ueberschreibt das Scrape-Relabeling das mit
+# "flux-system" und verschiebt das Original nach exported_namespace — damit
+# zeigt jeder Alert auf den falschen Namespace.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: flux-controllers
+  namespace: flux-system
+  labels:
+    release: victoriametrics
+spec:
+  namespaceSelector:
+    matchNames:
+      - flux-system
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: flux
+  podMetricsEndpoints:
+    - port: http-prom
+      interval: 30s
+      path: /metrics
+      honorLabels: true

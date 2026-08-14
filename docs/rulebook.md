@@ -201,6 +201,17 @@ loop.
 
 ## 5. GitOps / reconciliation
 
+- **Monitor the deploy pipeline itself, not just what it deploys.** A GitOps
+  controller (or any pull-based deploy automation) that stops reconciling does
+  not raise an error — it simply stops doing anything, while the cluster's
+  last-applied state keeps looking healthy on every other dashboard. Alert
+  directly on the controller's own reconcile-condition metrics, and treat a
+  hard failure and a reconcile that never finishes as two different failure
+  modes needing separate alerts: a stuck health-check wedged in a permanent
+  timeout (e.g. one blocked on a `Pending` PVC) reports as "still in
+  progress", not as an error, and a dependency chain built on top of it fails
+  loudly downstream while the true cause sits quietly upstream reporting
+  neither success nor failure.
 - **All changes land via Git — never `kubectl edit` a managed resource.** A
   pruning reconciler reverts live edits on its interval; a live patch is an
   emergency unblock only, and must be converged back into Git or it silently

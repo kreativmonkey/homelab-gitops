@@ -81,9 +81,22 @@ spec:
           # nachgewiesen an nextcloud-cron-29768115, 7,4 Tage alt und weiterhin
           # failed=1. Danach uebernimmt WatchdogJobStale mit derselben
           # Schwelle, die Uebergabe ist also lueckenlos.
+          #
+          # Aggregiert bewusst OHNE job_name: Kubernetes loescht den alten
+          # fehlgeschlagenen Job, sobald der naechste scheitert
+          # (failedJobsHistoryLimit). Mit job_name im Label-Set entstuende bei
+          # jedem Lauf eine neue Alert-Serie und das for: 10m finge jedes Mal
+          # von vorn an - bei einem 5-Minuten-CronJob koennte der Alert nie
+          # feuern. Im Test am 14.08.2026 blieb er so 20 Minuten auf pending.
+          # Ohne job_name ist die Serie je CronJob stabil.
+          #
+          # min statt max: der Wert ist Job-Alter / max-age, ein frischer
+          # Fehlschlag hat also den KLEINSTEN Wert. max wuerde von einer alten
+          # Karteileiche ueber die Schwelle gezogen und den frischen Fehlschlag
+          # verdecken.
           expr: |
             (
-              max by (namespace, cronjob, job_name) (
+              min by (namespace, cronjob) (
                 label_replace(
                     (kube_job_failed{condition="true"} == 1)
                   * on (namespace, job_name) group_left (owner_name)
@@ -110,7 +123,7 @@ spec:
             homelab_owner: platform
           annotations:
             summary: "Job fehlgeschlagen: {{ $labels.namespace }}/{{ $labels.cronjob }}"
-            description: "Job {{ $labels.job_name }} ist fehlgeschlagen. Logs: kubectl -n {{ $labels.namespace }} logs job/{{ $labels.job_name }} --all-containers --prefix"
+            description: "Ein Lauf von {{ $labels.cronjob }} ist fehlgeschlagen. Betroffenen Job finden und Logs lesen: kubectl -n {{ $labels.namespace }} get jobs --sort-by=.status.startTime | tail -3 && kubectl -n {{ $labels.namespace }} logs job/<name> --all-containers --prefix"
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/job-watchdog.md"
 
         - alert: WatchdogJobStale

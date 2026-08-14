@@ -1,0 +1,100 @@
+# Flux-GitOps-Alerts (KI-ALERT-PLAN Phase 4).
+#
+# Anlass: Am 14.08.2026 hat eine Pending-PVC aus PR #661 den Health-Check der
+# Kustomization infra-base blockiert. Weil infra-main, apps und
+# apps-monitoring-rules per dependsOn daran haengen, hat Flux fuenf Stunden
+# lang NICHTS mehr aus Git ausgerollt — ohne eine einzige Meldung. Gemerkt
+# wurde es nur, weil zufaellig jemand auf ein fehlendes Deployment wartete.
+#
+# Der Fall ist derselbe wie beim Job-Watchdog: Ausbleiben von Erfolg ist ein
+# Signal, nicht nur ein Fehler.
+#
+# Voraussetzung: extra-scrapes/flux-vmpodscrape.yaml. Ohne den Scrape gibt es
+# keine gotk-Serien und nur FluxControllerDown feuert (fail loud).
+#
+# gotk_reconcile_condition ist eine Serie je (kind, name, namespace, type,
+# status) mit Wert 0/1. "Ready ist False" heisst also
+# {type="Ready", status="False"} == 1 — nicht etwa == 0.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: homelab-flux
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.platform.flux
+      interval: 60s
+      rules:
+        - alert: FluxControllerDown
+          # Meta-Alert: keine einzige gotk-Serie. Entweder sind die Controller
+          # weg oder der VMPodScrape wurde entfernt. Ohne diesen Alert saehe
+          # beides wie "alles gruen" aus.
+          expr: |
+            absent(gotk_reconcile_condition)
+          for: 15m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Flux liefert keine Metriken mehr"
+            description: "Es existiert keine einzige gotk_reconcile_condition-Serie. Entweder laufen die Flux-Controller nicht mehr, oder der VMPodScrape flux-controllers fehlt. Solange dieser Alert steht, ist unbekannt, ob Git ueberhaupt noch ausgerollt wird."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/flux-reconcile.md"
+
+        - alert: FluxReconcileFailing
+          # Ready=False: der haeufigere Fall — fehlgeschlagener Apply, kaputtes
+          # Manifest, oder (wie am 14.08.) "dependency is not ready" bei allen
+          # nachgelagerten Kustomizations.
+          expr: |
+            gotk_reconcile_condition{type="Ready", status="False"} == 1
+            unless on (kind, name, namespace)
+            (gotk_suspend_status == 1)
+          for: 15m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Flux: {{ $labels.kind }}/{{ $labels.name }} nicht Ready"
+            description: "{{ $labels.kind }} {{ $labels.name }} in {{ $labels.namespace }} steht seit ueber 15 Minuten auf Ready=False. Aenderungen aus Git landen fuer dieses Objekt — und alles was per dependsOn daran haengt — nicht mehr im Cluster. Details: flux get all -A --status-selector ready=false"
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/flux-reconcile.md"
+
+        - alert: FluxReconcileStalled
+          # Ready=Unknown, also "Reconciliation in progress", die nie endet.
+          # Genau so sah infra-base am 14.08. aus: der Health-Check lief in eine
+          # 5-Minuten-Timeout-Schleife und blieb dauerhaft Unknown. Ein Alert
+          # nur auf status="False" haette die Ursache NICHT gesehen, nur die
+          # Folgefehler weiter unten in der Kette.
+          # 30 Minuten, damit langsame Helm-Installationen nicht anschlagen.
+          expr: |
+            gotk_reconcile_condition{type="Ready", status="Unknown"} == 1
+            unless on (kind, name, namespace)
+            (gotk_suspend_status == 1)
+          for: 30m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Flux: {{ $labels.kind }}/{{ $labels.name }} haengt im Reconcile"
+            description: "{{ $labels.kind }} {{ $labels.name }} in {{ $labels.namespace }} steht seit ueber 30 Minuten auf Ready=Unknown. Typisch: ein Health-Check laeuft dauerhaft in den Timeout (z. B. eine Pending-PVC). Alles was per dependsOn dahinter liegt, wird nicht mehr ausgerollt. Ursache: kubectl -n flux-system get kustomization; kubectl -n flux-system logs deploy/kustomize-controller | grep -i 'health check'"
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/flux-reconcile.md"
+
+        - alert: FluxSuspended
+          # Ein suspendiertes Objekt ist der GitOps-Zwilling des suspendierten
+          # CronJobs: Git und Cluster laufen still auseinander, ohne Fehler.
+          # Meist eine Notmassnahme, die niemand zurueckgenommen hat.
+          expr: |
+            gotk_suspend_status == 1
+          for: 1h
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Flux: {{ $labels.kind }}/{{ $labels.name }} ist suspendiert"
+            description: "{{ $labels.kind }} {{ $labels.name }} in {{ $labels.namespace }} ist seit ueber einer Stunde suspendiert. Aenderungen aus Git werden fuer dieses Objekt nicht angewendet — der Cluster driftet stillschweigend von Git weg. Falls das eine Notmassnahme war: flux resume {{ $labels.kind | lower }} -n {{ $labels.namespace }} {{ $labels.name }}"
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/flux-reconcile.md"
