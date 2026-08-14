@@ -77,7 +77,7 @@ Flux reconciles it every hour (or on demand). Changes land via **PRs to
 | **Security** | [cert-manager](https://github.com/cert-manager/cert-manager) | Automated TLS via Let's Encrypt (DNS-01) |
 | **Observability** | [VictoriaMetrics](https://victoriametrics.com/) Stack | High-performance monitoring and alerting |
 | **Automation** | [Renovate Bot](https://github.com/mend/renovate-ce-ee/tree/main) | Automated dependency and image updates |
-| **Data Policy** | [Velero](https://velero.io/) | Volume snapshots and offsite backups |
+| **Data Policy** | Velero + Restic | On-site Kubernetes recovery plus encrypted Immich/Nextcloud offsite backups |
 
 ---
 

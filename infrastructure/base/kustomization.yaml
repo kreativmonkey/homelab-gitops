@@ -9,6 +9,7 @@ resources:
   - system-upgrade-controller
   - blackbox-exporter
   - backup
+  - offsite-backup
   - database
   - remediation-api
   - mcp-server

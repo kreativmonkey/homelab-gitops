@@ -23,8 +23,9 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 
 # Verification
 
-- `just fmt && just lint && just test` locally before PR.
+- `just validate` locally before PR.
+- Run `just validate-full` when changing workload or controller manifests.
 
 # Child DOX Index
 
-No child AGENTS.md. Subfolders inherit this contract.
+- `base/offsite-backup/AGENTS.md` — encrypted Storage Box backups, retention, consistency, and restore verification.

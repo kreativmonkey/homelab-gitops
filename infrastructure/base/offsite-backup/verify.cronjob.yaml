@@ -1,0 +1,108 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: offsite-restore-verify
+  namespace: backup-offsite
+spec:
+  schedule: "0 8 * * 0"
+  timeZone: Europe/Berlin
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 21600
+      template:
+        spec:
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 60
+          initContainers:
+            - name: prepare-rclone
+              image: docker.io/rclone/rclone:1.74.2
+              command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
+              env:
+                - name: STORAGEBOX_HOST
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_HOST}
+                - name: STORAGEBOX_USERNAME
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_USERNAME}
+                - name: STORAGEBOX_PASSWORD
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_PASSWORD}
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+            - name: restic-server
+              image: docker.io/rclone/rclone:1.74.2
+              restartPolicy: Always
+              args:
+                - serve
+                - restic
+                - storagebox:homelab-gitops/restic
+                - --addr=127.0.0.1:8080
+                - --config=/config/rclone.conf
+                - --cache-objects=false
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+            - name: restore
+              image: docker.io/restic/restic:0.19.1
+              command: ["/bin/sh", "/scripts/verify.sh"]
+              env:
+                - name: RESTIC_REPOSITORY
+                  value: rest:http://127.0.0.1:8080/
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: storagebox-credentials
+                      key: restic-password
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: work
+                  mountPath: /work
+                - name: restore
+                  mountPath: /restore
+          containers:
+            - name: validate
+              image: docker.io/library/postgres:18-alpine
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  test -f /work/restore.ok
+                  immich_dump=/restore/immich/staging/database/immich.dump
+                  nextcloud_dump=/restore/nextcloud/staging/database/nextcloud.dump
+                  nextcloud_app=/restore/nextcloud/staging/nextcloud-app.tar.gz
+                  test -s "${immich_dump}"
+                  test -s "${nextcloud_dump}"
+                  test -s "${nextcloud_app}"
+                  pg_restore --list "${immich_dump}" >/dev/null
+                  pg_restore --list "${nextcloud_dump}" >/dev/null
+                  tar -tzf "${nextcloud_app}" >/dev/null
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+                  readOnly: true
+                - name: restore
+                  mountPath: /restore
+                  readOnly: true
+          volumes:
+            - name: config
+              emptyDir: {}
+            - name: work
+              emptyDir: {}
+            - name: restore
+              emptyDir:
+                sizeLimit: 10Gi
+            - name: scripts
+              configMap:
+                name: offsite-backup-scripts
+                defaultMode: 0555
