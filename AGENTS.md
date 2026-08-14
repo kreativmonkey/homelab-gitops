@@ -64,6 +64,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 - Alertmanager → ntfy (`ntfy.f4mily.net`); credentials stored in SOPS‑encrypted secret.
 - Optional AI triage: Alertmanager → n8n → Telegram (see `docs/integrations/alerting-n8n-telegram-triage.md`).
 - Rules in `apps/base/monitoring/rules/`; runbooks in `docs/runbooks/`.
+- CronJobs opt in to the generic job watchdog via the `homelab.f4mily.net/watchdog` label — do not write per-job alerts, see `docs/runbooks/job-watchdog.md`.
 - Progress tracker: `KI-ALERT-PLAN.md`.
 
 ---

@@ -190,6 +190,7 @@ spec:
         secrets:
           - alertmanager-ntfy-credentials
           - alertmanager-n8n-webhook
+          - alertmanager-homeassistant-webhook
         resources:
           requests:
             cpu: 10m
@@ -214,6 +215,17 @@ spec:
           group_interval: 10m
           repeat_interval: 24h
           routes:
+            # Dead-Man's-Switch: Dieser Alert feuert permanent (vector(1)) und
+            # dient als Herzschlag Richtung Home Assistant. Bleibt er aus, laeuft
+            # dort ein Timer ab und HA alarmiert per Mobile-Push - unabhaengig von
+            # ntfy, dessen Funktionieren er ja gerade beweisen soll.
+            # Muss vor den severity-Routen stehen, sonst greift keine.
+            - matchers:
+                - alertname="Watchdog"
+              receiver: homeassistant-watchdog
+              group_wait: 0s
+              group_interval: 5m
+              repeat_interval: 5m
             # Bypass bridge when it is down (JSON to ntfy — only this alert gets through)
             - matchers:
                 - alertname="NtfyBridgeDown"
@@ -279,6 +291,10 @@ spec:
             webhook_configs:
               - url_file: /etc/vm/secrets/alertmanager-n8n-webhook/url
                 send_resolved: true
+          - name: homeassistant-watchdog
+            webhook_configs:
+              - url_file: /etc/vm/secrets/alertmanager-homeassistant-webhook/url
+                send_resolved: false
           - name: blackhole
 
     # ============================================
@@ -309,6 +325,11 @@ spec:
           memory: 64Mi
         limits:
           memory: 192Mi
+      # Ohne diese Allowlist liefert kube_cronjob_labels NULL Serien und der
+      # generische Job-Watchdog (rules/job-watchdog-vmrule.yaml) wäre blind.
+      # Bewusst NUR cronjobs -> ~7 Serien. pods=[...] bleibt tabu (Kardinalität).
+      metricLabelsAllowlist:
+        - cronjobs=[homelab.f4mily.net/watchdog,homelab.f4mily.net/max-age-hours,homelab.f4mily.net/max-runtime-hours]
 
     # ============================================
     # DEFAULT DASHBOARDS & RULES

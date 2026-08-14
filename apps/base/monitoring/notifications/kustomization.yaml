@@ -3,4 +3,5 @@ kind: Kustomization
 resources:
   - alertmanager-ntfy-credentials.secret.yaml
   - alertmanager-n8n-webhook.secret.yaml
+  - alertmanager-homeassistant-webhook.secret.yaml
   - grafana-authentik-oauth.secret.yaml

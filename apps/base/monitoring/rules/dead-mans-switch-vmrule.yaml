@@ -1,0 +1,38 @@
+# Dead-Man's-Switch: die letzte Rueckfallebene.
+#
+# Alle anderen Alerts setzen voraus, dass Cluster, vmalert, Alertmanager, die
+# ntfy-Bridge und ntfy selbst funktionieren. Faellt diese Kette komplett aus,
+# kommt schlicht nichts mehr an - und Stille sieht aus wie "alles gruen".
+#
+# Dieser Alert feuert deshalb permanent (vector(1)) und wird alle 5 Minuten an
+# einen Home-Assistant-Webhook zugestellt (Route "Watchdog" ->
+# receiver homeassistant-watchdog in der vm-k8s-stack HelmRelease). HA laeuft
+# ausserhalb des Clusters, haelt einen 15-Minuten-Timer am Leben und alarmiert
+# per Mobile-Push, sobald der Herzschlag ausbleibt.
+#
+# severity: none haelt ihn bewusst aus den ntfy-Routen heraus - er darf nur den
+# Herzschlag ausloesen, nicht dauerhaft pushen.
+#
+# Details: docs/integrations/dead-mans-switch-homeassistant.md
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: homelab-dead-mans-switch
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.platform.deadmansswitch
+      interval: 60s
+      rules:
+        - alert: Watchdog
+          expr: vector(1)
+          labels:
+            severity: none
+            cluster: homelab
+          annotations:
+            summary: "Herzschlag der Alerting-Pipeline"
+            description: "Dieser Alert feuert immer. Bleibt er aus, ist die Alerting-Kette tot — Home Assistant schlägt dann Alarm."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/integrations/dead-mans-switch-homeassistant.md"

@@ -3,6 +3,12 @@ kind: CronJob
 metadata:
   name: offsite-restore-verify
   namespace: backup-offsite
+  labels:
+    # Opt-in fuer den generischen Job-Watchdog, siehe docs/runbooks/job-watchdog.md
+    # max-age = 168h Intervall + 6h activeDeadlineSeconds
+    homelab.f4mily.net/watchdog: "true"
+    homelab.f4mily.net/max-age-hours: "174"
+    homelab.f4mily.net/max-runtime-hours: "5"
 spec:
   schedule: "0 8 * * 0"
   timeZone: Europe/Berlin

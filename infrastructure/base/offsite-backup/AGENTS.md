@@ -15,6 +15,7 @@ Encrypted offsite backups of irreplaceable Immich and Nextcloud data to the Hetz
 - Nextcloud backups run in maintenance mode and include the primary S3 bucket, PostgreSQL dump, and app/config state.
 - Backup containers mount source volumes read-only. Staging is disposable and remains on-site.
 - Weekly verification must check repository data, restore both database dumps, validate Nextcloud app/config state, and hash-check restored Immich and Nextcloud user-data samples.
+- Every CronJob here carries the watchdog opt-in labels (`homelab.f4mily.net/watchdog`, `max-age-hours`, `max-runtime-hours`, see `docs/runbooks/job-watchdog.md`); pull `max-age-hours` along whenever `schedule` or `activeDeadlineSeconds` changes.
 
 # Work Guidance
 

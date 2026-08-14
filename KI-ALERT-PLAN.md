@@ -131,6 +131,42 @@ Siehe [`docs/integrations/grafana-authentik.md`](docs/integrations/grafana-authe
 
 ---
 
+### Phase 7 — Generischer Job-Watchdog + Dead-Man's-Switch
+
+CronJobs (Offsite-Backups, Authentik-Blueprint-Check) hatten kein Alerting:
+ein Job, der scheitert, suspendiert wird, aus Git verschwindet oder nie
+anläuft, blieb unbemerkt. Statt Alerts pro Job melden sich CronJobs per Label
+(`homelab.f4mily.net/watchdog`) am generischen Watchdog an. Zusätzlich sichert
+ein Dead-Man's-Switch über Home Assistant die gesamte Alerting-Kette selbst ab
+— fällt vmalert, Alertmanager oder die ntfy-bridge komplett aus, bleibt sonst
+auch das unbemerkt.
+
+| Alert | Status |
+|-------|--------|
+| `WatchdogBlind` | ✅ |
+| `WatchdogConfigInvalid` | ✅ |
+| `WatchdogJobFailed` | ✅ |
+| `WatchdogJobStale` | ✅ |
+| `WatchdogCronJobSuspended` | ✅ |
+| `WatchdogJobStuck` | ✅ |
+| `WatchdogCronJobDisappeared` | ✅ |
+| `Watchdog` (Dead-Man's-Switch, `severity: none`) | ✅ |
+
+Angemeldete Jobs: `backup-offsite/immich-offsite-backup` (32/6),
+`backup-offsite/nextcloud-offsite-backup` (32/6),
+`backup-offsite/offsite-restore-verify` (174/5),
+`authentik/authentik-blueprint-check` (3/1).
+
+**Abgelöst:** `apps/base/monitoring/rules/authentik-vmrule.yaml` ist entfallen
+— `AuthentikBlueprintCheckFailed` und `AuthentikBlueprintCheckStale` sind im
+generischen Watchdog aufgegangen (`WatchdogJobFailed`/`WatchdogJobStale` für
+`authentik/authentik-blueprint-check`).
+
+Doku: [`docs/runbooks/job-watchdog.md`](docs/runbooks/job-watchdog.md),
+[`docs/integrations/dead-mans-switch-homeassistant.md`](docs/integrations/dead-mans-switch-homeassistant.md).
+
+---
+
 ## Dateien (Referenz)
 
 ```
@@ -142,14 +178,20 @@ apps/base/monitoring/
 │   ├── alertmanager-ntfy-credentials.secret.yaml
 │   └── alertmanager-n8n-webhook.secret.yaml  # nach sops-create
 └── rules/
-    └── platform-p0-vmrule.yaml
+    ├── platform-p0-vmrule.yaml
+    ├── job-watchdog-vmrule.yaml           # generischer Job-Watchdog (Phase 7)
+    └── dead-mans-switch-vmrule.yaml       # Watchdog/vector(1) -> HA-Webhook (Phase 7)
 
 docs/runbooks/
 ├── cnpg-cluster-offline.md
 ├── cnpg-backup-stale.md
 ├── velero-backup.md
 ├── node-resources.md
-└── monitoring-stack.md
+├── monitoring-stack.md
+└── job-watchdog.md                        # Phase 7
+
+docs/integrations/
+└── dead-mans-switch-homeassistant.md       # Phase 7
 ```
 
 ---
@@ -167,6 +209,7 @@ docs/runbooks/
 
 | Datum | Änderung |
 |-------|----------|
+| 2026-08-14 | Generischer Job-Watchdog (7 Alerts, Opt-in per Label) + Dead-Man's-Switch über Home Assistant (Phase 7); `rules/authentik-vmrule.yaml` entfernt, in Watchdog aufgegangen |
 | 2026-05-30 | kubeApiServer-Scrape aus; Script `purge-chart-vmrules.sh` für verwaiste VMRules |
 | 2026-06-02 | `defaultRules.enabled: false` — `create: false` allein ließ Chart-VMRules (ScrapePoolHasNoTargets) |
 | 2026-05-30 | Fix `defaultRules.create: false`; Talos control-plane scrapes aus |

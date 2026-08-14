@@ -106,6 +106,13 @@ resilience — not on which product you happen to run.
 - **Take a fresh backup before any storage migration or risky change**, and after
   recovering/re-cloning a replica (so the recovery baseline sits on the clean
   state).
+- **Alert on the absence of success, not just on failure.** A backup job that
+  gets deleted, suspended, or never scheduled again produces no error — only
+  silence, and silence looks exactly like "all good" on a dashboard that only
+  tracks failures. Age the time since the *last success*, with a fallback to
+  the job's creation time so a job that has never once succeeded doesn't read
+  as fine — that single signal covers all three failure shapes (fails, stops
+  running, never ran) without a separate alert for each.
 
 ## 2. Databases (via an operator)
 
