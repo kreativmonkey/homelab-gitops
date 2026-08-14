@@ -53,7 +53,7 @@ spec:
                   mountPath: /config
                   readOnly: true
             - name: database-dump
-              image: docker.io/alpine/k8s:1.36.0
+              image: docker.io/alpine/k8s:1.36.2
               command:
                 - /bin/sh
                 - -ec
