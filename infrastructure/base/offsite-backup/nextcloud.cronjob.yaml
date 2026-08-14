@@ -3,6 +3,12 @@ kind: CronJob
 metadata:
   name: nextcloud-offsite-backup
   namespace: backup-offsite
+  labels:
+    # Opt-in fuer den generischen Job-Watchdog, siehe docs/runbooks/job-watchdog.md
+    # max-age = 24h Intervall + 8h activeDeadlineSeconds
+    homelab.f4mily.net/watchdog: "true"
+    homelab.f4mily.net/max-age-hours: "32"
+    homelab.f4mily.net/max-runtime-hours: "6"
 spec:
   schedule: "30 4 * * *"
   timeZone: Europe/Berlin

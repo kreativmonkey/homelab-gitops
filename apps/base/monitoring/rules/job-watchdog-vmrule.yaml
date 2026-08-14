@@ -1,0 +1,255 @@
+# Generischer Job-Watchdog. CronJobs melden sich per Label an, statt fuer jeden
+# Job eigene Alerts zu schreiben:
+#
+#   homelab.f4mily.net/watchdog: "true"          (Pflicht)
+#   homelab.f4mily.net/max-age-hours: "32"       (Pflicht, max. Alter des letzten Erfolgs)
+#   homelab.f4mily.net/max-runtime-hours: "6"    (optional, ab wann ein Lauf als haengend gilt)
+#
+# Dimensionierung: max-age-hours >= Schedule-Intervall + activeDeadlineSeconds,
+# weil lastSuccessfulTime erst am ENDE des Laufs gesetzt wird. max-runtime-hours
+# knapp unter activeDeadlineSeconds, damit die Warnung kommt, bevor Kubernetes
+# den Job selbst killt.
+#
+# Voraussetzung: metricLabelsAllowlist fuer cronjobs in der vm-k8s-stack
+# HelmRelease. Ohne sie liefert kube_cronjob_labels null Serien -> WatchdogBlind.
+#
+# label_value() ist MetricsQL (VictoriaMetrics-spezifisch, kein PromQL) und
+# verwirft Serien, deren Label fehlt oder nicht als Zahl parsebar ist - still.
+# Genau dagegen existiert WatchdogConfigInvalid.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: homelab-job-watchdog
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.platform.jobs
+      interval: 60s
+      rules:
+        - alert: WatchdogBlind
+          # Der wichtigste Alert: der Watchdog sieht gar nichts mehr. Ohne ihn
+          # wuerde ein Wegfall der Allowlist wie "alles gruen" aussehen.
+          # for: 30m, weil apps-monitoring-rules und infra-base unabhaengig
+          # reconcilen - beim ersten Rollout darf die Luecke nicht alarmieren.
+          expr: |
+            absent(kube_cronjob_labels{label_homelab_f4mily_net_watchdog="true"})
+          for: 30m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Job-Watchdog blind — keine überwachten CronJobs sichtbar"
+            description: "Es existiert keine einzige Serie kube_cronjob_labels mit homelab.f4mily.net/watchdog=true. Entweder ist kube-state-metrics ausgefallen, die metricLabelsAllowlist wurde aus der vm-k8s-stack HelmRelease entfernt, oder alle Watchdog-Labels sind weg. Solange dieser Alert steht, überwacht NICHTS die Backup- und Restore-Verify-Jobs."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/job-watchdog.md"
+
+        - alert: WatchdogConfigInvalid
+          # Angemeldet, aber max-age-hours fehlt oder ist keine Zahl ("26h"):
+          # label_value verwirft die Serie dann still und der Job waere
+          # unbemerkt unueberwacht.
+          expr: |
+            max by (namespace, cronjob) (
+              kube_cronjob_labels{label_homelab_f4mily_net_watchdog="true"}
+            )
+            unless on (namespace, cronjob)
+            max by (namespace, cronjob) (
+              label_value(
+                kube_cronjob_labels{label_homelab_f4mily_net_watchdog="true"},
+                "label_homelab_f4mily_net_max_age_hours"
+              )
+            )
+          for: 30m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Watchdog-Konfiguration unvollständig: {{ $labels.namespace }}/{{ $labels.cronjob }}"
+            description: "Der CronJob trägt homelab.f4mily.net/watchdog=true, aber homelab.f4mily.net/max-age-hours fehlt oder ist keine Zahl. Die Stale-Überwachung greift für diesen Job deshalb nicht — er ist faktisch unüberwacht."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/job-watchdog.md"
+
+        - alert: WatchdogJobFailed
+          # kube_job_failed{condition="true"} statt kube_job_status_failed:
+          # letzteres splittet nach reason und liefert lauter 0-Serien.
+          #
+          # Das Alters-Gate (< 1, also Job-Alter < max-age) ist zwingend: ein
+          # fehlgeschlagener Job bleibt bis failedJobsHistoryLimit liegen. Ohne
+          # Gate feuert der Alert ewig auf Karteileichen und resolved nie -
+          # nachgewiesen an nextcloud-cron-29768115, 7,4 Tage alt und weiterhin
+          # failed=1. Danach uebernimmt WatchdogJobStale mit derselben
+          # Schwelle, die Uebergabe ist also lueckenlos.
+          expr: |
+            (
+              max by (namespace, cronjob, job_name) (
+                label_replace(
+                    (kube_job_failed{condition="true"} == 1)
+                  * on (namespace, job_name) group_left (owner_name)
+                    kube_job_owner{owner_kind="CronJob"}
+                  * on (namespace, job_name) group_left ()
+                    (time() - kube_job_status_start_time),
+                  "cronjob", "$1", "owner_name", "(.+)"
+                )
+              )
+              / on (namespace, cronjob) group_left ()
+              (
+                3600 * max by (namespace, cronjob) (
+                  label_value(
+                    kube_cronjob_labels{label_homelab_f4mily_net_watchdog="true"},
+                    "label_homelab_f4mily_net_max_age_hours"
+                  )
+                )
+              )
+            ) < 1
+          for: 10m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Job fehlgeschlagen: {{ $labels.namespace }}/{{ $labels.cronjob }}"
+            description: "Job {{ $labels.job_name }} ist fehlgeschlagen. Logs: kubectl -n {{ $labels.namespace }} logs job/{{ $labels.job_name }} --all-containers --prefix"
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/job-watchdog.md"
+
+        - alert: WatchdogJobStale
+          # Kernalert: deckt "scheitert wiederholt", "wird nicht mehr eingeplant"
+          # und "ist nie gelaufen" mit einer Query ab.
+          #
+          # Zwei Feinheiten, die nicht kosmetisch sind:
+          # 1. kube_cronjob_status_last_successful_time EXISTIERT NICHT, solange
+          #    ein CronJob nie erfolgreich war. Ohne den or-Fallback auf
+          #    kube_cronjob_created gaelte "nie gelaufen" als "alles gut" - genau
+          #    das stille Versagen, um das es hier geht. Der Fallback gibt genau
+          #    eine Karenzperiode ab Erstellung.
+          # 2. max by (namespace, cronjob) muss auf BEIDEN or-Seiten stehen: es
+          #    strippt __name__ und die KSM-Meta-Labels. Erst dadurch wirkt or
+          #    als echter Fallback, statt beide Serien nebeneinander zu behalten.
+          #
+          # unless suspend==1 verhindert Doppel-Paging mit WatchdogCronJobSuspended
+          # - eine Ursache, ein Alert.
+          expr: |
+            (
+              (
+                time()
+                -
+                (
+                    max by (namespace, cronjob) (kube_cronjob_status_last_successful_time)
+                  or
+                    max by (namespace, cronjob) (kube_cronjob_created)
+                )
+              )
+              / on (namespace, cronjob) group_left (label_homelab_f4mily_net_max_age_hours)
+              (
+                3600 * max by (namespace, cronjob, label_homelab_f4mily_net_max_age_hours) (
+                  label_value(
+                    kube_cronjob_labels{label_homelab_f4mily_net_watchdog="true"},
+                    "label_homelab_f4mily_net_max_age_hours"
+                  )
+                )
+              )
+              > 1
+            )
+            unless on (namespace, cronjob)
+            (max by (namespace, cronjob) (kube_cronjob_spec_suspend) == 1)
+          for: 30m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Kein erfolgreicher Lauf: {{ $labels.namespace }}/{{ $labels.cronjob }}"
+            description: "Seit über {{ $labels.label_homelab_f4mily_net_max_age_hours }} Stunden gab es keinen erfolgreichen Lauf. Bei nie erfolgreichen Jobs zählt die Erstellungszeit des CronJobs. Der Job wird entweder nicht mehr eingeplant oder scheitert wiederholt — das Backup ist damit nicht mehr aktuell."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/job-watchdog.md"
+
+        - alert: WatchdogCronJobSuspended
+          # Am 13.06.2026 wurde nextcloud-cron waehrend des iSCSI-Ausfalls manuell
+          # suspendiert, um Alert-Spam zu stoppen, und nie zurueckgenommen. Genau
+          # dieser Fall ist hier gemeint.
+          expr: |
+            (max by (namespace, cronjob) (kube_cronjob_spec_suspend) == 1)
+            and on (namespace, cronjob)
+            max by (namespace, cronjob) (
+              kube_cronjob_labels{label_homelab_f4mily_net_watchdog="true"}
+            )
+          for: 15m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "CronJob pausiert: {{ $labels.namespace }}/{{ $labels.cronjob }}"
+            description: "spec.suspend=true — der überwachte Job wird nicht mehr eingeplant und läuft still ins Nichts. Falls das eine manuelle Notmaßnahme war: in Git zurücknehmen, sonst reconciled Flux ohnehin dagegen."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/job-watchdog.md"
+
+        - alert: WatchdogJobStuck
+          # Opt-in ueber das dritte Label: fehlt max-runtime-hours, verwirft
+          # label_value die Serie und der Job wird schlicht nicht auf Laufzeit
+          # geprueft. Das ist gewollt, deshalb gibt es dafuer bewusst keinen
+          # ConfigInvalid-Alert.
+          #
+          # clamp_max(...) == 1 statt > 0, damit bei parallelism > 1 nicht der
+          # Alterswert mitskaliert.
+          expr: |
+            (
+              max by (namespace, cronjob, job_name) (
+                label_replace(
+                    (clamp_max(kube_job_status_active, 1) == 1)
+                  * on (namespace, job_name) group_left (owner_name)
+                    kube_job_owner{owner_kind="CronJob"}
+                  * on (namespace, job_name) group_left ()
+                    (time() - kube_job_status_start_time),
+                  "cronjob", "$1", "owner_name", "(.+)"
+                )
+              )
+              / on (namespace, cronjob) group_left (label_homelab_f4mily_net_max_runtime_hours)
+              (
+                3600 * max by (namespace, cronjob, label_homelab_f4mily_net_max_runtime_hours) (
+                  label_value(
+                    kube_cronjob_labels{label_homelab_f4mily_net_watchdog="true"},
+                    "label_homelab_f4mily_net_max_runtime_hours"
+                  )
+                )
+              )
+            ) > 1
+          for: 15m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Job läuft zu lange: {{ $labels.namespace }}/{{ $labels.cronjob }}"
+            description: "Job {{ $labels.job_name }} läuft seit mehr als {{ $labels.label_homelab_f4mily_net_max_runtime_hours }} Stunden. Typische Ursachen: hängender NFS-Mount (192.168.10.94), blockierte Storage-Box-Verbindung oder ein Restic-Lock. Kubernetes killt den Job erst bei activeDeadlineSeconds — bis dahin blockiert concurrencyPolicy: Forbid alle Folgeläufe."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/job-watchdog.md"
+
+        - alert: WatchdogCronJobDisappeared
+          # Identitaetserhaltend statt count() < N: nennt WELCHER Job fehlt und
+          # hardcodiert keine Anzahl (die die Generizitaet brechen wuerde).
+          #
+          # offset 1h bewusst statt 1d - der Alert feuert im Fenster
+          # [Loeschung+10m, Loeschung+1h] und resolved dann. Sonst haette ein
+          # geloeschter Test-CronJob 24h Nachhall. Die dauerhafte Absicherung
+          # gegen "alles weg" ist WatchdogBlind.
+          #
+          # Der absent()-Guard verhindert Massenalarm, wenn KSM komplett ausfaellt.
+          expr: |
+            (
+              max by (namespace, cronjob) (
+                kube_cronjob_labels{label_homelab_f4mily_net_watchdog="true"} offset 1h
+              )
+              unless on (namespace, cronjob)
+              max by (namespace, cronjob) (
+                kube_cronjob_labels{label_homelab_f4mily_net_watchdog="true"}
+              )
+            )
+            unless on () (absent(kube_cronjob_info) == 1)
+          for: 10m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Überwachter CronJob verschwunden: {{ $labels.namespace }}/{{ $labels.cronjob }}"
+            description: "Der CronJob existierte vor einer Stunde noch und ist jetzt weg — aus Git entfernt, umbenannt oder von Flux geprunt. Ersatzlos: das zugehörige Backup läuft nicht mehr."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/job-watchdog.md"

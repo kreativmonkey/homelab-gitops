@@ -17,6 +17,11 @@ metadata:
   labels:
     app.kubernetes.io/name: authentik
     app.kubernetes.io/component: blueprint-check
+    # Opt-in fuer den generischen Job-Watchdog, siehe docs/runbooks/job-watchdog.md
+    # stuendlicher Schedule -> 3h Toleranz (loest die frueheren Bespoke-Alerts ab)
+    homelab.f4mily.net/watchdog: "true"
+    homelab.f4mily.net/max-age-hours: "3"
+    homelab.f4mily.net/max-runtime-hours: "1"
 spec:
   schedule: "17 * * * *"
   concurrencyPolicy: Forbid
