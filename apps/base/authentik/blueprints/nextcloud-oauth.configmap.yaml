@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-nextcloud-blueprint
+  namespace: authentik
+  labels:
+    app.kubernetes.io/part-of: authentik
+data:
+  nextcloud.yaml: |
+    version: 1
+    metadata:
+      name: Homelab Nextcloud OIDC
+      labels:
+        blueprints.goauthentik.io/description: OAuth2 provider, application and scope mapping for Nextcloud
+    entries:
+      # Managed here as well, not just referenced: the mapping carries the
+      # group logic this provider depends on, and a blueprint that only
+      # points at it breaks the moment someone deletes it.
+      - model: authentik_providers_oauth2.scopemapping
+        id: nextcloud-scope
+        identifiers:
+          scope_name: "nextcloud"
+        attrs:
+          name: "Nextcloud Profile"
+          scope_name: "nextcloud"
+          description: "Adding properties for Nextcloud"
+          expression: |-
+            # Extract all groups the user is a member of
+            groups = [group.name for group in user.ak_groups.all()]
+
+            # In Nextcloud, administrators must be members of a fixed group called "admin".
+
+            # If a user is an admin in authentik, ensure that "admin" is appended to their group list.
+            if user.is_superuser and "admin" not in groups:
+                groups.append("admin")
+
+            return {
+                "name": request.user.name,
+                "groups": groups,
+                # Set a quota by using the "nextcloud_quota" property in the user's attributes
+                "quota": user.group_attributes().get("nextcloud_quota", None),
+                # To connect an existing Nextcloud user, set "nextcloud_user_id" to the Nextcloud username.
+                "user_id": user.attributes.get("nextcloud_user_id", str(user.uuid)),
+            }
+      - model: authentik_providers_oauth2.oauth2provider
+        id: nextcloud-provider
+        # Match on client_id, not name: the name is an attribute the blueprint
+        # itself sets, so any rename turns the update into a create and hits the
+        # unique constraint.
+        identifiers:
+          client_id: homelab-nextcloud
+        attrs:
+          name: "Provider for Nextcloud"
+          client_type: confidential
+          client_id: homelab-nextcloud
+          # Injected into the worker from the authentik-oidc-client-secrets Secret.
+          # Never hardcode it here: every reconcile would overwrite the real
+          # secret in Authentik and break the login with invalid_client.
+          client_secret: !Env OIDC_NEXTCLOUD_CLIENT_SECRET
+          # explicit-consent for every provider by policy: consent is stored for
+          # 4 weeks, so it is one dialog per app and month, not per login.
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          redirect_uris:
+            - matching_mode: strict
+              url: https://nc.f4mily.net/apps/user_oidc/code
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+            - !KeyOf nextcloud-scope
+      - model: authentik_core.application
+        identifiers:
+          slug: nextcloud
+        attrs:
+          name: "Nextcloud"
+          slug: nextcloud
+          provider: !KeyOf nextcloud-provider
+          group: "Dokumente"
+          launch_url: https://nc.f4mily.net
+          meta_launch_url: https://nc.f4mily.net
