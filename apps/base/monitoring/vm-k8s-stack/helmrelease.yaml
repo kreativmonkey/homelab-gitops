@@ -224,7 +224,13 @@ spec:
                 - alertname="Watchdog"
               receiver: homeassistant-watchdog
               group_wait: 0s
-              group_interval: 5m
+              # group_interval bewusst 1m, nicht 5m: Alertmanager prueft die
+              # Wiederholung NUR an group_interval-Ticks. Bei
+              # group_interval == repeat_interval verfehlt der erste Tick die
+              # Bedingung knapp, und der Herzschlag kommt erst beim zweiten —
+              # gemessen 11 statt 5 Minuten. Mit 1m liegt der Takt dort, wo ihn
+              # repeat_interval hinlegen soll.
+              group_interval: 1m
               repeat_interval: 5m
             # Bypass bridge when it is down (JSON to ntfy — only this alert gets through)
             - matchers:
