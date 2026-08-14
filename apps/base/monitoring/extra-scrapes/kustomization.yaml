@@ -8,3 +8,4 @@ resources:
   - blackbox-vmprobe.yaml
   - blackbox-vmprobe-tandoor.yaml
   - truenas-exporter-vmservicescrape.yaml
+  - flux-vmpodscrape.yaml

@@ -76,12 +76,22 @@ Runbooks für alle P0-Alerts angelegt.
 
 ---
 
-### Phase 4 — Flux-GitOps-Alerts (offen)
+### Phase 4 — Flux-GitOps-Alerts
+
+Anlass (14.08.2026): PR #661 hat die PVC `backup-offsite/nextcloud-offsite-staging`
+eingeführt; TrueNAS lehnte die Provisionierung ab (`>80% VOLUME`), die PVC blieb
+`Pending`. Der Health-Check der Kustomization `infra-base` lief dadurch dauerhaft
+in den 5-Minuten-Timeout und blieb auf `Ready=Unknown`. Weil `infra-main`, `apps`
+und `apps-monitoring-rules` per `dependsOn` daran hängen, standen die drei auf
+`Ready=False` mit `dependency ... is not ready`. Flux hat fünf Stunden lang nichts
+mehr aus Git ausgerollt, ohne jede Meldung.
 
 | Task | Status |
 |------|--------|
-| `infrastructure/base/flux-notifications/` Provider + Alert | ⬜ |
-| Eigener ntfy-Receiver `homelab-gitops` | ⬜ |
+| `apps/base/monitoring/extra-scrapes/flux-vmpodscrape.yaml` (gotk-Metriken, `honorLabels: true`) | ✅ |
+| `apps/base/monitoring/rules/flux-vmrule.yaml` (4 Alerts: `FluxControllerDown`, `FluxReconcileFailing`, `FluxReconcileStalled`, `FluxSuspended`) | ✅ |
+| Eigener ntfy-Receiver | nicht nötig — bestehende Route über `severity` + `homelab_owner: platform` greift bereits |
+| Runbook `docs/runbooks/flux-reconcile.md` | ✅ |
 
 ---
 
@@ -177,10 +187,13 @@ apps/base/monitoring/
 ├── notifications/
 │   ├── alertmanager-ntfy-credentials.secret.yaml
 │   └── alertmanager-n8n-webhook.secret.yaml  # nach sops-create
-└── rules/
-    ├── platform-p0-vmrule.yaml
-    ├── job-watchdog-vmrule.yaml           # generischer Job-Watchdog (Phase 7)
-    └── dead-mans-switch-vmrule.yaml       # Watchdog/vector(1) -> HA-Webhook (Phase 7)
+├── rules/
+│   ├── platform-p0-vmrule.yaml
+│   ├── job-watchdog-vmrule.yaml        # generischer Job-Watchdog (Phase 7)
+│   ├── dead-mans-switch-vmrule.yaml    # Watchdog/vector(1) -> HA-Webhook (Phase 7)
+│   └── flux-vmrule.yaml                # Flux-GitOps-Alerts (Phase 4)
+└── extra-scrapes/
+    └── flux-vmpodscrape.yaml           # gotk_* Metriken (Phase 4)
 
 docs/runbooks/
 ├── cnpg-cluster-offline.md
@@ -188,7 +201,8 @@ docs/runbooks/
 ├── velero-backup.md
 ├── node-resources.md
 ├── monitoring-stack.md
-└── job-watchdog.md                        # Phase 7
+├── job-watchdog.md                        # Phase 7
+└── flux-reconcile.md                      # Phase 4
 
 docs/integrations/
 └── dead-mans-switch-homeassistant.md       # Phase 7
@@ -209,6 +223,7 @@ docs/integrations/
 
 | Datum | Änderung |
 |-------|----------|
+| 2026-08-14 | Flux-GitOps-Alerts (Phase 4): PR #661 hat eine Pending-PVC eingeführt (TrueNAS >80%-VOLUME-Limit), `infra-base` hing 5h im Health-Check-Timeout (`Ready=Unknown`), `infra-main`/`apps`/`apps-monitoring-rules` dadurch `Ready=False` — Flux rollte fünf Stunden lang nichts mehr aus Git aus, ohne Meldung. Fix: `flux-vmpodscrape.yaml` + 4 Alerts (`FluxControllerDown`, `FluxReconcileFailing`, `FluxReconcileStalled`, `FluxSuspended`) in `flux-vmrule.yaml`, Runbook `flux-reconcile.md` |
 | 2026-08-14 | Generischer Job-Watchdog (7 Alerts, Opt-in per Label) + Dead-Man's-Switch über Home Assistant (Phase 7); `rules/authentik-vmrule.yaml` entfernt, in Watchdog aufgegangen |
 | 2026-05-30 | kubeApiServer-Scrape aus; Script `purge-chart-vmrules.sh` für verwaiste VMRules |
 | 2026-06-02 | `defaultRules.enabled: false` — `create: false` allein ließ Chart-VMRules (ScrapePoolHasNoTargets) |

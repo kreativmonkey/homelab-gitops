@@ -10,3 +10,4 @@ resources:
   # generischen Job-Watchdog aufgegangen (Labels am CronJob statt eigener Regeln).
   - job-watchdog-vmrule.yaml
   - dead-mans-switch-vmrule.yaml
+  - flux-vmrule.yaml
