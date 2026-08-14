@@ -1,17 +1,28 @@
-# Flux-Controller-Metriken (gotk_*). Ohne diesen Scrape gibt es keine einzige
-# gotk-Serie und die Regeln in rules/flux-vmrule.yaml sind blind — geprueft:
-# vor diesem Objekt lieferte __name__=~"gotk.*" null Ergebnisse.
+# Flux-Controller-Metriken: controller_runtime_* (Reconcile-Fehlerraten,
+# -Latenzen, Workqueue-Tiefe), certwatcher_* und go_*.
+#
+# KORREKTUR 15.08.2026: Hier stand vorher, dieser Scrape liefere gotk_*-Serien
+# (insb. gotk_reconcile_condition/gotk_suspend_status). Das war falsch bzw.
+# durch das Flux-2.9-Upgrade ueberholt — diese Metriken existieren auf dem
+# Metrics-Port der Controller nicht (mehr). Verifiziert: __name__=~"gotk.*"
+# liefert null Ergebnisse, __name__=~"controller_runtime.*" liefert Daten. Die
+# Ready/Suspend-Alerts in rules/flux-vmrule.yaml haengen NICHT an diesem
+# Scrape, sondern an kube-state-metrics Custom Resource State (siehe
+# apps/base/monitoring/vm-k8s-stack/helmrelease.yaml und
+# docs/runbooks/flux-reconcile.md). Dieser VMPodScrape bleibt trotzdem
+# bestehen, weil controller_runtime_* fuer Reconcile-Fehlerraten/-Latenzen der
+# Flux-Controller selbst nuetzlich ist (kein Ersatz fuer CRS, sondern eine
+# andere Sicht: Controller-Performance statt Objekt-Status).
 #
 # Die Controller haben keinen Service, nur den Container-Port http-prom (8080).
 # Die bestehende NetworkPolicy flux-system/allow-scraping erlaubt Ingress auf
 # 8080 aus allen Namespaces, es ist also nichts weiter freizuschalten.
 #
-# honorLabels: true ist hier bewusst gesetzt. gotk_reconcile_condition traegt
-# ein eigenes `namespace`-Label: den Namespace des ueberwachten OBJEKTS (eine
-# HelmRelease liegt z. B. in monitoring oder cnpg-system), nicht den des
-# Controller-Pods. Ohne honorLabels ueberschreibt das Scrape-Relabeling das mit
-# "flux-system" und verschiebt das Original nach exported_namespace — damit
-# zeigt jeder Alert auf den falschen Namespace.
+# honorLabels: true bleibt gesetzt, obwohl controller_runtime_*-Metriken kein
+# eigenes namespace-Label tragen wie einst gotk_reconcile_condition — es
+# schadet nicht und verhindert, dass ein kuenftig hinzugefuegtes Label mit
+# eigenem `namespace` (z. B. bei einem Flux-Upgrade) stillschweigend
+# ueberschrieben wird.
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMPodScrape
 metadata:
