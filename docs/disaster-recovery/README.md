@@ -10,14 +10,16 @@ End-to-end recovery after control-plane loss or full cluster rebuild. **PostgreS
 | PostgreSQL | CNPG `bootstrap.recovery` from Garage S3 | [cnpg-s3-dr.md](cnpg-s3-dr.md) |
 | App manifests | Flux (`homelab-gitops` on **GitHub**) | This doc |
 | PV / namespace data | Velero (optional) | [cnpg-s3-dr.md](cnpg-s3-dr.md#velero-vs-barman) |
+| Immich + Nextcloud offsite | Encrypted Restic on Hetzner Storage Box | [Offsite restore](../runbooks/offsite-backup-restore.md) |
 
 ## Prerequisites (before you need DR)
 
 1. **CNPG backups** reaching `http://192.168.10.94:30188` — verify `kubectl get backup -n cnpg-system`.
 2. **SOPS secrets** in Git decryptable by cluster (`sops-age` in `flux-system` from OpenTofu).
-3. **pgadmin**: `pgadmin-credentials.secret.yaml` enabled in `infrastructure/overlays/main/pgadmin/kustomization.yaml` (see `just pgadmin-credentials`).
-4. **OpenTofu** access: `homelab-infrastructure/talos` (`kubeconfig`, `talosconfig`, `github_token` for Flux bootstrap).
-5. Know that **Flux clones `https://github.com/kreativmonkey/homelab-gitops.git`** — pushes only to Forgejo do not affect the cluster until mirrored to GitHub `main`.
+3. **Offsite Restic verification** successful in `backup-offsite` — see [offsite-backup-restore.md](../runbooks/offsite-backup-restore.md).
+4. **pgadmin**: `pgadmin-credentials.secret.yaml` enabled in `infrastructure/overlays/main/pgadmin/kustomization.yaml` (see `just pgadmin-credentials`).
+5. **OpenTofu** access: `homelab-infrastructure/talos` (`kubeconfig`, `talosconfig`, `github_token` for Flux bootstrap).
+6. Know that **Flux clones `https://github.com/kreativmonkey/homelab-gitops.git`** — pushes only to Forgejo do not affect the cluster until mirrored to GitHub `main`.
 
 ## Talos control plane
 

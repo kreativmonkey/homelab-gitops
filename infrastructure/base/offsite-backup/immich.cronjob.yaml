@@ -1,0 +1,130 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: immich-offsite-backup
+  namespace: backup-offsite
+spec:
+  schedule: "30 3 * * *"
+  timeZone: Europe/Berlin
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 28800
+      template:
+        spec:
+          serviceAccountName: offsite-backup
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 60
+          initContainers:
+            - name: prepare-rclone
+              image: docker.io/rclone/rclone:1.74.2
+              command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
+              env:
+                - name: STORAGEBOX_HOST
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_HOST}
+                - name: STORAGEBOX_USERNAME
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_USERNAME}
+                - name: STORAGEBOX_PASSWORD
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_PASSWORD}
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+            - name: restic-server
+              image: docker.io/rclone/rclone:1.74.2
+              restartPolicy: Always
+              args:
+                - serve
+                - restic
+                - storagebox:homelab-gitops/restic
+                - --addr=127.0.0.1:8080
+                - --config=/config/rclone.conf
+                - --cache-objects=false
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+            - name: database-dump
+              image: docker.io/alpine/k8s:1.36.0
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  mkdir -p /staging/database
+                  primary="$(kubectl get pods -n cnpg-system \
+                    -l cnpg.io/cluster=immich-postgres,role=primary \
+                    -o jsonpath='{.items[0].metadata.name}')"
+                  kubectl exec -n cnpg-system "${primary}" -- \
+                    pg_dump -d immich -Fc > /staging/database/immich.dump
+              volumeMounts:
+                - name: staging
+                  mountPath: /staging
+          containers:
+            - name: backup
+              image: docker.io/restic/restic:0.19.1
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  /bin/sh /scripts/record-sample.sh immich /data /fotos
+                  exec /bin/sh /scripts/restic-backup.sh \
+                    immich /data /fotos /staging
+              env:
+                - name: RESTIC_REPOSITORY
+                  value: rest:http://127.0.0.1:8080/
+                - name: EXIT_ON_FAILURE
+                  value: "true"
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: storagebox-credentials
+                      key: restic-password
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 2Gi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: work
+                  mountPath: /work
+                - name: staging
+                  mountPath: /staging
+                - name: media
+                  mountPath: /data
+                  subPath: Bilder
+                  readOnly: true
+                - name: media
+                  mountPath: /fotos
+                  subPath: Fotos
+                  readOnly: true
+          volumes:
+            - name: config
+              emptyDir: {}
+            - name: work
+              emptyDir: {}
+            - name: staging
+              emptyDir:
+                sizeLimit: 2Gi
+            - name: scripts
+              configMap:
+                name: offsite-backup-scripts
+                defaultMode: 0555
+            # Inline NFS is required because PVCs cannot cross namespaces.
+            # Paths match the existing static Immich PVs.
+            - name: media
+              nfs:
+                server: 192.168.10.94
+                path: /mnt/Storagepool/Media
+                readOnly: true

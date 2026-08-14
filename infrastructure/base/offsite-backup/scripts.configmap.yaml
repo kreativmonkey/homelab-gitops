@@ -1,0 +1,190 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: offsite-backup-scripts
+  namespace: backup-offsite
+data:
+  prepare-rclone.sh: |
+    #!/bin/sh
+    set -eu
+    umask 077
+
+    # Hetzner Storage Box ED25519 fingerprint:
+    # SHA256:XqONwb1S0zuj5A1CDxpOSuD2hnAArV1A3wKY7Z3sdgM
+    printf '[%s]:23 ssh-ed25519 %s\n' "${STORAGEBOX_HOST}" \
+      'AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs' \
+      > /config/storagebox-known-hosts
+    storagebox_password="$(rclone obscure "${STORAGEBOX_PASSWORD}")"
+    rclone config create storagebox sftp \
+      host "${STORAGEBOX_HOST}" \
+      user "${STORAGEBOX_USERNAME}" \
+      port 23 \
+      pass "${storagebox_password}" \
+      shell_type unix \
+      known_hosts_file /config/storagebox-known-hosts \
+      host_key_algorithms ssh-ed25519 \
+      --config /config/rclone.conf >/dev/null
+
+    if [ -s /config/garage-access-key.b64 ]; then
+      garage_access_key="$(base64 -d </config/garage-access-key.b64)"
+      garage_secret_key="$(base64 -d </config/garage-secret-key.b64)"
+      rclone config create garage s3 \
+        provider Other \
+        env_auth false \
+        access_key_id "${garage_access_key}" \
+        secret_access_key "${garage_secret_key}" \
+        endpoint http://192.168.10.94:30188 \
+        region garage \
+        force_path_style true \
+        --config /config/rclone.conf >/dev/null
+    fi
+
+  restic-backup.sh: |
+    #!/bin/sh
+    set -u
+
+    tag="$1"
+    shift
+    result=0
+
+    for delay in 1 2 4 8 16; do
+      restic snapshots >/dev/null 2>&1 && break
+      sleep "${delay}"
+    done
+    if ! restic snapshots >/dev/null 2>&1; then
+      restic init || result=1
+    fi
+    if [ "${result}" -eq 0 ]; then
+      restic backup --host homelab --tag "${tag}" "$@" || result=1
+    fi
+    if [ "${result}" -eq 0 ]; then
+      restic forget --host homelab --tag "${tag}" \
+        --keep-daily 14 --keep-weekly 8 --keep-monthly 12 --keep-yearly 3 \
+        || result=1
+    fi
+
+    if [ "${result}" -eq 0 ]; then
+      touch "/work/${tag}.ok"
+    else
+      touch "/work/${tag}.failed"
+    fi
+    if [ "${EXIT_ON_FAILURE:-false}" = "true" ]; then
+      exit "${result}"
+    fi
+    exit 0
+
+  record-sample.sh: |
+    #!/bin/sh
+    set -eu
+
+    tag="$1"
+    shift
+    sample_path="$(find "$@" -type f -print -quit)"
+    test -n "${sample_path}"
+    mkdir -p /staging/verify
+    printf '%s\n' "${sample_path}" > "/staging/verify/${tag}-sample.path"
+    sha256sum "${sample_path}" | cut -d ' ' -f 1 \
+      > "/staging/verify/${tag}-sample.sha256"
+
+  nextcloud-maintenance.sh: |
+    #!/bin/sh
+    set -u
+
+    disable_maintenance() {
+      kubectl exec -n nextcloud deploy/nextcloud -- \
+        php occ maintenance:mode --off >/dev/null 2>&1 || true
+      touch /work/maintenance-off
+    }
+    trap 'disable_maintenance; exit 0' TERM INT EXIT
+
+    if kubectl exec -n nextcloud deploy/nextcloud -- \
+      php occ maintenance:mode --on; then
+      touch /work/maintenance-ready
+    else
+      touch /work/maintenance-failed
+    fi
+
+    while [ ! -f /work/backup-done ]; do
+      sleep 5
+    done
+    disable_maintenance
+    trap - TERM INT EXIT
+    while true; do sleep 3600; done
+
+  nextcloud-capture.sh: |
+    #!/bin/sh
+    set -u
+    result=0
+    mkdir -p /staging/database
+
+    primary="$(kubectl get pods -n cnpg-system \
+      -l cnpg.io/cluster=homelab-postgres,role=primary \
+      -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)"
+    if [ -z "${primary}" ] || ! kubectl exec -n cnpg-system "${primary}" -- \
+      pg_dump -d nextcloud -Fc > /staging/database/nextcloud.dump; then
+      result=1
+    fi
+
+    if ! kubectl exec -n nextcloud deploy/nextcloud -- \
+      tar -C /var/www/html -czf - . > /staging/nextcloud-app.tar.gz; then
+      result=1
+    fi
+
+    if [ "${result}" -eq 0 ]; then
+      touch /work/nextcloud-capture.ok
+    else
+      touch /work/nextcloud-capture.failed
+    fi
+    exit 0
+
+  verify.sh: |
+    #!/bin/sh
+    set -u
+    result=0
+
+    for delay in 1 2 4 8 16; do
+      restic snapshots >/dev/null 2>&1 && break
+      sleep "${delay}"
+    done
+    restic check --read-data-subset=5% || result=1
+    restic restore latest --host homelab --tag immich \
+      --include '/staging/database/immich.dump' \
+      --include '/staging/verify/immich-sample.path' \
+      --include '/staging/verify/immich-sample.sha256' \
+      --target /restore/immich \
+      || result=1
+    restic restore latest --host homelab --tag nextcloud \
+      --include '/staging/database/nextcloud.dump' \
+      --include '/staging/nextcloud-app.tar.gz' \
+      --include '/staging/verify/nextcloud-sample.path' \
+      --include '/staging/verify/nextcloud-sample.sha256' \
+      --target /restore/nextcloud \
+      || result=1
+    for tag in immich nextcloud; do
+      manifest_root="/restore/${tag}/staging/verify"
+      sample_path="$(cat "${manifest_root}/${tag}-sample.path" 2>/dev/null)" \
+        || result=1
+      expected="$(cat "${manifest_root}/${tag}-sample.sha256" 2>/dev/null)" \
+        || result=1
+      if [ -n "${sample_path:-}" ] && [ -n "${expected:-}" ]; then
+        restic restore latest --host homelab --tag "${tag}" \
+          --include "${sample_path}" --target "/restore/${tag}-sample" \
+          || result=1
+        restored_path="/restore/${tag}-sample${sample_path}"
+        actual="$(sha256sum "${restored_path}" 2>/dev/null | cut -d ' ' -f 1)" \
+          || result=1
+        [ "${actual:-}" = "${expected}" ] || result=1
+      else
+        result=1
+      fi
+    done
+    if [ "${result}" -eq 0 ]; then
+      restic prune || result=1
+    fi
+
+    if [ "${result}" -eq 0 ]; then
+      touch /work/restore.ok
+    else
+      touch /work/restore.failed
+    fi
+    exit 0

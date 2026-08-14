@@ -105,6 +105,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 2. S3 credentials never stored plain‑text – use SealedSecrets or ExternalSecrets placeholders.
 3. DR overlay at `infrastructure/overlays/disaster-recovery/` patches CNPG `Cluster` with `spec.bootstrap.recovery` so fresh clusters restore from S3.
 4. Restoration flow: apply DR overlay → CNPG restores databases → Flux syncs apps.
+5. Immich and Nextcloud irreplaceable data also goes encrypted via Restic to the Hetzner Storage Box; manifests and restore verification live in `infrastructure/base/offsite-backup/`.
 
 ---
 

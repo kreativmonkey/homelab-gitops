@@ -1,0 +1,197 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nextcloud-offsite-backup
+  namespace: backup-offsite
+spec:
+  schedule: "30 4 * * *"
+  timeZone: Europe/Berlin
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 28800
+      template:
+        spec:
+          serviceAccountName: offsite-backup
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 120
+          initContainers:
+            - name: fetch-garage-credentials
+              image: docker.io/alpine/k8s:1.36.0
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  umask 077
+                  kubectl get secret -n nextcloud nextcloud-s3-credentials \
+                    -o jsonpath='{.data.access-key}' > /config/garage-access-key.b64
+                  kubectl get secret -n nextcloud nextcloud-s3-credentials \
+                    -o jsonpath='{.data.secret-key}' > /config/garage-secret-key.b64
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+            - name: prepare-rclone
+              image: docker.io/rclone/rclone:1.74.2
+              command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
+              env:
+                - name: STORAGEBOX_HOST
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_HOST}
+                - name: STORAGEBOX_USERNAME
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_USERNAME}
+                - name: STORAGEBOX_PASSWORD
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_PASSWORD}
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+            - name: restic-server
+              image: docker.io/rclone/rclone:1.74.2
+              restartPolicy: Always
+              args:
+                - serve
+                - restic
+                - storagebox:homelab-gitops/restic
+                - --addr=127.0.0.1:8080
+                - --config=/config/rclone.conf
+                - --cache-objects=false
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+            - name: maintenance
+              image: docker.io/alpine/k8s:1.36.0
+              restartPolicy: Always
+              command: ["/bin/sh", "/scripts/nextcloud-maintenance.sh"]
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: work
+                  mountPath: /work
+            - name: wait-maintenance
+              image: docker.io/rclone/rclone:1.74.2
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  for _ in $(seq 1 60); do
+                    [ -f /work/maintenance-ready ] && exit 0
+                    [ -f /work/maintenance-failed ] && exit 0
+                    sleep 5
+                  done
+                  touch /work/maintenance-failed
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+            - name: stage-objects
+              image: docker.io/rclone/rclone:1.74.2
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  if [ ! -f /work/maintenance-ready ]; then
+                    touch /work/nextcloud-stage.failed
+                    exit 0
+                  fi
+                  if rclone sync garage:nextcloud /staging/objects \
+                    --config=/config/rclone.conf --fast-list \
+                    --transfers=4 --checkers=8 --delete-during; then
+                    touch /work/nextcloud-stage.ok
+                  else
+                    touch /work/nextcloud-stage.failed
+                  fi
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: work
+                  mountPath: /work
+                - name: staging
+                  mountPath: /staging
+            - name: capture-state
+              image: docker.io/alpine/k8s:1.36.0
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  if [ ! -f /work/nextcloud-stage.ok ]; then
+                    touch /work/nextcloud-capture.failed
+                    exit 0
+                  fi
+                  exec /bin/sh /scripts/nextcloud-capture.sh
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: work
+                  mountPath: /work
+                - name: staging
+                  mountPath: /staging
+            - name: backup
+              image: docker.io/restic/restic:0.19.1
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  if [ ! -f /work/nextcloud-stage.ok ] || \
+                     [ ! -f /work/nextcloud-capture.ok ]; then
+                    touch /work/nextcloud.failed
+                    exit 0
+                  fi
+                  /bin/sh /scripts/record-sample.sh nextcloud /staging/objects
+                  exec /bin/sh /scripts/restic-backup.sh nextcloud /staging
+              env:
+                - name: RESTIC_REPOSITORY
+                  value: rest:http://127.0.0.1:8080/
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: storagebox-credentials
+                      key: restic-password
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: work
+                  mountPath: /work
+                - name: staging
+                  mountPath: /staging
+          containers:
+            - name: finalize
+              image: docker.io/rclone/rclone:1.74.2
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  touch /work/backup-done
+                  for _ in $(seq 1 60); do
+                    [ -f /work/maintenance-off ] && break
+                    sleep 2
+                  done
+                  test -f /work/maintenance-off
+                  test -f /work/nextcloud-stage.ok
+                  test -f /work/nextcloud-capture.ok
+                  test -f /work/nextcloud.ok
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+          volumes:
+            - name: config
+              emptyDir: {}
+            - name: work
+              emptyDir: {}
+            - name: scripts
+              configMap:
+                name: offsite-backup-scripts
+                defaultMode: 0555
+            - name: staging
+              persistentVolumeClaim:
+                claimName: nextcloud-offsite-staging
