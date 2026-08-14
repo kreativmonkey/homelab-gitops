@@ -96,5 +96,10 @@ spec:
             homelab_owner: platform
           annotations:
             summary: "Flux: {{ $labels.kind }}/{{ $labels.name }} ist suspendiert"
-            description: "{{ $labels.kind }} {{ $labels.name }} in {{ $labels.namespace }} ist seit ueber einer Stunde suspendiert. Aenderungen aus Git werden fuer dieses Objekt nicht angewendet — der Cluster driftet stillschweigend von Git weg. Falls das eine Notmassnahme war: flux resume {{ $labels.kind | lower }} -n {{ $labels.namespace }} {{ $labels.name }}"
+            # Keine Template-Funktionen in Annotations: die Engine kennt weder
+            # `lower` noch die meisten Sprig-Helfer. Ein unbekannter Aufruf
+            # laesst die Validierung der GANZEN VMRule scheitern, nicht nur
+            # dieser einen Regel — dann ist keine der vier Flux-Regeln aktiv.
+            # Der Objekttyp wird deshalb ausgeschrieben statt kleingerechnet.
+            description: "{{ $labels.kind }} {{ $labels.name }} in {{ $labels.namespace }} ist seit ueber einer Stunde suspendiert. Aenderungen aus Git werden fuer dieses Objekt nicht angewendet — der Cluster driftet stillschweigend von Git weg. Falls das eine Notmassnahme war, den Typ kleingeschrieben einsetzen: flux resume kustomization|helmrelease|source git -n {{ $labels.namespace }} {{ $labels.name }}"
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/flux-reconcile.md"

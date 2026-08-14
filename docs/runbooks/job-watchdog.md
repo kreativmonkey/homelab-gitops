@@ -370,10 +370,29 @@ kubectl -n backup-offsite label --overwrite cronjob watchdog-selftest \
 5. **Group-by ohne `cronjob`.** Die Root-`group_by` in der Alertmanager-Route
    enthält kein `cronjob`-Label. Drei gleichzeitig stale Backups ergeben deshalb
    eine ntfy-Nachricht mit drei Zeilen statt drei Nachrichten — das ist gewollt.
-6. **Keine CI-Prüfung der Queries.** Es gibt keinen VMRule-Admission-Webhook und
-   keine Expression-Validierung in der CI-Pipeline. Eine kaputte Query landet
-   still im Cluster. Nach jeder Änderung an diesem VMRule die vmalert-Rules-API
-   prüfen (Befehl siehe oben, Abschnitt 3).
+6. **Keine CI-Prüfung der Queries.** Die CI-Pipeline validiert nur YAML und
+   Kubernetes-Schema, keine MetricsQL. Eine semantisch leere Query — eine, die
+   syntaktisch stimmt, aber nie Daten liefert — landet still im Cluster. Nach
+   jeder Änderung an diesem VMRule die vmalert-Rules-API prüfen (Befehl siehe
+   Abschnitt 3).
+
+   **Zwei getrennte Prüfstellen, beide nötig:**
+
+   ```bash
+   # 1. Hat der VM-Operator die Regel ueberhaupt akzeptiert?
+   kubectl -n monitoring get vmrule
+   # STATUS muss "operational" sein. Bei "failed" den Grund lesen:
+   kubectl -n monitoring get vmrule <name> -o jsonpath='{.status.reason}'
+
+   # 2. Wertet vmalert sie fehlerfrei aus?  (health/lastError, siehe Abschnitt 3)
+   ```
+
+   Die erste Stelle fängt Syntaxfehler und **unbekannte Template-Funktionen in
+   den Annotations** — und zwar hart: schlägt eine einzige Annotation fehl,
+   wird die **komplette VMRule** abgelehnt und keine ihrer Regeln ist aktiv.
+   Am 15.08.2026 hat ein `{{ $labels.kind | lower }}` so alle vier Flux-Regeln
+   auf einen Schlag stillgelegt. Die Template-Engine kennt `lower` nicht — in
+   Annotations grundsätzlich ohne Funktionsaufrufe auskommen.
 
 ## Abgelöst
 
