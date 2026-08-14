@@ -39,7 +39,15 @@ metadata:
 
 ```
 max-age-hours >= Schedule-Intervall + activeDeadlineSeconds
+max-age-hours >  10 Minuten (0.17)
 ```
+
+Die zweite Zeile ist eine harte Untergrenze, keine Empfehlung: `WatchdogJobFailed`
+hat ein Alters-Gate auf `max-age-hours` (siehe unten) **und** ein `for: 10m`.
+Liegt `max-age-hours` unter 10 Minuten, faellt die Serie aus dem Gate, bevor
+`for` erfuellt ist — der Alert kann dann nie feuern. In der Praxis ist das nie
+ein Thema (kleinster echter Wert ist 1h), aber beim Basteln mit Testwerten
+laeuft man genau da hinein.
 
 Grund: `kube_cronjob_status_last_successful_time` wird erst am **Ende** eines
 Laufs gesetzt, nicht beim Start. Ein täglicher Job mit `activeDeadlineSeconds:
@@ -323,12 +331,21 @@ laufen lassen), damit die `ownerReferences` stehen. `kubectl create job
 bricht damit den `kube_job_owner`-Join, den `WatchdogJobFailed` und
 `WatchdogJobStuck` benötigen — der Selbsttest würde dann nichts auslösen.
 
-Erwarteter Ablauf: `WatchdogConfigInvalid` bleibt aus (Werte sind gültige
-Zahlen), nach dem ersten Lauf feuert `WatchdogJobFailed` (der Job schlägt
-mit `/bin/false` fehl), nach ca. 3 Minuten `WatchdogJobStale`
-(`max-age-hours=0.05` ≈ 3 Minuten). Nach dem `delete` erscheint irgendwann im
-Fenster [+10m, +1h] `WatchdogCronJobDisappeared` und resolved danach von
-selbst.
+Erwarteter Ablauf mit `max-age-hours=0.05`: `WatchdogConfigInvalid` bleibt aus
+(Werte sind gültige Zahlen). `WatchdogJobStale` geht sofort auf `pending` und
+feuert nach 30 Minuten. Nach dem `delete` erscheint im Fenster [+10m, +1h]
+`WatchdogCronJobDisappeared` und resolved danach von selbst.
+
+**`WatchdogJobFailed` feuert mit diesem Wert absichtlich NICHT** — und das ist
+kein Fehler, sondern die Untergrenze aus Abschnitt 2 in Aktion: bei
+`max-age-hours=0.05` (3 Minuten) faellt jede Job-Serie nach 3 Minuten aus dem
+Alters-Gate, das `for: 10m` wird also nie erreicht. Um auch diesen Pfad zu
+pruefen, nach dem Stale-Test umlabeln und zehn Minuten warten:
+
+```bash
+kubectl -n backup-offsite label --overwrite cronjob watchdog-selftest \
+  homelab.f4mily.net/max-age-hours=0.5
+```
 
 ## 5. Bekannte Grenzen
 
