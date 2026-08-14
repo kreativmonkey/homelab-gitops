@@ -76,6 +76,10 @@ spec:
         - authentik-sparky-fitness-blueprint
         - authentik-tandoor-blueprint
         - authentik-outline-blueprint
+        - authentik-audiobookshelf-blueprint
+        - authentik-forgejo-blueprint
+        - authentik-immich-blueprint
+        - authentik-nextcloud-blueprint
     server:
       ingress:
         enabled: false

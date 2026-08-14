@@ -17,6 +17,10 @@ resources:
   - blueprints/sparky-fitness-oauth.configmap.yaml
   - blueprints/tandoor-oauth.configmap.yaml
   - blueprints/outline-oauth.configmap.yaml
+  - blueprints/audiobookshelf-oauth.configmap.yaml
+  - blueprints/forgejo-oauth.configmap.yaml
+  - blueprints/immich-oauth.configmap.yaml
+  - blueprints/nextcloud-oauth.configmap.yaml
   - media-pvc.yaml
   - helmrelease.yaml
   - ingress.yaml

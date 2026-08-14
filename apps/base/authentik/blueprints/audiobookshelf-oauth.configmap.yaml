@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-audiobookshelf-blueprint
+  namespace: authentik
+  labels:
+    app.kubernetes.io/part-of: authentik
+data:
+  audiobookshelf.yaml: |
+    version: 1
+    metadata:
+      name: Homelab Audiobookshelf OIDC
+      labels:
+        blueprints.goauthentik.io/description: OAuth2 provider, application and scope mapping for Audiobookshelf
+    entries:
+      # Managed here as well, not just referenced: the mapping carries the
+      # group logic this provider depends on, and a blueprint that only
+      # points at it breaks the moment someone deletes it.
+      - model: authentik_providers_oauth2.scopemapping
+        id: audiobookshelf-scope
+        identifiers:
+          scope_name: "audiobookshelf-group-mapping"
+        attrs:
+          name: "Audiobookshelf Group mapping"
+          scope_name: "audiobookshelf-group-mapping"
+          description: "Mapps default groups to audiobookshelf group."
+          expression: |-
+            audbshlf_claims = {}
+
+            if request.user.ak_groups.filter(name="Familie").exists():
+                audbshlf_claims["audiobookshelf"]= "user"
+            if request.user.ak_groups.filter(name="Admin").exists():
+                audbshlf_claims["audiobookshelf"]= "admin"
+            if request.user.ak_groups.filter(name="authentik Admins").exists():
+                audbshlf_claims["audiobookshelf"]= "admin"
+
+            return audbshlf_claims
+      - model: authentik_providers_oauth2.oauth2provider
+        id: audiobookshelf-provider
+        # Match on client_id, not name: the name is an attribute the blueprint
+        # itself sets, so any rename turns the update into a create and hits the
+        # unique constraint.
+        identifiers:
+          client_id: Cw6xIezlTTKxGyPt8uNGFqWG7HgvGcxw2eHqQ8H4
+        attrs:
+          name: "Provider for Audiobookshelf"
+          client_type: confidential
+          client_id: Cw6xIezlTTKxGyPt8uNGFqWG7HgvGcxw2eHqQ8H4
+          # Injected into the worker from the authentik-oidc-client-secrets Secret.
+          # Never hardcode it here: every reconcile would overwrite the real
+          # secret in Authentik and break the login with invalid_client.
+          client_secret: !Env OIDC_AUDIOBOOKSHELF_CLIENT_SECRET
+          # explicit-consent for every provider by policy: consent is stored for
+          # 4 weeks, so it is one dialog per app and month, not per login.
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          redirect_uris:
+            - matching_mode: strict
+              url: audiobookshelf://oauth
+            - matching_mode: strict
+              url: https://audible.f4mily.net/audiobookshelf/auth/openid/callback
+            - matching_mode: strict
+              url: https://audible.f4mily.net/audiobookshelf/auth/openid/mobile-redirect
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+            - !KeyOf audiobookshelf-scope
+      - model: authentik_core.application
+        identifiers:
+          slug: audiobookshelf
+        attrs:
+          name: "Audiobookshelf"
+          slug: audiobookshelf
+          provider: !KeyOf audiobookshelf-provider
+          group: "Media"
+          launch_url: https://audible.f4mily.net/
+          meta_launch_url: https://audible.f4mily.net/
