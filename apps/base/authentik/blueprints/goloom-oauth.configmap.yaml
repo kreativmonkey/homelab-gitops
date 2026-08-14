@@ -32,7 +32,7 @@ data:
           # Every attribute below mirrors the live provider, which was created by
           # hand. Keeps the first apply a no-op — change deliberately, not as a
           # side effect of adopting this into GitOps.
-          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
           signing_key: null
           redirect_uris:
