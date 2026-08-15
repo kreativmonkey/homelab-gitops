@@ -337,6 +337,222 @@ spec:
       metricLabelsAllowlist:
         - cronjobs=[homelab.f4mily.net/watchdog,homelab.f4mily.net/max-age-hours,homelab.f4mily.net/max-runtime-hours]
 
+      # Custom Resource State (CRS): Flux-Reconcile-Metriken.
+      #
+      # gotk_reconcile_condition/gotk_suspend_status existieren in Flux 2.9
+      # nicht mehr (siehe docs/runbooks/flux-reconcile.md, Abschnitt "gotk_*
+      # ist tot"). Statt der Controller-Metrik generiert kube-state-metrics
+      # die Serien jetzt direkt aus den Flux-CRs. Syntax verifiziert gegen
+      # https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/extend/customresourcestate-metrics.md
+      # (Beispiel "status conditions on Kubernetes Controllers") sowie gegen
+      # `helm template` — siehe just-validate-Output für den Beleg, dass diese
+      # Config tatsächlich in den ConfigMap-Values landet.
+      #
+      # Metriken je abgedecktem Kind (Kustomization, HelmRelease,
+      # GitRepository, OCIRepository, HelmRepository, HelmChart):
+      #   flux_resource_ready{namespace,name,kind,type,status}  Info, Wert immer 1
+      #     -> eine Serie je Eintrag in .status.conditions[], nicht nur für
+      #        "Ready". Alert-Queries filtern deshalb explizit type="Ready".
+      #   flux_resource_suspended{namespace,name,kind}          Gauge, 0/1
+      #     -> aus .spec.suspend (bool wird von KSM zu 0.0/1.0).
+      #
+      # WICHTIG, nicht vereinfachen: status steht als LABEL, nicht als
+      # Metrikwert. Ein Gauge mit valueFrom:[status] würde "False" UND
+      # "Unknown" beide auf 0.0 abbilden (KSM-String-Konvertierung: alles
+      # außer "true"/"yes" -> 0.0) — genau die Unterscheidung, die am
+      # 14.08.2026 zwischen Ursache (Unknown) und Folgefehlern (False) den
+      # Unterschied machte, ginge damit verloren. Deshalb Info-Metrik mit
+      # type+status als Label statt Gauge mit valueFrom.
+      #
+      # Diese Metriken kommen über die Default-VMServiceScrape von
+      # kube-state-metrics selbst rein (values-Key `vmScrape`, oben im Chart
+      # bereits mit honorLabels:true aktiv) — kein separater Scrape nötig.
+      customResourceState:
+        enabled: true
+        config:
+          kind: CustomResourceStateMetrics
+          spec:
+            resources:
+              - groupVersionKind:
+                  group: kustomize.toolkit.fluxcd.io
+                  version: v1
+                  kind: Kustomization
+                metricNamePrefix: flux
+                labelsFromPath:
+                  name: [metadata, name]
+                  namespace: [metadata, namespace]
+                commonLabels:
+                  kind: Kustomization
+                metrics:
+                  - name: resource_ready
+                    help: "Ready-Bedingung eines Flux-Objekts (Info-Metrik, Wert immer 1; status als Label)."
+                    each:
+                      type: Info
+                      info:
+                        path: [status, conditions]
+                        labelsFromPath:
+                          type: ["type"]
+                          status: ["status"]
+                  - name: resource_suspended
+                    help: "spec.suspend eines Flux-Objekts (0=aktiv, 1=suspendiert)."
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [spec, suspend]
+              - groupVersionKind:
+                  group: helm.toolkit.fluxcd.io
+                  version: v2
+                  kind: HelmRelease
+                metricNamePrefix: flux
+                labelsFromPath:
+                  name: [metadata, name]
+                  namespace: [metadata, namespace]
+                commonLabels:
+                  kind: HelmRelease
+                metrics:
+                  - name: resource_ready
+                    help: "Ready-Bedingung eines Flux-Objekts (Info-Metrik, Wert immer 1; status als Label)."
+                    each:
+                      type: Info
+                      info:
+                        path: [status, conditions]
+                        labelsFromPath:
+                          type: ["type"]
+                          status: ["status"]
+                  - name: resource_suspended
+                    help: "spec.suspend eines Flux-Objekts (0=aktiv, 1=suspendiert)."
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [spec, suspend]
+              - groupVersionKind:
+                  group: source.toolkit.fluxcd.io
+                  version: v1
+                  kind: GitRepository
+                metricNamePrefix: flux
+                labelsFromPath:
+                  name: [metadata, name]
+                  namespace: [metadata, namespace]
+                commonLabels:
+                  kind: GitRepository
+                metrics:
+                  - name: resource_ready
+                    help: "Ready-Bedingung eines Flux-Objekts (Info-Metrik, Wert immer 1; status als Label)."
+                    each:
+                      type: Info
+                      info:
+                        path: [status, conditions]
+                        labelsFromPath:
+                          type: ["type"]
+                          status: ["status"]
+                  - name: resource_suspended
+                    help: "spec.suspend eines Flux-Objekts (0=aktiv, 1=suspendiert)."
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [spec, suspend]
+              - groupVersionKind:
+                  group: source.toolkit.fluxcd.io
+                  version: v1
+                  kind: OCIRepository
+                metricNamePrefix: flux
+                labelsFromPath:
+                  name: [metadata, name]
+                  namespace: [metadata, namespace]
+                commonLabels:
+                  kind: OCIRepository
+                metrics:
+                  - name: resource_ready
+                    help: "Ready-Bedingung eines Flux-Objekts (Info-Metrik, Wert immer 1; status als Label)."
+                    each:
+                      type: Info
+                      info:
+                        path: [status, conditions]
+                        labelsFromPath:
+                          type: ["type"]
+                          status: ["status"]
+                  - name: resource_suspended
+                    help: "spec.suspend eines Flux-Objekts (0=aktiv, 1=suspendiert)."
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [spec, suspend]
+              - groupVersionKind:
+                  group: source.toolkit.fluxcd.io
+                  version: v1
+                  kind: HelmRepository
+                metricNamePrefix: flux
+                labelsFromPath:
+                  name: [metadata, name]
+                  namespace: [metadata, namespace]
+                commonLabels:
+                  kind: HelmRepository
+                metrics:
+                  - name: resource_ready
+                    help: "Ready-Bedingung eines Flux-Objekts (Info-Metrik, Wert immer 1; status als Label)."
+                    each:
+                      type: Info
+                      info:
+                        path: [status, conditions]
+                        labelsFromPath:
+                          type: ["type"]
+                          status: ["status"]
+                  - name: resource_suspended
+                    help: "spec.suspend eines Flux-Objekts (0=aktiv, 1=suspendiert)."
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [spec, suspend]
+              - groupVersionKind:
+                  group: source.toolkit.fluxcd.io
+                  version: v1
+                  kind: HelmChart
+                metricNamePrefix: flux
+                labelsFromPath:
+                  name: [metadata, name]
+                  namespace: [metadata, namespace]
+                commonLabels:
+                  kind: HelmChart
+                metrics:
+                  - name: resource_ready
+                    help: "Ready-Bedingung eines Flux-Objekts (Info-Metrik, Wert immer 1; status als Label)."
+                    each:
+                      type: Info
+                      info:
+                        path: [status, conditions]
+                        labelsFromPath:
+                          type: ["type"]
+                          status: ["status"]
+                  - name: resource_suspended
+                    help: "spec.suspend eines Flux-Objekts (0=aktiv, 1=suspendiert)."
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [spec, suspend]
+
+      # Ohne List/Watch auf die Flux-CRDs liefert die CRS-Config oben still
+      # keine Daten — kein Fehler, einfach leere Metriken (Belegpflicht siehe
+      # just-validate-Output). rbac.customResourceState.createClusterRoleRules
+      # gibt es in dieser Chart-Version (kube-state-metrics 7.5.3, gebündelt
+      # in victoria-metrics-k8s-stack 0.90.1) noch NICHT (geprüft mit
+      # `helm show values` gegen die tatsächlich gepinnte Version) — der
+      # Weg für Custom-Resource-RBAC ist hier ausschließlich rbac.extraRules.
+      rbac:
+        extraRules:
+          - apiGroups: ["kustomize.toolkit.fluxcd.io"]
+            resources: ["kustomizations"]
+            verbs: ["list", "watch"]
+          - apiGroups: ["helm.toolkit.fluxcd.io"]
+            resources: ["helmreleases"]
+            verbs: ["list", "watch"]
+          - apiGroups: ["source.toolkit.fluxcd.io"]
+            resources:
+              - gitrepositories
+              - ocirepositories
+              - helmrepositories
+              - helmcharts
+            verbs: ["list", "watch"]
+
     # ============================================
     # DEFAULT DASHBOARDS & RULES
     # ============================================

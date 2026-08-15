@@ -88,10 +88,20 @@ mehr aus Git ausgerollt, ohne jede Meldung.
 
 | Task | Status |
 |------|--------|
-| `apps/base/monitoring/extra-scrapes/flux-vmpodscrape.yaml` (gotk-Metriken, `honorLabels: true`) | ✅ |
 | `apps/base/monitoring/rules/flux-vmrule.yaml` (4 Alerts: `FluxControllerDown`, `FluxReconcileFailing`, `FluxReconcileStalled`, `FluxSuspended`) | ✅ |
 | Eigener ntfy-Receiver | nicht nötig — bestehende Route über `severity` + `homelab_owner: platform` greift bereits |
 | Runbook `docs/runbooks/flux-reconcile.md` | ✅ |
+
+**Nachtrag 15.08.2026:** Die erste Fassung dieser Phase baute auf
+`gotk_reconcile_condition`/`gotk_suspend_status` auf — diese Metriken
+existieren in Flux 2.9 (hier: v2.9.4) nicht mehr, alle vier Alerts liefen ins
+Leere. Fix: die Serien kommen jetzt aus kube-state-metrics Custom Resource
+State (`flux_resource_ready`, `flux_resource_suspended`), konfiguriert in
+`apps/base/monitoring/vm-k8s-stack/helmrelease.yaml`
+(`kube-state-metrics.customResourceState` + `rbac.extraRules`). Der
+`VMPodScrape flux-vmpodscrape.yaml` liefert weiterhin `controller_runtime_*`
+(nützlich für Reconcile-Fehlerraten/-Latenzen), aber nicht mehr die Basis der
+vier Alerts — siehe `docs/runbooks/flux-reconcile.md`.
 
 ---
 
@@ -191,9 +201,9 @@ apps/base/monitoring/
 │   ├── platform-p0-vmrule.yaml
 │   ├── job-watchdog-vmrule.yaml        # generischer Job-Watchdog (Phase 7)
 │   ├── dead-mans-switch-vmrule.yaml    # Watchdog/vector(1) -> HA-Webhook (Phase 7)
-│   └── flux-vmrule.yaml                # Flux-GitOps-Alerts (Phase 4)
+│   └── flux-vmrule.yaml                # Flux-GitOps-Alerts (Phase 4, Metriken seit 15.08. aus KSM-CRS)
 └── extra-scrapes/
-    └── flux-vmpodscrape.yaml           # gotk_* Metriken (Phase 4)
+    └── flux-vmpodscrape.yaml           # controller_runtime_* Metriken (Phase 4)
 
 docs/runbooks/
 ├── cnpg-cluster-offline.md
@@ -223,6 +233,7 @@ docs/integrations/
 
 | Datum | Änderung |
 |-------|----------|
+| 2026-08-15 | Flux-GitOps-Alerts korrigiert: `gotk_reconcile_condition`/`gotk_suspend_status` existieren in Flux 2.9 nicht mehr, alle vier Alerts aus Phase 4 waren wirkungslos. Umgestellt auf kube-state-metrics Custom Resource State (`flux_resource_ready`, `flux_resource_suspended`); RBAC via `rbac.extraRules`. `flux-vmpodscrape.yaml` bleibt (liefert `controller_runtime_*`), Kommentar korrigiert. |
 | 2026-08-14 | Flux-GitOps-Alerts (Phase 4): PR #661 hat eine Pending-PVC eingeführt (TrueNAS >80%-VOLUME-Limit), `infra-base` hing 5h im Health-Check-Timeout (`Ready=Unknown`), `infra-main`/`apps`/`apps-monitoring-rules` dadurch `Ready=False` — Flux rollte fünf Stunden lang nichts mehr aus Git aus, ohne Meldung. Fix: `flux-vmpodscrape.yaml` + 4 Alerts (`FluxControllerDown`, `FluxReconcileFailing`, `FluxReconcileStalled`, `FluxSuspended`) in `flux-vmrule.yaml`, Runbook `flux-reconcile.md` |
 | 2026-08-14 | Generischer Job-Watchdog (7 Alerts, Opt-in per Label) + Dead-Man's-Switch über Home Assistant (Phase 7); `rules/authentik-vmrule.yaml` entfernt, in Watchdog aufgegangen |
 | 2026-05-30 | kubeApiServer-Scrape aus; Script `purge-chart-vmrules.sh` für verwaiste VMRules |

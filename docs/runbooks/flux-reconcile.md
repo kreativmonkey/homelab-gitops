@@ -28,36 +28,73 @@ HelmRelease-Objekt konnte beliebig lange `False` oder `Unknown` stehen, ohne
 dass irgendwer benachrichtigt wurde.
 
 Alle vier Alerts liegen in `apps/base/monitoring/rules/flux-vmrule.yaml`,
-Gruppe `homelab.platform.flux`, im Namespace `monitoring`. Voraussetzung ist
-der `VMPodScrape` in `apps/base/monitoring/extra-scrapes/flux-vmpodscrape.yaml`
-— ohne ihn gibt es keine `gotk_*`-Serien und nur `FluxControllerDown` würde
-feuern.
+Gruppe `homelab.platform.flux`, im Namespace `monitoring`.
 
-**Technischer Hintergrund, wichtig beim Anpassen der Regeln:**
-`gotk_reconcile_condition` ist eine Serie je (`kind`, `name`, `namespace`,
-`type`, `status`) mit Wert 0/1. "Ready ist False" heißt in MetricsQL
-`{type="Ready", status="False"} == 1` — **nicht** `{type="Ready"} == 0`. Das
-ist die häufigste Fehlerquelle, wenn hier jemand eine weitere Regel ergänzt.
+## 2. `gotk_*` ist tot — nicht wieder einbauen
 
-Der `VMPodScrape` setzt außerdem `honorLabels: true`, weil
-`gotk_reconcile_condition` ein eigenes `namespace`-Label trägt: den Namespace
-des überwachten Objekts (eine HelmRelease liegt z. B. in `monitoring` oder
-`cnpg-system`), nicht den des Controller-Pods (`flux-system`). Ohne
-`honorLabels` überschreibt das Scrape-Relabeling dieses Label mit
-`flux-system` und schiebt das Original nach `exported_namespace` — jeder
-Alert hätte dann auf den falschen Namespace gezeigt.
+Die erste Fassung dieser Alerts (14.08.2026) basierte auf
+`gotk_reconcile_condition` und `gotk_suspend_status`, angeblich geliefert vom
+`VMPodScrape flux-vmpodscrape.yaml`. Das war falsch: **diese Metriken
+existieren in Flux 2.9 (hier: v2.9.4) nicht mehr.** Die Flux-Controller
+exportieren auf ihrem Metrics-Port (`http-prom`, 8080) ausschließlich
+`controller_runtime_*`, `certwatcher_*` und `go_*`. Der Scrape war korrekt
+konfiguriert, die Targets standen auf `up`, andere Metriken kamen an — die
+Serie gab es einfach nicht (mehr). Ergebnis: alle vier Regeln liefen seit
+Einführung ins Leere, ohne dass der VM-Operator das ablehnte (eine Regel auf
+einer nicht existierenden Metrik ist kein Config-Fehler, nur dauerhaft
+`absent()`).
 
-Die Flux-Controller haben keinen Service, nur den Container-Port
-`http-prom` (8080). Die bestehende NetworkPolicy `flux-system/allow-scraping`
-erlaubt Ingress auf 8080 aus allen Namespaces — für den Scrape war nichts
-weiter freizuschalten.
+**Fix (15.08.2026):** Die Serien kommen jetzt aus **kube-state-metrics Custom
+Resource State (CRS)** — kube-state-metrics liest die Flux-Custom-Resources
+direkt über die Kubernetes-API (list/watch), nicht über den Metrics-Port der
+Controller. Konfiguriert in
+`apps/base/monitoring/vm-k8s-stack/helmrelease.yaml`, Block
+`kube-state-metrics.customResourceState` (+ `kube-state-metrics.rbac.extraRules`
+für die nötigen Leserechte auf die Flux-API-Gruppen). Abgedeckte Kinds:
+`Kustomization`, `HelmRelease`, `GitRepository`, `OCIRepository`,
+`HelmRepository`, `HelmChart`.
+
+Neue Metriken:
+
+- **`flux_resource_ready{namespace, name, kind, type, status}`** — Info-Metrik
+  (Wert immer `1`), eine Serie je Eintrag in `.status.conditions[]` des
+  Flux-Objekts. `status` ist bewusst ein **Label** und nicht der Metrikwert:
+  ein klassisches Gauge mit `valueFrom: [status]` würde laut
+  KSM-Typkonvertierung sowohl `"False"` als auch `"Unknown"` auf `0.0`
+  abbilden (alles außer `"true"`/`"yes"` wird `0.0`) — genau die
+  Unterscheidung, die am 14.08. den Unterschied zwischen Ursache
+  (`Ready=Unknown`) und Folgefehlern (`Ready=False`) ausmachte, ginge damit
+  verloren.
+- **`flux_resource_suspended{namespace, name, kind}`** — Gauge (`0`/`1`) aus
+  `.spec.suspend`.
+
+"Ready ist False" heißt in MetricsQL jetzt
+`flux_resource_ready{type="Ready", status="False"}` — das reine Vorhandensein
+dieser Label-Kombination ist bereits das Signal, ein zusätzliches `== 1` ist
+bei dieser Info-Metrik nicht nötig (anders als früher bei einem klassischen
+Gauge). Bei `flux_resource_suspended` bleibt `== 1` weiterhin die richtige
+Prüfung.
+
+**Diese Metriken kommen automatisch über die Default-`VMServiceScrape` von
+kube-state-metrics selbst rein** (chart-eigener `vmScrape`-Wert, bereits mit
+`honorLabels: true`) — es gibt dafür keinen eigenen Scrape. Der
+`VMPodScrape flux-vmpodscrape.yaml` bleibt trotzdem bestehen, liefert aber nur
+noch `controller_runtime_*`/`certwatcher_*`/`go_*` (Controller-Performance,
+kein Ersatz für CRS) — siehe Kommentar in der Datei.
+
+**Beleg, dass die Values-Pfade stimmen:** `nix develop -c just validate` im
+`helm-render`-Schritt prüfen — dort muss sowohl der
+`customResourceState.config`-Block (als ConfigMap-Inhalt) als auch die
+`rbac.extraRules`-Regeln im gerenderten kube-state-metrics-`ClusterRole`
+auftauchen. Ohne die RBAC-Regeln liefert CRS still keine Daten — kein Fehler,
+einfach leere Metriken.
 
 **Routing:** unverändert gegenüber allen anderen Platform-Alerts. `severity`
 + `homelab_owner: platform` greifen in die bestehenden Alertmanager-Routen →
 ntfy-Topic `monitoring` sowie n8n/Telegram-Triage. Es gibt keinen eigenen
 Receiver für Flux — siehe [monitoring-stack.md](monitoring-stack.md).
 
-## 2. Nützliche Basisbefehle für jede Diagnose
+## 3. Nützliche Basisbefehle für jede Diagnose
 
 ```bash
 flux get all -A --status-selector ready=false
@@ -68,6 +105,10 @@ kubectl -n flux-system logs deploy/helm-controller --tail=100
 flux reconcile source git flux-system
 flux reconcile kustomization <name> --timeout=5m
 flux resume kustomization <name>
+
+# Direkt an den neuen Metriken prüfen (kube-state-metrics CRS statt gotk_*):
+kubectl -n monitoring exec deploy/vm-k8s-stack-kube-state-metrics -- \
+  wget -qO- http://127.0.0.1:8080/metrics | grep ^flux_resource_
 ```
 
 **Wichtig:** Der Kustomization-Status selbst zeigt bei einem hängenden
@@ -76,39 +117,46 @@ Ursache (welche Ressource, welcher Timeout) steht fast nie im Status, sondern
 nur im Log des `kustomize-controller`. Der `grep -i "health check"` oben ist
 deshalb der entscheidende Schritt, nicht ein Nice-to-have.
 
-## 3. Die Alerts
+## 4. Die Alerts
 
 ### FluxControllerDown — critical, `for: 15m`
 
-**Bedeutung:** `absent(gotk_reconcile_condition)` — es existiert keine
-einzige gotk-Serie mehr. Entweder sind die Flux-Controller weg, oder der
-`VMPodScrape flux-controllers` wurde entfernt. Solange dieser Alert steht,
-ist unbekannt, ob Git überhaupt noch ausgerollt wird — er ist der
-wichtigste Alert im Set, analog zu `WatchdogBlind` beim Job-Watchdog.
+**Bedeutung:** `absent(flux_resource_ready)` — es existiert keine einzige
+CRS-Serie mehr. Entweder liefert kube-state-metrics keine
+Custom-Resource-State-Daten mehr (Pod down, RBAC entzogen), oder der Block
+`kube-state-metrics.customResourceState` wurde aus der HelmRelease
+`vm-k8s-stack` entfernt. Solange dieser Alert steht, ist unbekannt, ob Git
+überhaupt noch ausgerollt wird — er ist der wichtigste Alert im Set, analog
+zu `WatchdogBlind` beim Job-Watchdog.
 
 **Sofortdiagnose:**
 
 ```bash
-kubectl -n flux-system get pods
-kubectl get vmpodscrape -n flux-system flux-controllers
+kubectl -n monitoring get pods -l app.kubernetes.io/name=kube-state-metrics
+kubectl -n monitoring exec deploy/vm-k8s-stack-kube-state-metrics -- \
+  wget -qO- http://127.0.0.1:8080/metrics | grep ^flux_resource_
+kubectl -n monitoring logs deploy/vm-k8s-stack-kube-state-metrics | grep -i "customresourcestate\|forbidden"
 ```
 
 **Typische Ursachen:**
 
-- Flux-Controller-Pods sind gecrasht oder das Deployment ist auf 0 skaliert.
-- Der `VMPodScrape` wurde aus Git entfernt oder das Selector-Label
-  `app.kubernetes.io/part-of: flux` stimmt nach einem Flux-Upgrade nicht mehr.
-- Die NetworkPolicy `flux-system/allow-scraping` wurde geändert und blockiert
-  jetzt den Scrape auf Port 8080.
+- kube-state-metrics-Pod ist gecrasht oder das Deployment ist auf 0 skaliert.
+- Der Block `kube-state-metrics.customResourceState` wurde aus
+  `apps/base/monitoring/vm-k8s-stack/helmrelease.yaml` entfernt oder die
+  `rbac.extraRules` fehlen — dann läuft kube-state-metrics zwar, aber CRS
+  liefert still keine Daten (kein Fehler im Log, einfach leere Serien).
+- Die Flux-CRDs wurden umbenannt/migriert (API-Group/Version-Wechsel) und die
+  `groupVersionKind`-Einträge in `customResourceState.config` stimmen nicht
+  mehr.
 
-**Behebung:** Controller-Pods reparieren (Logs prüfen, ggf. Deployment
-neu starten) bzw. den `VMPodScrape`/die NetworkPolicy in Git wiederherstellen
-und Flux reconcilen lassen. Danach prüfen, dass
-`gotk_reconcile_condition` wieder Serien liefert.
+**Behebung:** kube-state-metrics-Pod reparieren (Logs prüfen, ggf. Deployment
+neu starten) bzw. `customResourceState`/`rbac.extraRules` in Git
+wiederherstellen und Flux reconcilen lassen. Danach prüfen, dass
+`flux_resource_ready` wieder Serien liefert.
 
 ### FluxReconcileFailing — critical, `for: 15m`
 
-**Bedeutung:** `gotk_reconcile_condition{type="Ready", status="False"} == 1`,
+**Bedeutung:** `flux_resource_ready{type="Ready", status="False"}`,
 suspendierte Objekte ausgenommen. Der häufigere Fall: ein fehlgeschlagener
 Apply, ein kaputtes Manifest, oder — wie am 14.08. bei `infra-main`, `apps`
 und `apps-monitoring-rules` — `dependency ... is not ready`, weil ein
@@ -138,8 +186,8 @@ von selbst.
 
 ### FluxReconcileStalled — critical, `for: 30m`
 
-**Bedeutung:** `gotk_reconcile_condition{type="Ready", status="Unknown"} ==
-1`, suspendierte Objekte ausgenommen — ein Reconcile, das nie endet. Genau
+**Bedeutung:** `flux_resource_ready{type="Ready", status="Unknown"}`,
+suspendierte Objekte ausgenommen — ein Reconcile, das nie endet. Genau
 so sah `infra-base` am 14.08. aus: der Health-Check auf die
 `nextcloud-offsite-staging`-PVC lief alle fünf Minuten erneut in den
 Timeout und blieb dauerhaft `Unknown`. 30 Minuten `for`, damit langsame
@@ -179,7 +227,7 @@ Konfigänderungen).
 
 ### FluxSuspended — warning, `for: 1h`
 
-**Bedeutung:** `gotk_suspend_status == 1` — ein Objekt ist suspendiert. Das
+**Bedeutung:** `flux_resource_suspended == 1` — ein Objekt ist suspendiert. Das
 GitOps-Pendant zum suspendierten CronJob im Job-Watchdog: Git und Cluster
 laufen still auseinander, ohne dass irgendwo ein Fehler steht. Meist eine
 Notmaßnahme aus einem Vorfall, die niemand zurückgenommen hat — genau das
@@ -205,7 +253,7 @@ committen, Flux reconcilen lassen — ein manuelles `flux resume` wird beim
 nächsten Reconcile aus Git ohnehin wieder überschrieben, wenn der
 `suspend`-Wert in Git nicht ebenfalls korrigiert wird.
 
-## 4. Ursache vs. Folge: Unknown vs. False
+## 5. Ursache vs. Folge: Unknown vs. False
 
 Der 14.08.2026-Vorfall zeigte sich als **eine** hängende Kustomization
 (`Ready=Unknown`) und **drei** fehlgeschlagene Folge-Kustomizations
@@ -235,7 +283,7 @@ geblieben, solange niemand auch in den `Unknown`-Zustand geschaut hätte.
 Deshalb gibt es `FluxReconcileFailing` und `FluxReconcileStalled` als zwei
 getrennte Regeln statt einer gemeinsamen `!= "True"`-Regel.
 
-## 5. Bekannte Grenzen
+## 6. Bekannte Grenzen
 
 1. **Kein eigener ntfy-Receiver.** Die vier Alerts nutzen ausschließlich die
    bestehende Routing-Logik über `severity` + `homelab_owner: platform`. Das
@@ -270,7 +318,7 @@ getrennte Regeln statt einer gemeinsamen `!= "True"`-Regel.
    ntfy-Nachricht mit mehreren Zeilen statt mehreren Einzel-Nachrichten —
    das ist gewollt, siehe [monitoring-stack.md](monitoring-stack.md) bzw. das
    generelle Muster im [Rulebook](../rulebook.md).
-5. **`gotk_suspend_status` deckt keine Halb-Suspendierung ab.** Wird nur die
+5. **`flux_resource_suspended` deckt keine Halb-Suspendierung ab.** Wird nur die
    `GitRepository`-Quelle suspendiert, aber die abhängigen Kustomizations
    nicht, feuert `FluxSuspended` nur für die Quelle — die Kustomizations
    selbst laufen mit dem letzten bekannten Commit weiter, ohne dass das aus
