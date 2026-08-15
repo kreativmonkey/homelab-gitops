@@ -14,7 +14,7 @@ spec:
   chart:
     spec:
       chart: paperless
-      version: "11.3.0"
+      version: "11.4.0"
       sourceRef:
         kind: HelmRepository
         name: zekker6-repo
