@@ -40,7 +40,7 @@ spec:
                 - name: config
                   mountPath: /config
             - name: prepare-rclone
-              image: docker.io/rclone/rclone:1.74.2
+              image: docker.io/rclone/rclone:1.75.0
               command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
               env:
                 - name: STORAGEBOX_HOST
@@ -59,7 +59,7 @@ spec:
                   mountPath: /scripts
                   readOnly: true
             - name: restic-server
-              image: docker.io/rclone/rclone:1.74.2
+              image: docker.io/rclone/rclone:1.75.0
               restartPolicy: Always
               args:
                 - serve
@@ -83,7 +83,7 @@ spec:
                 - name: work
                   mountPath: /work
             - name: wait-maintenance
-              image: docker.io/rclone/rclone:1.74.2
+              image: docker.io/rclone/rclone:1.75.0
               command:
                 - /bin/sh
                 - -ec
@@ -98,7 +98,7 @@ spec:
                 - name: work
                   mountPath: /work
             - name: stage-objects
-              image: docker.io/rclone/rclone:1.74.2
+              image: docker.io/rclone/rclone:1.75.0
               command:
                 - /bin/sh
                 - -ec
@@ -172,7 +172,7 @@ spec:
                   mountPath: /staging
           containers:
             - name: finalize
-              image: docker.io/rclone/rclone:1.74.2
+              image: docker.io/rclone/rclone:1.75.0
               command:
                 - /bin/sh
                 - -ec
