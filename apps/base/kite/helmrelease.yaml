@@ -27,7 +27,7 @@ spec:
   chart:
     spec:
       chart: kite
-      version: "0.14.1"
+      version: "0.15.0"
       sourceRef:
         kind: HelmRepository
         name: kite-repo
