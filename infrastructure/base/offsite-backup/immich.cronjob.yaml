@@ -26,7 +26,7 @@ spec:
           terminationGracePeriodSeconds: 60
           initContainers:
             - name: prepare-rclone
-              image: docker.io/rclone/rclone:1.74.2
+              image: docker.io/rclone/rclone:1.75.0
               command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
               env:
                 - name: STORAGEBOX_HOST
@@ -45,7 +45,7 @@ spec:
                   mountPath: /scripts
                   readOnly: true
             - name: restic-server
-              image: docker.io/rclone/rclone:1.74.2
+              image: docker.io/rclone/rclone:1.75.0
               restartPolicy: Always
               args:
                 - serve
