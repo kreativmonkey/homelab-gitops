@@ -13,7 +13,8 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 - Single CNPG cluster operator in `base/database/cnpg/`. Per-app DB clusters live in `overlays/main/database-clusters/<app>/`.
 - CNPG `barmanObjectStore` (S3-compatible) for base-backup + WAL archiving. S3 creds never plaintext — SealedSecrets/ExternalSecrets placeholders.
 - DR overlay `overlays/disaster-recovery/` patches CNPG `Cluster` with `spec.bootstrap.recovery`. Restore flow: apply DR overlay → CNPG restores → Flux syncs apps.
-- Storage: democratic-csi iSCSI for fast workloads (DBs), NFS for large media.
+- Velero protects Kubernetes volumes with filesystem backups: `deployNodeAgent: true`, one node-agent per node, and `snapshotsEnabled: false`. Keep unused democratic-csi snapshotter sidecars disabled unless snapshot CRDs and a tested snapshot restore path are introduced together.
+- Storage: CNPG databases use node-local `local-path`; democratic-csi iSCSI serves app RWO volumes; NFS serves large media.
 - Ingress: NGINX with `nginx.org/*` annotations + Cilium CNI.
 
 # Work Guidance

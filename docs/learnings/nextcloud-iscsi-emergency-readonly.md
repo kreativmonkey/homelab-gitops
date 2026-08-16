@@ -3,7 +3,7 @@
 **Date**: 2026-06-13
 **Severity**: high
 **Affected**: app
-**Status**: resolved
+**Status**: recurring failure mode
 
 ## What Went Wrong
 
@@ -25,6 +25,12 @@ Mount options before fix:
 ```
 
 The CSI driver's `NodeStageVolume` was not called because the pod was already running with the volume attached — the kernel silently flipped the mount to read-only without detaching the iSCSI session.
+
+The first `IScsiEmergencyReadOnly` rule was also ineffective. The default
+node-exporter collector excluded all mounts below `/var/lib/kubelet`, including
+CSI `globalmount` paths. VictoriaMetrics therefore had no series for the
+affected iSCSI filesystem even while `node_filesystem_readonly` existed for
+host filesystems.
 
 ## The Correct Approach
 
@@ -105,26 +111,25 @@ kubectl get pods -n nextcloud -l app.kubernetes.io/name=nextcloud,app.kubernetes
 # Expected: 1/1 Running
 ```
 
-## Deployment Fixes Applied
-
-| File | Change | Why |
-|------|--------|-----|
-| `apps/base/nextcloud/helmrelease.yaml` | Added `fsGroupChangePolicy: OnRootMismatch` to `podSecurityContext` | Prevents full-volume chown on every pod start; avoids timeout-induced re-mounts |
-| `apps/base/nextcloud/helmrelease.yaml` | Added `terminationGracePeriodSeconds: 60` | Gives iSCSI time for clean SCSI reservation release on shutdown |
-
 ## Prevention
+
+The Nextcloud HelmRelease currently sets only `fsGroup: 1000`. It does not set
+`fsGroupChangePolicy` or `terminationGracePeriodSeconds`; rendered and live
+Deployments therefore use Kubernetes' 30-second termination default. Do not
+cite either setting as an applied fix until it exists declaratively and its
+rendered Deployment has been verified.
 
 **Implemented:**
 
 | Date | Change | File |
 |------|--------|------|
-| 2026-06-13 | `fsGroupChangePolicy: OnRootMismatch` — prevents full-volume chown on pod start | `apps/base/nextcloud/helmrelease.yaml` |
-| 2026-06-13 | `terminationGracePeriodSeconds: 60` — clean iSCSI disconnect on shutdown | `apps/base/nextcloud/helmrelease.yaml` |
-| 2026-06-13 | VMRule `IScsiEmergencyReadOnly` — alerts when ext4 mounts go read-only | `apps/base/monitoring/rules/storage-iscsi-vmrule.yaml` |
 | 2026-06-13 | StorageClass `truenas-iscsi-xfs` — XFS option for future volumes (better journal recovery) | `infrastructure/base/storage/democratic-csi/helmrelease.yaml` |
+| 2026-08-16 | node-exporter includes CSI `globalmount` paths while still excluding pod bind mounts; VMRule `IScsiEmergencyReadOnly` checks `node_filesystem_readonly` | `apps/base/monitoring/vm-k8s-stack/helmrelease.yaml`, `apps/base/monitoring/rules/iscsi-storage-vmrule.yaml` |
 
 **Still recommended:**
-- Monitor `emergency_ro` mount options via the new alert rule.
+- Monitor `node_filesystem_readonly` for CSI `globalmount` paths. A rule cannot
+  detect mounts excluded by its exporter; verify source-series presence after
+  every collector-filter change.
 - For new iSCSI volumes, prefer `truenas-iscsi-xfs` (XFS handles journal recovery more gracefully than ext4 under iSCSI).
 - If the issue recurs frequently on a specific volume, migrate it from ext4 to XFS (requires PVC recreation).
 

@@ -56,16 +56,46 @@ spec:
     - name: homelab.platform.velero
       interval: 30s
       rules:
+        - alert: VeleroMetricsAbsent
+          expr: (count(velero_backup_total) or on() vector(0)) == 0
+          for: 10m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Velero-Metriken fehlen"
+            description: "Velero wird seit 10 Minuten nicht gescraped; Backup-Alerts sind blind."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/velero-backup.md"
+
         - alert: VeleroBackupFailures
-          expr: increase(velero_backup_failure_total[1h]) > 0
+          expr: |
+            increase(velero_backup_failure_total[1h]) > 0
+            or
+            increase(velero_backup_partial_failure_total[1h]) > 0
           for: 5m
           labels:
             severity: warning
             cluster: homelab
             homelab_owner: platform
           annotations:
-            summary: "Velero-Backup fehlgeschlagen"
-            description: "In der letzten Stunde wurden fehlgeschlagene Velero-Backups gezählt."
+            summary: "Velero-Backup fehlerhaft: {{ $labels.schedule }}"
+            description: "In der letzten Stunde ist ein Velero-Backup fehlgeschlagen oder nur teilweise gelungen."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/velero-backup.md"
+
+        - alert: VeleroBackupNeverSucceeded
+          expr: |
+            absent(velero_backup_last_successful_timestamp{schedule!=""})
+            and on()
+            velero_backup_total >= 0
+          for: 30m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Velero: noch kein erfolgreiches Schedule-Backup"
+            description: "Velero liefert Metriken, aber keinen erfolgreichen Backup-Zeitstempel."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/velero-backup.md"
 
         - alert: VeleroBackupStale
