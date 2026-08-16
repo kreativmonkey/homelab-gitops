@@ -26,8 +26,18 @@ kubectl get helmrelease -n nextcloud nextcloud
 |-------|-----|
 | `occ-db-sync` rewrites `config.php` on every start and fails | GitOps: fast-path in `helmrelease.yaml` (skip rewrite when `occ status` OK) |
 | Wrong DB password in `config.php` vs secret | Restore from secret; avoid `occ config:system:set dbpassword` without env |
-| iSCSI / config read-only (transient) | Check PVC attach; verify write with debug pod on `nextcloud-app-iscsi` subPath `config` |
+| iSCSI / config read-only | Treat as filesystem incident; do not test writes or run `fsck` while mounted |
 | Flux Ready but pod crash looping | `disableWait: true` on HelmRelease — check pod, not only HelmRelease status |
+
+## iSCSI filesystem is read-only
+
+`Read-only file system` or alert `IScsiEmergencyReadOnly` means kernel protected
+filesystem after an error. Record pod, node, PVC/PV, device, CSI `globalmount`,
+and recent node/CSI events first. Then stop every workload using volume before
+unmounting or running filesystem repair. Never run `fsck` on mounted filesystem.
+
+Detailed device mapping and offline-repair background:
+[Nextcloud iSCSI Volume: Emergency Read-Only Remount](../learnings/nextcloud-iscsi-emergency-readonly.md).
 
 ## Manual recovery (DB password in config.php)
 

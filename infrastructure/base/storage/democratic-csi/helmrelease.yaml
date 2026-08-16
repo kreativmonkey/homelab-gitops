@@ -71,12 +71,9 @@ spec:
           limits:
             memory: 128Mi
       externalSnapshotter:
-        resources:
-          requests:
-            cpu: 10m
-            memory: 48Mi
-          limits:
-            memory: 128Mi
+        # Velero uses filesystem backups and snapshotsEnabled=false. Running
+        # this sidecar without snapshot.storage.k8s.io CRDs only creates noise.
+        enabled: false
     node:
       hostPID: true
       cleanup:

@@ -45,8 +45,10 @@ spec:
             name: plugins
     credentials:
       existingSecret: velero-credentials
+    # Filesystem backups need one node-agent pod per node. `nodeAgent.enabled`
+    # is not a chart value in Velero 12.x and silently rendered no DaemonSet.
+    deployNodeAgent: true
     nodeAgent:
-      enabled: true
       priorityClassName: "homelab-infrastructure"
       resources:
         requests:

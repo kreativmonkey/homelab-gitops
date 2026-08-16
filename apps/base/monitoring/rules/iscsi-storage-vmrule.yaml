@@ -17,6 +17,24 @@ spec:
     - name: homelab.platform.iscsi
       interval: 30s
       rules:
+        - alert: IScsiEmergencyReadOnly
+          # node-exporter sees CSI global mounts once its collector excludes
+          # only kubelet pod bind mounts instead of all /var/lib/kubelet.
+          expr: |
+            node_filesystem_readonly{
+              fstype=~"ext4|xfs",
+              mountpoint=~"/var/lib/kubelet/plugins/kubernetes.io/csi/.+/globalmount"
+            } == 1
+          for: 2m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "iSCSI-Dateisystem read-only: {{ $labels.device }}"
+            description: "{{ $labels.mountpoint }} auf {{ $labels.instance }} ist read-only. Workload stoppen und Dateisystem offline prüfen; nicht im laufenden Betrieb reparieren."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/nextcloud-init-crashloop.md"
+
         - alert: NodeISCSIDiskWriteLatencyHigh
           # Avg write service time per op on the iSCSI block devices (sd*). Baseline ~1ms;
           # >250ms sustained means the initiator is waiting on the contended SSD/transport,
