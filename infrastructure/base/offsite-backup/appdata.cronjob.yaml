@@ -1,0 +1,131 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: appdata-offsite-backup
+  namespace: backup-offsite
+  labels:
+    # Opt-in fuer den generischen Job-Watchdog, siehe docs/runbooks/job-watchdog.md
+    # max-age = 24h Intervall + 2h activeDeadlineSeconds
+    homelab.f4mily.net/watchdog: "true"
+    homelab.f4mily.net/max-age-hours: "26"
+    homelab.f4mily.net/max-runtime-hours: "1"
+spec:
+  schedule: "30 6 * * *"
+  timeZone: Europe/Berlin
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 7200
+      template:
+        spec:
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 60
+          initContainers:
+            - name: prepare-rclone
+              image: docker.io/rclone/rclone:1.75.0
+              command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
+              env:
+                - name: STORAGEBOX_HOST
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_HOST}
+                - name: STORAGEBOX_USERNAME
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_USERNAME}
+                - name: STORAGEBOX_PASSWORD
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_PASSWORD}
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+            - name: restic-server
+              image: docker.io/rclone/rclone:1.75.0
+              restartPolicy: Always
+              args:
+                - serve
+                - restic
+                - storagebox:homelab-gitops/restic
+                - --addr=127.0.0.1:8080
+                - --config=/config/rclone.conf
+                - --cache-objects=false
+              volumeMounts:
+                # Schreibbar: rclone aktualisiert seine Config zur Laufzeit.
+                - name: config
+                  mountPath: /config
+          containers:
+            - name: backup
+              image: docker.io/restic/restic:0.19.1
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  /bin/sh /scripts/record-sample.sh appdata /jellyfin /kavita
+                  exec /bin/sh /scripts/restic-backup.sh appdata \
+                    /jellyfin /kavita /tandoor-static /tandoor-media /staging
+              env:
+                - name: RESTIC_REPOSITORY
+                  value: rest:http://127.0.0.1:8080/
+                - name: EXIT_ON_FAILURE
+                  value: "true"
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: storagebox-credentials
+                      key: restic-password
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 1Gi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: work
+                  mountPath: /work
+                - name: staging
+                  mountPath: /staging
+                # Anwendungszustand, der nach einem Totalverlust Handarbeit
+                # spart: Bibliothekszuordnungen, Metadaten, Rezeptbilder.
+                # Die Datenbanken dieser Apps deckt der databases-Job ab.
+                - name: media
+                  mountPath: /jellyfin
+                  subPath: jellyfin/config
+                  readOnly: true
+                - name: media
+                  mountPath: /kavita
+                  subPath: docker/kavita/config
+                  readOnly: true
+                - name: media
+                  mountPath: /tandoor-static
+                  subPath: docker/tandoor/staticfiles
+                  readOnly: true
+                - name: media
+                  mountPath: /tandoor-media
+                  subPath: docker/tandoor/mediafiles
+                  readOnly: true
+          volumes:
+            - name: config
+              emptyDir: {}
+            - name: work
+              emptyDir: {}
+            - name: staging
+              emptyDir:
+                sizeLimit: 512Mi
+            - name: scripts
+              configMap:
+                name: offsite-backup-scripts
+                defaultMode: 0555
+            # Inline NFS wie bei Immich: PVCs sind nicht namespace-uebergreifend
+            # nutzbar. Pfad entspricht den statischen Media-PVs.
+            - name: media
+              nfs:
+                server: 192.168.10.94
+                path: /mnt/Storagepool/Media
+                readOnly: true
