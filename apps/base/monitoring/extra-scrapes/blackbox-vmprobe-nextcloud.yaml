@@ -1,8 +1,6 @@
-# VMProbe für den Nextcloud-Wartungsmodus. Gleiche URL wie die allgemeine
-# Erreichbarkeitsprobe, aber eigenes Modul: http_2xx_nextcloud_online schlägt
-# fehl, wenn status.php `"maintenance":true` liefert. So bleibt EndpointDown
-# frei von geplanten Wartungsfenstern, während ein hängender Wartungsmodus
-# trotzdem auffällt (Alert NextcloudMaintenanceModeStuck).
+# Gleiche URL wie die allgemeine Erreichbarkeitsprobe, aber eigenes Modul:
+# es schlägt fehl, solange Nextcloud im Wartungsmodus steht. Wertet der Alert
+# NextcloudMaintenanceModeStuck aus.
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMProbe
 metadata:

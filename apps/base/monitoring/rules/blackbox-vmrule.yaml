@@ -35,12 +35,9 @@ spec:
             summary: "SSL-Zertifikat läuft bald ab: {{ $labels.instance }}"
             description: "Das SSL-Zertifikat für {{ $labels.instance }} läuft in weniger als 7 Tagen ab. Läuft ab am {{ $value | humanizeTimestamp }}."
 
-        # Erste Bedingung: das Nextcloud-Modul schlägt fehl, status.php meldet
-        # also maintenance=true. Zweite Bedingung: die reguläre Probe auf
-        # derselben URL ist erfolgreich — Nextcloud läuft, ist nur gesperrt.
-        # Ein echter Ausfall meldet stattdessen EndpointDown.
-        # 30m liegt deutlich über dem Wartungsfenster des Offsite-Backups
-        # (Objekt-Nachsync + Dump + App-Tar dauern wenige Minuten).
+        # Wartungsmodus aktiv, während Nextcloud erreichbar ist — ein echter
+        # Ausfall meldet stattdessen EndpointDown. Die Wartezeit liegt deutlich
+        # über dem Wartungsfenster des Offsite-Backups.
         - alert: NextcloudMaintenanceModeStuck
           expr: |
             probe_success{job="blackbox-http-nextcloud-online"} == 0
