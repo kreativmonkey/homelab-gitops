@@ -56,6 +56,14 @@ spec:
         value: "false"
       - name: SECURITY_ENABLELOGIN
         value: "false"
+      # The image sizes the heap dynamically from the cgroup limit
+      # (STIRLING_JVM_PROFILE=balanced -> -XX:MaxRAMPercentage=65). Compression
+      # shells out to Ghostscript, which allocates *outside* the heap but inside
+      # the same cgroup, so a 65% heap leaves too little room and the kernel OOM
+      # kills the pod mid-`gs`. Cap the heap so native tooling keeps headroom.
+      # JAVA_CUSTOM_OPTS is appended after JAVA_BASE_OPTS, so this wins.
+      - name: JAVA_CUSTOM_OPTS
+        value: "-XX:MaxRAMPercentage=50"
     service:
       type: ClusterIP
       externalPort: 8080
@@ -65,6 +73,15 @@ spec:
       accessMode: ReadWriteOnce
       size: 8Gi
       path: /configs
+    deployment:
+      # Chart bug (3.1.0): templates/deployment.yaml defines the `storage-volume`
+      # from the PVC but never renders a matching volumeMount, so /configs stayed
+      # ephemeral and settings + the H2 DB were lost on every restart. Mount it
+      # ourselves; /configs holds only runtime-generated state, nothing from the
+      # image, so shadowing it is safe.
+      extraVolumeMounts:
+        - name: storage-volume
+          mountPath: /configs
     securityContext:
       enabled: true
       fsGroup: 1000
@@ -91,11 +108,16 @@ spec:
         timeoutSeconds: 10
         failureThreshold: 10
     resources:
+      # 2Gi OOM killed the pod during compression: the JVM alone reached ~1.8Gi
+      # (1.3Gi heap + 192m metaspace + native) before Ghostscript even forked.
+      # 4Gi with the 50% heap cap above leaves ~1.3Gi for gs/LibreOffice.
+      # No CPU limit on purpose - compression is bursty and throttling it only
+      # stretches the job out.
       requests:
-        cpu: 100m
-        memory: 512Mi
+        cpu: 250m
+        memory: 1Gi
       limits:
-        memory: 2Gi
+        memory: 4Gi
     ingress:
       enabled: true
       ingressClassName: nginx
