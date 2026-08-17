@@ -34,3 +34,24 @@ spec:
           annotations:
             summary: "SSL-Zertifikat läuft bald ab: {{ $labels.instance }}"
             description: "Das SSL-Zertifikat für {{ $labels.instance }} läuft in weniger als 7 Tagen ab. Läuft ab am {{ $value | humanizeTimestamp }}."
+
+        # Erste Bedingung: das Nextcloud-Modul schlägt fehl, status.php meldet
+        # also maintenance=true. Zweite Bedingung: die reguläre Probe auf
+        # derselben URL ist erfolgreich — Nextcloud läuft, ist nur gesperrt.
+        # Ein echter Ausfall meldet stattdessen EndpointDown.
+        # 30m liegt deutlich über dem Wartungsfenster des Offsite-Backups
+        # (Objekt-Nachsync + Dump + App-Tar dauern wenige Minuten).
+        - alert: NextcloudMaintenanceModeStuck
+          expr: |
+            probe_success{job="blackbox-http-nextcloud-online"} == 0
+            and on(instance)
+            probe_success{job="blackbox-http"} == 1
+          for: 30m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Nextcloud hängt im Wartungsmodus"
+            description: "nc.f4mily.net meldet seit 30 Minuten maintenance=true, ist dabei aber erreichbar. Ein regulärer Offsite-Backup-Lauf sperrt Nextcloud nur wenige Minuten. Freigabe: kubectl exec -n nextcloud deploy/nextcloud -c nextcloud -- php occ maintenance:mode --off"
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/offsite-backup-restore.md"

@@ -55,9 +55,10 @@ spec:
                 - --config=/config/rclone.conf
                 - --cache-objects=false
               volumeMounts:
+                # Schreibbar: rclone aktualisiert seine Config zur Laufzeit und
+                # protokolliert sonst dauerhaft "Failed to save config".
                 - name: config
                   mountPath: /config
-                  readOnly: true
             - name: database-dump
               image: docker.io/alpine/k8s:1.36.2
               command:

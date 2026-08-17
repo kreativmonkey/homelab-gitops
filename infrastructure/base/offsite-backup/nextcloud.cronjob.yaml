@@ -24,6 +24,9 @@ spec:
           serviceAccountName: offsite-backup
           restartPolicy: Never
           terminationGracePeriodSeconds: 120
+          # Reihenfolge ist bewusst gewaehlt: der lange Objekt-Sync und der
+          # lange restic-Upload laufen OHNE Wartungsmodus, im Wartungsmodus
+          # liegt nur der konsistenzkritische Kern (Nachsync + Dump + App-Tar).
           initContainers:
             - name: fetch-garage-credentials
               image: docker.io/alpine/k8s:1.36.2
@@ -69,9 +72,30 @@ spec:
                 - --config=/config/rclone.conf
                 - --cache-objects=false
               volumeMounts:
+                # Schreibbar: rclone aktualisiert seine Config zur Laufzeit und
+                # protokolliert sonst dauerhaft "Failed to save config".
+                - name: config
+                  mountPath: /config
+            # Prefetch ausserhalb des Wartungsmodus. Best effort -- Fehler
+            # werden nicht bewertet, der autoritative Sync folgt im Freeze.
+            - name: stage-objects-prefetch
+              image: docker.io/rclone/rclone:1.75.0
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  /bin/sh /scripts/stage-objects.sh \
+                    || echo "Prefetch unvollstaendig, wird im Wartungsfenster nachgeholt"
+              volumeMounts:
                 - name: config
                   mountPath: /config
                   readOnly: true
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: staging
+                  mountPath: /staging
+            # Ab hier ist Nextcloud offline -- alles dahinter kurz halten.
             - name: maintenance
               image: docker.io/alpine/k8s:1.36.2
               restartPolicy: Always
@@ -88,7 +112,11 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
-                  for _ in $(seq 1 60); do
+                  # 15 Minuten Budget: mehr als der Worst Case des Sidecars
+                  # (5 Versuche a 60s Timeout + 10s Pause). Sonst laufen Gate
+                  # und Sidecar gegeneinander und der Wartungsmodus wird
+                  # gesetzt, nachdem das Gate schon aufgegeben hat.
+                  for _ in $(seq 1 180); do
                     [ -f /work/maintenance-ready ] && exit 0
                     [ -f /work/maintenance-failed ] && exit 0
                     sleep 5
@@ -101,15 +129,14 @@ spec:
               image: docker.io/rclone/rclone:1.75.0
               command:
                 - /bin/sh
-                - -ec
+                - -c
                 - |
                   if [ ! -f /work/maintenance-ready ]; then
+                    echo "Wartungsmodus nicht aktiv, Sync uebersprungen"
                     touch /work/nextcloud-stage.failed
                     exit 0
                   fi
-                  if rclone sync garage:nextcloud /staging/objects \
-                    --config=/config/rclone.conf --fast-list \
-                    --transfers=4 --checkers=8 --delete-during; then
+                  if /bin/sh /scripts/stage-objects.sh; then
                     touch /work/nextcloud-stage.ok
                   else
                     touch /work/nextcloud-stage.failed
@@ -117,6 +144,9 @@ spec:
               volumeMounts:
                 - name: config
                   mountPath: /config
+                  readOnly: true
+                - name: scripts
+                  mountPath: /scripts
                   readOnly: true
                 - name: work
                   mountPath: /work
@@ -126,13 +156,17 @@ spec:
               image: docker.io/alpine/k8s:1.36.2
               command:
                 - /bin/sh
-                - -ec
+                - -c
                 - |
-                  if [ ! -f /work/nextcloud-stage.ok ]; then
+                  if [ -f /work/nextcloud-stage.ok ]; then
+                    /bin/sh /scripts/nextcloud-capture.sh
+                  else
+                    echo "Objekt-Sync nicht vollstaendig, Capture uebersprungen"
                     touch /work/nextcloud-capture.failed
-                    exit 0
                   fi
-                  exec /bin/sh /scripts/nextcloud-capture.sh
+                  # Gibt den Wartungsmodus frei und muss deshalb in JEDEM Pfad
+                  # gesetzt werden -- auch nach Fehlern.
+                  touch /work/capture-complete
               volumeMounts:
                 - name: scripts
                   mountPath: /scripts
@@ -141,6 +175,8 @@ spec:
                   mountPath: /work
                 - name: staging
                   mountPath: /staging
+            # Nextcloud ist ab hier wieder online, der Upload laeuft aus dem
+            # Staging und braucht die Anwendung nicht mehr.
             - name: backup
               image: docker.io/restic/restic:0.19.1
               command:
@@ -149,6 +185,7 @@ spec:
                 - |
                   if [ ! -f /work/nextcloud-stage.ok ] || \
                      [ ! -f /work/nextcloud-capture.ok ]; then
+                    echo "Staging oder Capture fehlgeschlagen, kein Upload"
                     touch /work/nextcloud.failed
                     exit 0
                   fi
@@ -173,20 +210,11 @@ spec:
           containers:
             - name: finalize
               image: docker.io/rclone/rclone:1.75.0
-              command:
-                - /bin/sh
-                - -ec
-                - |
-                  touch /work/backup-done
-                  for _ in $(seq 1 60); do
-                    [ -f /work/maintenance-off ] && break
-                    sleep 2
-                  done
-                  test -f /work/maintenance-off
-                  test -f /work/nextcloud-stage.ok
-                  test -f /work/nextcloud-capture.ok
-                  test -f /work/nextcloud.ok
+              command: ["/bin/sh", "/scripts/finalize.sh"]
               volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
                 - name: work
                   mountPath: /work
           volumes:

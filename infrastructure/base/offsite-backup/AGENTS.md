@@ -12,7 +12,10 @@ Encrypted offsite backups of irreplaceable Immich and Nextcloud data to the Hetz
 - Storage Box credentials and Restic password stay SOPS-encrypted in `storagebox-credentials.secret.yaml`.
 - Restic is the durable backup format; rclone only exposes the SFTP target and stages Nextcloud S3 objects.
 - Immich backups include `Bilder`, `Fotos`, and a fresh PostgreSQL dump.
-- Nextcloud backups run in maintenance mode and include the primary S3 bucket, PostgreSQL dump, and app/config state.
+- Nextcloud backups include the primary S3 bucket, PostgreSQL dump, and app/config state.
+- Maintenance mode covers only the consistency-critical core: the incremental object re-sync, the PostgreSQL dump, and the app-state tar. Object prefetch and the restic upload run with Nextcloud online — never widen the window back to the whole pipeline.
+- Every maintenance-mode change is verified against `occ config:system:get maintenance`. A release that cannot be confirmed leaves `/work/maintenance-off.failed` behind and must fail the job; never swallow the error.
+- `capture-complete` releases the maintenance mode and must be written on every path out of the capture step, including failures.
 - Backup containers mount source volumes read-only. Staging is disposable and remains on-site.
 - Weekly verification must check repository data, restore both database dumps, validate Nextcloud app/config state, and hash-check restored Immich and Nextcloud user-data samples.
 - Every CronJob here carries the watchdog opt-in labels (`homelab.f4mily.net/watchdog`, `max-age-hours`, `max-runtime-hours`, see `docs/runbooks/job-watchdog.md`); pull `max-age-hours` along whenever `schedule` or `activeDeadlineSeconds` changes.

@@ -54,9 +54,10 @@ spec:
                 - --config=/config/rclone.conf
                 - --cache-objects=false
               volumeMounts:
+                # Schreibbar: rclone aktualisiert seine Config zur Laufzeit und
+                # protokolliert sonst dauerhaft "Failed to save config".
                 - name: config
                   mountPath: /config
-                  readOnly: true
             - name: restore
               image: docker.io/restic/restic:0.19.1
               command: ["/bin/sh", "/scripts/verify.sh"]
@@ -83,16 +84,28 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
-                  test -f /work/restore.ok
+                  if [ ! -f /work/restore.ok ]; then
+                    echo "restore.ok fehlt: verify.sh ist gescheitert," \
+                      "Details im Log des restore-Containers"
+                    exit 1
+                  fi
                   immich_dump=/restore/immich/staging/database/immich.dump
                   nextcloud_dump=/restore/nextcloud/staging/database/nextcloud.dump
                   nextcloud_app=/restore/nextcloud/staging/nextcloud-app.tar.gz
-                  test -s "${immich_dump}"
-                  test -s "${nextcloud_dump}"
-                  test -s "${nextcloud_app}"
-                  pg_restore --list "${immich_dump}" >/dev/null
-                  pg_restore --list "${nextcloud_dump}" >/dev/null
-                  tar -tzf "${nextcloud_app}" >/dev/null
+                  for artefact in "${immich_dump}" "${nextcloud_dump}" \
+                    "${nextcloud_app}"; do
+                    if [ ! -s "${artefact}" ]; then
+                      echo "Restauriertes Artefakt fehlt oder ist leer: ${artefact}"
+                      exit 1
+                    fi
+                  done
+                  pg_restore --list "${immich_dump}" >/dev/null \
+                    || { echo "immich-Dump nicht lesbar"; exit 1; }
+                  pg_restore --list "${nextcloud_dump}" >/dev/null \
+                    || { echo "nextcloud-Dump nicht lesbar"; exit 1; }
+                  tar -tzf "${nextcloud_app}" >/dev/null \
+                    || { echo "nextcloud-App-Tar nicht lesbar"; exit 1; }
+                  echo "Alle restaurierten Artefakte plausibel"
               volumeMounts:
                 - name: work
                   mountPath: /work
