@@ -31,7 +31,12 @@ spec:
         - https://bookmarks.f4mily.net
         - https://readeck.f4mily.net
         - https://fitness.f4mily.net
-        - https://nc.f4mily.net
+        # /status.php statt Root: Nextcloud antwortet im Wartungsmodus auf der
+        # Root-URL mit 503 und wuerde EndpointDown bei jedem Offsite-Backup
+        # ausloesen. status.php bleibt erreichbar (200) und ist Nextclouds
+        # eigener Health-Endpunkt. Den Wartungsmodus selbst ueberwacht
+        # blackbox-vmprobe-nextcloud.yaml.
+        - https://nc.f4mily.net/status.php
         - https://goloom.f4mily.net/healthz
         # Cluster-internal (cluster.f4mily.net)
         - https://grafana.cluster.f4mily.net/api/health

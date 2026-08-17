@@ -10,12 +10,21 @@ KUBECONFORM_ARGS=(
   "HelmRelease,HelmRepository,OCIRepository,GitRepository,Kustomization,HelmChart,Provider,Alert,Bucket,Receiver,ImageRepository,ImagePolicy,ImageUpdateAutomation,Secret"
 )
 
+# Muss jeden spec.path der Flux-Kustomizations in clusters/ abdecken -- sonst
+# erreicht ein Kustomize-Build-Fehler den Cluster, ohne dass CI ihn sieht.
+# Ausnahme: clusters/main selbst hat keine kustomization.yaml (Flux liest die
+# Manifeste dort direkt) und ist deshalb kein Kustomize-Root.
 KUSTOMIZE_PATHS=(
   infrastructure/base
   infrastructure/base/backup-schedules
   infrastructure/base/network/network-policies
+  infrastructure/base/sources
+  infrastructure/base/storage
   infrastructure/overlays/main
+  infrastructure/overlays/disaster-recovery
   apps/overlays/main
+  apps/overlays/main/monitoring-rules
+  apps/base/netbird-operator/clusterproxy
 )
 
 # stderr, not stdout: render_all_helmreleases' stdout is a data channel the

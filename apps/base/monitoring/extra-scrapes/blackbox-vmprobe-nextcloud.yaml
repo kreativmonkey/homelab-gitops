@@ -1,0 +1,22 @@
+# VMProbe für den Nextcloud-Wartungsmodus. Gleiche URL wie die allgemeine
+# Erreichbarkeitsprobe, aber eigenes Modul: http_2xx_nextcloud_online schlägt
+# fehl, wenn status.php `"maintenance":true` liefert. So bleibt EndpointDown
+# frei von geplanten Wartungsfenstern, während ein hängender Wartungsmodus
+# trotzdem auffällt (Alert NextcloudMaintenanceModeStuck).
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMProbe
+metadata:
+  name: blackbox-http-nextcloud-online
+  namespace: monitoring
+  labels:
+    release: victoriametrics
+spec:
+  jobName: blackbox-http-nextcloud-online
+  vmProberSpec:
+    url: http://prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+  module: http_2xx_nextcloud_online
+  targets:
+    static:
+      targets:
+        - https://nc.f4mily.net/status.php
+  interval: 30s
