@@ -57,6 +57,11 @@ data:
     shift
     result=0
 
+    # Mehrere Backup-Jobs teilen ein Repository, und forget/prune brauchen einen
+    # exklusiven Lock. Ohne Wartezeit scheitert der zweite Job sofort, statt sich
+    # anzustellen.
+    RETRY_LOCK="--retry-lock 30m"
+
     for delay in 1 2 4 8 16; do
       restic snapshots >/dev/null 2>&1 && break
       sleep "${delay}"
@@ -65,10 +70,10 @@ data:
       restic init || result=1
     fi
     if [ "${result}" -eq 0 ]; then
-      restic backup --host homelab --tag "${tag}" "$@" || result=1
+      restic backup ${RETRY_LOCK} --host homelab --tag "${tag}" "$@" || result=1
     fi
     if [ "${result}" -eq 0 ]; then
-      restic forget --host homelab --tag "${tag}" \
+      restic forget ${RETRY_LOCK} --host homelab --tag "${tag}" \
         --keep-daily 14 --keep-weekly 8 --keep-monthly 12 --keep-yearly 3 \
         || result=1
     fi
@@ -346,46 +351,49 @@ data:
       result=1
     }
 
+    # Siehe restic-backup.sh: geteiltes Repository, exklusive Locks.
+    RETRY_LOCK="--retry-lock 30m"
+
     for delay in 1 2 4 8 16; do
       restic snapshots >/dev/null 2>&1 && break
       sleep "${delay}"
     done
-    restic check --read-data-subset=5% || fail "restic check"
+    restic check ${RETRY_LOCK} --read-data-subset=5% || fail "restic check"
     # security.*-xattrs bleiben aussen vor: der Container darf den SELinux-Label
     # des Zielverzeichnisses nicht setzen, restic wertet das als Fatal, obwohl
     # die Daten vollstaendig zurueckkommen.
-    restic restore latest --host homelab --tag immich --exclude-xattr 'security.*' \
+    restic restore latest ${RETRY_LOCK} --host homelab --tag immich --exclude-xattr 'security.*' \
       --include '/staging/database/immich.dump' \
       --include '/staging/verify/immich-sample.path' \
       --include '/staging/verify/immich-sample.sha256' \
       --target /restore/immich \
       || fail "Restore immich-Dump/Manifest"
-    restic restore latest --host homelab --tag nextcloud --exclude-xattr 'security.*' \
+    restic restore latest ${RETRY_LOCK} --host homelab --tag nextcloud --exclude-xattr 'security.*' \
       --include '/staging/database/nextcloud.dump' \
       --include '/staging/nextcloud-app.tar.gz' \
       --include '/staging/verify/nextcloud-sample.path' \
       --include '/staging/verify/nextcloud-sample.sha256' \
       --target /restore/nextcloud \
       || fail "Restore nextcloud-Dump/App-State"
-    restic restore latest --host homelab --tag forgejo --exclude-xattr 'security.*' \
+    restic restore latest ${RETRY_LOCK} --host homelab --tag forgejo --exclude-xattr 'security.*' \
       --include '/staging/database/forgejo.dump' \
       --include '/staging/verify/forgejo-sample.path' \
       --include '/staging/verify/forgejo-sample.sha256' \
       --target /restore/forgejo \
       || fail "Restore forgejo-Dump/Manifest"
-    restic restore latest --host homelab --tag paperless --exclude-xattr 'security.*' \
+    restic restore latest ${RETRY_LOCK} --host homelab --tag paperless --exclude-xattr 'security.*' \
       --include '/staging/database/paperless.dump' \
       --include '/staging/verify/paperless-sample.path' \
       --include '/staging/verify/paperless-sample.sha256' \
       --target /restore/paperless \
       || fail "Restore paperless-Dump/Manifest"
-    restic restore latest --host homelab --tag appdata --exclude-xattr 'security.*' \
+    restic restore latest ${RETRY_LOCK} --host homelab --tag appdata --exclude-xattr 'security.*' \
       --include '/staging/verify/appdata-sample.path' \
       --include '/staging/verify/appdata-sample.sha256' \
       --target /restore/appdata \
       || fail "Restore appdata-Manifest"
     # Enthaelt nur Dumps, deshalb ohne --include-Filter.
-    restic restore latest --host homelab --tag databases --exclude-xattr 'security.*' \
+    restic restore latest ${RETRY_LOCK} --host homelab --tag databases --exclude-xattr 'security.*' \
       --target /restore/databases \
       || fail "Restore Datenbank-Dumps"
     for tag in immich nextcloud forgejo paperless appdata; do
@@ -395,7 +403,7 @@ data:
       expected="$(cat "${manifest_root}/${tag}-sample.sha256" 2>/dev/null)" \
         || fail "Sample-Hash ${tag} nicht lesbar"
       if [ -n "${sample_path:-}" ] && [ -n "${expected:-}" ]; then
-        restic restore latest --host homelab --tag "${tag}" --exclude-xattr 'security.*' \
+        restic restore latest ${RETRY_LOCK} --host homelab --tag "${tag}" --exclude-xattr 'security.*' \
           --include "${sample_path}" --target "/restore/${tag}-sample" \
           || fail "Restore Sample-Datei ${tag}"
         restored_path="/restore/${tag}-sample${sample_path}"
@@ -408,7 +416,7 @@ data:
       fi
     done
     if [ "${result}" -eq 0 ]; then
-      restic prune || fail "restic prune"
+      restic prune ${RETRY_LOCK} || fail "restic prune"
     fi
 
     if [ "${result}" -eq 0 ]; then
