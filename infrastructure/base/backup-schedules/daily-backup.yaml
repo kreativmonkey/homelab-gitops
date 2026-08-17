@@ -6,30 +6,11 @@ metadata:
 spec:
   schedule: "0 2 * * *"
   template:
-    # Jeder hier gelistete, im Cluster nicht existierende Namespace erzeugt
-    # einen Backup-Error und stempelt den Lauf dauerhaft auf PartiallyFailed.
-    # Damit wird VeleroBackupFailures zum Dauer-Alert und echte Fehler gehen
-    # darin unter -- die Liste muss beim Entfernen einer App mitgepflegt werden.
+    # Alle Namespaces, wie im weekly-backup. Eine gepflegte Liste veraltet
+    # still, und jeder darin verbliebene, entfernte Namespace laesst den Lauf
+    # dauerhaft auf PartiallyFailed stehen.
     includedNamespaces:
-      - default
-      - monitoring
-      - external-dns
-      - ingress-nginx
-      - cnpg-system
-      - goloom
-      - sparkyfitness
-      - authentik
-      - forgejo
-      - nextcloud
-      - paperless-ngx
-      - tandoor
-      - immich
-      - jellyfin
-      - kavita
-      - sterling-pdf
-      - searxng
-      - teslamate
-      - watchyourlan
+      - '*'
     excludedResources:
       - events
       - events.events.k8s.io
@@ -37,15 +18,7 @@ spec:
     ttl: 168h
     includeClusterResources: true
     snapshotVolumes: false
-    # Opt-in statt Opt-out. Mit `true` wuerde jedes gemountete Volume per kopia
-    # nach Garage geschrieben -- auch immich-library, immich-fotos,
-    # jellyfin-media und kavita-books (zusammen ~4,8 TB). Garage liegt auf
-    # demselben TrueNAS-Storagepool, der nur ~3,7 TB frei hat: der Lauf wuerde
-    # den Pool fuellen und damit alle stateful Workloads reissen. Bisher fiel
-    # das nicht auf, weil haengende PodVolumeBackups die Pipeline vorher
-    # abbrachen (siehe docs/runbooks/velero-backup.md).
-    # Volumes, die gesichert werden sollen, tragen am Pod die Annotation
-    # `backup.velero.io/backup-volumes: <volume-namen>`. Mediatheken bleiben
-    # bewusst draussen: Immich-Nutzdaten deckt der Hetzner-restic-Job ab,
-    # Jellyfin- und Kavita-Inhalte sind ersetzbar.
+    # Opt-in: Volumes kommen per `backup.velero.io/backup-volumes` am Pod dazu.
+    # Ohne das landen auch die Mediatheken im Garage-Bucket, der auf demselben
+    # Storagepool liegt wie die Quelldaten.
     defaultVolumesToFsBackup: false
