@@ -9,4 +9,6 @@ resources:
   - immich.cronjob.yaml
   - nextcloud.cronjob.yaml
   - forgejo.cronjob.yaml
+  - databases.cronjob.yaml
+  - quota-check.cronjob.yaml
   - verify.cronjob.yaml
