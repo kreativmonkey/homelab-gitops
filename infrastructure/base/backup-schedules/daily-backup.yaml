@@ -37,4 +37,15 @@ spec:
     ttl: 168h
     includeClusterResources: true
     snapshotVolumes: false
-    defaultVolumesToFsBackup: true
+    # Opt-in statt Opt-out. Mit `true` wuerde jedes gemountete Volume per kopia
+    # nach Garage geschrieben -- auch immich-library, immich-fotos,
+    # jellyfin-media und kavita-books (zusammen ~4,8 TB). Garage liegt auf
+    # demselben TrueNAS-Storagepool, der nur ~3,7 TB frei hat: der Lauf wuerde
+    # den Pool fuellen und damit alle stateful Workloads reissen. Bisher fiel
+    # das nicht auf, weil haengende PodVolumeBackups die Pipeline vorher
+    # abbrachen (siehe docs/runbooks/velero-backup.md).
+    # Volumes, die gesichert werden sollen, tragen am Pod die Annotation
+    # `backup.velero.io/backup-volumes: <volume-namen>`. Mediatheken bleiben
+    # bewusst draussen: Immich-Nutzdaten deckt der Hetzner-restic-Job ab,
+    # Jellyfin- und Kavita-Inhalte sind ersetzbar.
+    defaultVolumesToFsBackup: false
