@@ -290,7 +290,13 @@ data:
       --include '/staging/verify/nextcloud-sample.sha256' \
       --target /restore/nextcloud \
       || fail "Restore nextcloud-Dump/App-State"
-    for tag in immich nextcloud; do
+    restic restore latest --host homelab --tag forgejo --exclude-xattr 'security.*' \
+      --include '/staging/database/forgejo.dump' \
+      --include '/staging/verify/forgejo-sample.path' \
+      --include '/staging/verify/forgejo-sample.sha256' \
+      --target /restore/forgejo \
+      || fail "Restore forgejo-Dump/Manifest"
+    for tag in immich nextcloud forgejo; do
       manifest_root="/restore/${tag}/staging/verify"
       sample_path="$(cat "${manifest_root}/${tag}-sample.path" 2>/dev/null)" \
         || fail "Sample-Pfad ${tag} nicht lesbar"

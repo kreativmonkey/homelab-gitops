@@ -8,4 +8,5 @@ resources:
   - scripts.configmap.yaml
   - immich.cronjob.yaml
   - nextcloud.cronjob.yaml
+  - forgejo.cronjob.yaml
   - verify.cronjob.yaml

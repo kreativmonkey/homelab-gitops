@@ -1,4 +1,4 @@
-# Immich and Nextcloud offsite backup
+# Immich, Nextcloud, and Forgejo offsite backup
 
 ## Scope
 
@@ -8,6 +8,11 @@ Daily Restic snapshots are stored encrypted on the Hetzner Storage Box under
 - `immich`: PostgreSQL dump plus complete `Bilder` and `Fotos` NFS trees.
 - `nextcloud`: Garage primary-object bucket, PostgreSQL dump, and a tar archive
   of `/var/www/html` containing config, apps, themes, and compatibility data.
+- `forgejo`: the git data directory (`docker/forgejo` on the media share —
+  repositories, LFS, attachments, avatars, `app.ini`) plus a dump of the
+  `forgejo` database from `homelab-postgres`. Forgejo keeps running during the
+  backup; git writes objects before it moves refs, so a push in flight leaves
+  at most an unreferenced object behind.
 
 The Nextcloud job now holds Nextcloud in maintenance mode only for the
 consistency-critical core: incremental object re-sync, `pg_dump`, and the
@@ -38,11 +43,12 @@ Trigger an additional backup or verification:
 ```bash
 kubectl create job -n backup-offsite --from=cronjob/immich-offsite-backup immich-offsite-manual
 kubectl create job -n backup-offsite --from=cronjob/nextcloud-offsite-backup nextcloud-offsite-manual
+kubectl create job -n backup-offsite --from=cronjob/forgejo-offsite-backup forgejo-offsite-manual
 kubectl create job -n backup-offsite --from=cronjob/offsite-restore-verify offsite-verify-manual
 ```
 
-After the first seed, require all three jobs to complete before treating the
-Storage Box as a valid offsite copy.
+After the first seed, require every backup job **and** the verification to
+complete before treating the Storage Box as a valid offsite copy.
 
 ## Nextcloud job: flow and stuck maintenance mode
 
@@ -104,6 +110,11 @@ also perform this isolated restore:
 6. Run `php occ maintenance:data-fingerprint`, `php occ status`, and download
    several known files through Nextcloud. Never run `files:scan --all` against
    primary object storage.
+7. Forgejo: restore the data directory, restore the `forgejo` database, start
+   the matching Forgejo version, then run `forgejo doctor check` and clone one
+   repository over HTTPS and SSH. A restore that only brings back the data
+   directory without its database is worthless — repository metadata, users,
+   and permissions live in PostgreSQL.
 
 Record restore date, snapshot IDs, tested files, and result in the operations
 log. A failed verification blocks pruning or storage migrations until fixed.

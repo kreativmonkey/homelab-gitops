@@ -1,16 +1,16 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: offsite-restore-verify
+  name: forgejo-offsite-backup
   namespace: backup-offsite
   labels:
     # Opt-in fuer den generischen Job-Watchdog, siehe docs/runbooks/job-watchdog.md
-    # max-age = 168h Intervall + 6h activeDeadlineSeconds
+    # max-age = 24h Intervall + 2h activeDeadlineSeconds
     homelab.f4mily.net/watchdog: "true"
-    homelab.f4mily.net/max-age-hours: "174"
-    homelab.f4mily.net/max-runtime-hours: "5"
+    homelab.f4mily.net/max-age-hours: "26"
+    homelab.f4mily.net/max-runtime-hours: "1"
 spec:
-  schedule: "0 8 * * 0"
+  schedule: "30 5 * * *"
   timeZone: Europe/Berlin
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
@@ -18,9 +18,10 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 1
-      activeDeadlineSeconds: 21600
+      activeDeadlineSeconds: 7200
       template:
         spec:
+          serviceAccountName: offsite-backup
           restartPolicy: Never
           terminationGracePeriodSeconds: 60
           initContainers:
@@ -54,77 +55,77 @@ spec:
                 - --config=/config/rclone.conf
                 - --cache-objects=false
               volumeMounts:
-                # Schreibbar: rclone aktualisiert seine Config zur Laufzeit und
-                # protokolliert sonst dauerhaft "Failed to save config".
+                # Schreibbar: rclone aktualisiert seine Config zur Laufzeit.
                 - name: config
                   mountPath: /config
-            - name: restore
+            - name: database-dump
+              image: docker.io/alpine/k8s:1.36.2
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  mkdir -p /staging/database
+                  primary="$(kubectl get pods -n cnpg-system \
+                    -l cnpg.io/cluster=homelab-postgres,role=primary \
+                    -o jsonpath='{.items[0].metadata.name}')"
+                  kubectl exec -n cnpg-system "${primary}" -- \
+                    pg_dump -d forgejo -Fc > /staging/database/forgejo.dump
+              volumeMounts:
+                - name: staging
+                  mountPath: /staging
+          containers:
+            - name: backup
               image: docker.io/restic/restic:0.19.1
-              command: ["/bin/sh", "/scripts/verify.sh"]
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  /bin/sh /scripts/record-sample.sh forgejo /data
+                  exec /bin/sh /scripts/restic-backup.sh forgejo /data /staging
               env:
                 - name: RESTIC_REPOSITORY
                   value: rest:http://127.0.0.1:8080/
+                - name: EXIT_ON_FAILURE
+                  value: "true"
                 - name: RESTIC_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       name: storagebox-credentials
                       key: restic-password
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 2Gi
               volumeMounts:
                 - name: scripts
                   mountPath: /scripts
                   readOnly: true
                 - name: work
                   mountPath: /work
-                - name: restore
-                  mountPath: /restore
-          containers:
-            - name: validate
-              image: docker.io/library/postgres:18-alpine
-              command:
-                - /bin/sh
-                - -ec
-                - |
-                  if [ ! -f /work/restore.ok ]; then
-                    echo "restore.ok fehlt: verify.sh ist gescheitert," \
-                      "Details im Log des restore-Containers"
-                    exit 1
-                  fi
-                  immich_dump=/restore/immich/staging/database/immich.dump
-                  nextcloud_dump=/restore/nextcloud/staging/database/nextcloud.dump
-                  nextcloud_app=/restore/nextcloud/staging/nextcloud-app.tar.gz
-                  forgejo_dump=/restore/forgejo/staging/database/forgejo.dump
-                  for artefact in "${immich_dump}" "${nextcloud_dump}" \
-                    "${nextcloud_app}" "${forgejo_dump}"; do
-                    if [ ! -s "${artefact}" ]; then
-                      echo "Restauriertes Artefakt fehlt oder ist leer: ${artefact}"
-                      exit 1
-                    fi
-                  done
-                  pg_restore --list "${immich_dump}" >/dev/null \
-                    || { echo "immich-Dump nicht lesbar"; exit 1; }
-                  pg_restore --list "${nextcloud_dump}" >/dev/null \
-                    || { echo "nextcloud-Dump nicht lesbar"; exit 1; }
-                  pg_restore --list "${forgejo_dump}" >/dev/null \
-                    || { echo "forgejo-Dump nicht lesbar"; exit 1; }
-                  tar -tzf "${nextcloud_app}" >/dev/null \
-                    || { echo "nextcloud-App-Tar nicht lesbar"; exit 1; }
-                  echo "Alle restaurierten Artefakte plausibel"
-              volumeMounts:
-                - name: work
-                  mountPath: /work
-                  readOnly: true
-                - name: restore
-                  mountPath: /restore
+                - name: staging
+                  mountPath: /staging
+                - name: data
+                  mountPath: /data
+                  subPath: docker/forgejo
                   readOnly: true
           volumes:
             - name: config
               emptyDir: {}
             - name: work
               emptyDir: {}
-            - name: restore
+            - name: staging
               emptyDir:
-                sizeLimit: 10Gi
+                sizeLimit: 2Gi
             - name: scripts
               configMap:
                 name: offsite-backup-scripts
                 defaultMode: 0555
+            # Inline NFS wie bei Immich: PVCs sind nicht namespace-uebergreifend
+            # nutzbar. Pfad entspricht dem statischen PV pv-nfs-forgejo-data.
+            - name: data
+              nfs:
+                server: 192.168.10.94
+                path: /mnt/Storagepool/Media
+                readOnly: true
