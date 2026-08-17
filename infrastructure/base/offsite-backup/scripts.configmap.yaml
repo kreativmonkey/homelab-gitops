@@ -373,11 +373,22 @@ data:
       --include '/staging/verify/forgejo-sample.sha256' \
       --target /restore/forgejo \
       || fail "Restore forgejo-Dump/Manifest"
+    restic restore latest --host homelab --tag paperless --exclude-xattr 'security.*' \
+      --include '/staging/database/paperless.dump' \
+      --include '/staging/verify/paperless-sample.path' \
+      --include '/staging/verify/paperless-sample.sha256' \
+      --target /restore/paperless \
+      || fail "Restore paperless-Dump/Manifest"
+    restic restore latest --host homelab --tag appdata --exclude-xattr 'security.*' \
+      --include '/staging/verify/appdata-sample.path' \
+      --include '/staging/verify/appdata-sample.sha256' \
+      --target /restore/appdata \
+      || fail "Restore appdata-Manifest"
     # Enthaelt nur Dumps, deshalb ohne --include-Filter.
     restic restore latest --host homelab --tag databases --exclude-xattr 'security.*' \
       --target /restore/databases \
       || fail "Restore Datenbank-Dumps"
-    for tag in immich nextcloud forgejo; do
+    for tag in immich nextcloud forgejo paperless appdata; do
       manifest_root="/restore/${tag}/staging/verify"
       sample_path="$(cat "${manifest_root}/${tag}-sample.path" 2>/dev/null)" \
         || fail "Sample-Pfad ${tag} nicht lesbar"

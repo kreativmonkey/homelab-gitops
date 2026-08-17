@@ -8,6 +8,12 @@ Daily Restic snapshots are stored encrypted on the Hetzner Storage Box under
 - `immich`: PostgreSQL dump plus complete `Bilder` and `Fotos` NFS trees.
 - `nextcloud`: Garage primary-object bucket, PostgreSQL dump, and a tar archive
   of `/var/www/html` containing config, apps, themes, and compatibility data.
+- `paperless`: the document archive and search-index data plus a dump of the
+  `paperless` database. `consume/` and `export/` are transit directories and
+  stay out.
+- `appdata`: application state that would otherwise be rebuilt by hand —
+  Jellyfin and Kavita library config, Tandoor static and media files. Their
+  databases come from the `databases` tag.
 - `databases`: a dump of every database in every CNPG cluster, discovered at
   runtime. This is the offsite copy of what Barman keeps locally — use it when
   the NAS is gone, and Barman when a single database needs a fast rollback. The
@@ -49,6 +55,8 @@ Trigger an additional backup or verification:
 kubectl create job -n backup-offsite --from=cronjob/immich-offsite-backup immich-offsite-manual
 kubectl create job -n backup-offsite --from=cronjob/nextcloud-offsite-backup nextcloud-offsite-manual
 kubectl create job -n backup-offsite --from=cronjob/forgejo-offsite-backup forgejo-offsite-manual
+kubectl create job -n backup-offsite --from=cronjob/paperless-offsite-backup paperless-offsite-manual
+kubectl create job -n backup-offsite --from=cronjob/appdata-offsite-backup appdata-offsite-manual
 kubectl create job -n backup-offsite --from=cronjob/databases-offsite-backup databases-offsite-manual
 kubectl create job -n backup-offsite --from=cronjob/storagebox-quota-check quota-check-manual
 kubectl create job -n backup-offsite --from=cronjob/offsite-restore-verify offsite-verify-manual

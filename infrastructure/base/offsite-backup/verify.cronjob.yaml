@@ -93,8 +93,9 @@ spec:
                   nextcloud_dump=/restore/nextcloud/staging/database/nextcloud.dump
                   nextcloud_app=/restore/nextcloud/staging/nextcloud-app.tar.gz
                   forgejo_dump=/restore/forgejo/staging/database/forgejo.dump
+                  paperless_dump=/restore/paperless/staging/database/paperless.dump
                   for artefact in "${immich_dump}" "${nextcloud_dump}" \
-                    "${nextcloud_app}" "${forgejo_dump}"; do
+                    "${nextcloud_app}" "${forgejo_dump}" "${paperless_dump}"; do
                     if [ ! -s "${artefact}" ]; then
                       echo "Restauriertes Artefakt fehlt oder ist leer: ${artefact}"
                       exit 1
@@ -106,6 +107,8 @@ spec:
                     || { echo "nextcloud-Dump nicht lesbar"; exit 1; }
                   pg_restore --list "${forgejo_dump}" >/dev/null \
                     || { echo "forgejo-Dump nicht lesbar"; exit 1; }
+                  pg_restore --list "${paperless_dump}" >/dev/null \
+                    || { echo "paperless-Dump nicht lesbar"; exit 1; }
                   # Alle Cluster-Dumps aus dem databases-Tag pruefen. Die Menge
                   # waechst mit neuen Apps, deshalb kein festes Muster.
                   dumps=0
