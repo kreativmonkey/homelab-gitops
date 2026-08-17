@@ -274,13 +274,16 @@ data:
       sleep "${delay}"
     done
     restic check --read-data-subset=5% || fail "restic check"
-    restic restore latest --host homelab --tag immich \
+    # security.*-xattrs bleiben aussen vor: der Container darf den SELinux-Label
+    # des Zielverzeichnisses nicht setzen, restic wertet das als Fatal, obwohl
+    # die Daten vollstaendig zurueckkommen.
+    restic restore latest --host homelab --tag immich --exclude-xattr 'security.*' \
       --include '/staging/database/immich.dump' \
       --include '/staging/verify/immich-sample.path' \
       --include '/staging/verify/immich-sample.sha256' \
       --target /restore/immich \
       || fail "Restore immich-Dump/Manifest"
-    restic restore latest --host homelab --tag nextcloud \
+    restic restore latest --host homelab --tag nextcloud --exclude-xattr 'security.*' \
       --include '/staging/database/nextcloud.dump' \
       --include '/staging/nextcloud-app.tar.gz' \
       --include '/staging/verify/nextcloud-sample.path' \
@@ -294,7 +297,7 @@ data:
       expected="$(cat "${manifest_root}/${tag}-sample.sha256" 2>/dev/null)" \
         || fail "Sample-Hash ${tag} nicht lesbar"
       if [ -n "${sample_path:-}" ] && [ -n "${expected:-}" ]; then
-        restic restore latest --host homelab --tag "${tag}" \
+        restic restore latest --host homelab --tag "${tag}" --exclude-xattr 'security.*' \
           --include "${sample_path}" --target "/restore/${tag}-sample" \
           || fail "Restore Sample-Datei ${tag}"
         restored_path="/restore/${tag}-sample${sample_path}"
