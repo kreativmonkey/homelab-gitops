@@ -96,6 +96,83 @@ data:
     sha256sum "${sample_path}" | cut -d ' ' -f 1 \
       > "/staging/verify/${tag}-sample.sha256"
 
+  databases-dump.sh: |
+    #!/bin/sh
+    set -u
+    # Dumpt jede Datenbank jedes CNPG-Clusters. Cluster und Datenbanken werden
+    # entdeckt, nicht gepflegt -- eine Liste im Manifest wuerde veralten und
+    # neue Apps stillschweigend ungesichert lassen.
+    # Barman sichert dieselben Daten lokal fuer schnelle Restores; dieser Job
+    # ist die Offsite-Kopie fuer den Fall, dass das NAS weg ist.
+    result=0
+    mkdir -p /staging/database
+
+    primaries="$(kubectl get pods -n cnpg-system -l role=primary \
+      -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.metadata.labels.cnpg\.io/cluster}{"\n"}{end}')"
+    if [ -z "${primaries}" ]; then
+      echo "FEHLER: kein primaerer CNPG-Pod gefunden"
+      exit 1
+    fi
+
+    echo "${primaries}" | while read -r pod cluster; do
+      [ -n "${pod}" ] || continue
+      dbs="$(kubectl exec -n cnpg-system "${pod}" -c postgres -- psql -Atc \
+        "select datname from pg_database where not datistemplate \
+         and datname not in ('postgres','template0','template1')" 2>/dev/null)"
+      if [ -z "${dbs}" ]; then
+        echo "FEHLER: keine Datenbanken in ${cluster} gefunden"
+        echo fail > /staging/database/.failed
+        continue
+      fi
+      for db in ${dbs}; do
+        target="/staging/database/${cluster}-${db}.dump"
+        if kubectl exec -n cnpg-system "${pod}" -c postgres -- \
+          pg_dump -d "${db}" -Fc > "${target}"; then
+          echo "gesichert: ${cluster}/${db}"
+        else
+          echo "FEHLER: pg_dump ${cluster}/${db}"
+          echo fail > /staging/database/.failed
+        fi
+      done
+    done
+
+    # Die while-Schleife laeuft in einer Subshell, result waere dort verloren.
+    if [ -f /staging/database/.failed ]; then
+      rm -f /staging/database/.failed
+      result=1
+    fi
+    exit "${result}"
+
+  storagebox-quota.sh: |
+    #!/bin/sh
+    set -u
+    # Die Storage Box teilt ihr Kontingent mit anderen Sicherungen. Laeuft sie
+    # voll, scheitern nicht nur die Cluster-Backups, sondern Borg kann nicht
+    # einmal mehr seine Lock-Datei anlegen -- Platz muss dann von aussen
+    # geschaffen werden. Deshalb rechtzeitig scheitern statt erst im Ernstfall.
+    min_free="${MIN_FREE_BYTES:?MIN_FREE_BYTES nicht gesetzt}"
+
+    about="$(rclone about storagebox: --json --config /config/rclone.conf)" || {
+      echo "FEHLER: rclone about fehlgeschlagen"
+      exit 1
+    }
+    free="$(printf '%s' "${about}" | tr ',{}' '\n' \
+      | sed -n 's/.*"free": *\([0-9][0-9]*\).*/\1/p' | head -n 1)"
+    if [ -z "${free}" ]; then
+      echo "FEHLER: freier Platz nicht aus rclone-Ausgabe lesbar: ${about}"
+      exit 1
+    fi
+
+    free_gib=$((free / 1024 / 1024 / 1024))
+    min_gib=$((min_free / 1024 / 1024 / 1024))
+    if [ "${free}" -lt "${min_free}" ]; then
+      echo "FEHLER: nur noch ${free_gib} GiB frei, Schwelle ${min_gib} GiB"
+      echo "Aufraeumen: restic forget/prune im Repo, Retention pruefen," \
+        "oder Kontingent der Box erhoehen."
+      exit 1
+    fi
+    echo "Storage Box: ${free_gib} GiB frei (Schwelle ${min_gib} GiB)"
+
   nextcloud-maintenance.sh: |
     #!/bin/sh
     set -u
@@ -296,6 +373,10 @@ data:
       --include '/staging/verify/forgejo-sample.sha256' \
       --target /restore/forgejo \
       || fail "Restore forgejo-Dump/Manifest"
+    # Enthaelt nur Dumps, deshalb ohne --include-Filter.
+    restic restore latest --host homelab --tag databases --exclude-xattr 'security.*' \
+      --target /restore/databases \
+      || fail "Restore Datenbank-Dumps"
     for tag in immich nextcloud forgejo; do
       manifest_root="/restore/${tag}/staging/verify"
       sample_path="$(cat "${manifest_root}/${tag}-sample.path" 2>/dev/null)" \

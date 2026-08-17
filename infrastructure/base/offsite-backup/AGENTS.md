@@ -12,6 +12,8 @@ Encrypted offsite backups of irreplaceable Immich, Nextcloud, and Forgejo data t
 - Storage Box credentials and Restic password stay SOPS-encrypted in `storagebox-credentials.secret.yaml`.
 - Restic is the durable backup format; rclone only exposes the SFTP target and stages Nextcloud S3 objects.
 - Immich backups include `Bilder`, `Fotos`, and a fresh PostgreSQL dump.
+- The `databases` job dumps every database of every CNPG cluster. Clusters and databases are discovered from pod labels and `pg_database`, never listed in the manifest — a list would rot and silently leave new apps unprotected. Barman keeps the same data locally for fast restores; this job is the copy that survives losing the NAS. The per-app jobs keep their own dump so data and database restore as a matching pair.
+- `storagebox-quota-check` fails once free space on the Storage Box drops below its threshold. The quota is shared with other backups on the same box, and a full box blocks writing clients entirely — including their lock files, which makes cleanup impossible from the inside.
 - Forgejo backups include the git data directory (`docker/forgejo` on the media share) and a fresh dump of the `forgejo` database. Forgejo is not quiesced: git objects are written before refs are updated, so a push during the backup leaves at most an unreferenced object. Do not add a maintenance window for it without a reason that outweighs the downtime.
 - Nextcloud backups include the primary S3 bucket, PostgreSQL dump, and app/config state.
 - Maintenance mode covers only the consistency-critical core: the incremental object re-sync, the PostgreSQL dump, and the app-state tar. Object prefetch and the restic upload run with Nextcloud online — never widen the window back to the whole pipeline.

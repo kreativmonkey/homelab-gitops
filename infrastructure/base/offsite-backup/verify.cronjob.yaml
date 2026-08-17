@@ -106,6 +106,20 @@ spec:
                     || { echo "nextcloud-Dump nicht lesbar"; exit 1; }
                   pg_restore --list "${forgejo_dump}" >/dev/null \
                     || { echo "forgejo-Dump nicht lesbar"; exit 1; }
+                  # Alle Cluster-Dumps aus dem databases-Tag pruefen. Die Menge
+                  # waechst mit neuen Apps, deshalb kein festes Muster.
+                  dumps=0
+                  for dump in /restore/databases/staging/database/*.dump; do
+                    [ -e "${dump}" ] || continue
+                    pg_restore --list "${dump}" >/dev/null \
+                      || { echo "Dump nicht lesbar: ${dump}"; exit 1; }
+                    dumps=$((dumps + 1))
+                  done
+                  if [ "${dumps}" -lt 2 ]; then
+                    echo "Nur ${dumps} Cluster-Dumps restauriert, erwartet mehrere"
+                    exit 1
+                  fi
+                  echo "${dumps} Cluster-Dumps geprueft"
                   tar -tzf "${nextcloud_app}" >/dev/null \
                     || { echo "nextcloud-App-Tar nicht lesbar"; exit 1; }
                   echo "Alle restaurierten Artefakte plausibel"

@@ -1,0 +1,113 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: databases-offsite-backup
+  namespace: backup-offsite
+  labels:
+    # Opt-in fuer den generischen Job-Watchdog, siehe docs/runbooks/job-watchdog.md
+    # max-age = 24h Intervall + 2h activeDeadlineSeconds
+    homelab.f4mily.net/watchdog: "true"
+    homelab.f4mily.net/max-age-hours: "26"
+    homelab.f4mily.net/max-runtime-hours: "1"
+spec:
+  schedule: "0 1 * * *"
+  timeZone: Europe/Berlin
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 7200
+      template:
+        spec:
+          serviceAccountName: offsite-backup
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 60
+          initContainers:
+            - name: prepare-rclone
+              image: docker.io/rclone/rclone:1.75.0
+              command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
+              env:
+                - name: STORAGEBOX_HOST
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_HOST}
+                - name: STORAGEBOX_USERNAME
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_USERNAME}
+                - name: STORAGEBOX_PASSWORD
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_PASSWORD}
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+            - name: restic-server
+              image: docker.io/rclone/rclone:1.75.0
+              restartPolicy: Always
+              args:
+                - serve
+                - restic
+                - storagebox:homelab-gitops/restic
+                - --addr=127.0.0.1:8080
+                - --config=/config/rclone.conf
+                - --cache-objects=false
+              volumeMounts:
+                # Schreibbar: rclone aktualisiert seine Config zur Laufzeit.
+                - name: config
+                  mountPath: /config
+            - name: databases-dump
+              image: docker.io/alpine/k8s:1.36.2
+              command: ["/bin/sh", "/scripts/databases-dump.sh"]
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: staging
+                  mountPath: /staging
+          containers:
+            - name: backup
+              image: docker.io/restic/restic:0.19.1
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  exec /bin/sh /scripts/restic-backup.sh databases /staging
+              env:
+                - name: RESTIC_REPOSITORY
+                  value: rest:http://127.0.0.1:8080/
+                - name: EXIT_ON_FAILURE
+                  value: "true"
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: storagebox-credentials
+                      key: restic-password
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 1Gi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: work
+                  mountPath: /work
+                - name: staging
+                  mountPath: /staging
+          volumes:
+            - name: config
+              emptyDir: {}
+            - name: work
+              emptyDir: {}
+            - name: staging
+              emptyDir:
+                sizeLimit: 4Gi
+            - name: scripts
+              configMap:
+                name: offsite-backup-scripts
+                defaultMode: 0555

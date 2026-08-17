@@ -8,6 +8,11 @@ Daily Restic snapshots are stored encrypted on the Hetzner Storage Box under
 - `immich`: PostgreSQL dump plus complete `Bilder` and `Fotos` NFS trees.
 - `nextcloud`: Garage primary-object bucket, PostgreSQL dump, and a tar archive
   of `/var/www/html` containing config, apps, themes, and compatibility data.
+- `databases`: a dump of every database in every CNPG cluster, discovered at
+  runtime. This is the offsite copy of what Barman keeps locally — use it when
+  the NAS is gone, and Barman when a single database needs a fast rollback. The
+  per-app tags keep their own dump as well, so app data and its database can be
+  restored as a matching pair.
 - `forgejo`: the git data directory (`docker/forgejo` on the media share —
   repositories, LFS, attachments, avatars, `app.ini`) plus a dump of the
   `forgejo` database from `homelab-postgres`. Forgejo keeps running during the
@@ -44,8 +49,15 @@ Trigger an additional backup or verification:
 kubectl create job -n backup-offsite --from=cronjob/immich-offsite-backup immich-offsite-manual
 kubectl create job -n backup-offsite --from=cronjob/nextcloud-offsite-backup nextcloud-offsite-manual
 kubectl create job -n backup-offsite --from=cronjob/forgejo-offsite-backup forgejo-offsite-manual
+kubectl create job -n backup-offsite --from=cronjob/databases-offsite-backup databases-offsite-manual
+kubectl create job -n backup-offsite --from=cronjob/storagebox-quota-check quota-check-manual
 kubectl create job -n backup-offsite --from=cronjob/offsite-restore-verify offsite-verify-manual
 ```
+
+`storagebox-quota-check` fails when free space drops below its threshold. It is
+the only warning before a full box breaks every writing client on it, so treat
+its failure as urgent: check retention first (`restic forget`/`prune`), then the
+box quota itself.
 
 After the first seed, require every backup job **and** the verification to
 complete before treating the Storage Box as a valid offsite copy.

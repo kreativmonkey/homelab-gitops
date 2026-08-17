@@ -1,0 +1,68 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: storagebox-quota-check
+  namespace: backup-offsite
+  labels:
+    # Opt-in fuer den generischen Job-Watchdog, siehe docs/runbooks/job-watchdog.md
+    # max-age = 24h Intervall + 1h activeDeadlineSeconds
+    homelab.f4mily.net/watchdog: "true"
+    homelab.f4mily.net/max-age-hours: "25"
+    homelab.f4mily.net/max-runtime-hours: "1"
+spec:
+  schedule: "0 7 * * *"
+  timeZone: Europe/Berlin
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      template:
+        spec:
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 30
+          initContainers:
+            - name: prepare-rclone
+              image: docker.io/rclone/rclone:1.75.0
+              command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
+              env:
+                - name: STORAGEBOX_HOST
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_HOST}
+                - name: STORAGEBOX_USERNAME
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_USERNAME}
+                - name: STORAGEBOX_PASSWORD
+                  valueFrom:
+                    secretKeyRef: {name: storagebox-credentials, key: STORAGEBOX_PASSWORD}
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          containers:
+            - name: check
+              image: docker.io/rclone/rclone:1.75.0
+              command: ["/bin/sh", "/scripts/storagebox-quota.sh"]
+              env:
+                # 500 GiB. Reicht fuer mehrere Laeufe Vorlauf, bevor Retention
+                # oder Kontingent angepasst werden muessen.
+                - name: MIN_FREE_BYTES
+                  value: "536870912000"
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: config
+              emptyDir: {}
+            - name: scripts
+              configMap:
+                name: offsite-backup-scripts
+                defaultMode: 0555
