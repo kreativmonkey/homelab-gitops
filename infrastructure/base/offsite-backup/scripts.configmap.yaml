@@ -42,11 +42,9 @@ data:
   stage-objects.sh: |
     #!/bin/sh
     set -u
-    # Spiegelt den Nextcloud-Primary-Storage (Garage) ins Staging.
-    # Laeuft zweimal pro Backup: einmal ohne Wartungsmodus als Prefetch, danach
-    # ein zweites Mal im Wartungsmodus. Der zweite Lauf ist inkrementell und
-    # damit kurz -- so bleibt das Wartungsfenster klein, ohne Konsistenz
-    # zwischen Objekten und Datenbank-Dump aufzugeben.
+    # Spiegelt den Nextcloud-Primary-Storage ins Staging. Laeuft zweimal pro
+    # Backup: als Prefetch ohne Wartungsmodus, danach inkrementell im
+    # Wartungsmodus -- kleines Fenster, ohne Konsistenz zum Dump aufzugeben.
     exec rclone sync garage:nextcloud /staging/objects \
       --config=/config/rclone.conf --fast-list \
       --transfers=4 --checkers=8 --delete-during
@@ -101,19 +99,22 @@ data:
   nextcloud-maintenance.sh: |
     #!/bin/sh
     set -u
-    # Haelt Nextcloud NUR fuer den konsistenzkritischen Teil des Backups
-    # (Objekt-Nachsync + DB-Dump + App-State) im Wartungsmodus. Freigabe
-    # erfolgt, sobald /work/capture-complete existiert -- nicht erst nach dem
-    # restic-Upload.
-    #
-    # Jede Zustandsaenderung wird gegen `occ config:system:get maintenance`
-    # verifiziert. Ein nicht bestaetigter Zustand ist ein Fehler und wird als
-    # Marker hinterlegt, damit finalize den Job scheitern laesst -- frueher
-    # verschluckte `|| true` genau diesen Fall und Nextcloud blieb still im
-    # Wartungsmodus haengen.
+    # Haelt Nextcloud nur fuer den konsistenzkritischen Teil im Wartungsmodus:
+    # Freigabe, sobald /work/capture-complete existiert, nicht erst nach dem
+    # restic-Upload. Jede Zustandsaenderung wird gegen
+    # `occ config:system:get maintenance` verifiziert; eine unbestaetigte
+    # Freigabe hinterlaesst einen Marker und laesst den Job scheitern.
 
-    # 60s ist reichlich (occ antwortet normal in Sekunden) und haelt den
-    # Worst Case aus 5 Versuchen unter dem Budget von wait-maintenance.
+    # Kurze Intervalle sind Pflicht: ein Trap laeuft in sh erst nach dem
+    # laufenden Kommando. Mit langem sleep wuerde der Sidecar die Freigabe erst
+    # nach Ablauf der Grace Period versuchen, also nach dem SIGKILL nie.
+    idle() {
+      while true; do
+        sleep 5
+      done
+    }
+
+    # Timeout, damit ein haengender exec das Script nicht blockiert.
     occ() {
       timeout 60 kubectl exec -n nextcloud deploy/nextcloud -c nextcloud -- \
         php occ "$@"
@@ -162,8 +163,8 @@ data:
     # erneut setzen -- dann nur noch freigeben.
     if [ -f /work/capture-complete ]; then
       echo "Neustart nach Capture-Phase, setze Wartungsmodus nicht erneut"
-      until release; do sleep 60; done
-      while true; do sleep 3600; done
+      until release; do sleep 10; done
+      idle
     fi
 
     if set_mode on true; then
@@ -174,20 +175,19 @@ data:
       touch /work/maintenance-failed
       # Halb gesetzter Zustand ist moeglich -- in jedem Fall wieder freigeben.
       release || true
-      while true; do sleep 3600; done
+      idle
     fi
 
     while [ ! -f /work/capture-complete ]; do
       sleep 5
     done
 
-    # Read-only Dateisystem im Nextcloud-Pod (iSCSI-Remount) laesst occ
-    # scheitern. Weiter versuchen, solange der Pod lebt -- der Marker bleibt
-    # bis zum bestaetigten Erfolg liegen.
+    # Ein read-only Dateisystem im Nextcloud-Pod laesst occ scheitern. Weiter
+    # versuchen, solange der Pod lebt; der Marker bleibt bis zum Erfolg liegen.
     until release; do
-      sleep 60
+      sleep 10
     done
-    while true; do sleep 3600; done
+    idle
 
   nextcloud-capture.sh: |
     #!/bin/sh
@@ -223,14 +223,12 @@ data:
   finalize.sh: |
     #!/bin/sh
     set -u
-    # Endabnahme des Nextcloud-Offsite-Jobs. Benennt fehlende Erfolgs-Marker
-    # explizit, damit ein Fehlschlag im Job-Log lesbar ist statt als nackter
-    # exit 1 aus einer test-Kette.
+    # Endabnahme: benennt fehlende Erfolgs-Marker explizit, damit ein
+    # Fehlschlag im Job-Log lesbar ist.
     result=0
 
-    # Der Wartungsmodus wird direkt nach der Capture-Phase freigegeben, also
-    # lange vor diesem Schritt. Falls die Freigabe noch laeuft (Retry bei
-    # read-only Dateisystem), kurz Zeit geben.
+    # Die Freigabe des Wartungsmodus liegt lange vor diesem Schritt. Laeuft sie
+    # noch (Retry), kurz Zeit geben.
     attempt=0
     while [ ! -f /work/maintenance-off ] && [ "${attempt}" -lt 30 ]; do
       sleep 10

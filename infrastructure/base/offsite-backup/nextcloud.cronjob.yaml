@@ -112,10 +112,9 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
-                  # 15 Minuten Budget: mehr als der Worst Case des Sidecars
-                  # (5 Versuche a 60s Timeout + 10s Pause). Sonst laufen Gate
-                  # und Sidecar gegeneinander und der Wartungsmodus wird
-                  # gesetzt, nachdem das Gate schon aufgegeben hat.
+                  # Budget bewusst groesser als der Worst Case des Sidecars,
+                  # sonst setzt der den Wartungsmodus, nachdem das Gate schon
+                  # aufgegeben hat.
                   for _ in $(seq 1 180); do
                     [ -f /work/maintenance-ready ] && exit 0
                     [ -f /work/maintenance-failed ] && exit 0

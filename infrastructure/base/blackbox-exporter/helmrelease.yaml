@@ -41,10 +41,8 @@ spec:
             # `remote error: tls: internal error`.
             tls_config:
               server_name: home.f4mily.net
-        # Separates Modul für Nextcloud: status.php liefert auch im
-        # Wartungsmodus HTTP 200, deshalb wird zusätzlich der Body geprüft.
-        # Schlägt dieses Modul fehl, während die reguläre http_2xx-Probe auf
-        # derselben URL erfolgreich ist, steht Nextcloud im Wartungsmodus.
+        # Separates Modul für Nextcloud: status.php antwortet auch im
+        # Wartungsmodus erfolgreich, deshalb wird zusätzlich der Body geprüft.
         http_2xx_nextcloud_online:
           prober: http
           timeout: 15s

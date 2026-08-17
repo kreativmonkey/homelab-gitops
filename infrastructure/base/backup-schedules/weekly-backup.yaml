@@ -15,7 +15,5 @@ spec:
     ttl: 672h
     includeClusterResources: true
     snapshotVolumes: false
-    # Opt-in wie im daily-backup, hier umso wichtiger: includedNamespaces ist
-    # '*', ein Opt-out-Lauf wuerde jede Mediathek im Cluster nach Garage
-    # schreiben. Begruendung siehe daily-backup.yaml.
+    # Opt-in, siehe daily-backup.yaml.
     defaultVolumesToFsBackup: false
