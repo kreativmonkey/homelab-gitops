@@ -10,7 +10,7 @@ metadata:
     homelab.f4mily.net/max-age-hours: "174"
     homelab.f4mily.net/max-runtime-hours: "5"
 spec:
-  schedule: "0 8 * * 0"
+  schedule: "0 11 * * 0"
   timeZone: Europe/Berlin
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2

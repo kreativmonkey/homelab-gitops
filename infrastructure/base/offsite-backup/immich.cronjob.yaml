@@ -10,7 +10,9 @@ metadata:
     homelab.f4mily.net/max-age-hours: "32"
     homelab.f4mily.net/max-runtime-hours: "6"
 spec:
-  schedule: "30 3 * * *"
+  # 00:30 Berlin: laeuft VOR dem Velero/CNPG-Backupfenster (UTC-gepinnt) und
+  # muss dort nie hineinragen, siehe AGENTS.md.
+  schedule: "30 0 * * *"
   timeZone: Europe/Berlin
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
