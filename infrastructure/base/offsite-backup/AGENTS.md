@@ -27,6 +27,7 @@ Encrypted offsite backups of irreplaceable Immich, Nextcloud, and Forgejo data t
 - Weekly verification must check repository data, restore every database dump (Immich, Nextcloud, Forgejo), validate Nextcloud app/config state, and hash-check a restored user-data sample per backup tag. A new backup job is only complete once `verify.sh` and the `validate` container cover it.
 - `restic restore` runs with `--exclude-xattr 'security.*'`: the container may not set the SELinux label of the target directory and restic treats that as fatal even though the data is complete.
 - Every CronJob here carries the watchdog opt-in labels (`homelab.f4mily.net/watchdog`, `max-age-hours`, `max-runtime-hours`, see `docs/runbooks/job-watchdog.md`); pull `max-age-hours` along whenever `schedule` or `activeDeadlineSeconds` changes.
+- No job in this directory may run during the Velero/CNPG backup window (03:45–05:50 Berlin in summer, 02:45–04:50 in winter — Velero and CNPG are UTC-pinned, these jobs are `Europe/Berlin`-pinned). All of them read from TrueNAS `192.168.10.94`, which also hosts the Garage S3 endpoint Velero/CNPG back up to; concurrent load stretches CNPG base backups until Garage expires their multipart upload.
 
 # Work Guidance
 
