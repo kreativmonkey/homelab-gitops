@@ -7,4 +7,6 @@ resources:
   - smoke-source.namespace.yaml
   - smoke-source.configmap.yaml
   - smoke.backup.yaml
+  - smoke-restore.namespace.yaml
+  - smoke.restore.yaml
   # VMServiceScrape: apps/base/monitoring/extra-scrapes/

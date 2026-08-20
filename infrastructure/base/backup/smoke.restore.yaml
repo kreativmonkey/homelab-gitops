@@ -1,0 +1,14 @@
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: garage-checksum-smoke-20260820-202326
+  namespace: velero
+spec:
+  backupName: garage-checksum-smoke-20260820-202326
+  includedResources:
+    - configmaps
+  namespaceMapping:
+    velero-smoke-source: velero-smoke-restore
+  includeClusterResources: false
+  restorePVs: false
+  existingResourcePolicy: none
