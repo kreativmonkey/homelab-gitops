@@ -4,4 +4,7 @@ resources:
   - namespace.yaml
   - velero-credentials.secret.yaml
   - helmrelease.yaml
+  - smoke-source.namespace.yaml
+  - smoke-source.configmap.yaml
+  - smoke.backup.yaml
   # VMServiceScrape: apps/base/monitoring/extra-scrapes/
