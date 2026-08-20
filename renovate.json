@@ -74,6 +74,13 @@
   },
   "packageRules": [
     {
+      "description": "Velero AWS plugin v1.14.2 corrupts objects on S3-compatible Garage; upstream fix is waiting for v1.14.3",
+      "matchPackageNames": [
+        "velero/velero-plugin-for-aws"
+      ],
+      "allowedVersions": "!/^(v)?1\\.14\\.2$/"
+    },
+    {
       "description": "Ein PR pro App-Verzeichnis — Chart, Images und Marker desselben Verzeichnisses landen zusammen (Lockstep: nextcloud occ, teslamate grafana, immich server+ml, sparkyfitness, SUC ref+newTag)",
       "matchFileNames": [
         "apps/**",
