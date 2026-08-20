@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: garage-checksum-smoke
-  namespace: velero-smoke-source
-data:
-  marker: "velero-garage-smoke-20260820-202326"
