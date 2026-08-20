@@ -38,7 +38,11 @@ spec:
       volumeSnapshotLocation: []
     initContainers:
       - name: velero-plugin-for-aws
-        image: velero/velero-plugin-for-aws:v1.14.2
+        # v1.14.2 corrupts backup objects on S3-compatible backends because
+        # AWS SDK checksum defaults ignore checksumAlgorithm: "". Keep Garage
+        # on v1.14.1 until the upstream fix ships in v1.14.3.
+        # https://github.com/velero-io/velero/issues/9951
+        image: velero/velero-plugin-for-aws:v1.14.1
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /target
