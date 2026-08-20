@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
       - name: Install Nix
-        uses: cachix/install-nix-action@v31.11.0
+        uses: cachix/install-nix-action@v31.11.1
       - name: Renovate audit + YAML lint
         run: nix develop -c just ci-lint
 
@@ -25,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
       - name: Install Nix
-        uses: cachix/install-nix-action@v31.11.0
+        uses: cachix/install-nix-action@v31.11.1
       - name: Kustomize build + kubeconform
         run: nix develop -c just kustomize-validate
 
@@ -35,7 +35,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
       - name: Install Nix
-        uses: cachix/install-nix-action@v31.11.0
+        uses: cachix/install-nix-action@v31.11.1
       - name: Helm chart render + kubeconform
         run: nix develop -c just helm-render
 
@@ -45,7 +45,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
       - name: Install Nix
-        uses: cachix/install-nix-action@v31.11.0
+        uses: cachix/install-nix-action@v31.11.1
       - name: Server-side dry-run (kind)
         env:
           ENABLE_KIND_CI: "1"
