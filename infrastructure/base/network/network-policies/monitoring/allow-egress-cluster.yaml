@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-cluster
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Pod CIDR (Talos/Cilium 10.244.0.0/16) — vmagent endpoint scraping.
+    - to:
+        - ipBlock:
+            cidr: 10.244.0.0/16
+    # Node CIDR — kubelet (10250) and node-exporter (9100), control-plane
+    # component metrics.
+    - to:
+        - ipBlock:
+            cidr: 192.168.10.0/24

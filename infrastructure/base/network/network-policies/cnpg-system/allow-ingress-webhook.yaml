@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-webhook
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudnative-pg
+  policyTypes:
+    - Ingress
+  ingress:
+    # Kubernetes API server admission webhooks (via cnpg-webhook-service).
+    - from:
+        - ipBlock:
+            cidr: 192.168.10.245/32
+        - ipBlock:
+            cidr: 192.168.10.41/32
+        - ipBlock:
+            cidr: 192.168.10.42/32
+        - ipBlock:
+            cidr: 192.168.10.43/32
+      ports:
+        - protocol: TCP
+          port: 9443
+        - protocol: TCP
+          port: 443

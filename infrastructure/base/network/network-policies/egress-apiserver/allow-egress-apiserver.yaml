@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-apiserver
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 192.168.10.245/32
+        - ipBlock:
+            cidr: 192.168.10.41/32
+        - ipBlock:
+            cidr: 192.168.10.42/32
+        - ipBlock:
+            cidr: 192.168.10.43/32
+      ports:
+        - protocol: TCP
+          port: 6443

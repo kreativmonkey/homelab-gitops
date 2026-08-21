@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-database
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Central CNPG tier in cnpg-system (homelab-postgres + per-app clusters).
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cnpg-system
+      ports:
+        - protocol: TCP
+          port: 5432

@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# cnpg-system = CNPG operator + PostgreSQL clusters. Operator reconciles via
+# the API server (egress) and serves admission webhooks (ingress from API
+# server). DB pods replicate in-ns, archive WAL to S3 (egress-external) and
+# must accept client connections from every consumer namespace on 5432.
+namespace: cnpg-system
+components:
+  - ../baseline
+  - ../egress-external
+  - ../egress-apiserver
+resources:
+  - allow-ingress-postgres.yaml
+  - allow-ingress-webhook.yaml

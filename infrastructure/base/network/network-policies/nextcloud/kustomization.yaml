@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# nextcloud = CNPG (postgres) + redis (in-ns) + Garage S3 (LAN) + mail + OIDC.
+# S3 egress to the Garage endpoint is bespoke (LAN IP, not 80/443).
+namespace: nextcloud
+components:
+  - ../baseline
+  - ../egress-external
+  - ../egress-database
+  - ../egress-mail
+resources:
+  - allow-egress-s3.yaml

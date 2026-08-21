@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+# Egress for mail submission (SMTP/IMAPS). Add to namespaces whose workloads
+# send or receive mail (Authentik invites, Nextcloud mail app). Mail ports
+# only — 465/587 submission, 993 IMAPS.
+resources:
+  - allow-egress-mail.yaml

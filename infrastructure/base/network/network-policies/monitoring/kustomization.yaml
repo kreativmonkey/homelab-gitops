@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# monitoring = vm-k8s-stack. vmagent scrapes pod + node IPs cluster-wide and
+# uses kubernetes_sd (API server). Grafana/Alertmanager need external (OIDC,
+# ntfy). Allow egress to pod CIDR + node CIDR (scrape) and the API server.
+namespace: monitoring
+components:
+  - ../baseline
+  - ../egress-external
+  - ../egress-apiserver
+resources:
+  - allow-egress-cluster.yaml

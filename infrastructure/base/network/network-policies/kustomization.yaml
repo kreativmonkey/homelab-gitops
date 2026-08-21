@@ -8,3 +8,11 @@ resources:
   - homer
   - linkding
   - readeck
+  # Phase 2 (issue #739): Identity provider, data crown, DB tier, observability.
+  - authentik
+  - cnpg-system
+  - forgejo
+  - immich
+  - nextcloud
+  - monitoring
+  - gatus

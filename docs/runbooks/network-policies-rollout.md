@@ -17,6 +17,12 @@ infrastructure/base/network/network-policies/
 │   └── 40-allow-from-monitoring.yaml # ingress ← vmagent (scrape)
 ├── egress-external/     # Component: add-on, egress to the internet on 80/443
 │   └── 50-allow-egress-external.yaml
+├── egress-database/     # Component: egress → cnpg-system:5432 (CNPG tier)
+│   └── allow-egress-database.yaml
+├── egress-apiserver/    # Component: egress → API server VIP + CP nodes:6443
+│   └── allow-egress-apiserver.yaml
+├── egress-mail/         # Component: egress → 0.0.0.0/0 on 465/587/993 (mail)
+│   └── allow-egress-mail.yaml
 ├── <namespace>/         # per-namespace overlay (sets namespace, picks components)
 └── kustomization.yaml   # bundles the per-namespace overlays
 ```
@@ -33,6 +39,37 @@ is a single `flux suspend kustomization infra-network-policies`.
 | `linkding`| baseline + egress-external | SQLite, but OIDC → login.f4mily.net (443) |
 | `readeck` | baseline + egress-external | SQLite, but archives web pages (80/443) |
 
+## Phase 2 (issue #739)
+
+| Namespace | Components | Why / extra egress |
+|-----------|------------|-----|
+| `authentik` | baseline + egress-external + egress-database + egress-mail | IdP: postgres (CNPG), SMTP 465, error reporting 443 |
+| `cnpg-system` | baseline + egress-external + egress-apiserver + `allow-ingress-postgres` + `allow-ingress-webhook` | operator→API (egress) + webhook ingress from API server; DB ingress `5432` from **any** namespace (auth-gated) |
+| `forgejo` | baseline + egress-external + egress-database | postgres (CNPG), redis in-ns, webhooks/avatars/OIDC |
+| `immich` | baseline + egress-external + egress-database | postgres (CNPG), valkey in-ns, ML model download (443) |
+| `nextcloud` | baseline + egress-external + egress-database + egress-mail + `allow-egress-s3-garage` | postgres, redis in-ns, Garage S3 `192.168.10.94:30188/30190`, mail, OIDC |
+| `monitoring` | baseline + egress-external + egress-apiserver + `allow-egress-cluster` | vmagent scrapes pod CIDR `10.244.0.0/16` + node CIDR `192.168.10.0/24`; kubernetes_sd → API |
+| `gatus` | baseline + `allow-egress-probe-dns` + `allow-egress-probes` | prober forces DNS via `192.168.10.1`/`1.1.1.1` and hits external + `*.f4mily.net` on 80/443 |
+
+### Gotchas when onboarding the DB / observability tiers
+- **`cnpg-system` is special.** Default-deny there blocks (a) the operator's
+  API-server watch → add `egress-apiserver`, (b) admission **webhook ingress**
+  from the API server → `allow-ingress-webhook` (VIP `192.168.10.245` + CP
+  nodes `192.168.10.41-43`), (c) client connections from app NS →
+  `allow-ingress-postgres` opens `5432` to **all** namespaces (DB is
+  credential-gated; acceptable tradeoff for the tier). Replication between
+  instances and WAL→S3 are covered by baseline same-ns + `egress-external`.
+- **`monitoring` must reach pod *and* node IPs.** vmagent scrapes
+  `kubernetes_sd` endpoints (pod CIDR) plus kubelet/node-exporter (node CIDR),
+  and needs the API server for SD. `allow-egress-cluster` opens both CIDRs;
+  Grafana/Alertmanager external (OIDC, ntfy) use `egress-external`.
+- **`gatus` bypasses CoreDNS.** Its config points DNS at the LAN router
+  (`192.168.10.1`) and Cloudflare (`1.1.1.1`), so the baseline `allow-dns`
+  (CoreDNS only) is insufficient — add `allow-egress-probe-dns`.
+- **Apps on CNPG** (authentik, immich, forgejo, nextcloud, …) just add the
+  `egress-database` component; the matching **ingress** already lives in
+  `cnpg-system` (point c above).
+
 ## Onboarding another namespace
 
 1. **Map the namespace's real traffic first** — what does it need to reach?
@@ -45,14 +82,19 @@ is a single `flux suspend kustomization infra-network-policies`.
    - Other cross-namespace calls (Redis, Authentik internal, MQTT) → add a
      matching egress policy.
 2. Create `network-policies/<ns>/kustomization.yaml`:
-   ```yaml
-   apiVersion: kustomize.config.k8s.io/v1beta1
-   kind: Kustomization
-   namespace: <ns>
-   components:
-     - ../baseline
-     # - ../egress-external   # only if it needs outbound 80/443
-   ```
+    ```yaml
+    apiVersion: kustomize.config.k8s.io/v1beta1
+    kind: Kustomization
+    namespace: <ns>
+    components:
+      - ../baseline
+      # - ../egress-external   # only if it needs outbound 80/443
+      # - ../egress-database   # if it uses the central CNPG tier (postgres:5432)
+      # - ../egress-apiserver  # if it runs a controller/operator watching the API
+      # - ../egress-mail       # if it sends/receives mail (465/587/993)
+    # resources:              # bespoke egress/ingress not covered by a component
+    #   - allow-egress-<thing>.yaml
+    ```
 3. Add `- <ns>` to `network-policies/kustomization.yaml`.
 4. `just validate`, commit, push.
 5. **Verify before moving on** (see below). Onboard one or two namespaces per PR.

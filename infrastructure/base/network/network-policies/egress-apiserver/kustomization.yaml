@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+# Egress to the Kubernetes API server. Required by controllers/operators
+# (CNPG operator, monitoring vmagent service discovery) that watch the API.
+# Covers the Talos apiserver VIP and the three control-plane node IPs.
+# Adjust if the VIP / node IPs change.
+resources:
+  - allow-egress-apiserver.yaml
