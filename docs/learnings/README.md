@@ -66,6 +66,7 @@ How to avoid this in the future. Include specific checks or guardrails.
 | [forgejo-500-nil-pullrequest.md](forgejo-500-nil-pullrequest.md) | Forgejo: Pull Request 500 from Nil PullRequest | 2026-07-23 |
 | [goloom-rwo-upgrade-race.md](goloom-rwo-upgrade-race.md) | Goloom RWO Upgrade Race | 2026-07-24 |
 | [talos-autonomous-upgrade-handbook.md](talos-autonomous-upgrade-handbook.md) | Talos Autonomous Upgrade Handbook | 2026-07-25 |
+| [authentik-ha-rwo-media.md](authentik-ha-rwo-media.md) | Authentik HA: keep media PVC RWO, co-locate replicas | 2026-08-21 |
 
 ---
 
