@@ -148,13 +148,13 @@
       "enabled": false
     },
     {
-      "description": "Authentik: CalVer, gepinnt auf 2026.5.x — für ein Upgrade den Pin anheben. Chart und Server-Image gemeinsam, weil der Blueprint-Check-CronJob mit dem Image gegen dieselbe DB spricht wie der Worker — ein Versatz bedeutet ein anderes Django-Schema.",
+      "description": "Authentik: CalVer, gepinnt auf 2026.8.x — für ein Upgrade den Pin anheben. Chart und Server-Image gemeinsam, weil der Blueprint-Check-CronJob mit dem Image gegen dieselbe DB spricht wie der Worker — ein Versatz bedeutet ein anderes Django-Schema.",
       "matchDepNames": [
         "authentik",
         "ghcr.io/goauthentik/server"
       ],
       "groupName": "authentik",
-      "allowedVersions": "/^2026\\.5\\./"
+      "allowedVersions": "/^2026\\.8\\./"
     },
     {
       "description": "Nix-Flake-Inputs gruppiert + Automerge",
