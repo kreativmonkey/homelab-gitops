@@ -165,30 +165,11 @@
       "automerge": true
     },
     {
-      "description": "Stufe 1: risikoarme Updates (digest/pin/patch) global automergen — nach 7d-Soak + grünem validate-Check. Majors/Minors bleiben manuell (außer Stufe-2-Allowlist unten).",
+      "description": "Automerge-Basis: alles außer major (digest/pin/patch/minor) global automergen — nach 7d-Soak + grünem validate-Check. Major bleibt immer manuell; Ausnahme vom Minor-Automerge ist der 0.x-Guard unten.",
       "matchUpdateTypes": [
         "digest",
         "pin",
-        "patch"
-      ],
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true
-    },
-    {
-      "description": "Stufe 2: minor-Updates unkritischer, zustandsarmer Leaf-Apps automergen. Bewusst OHNE stateful/kritische Dienste (nextcloud, immich, authentik, forgejo, netbird, DBs).",
-      "matchFileNames": [
-        "apps/base/homepage/**",
-        "apps/base/homer/**",
-        "apps/base/linkding/**",
-        "apps/base/readeck/**",
-        "apps/base/gatus/**",
-        "apps/base/speedtest-tracker/**",
-        "apps/base/sterling-pdf/**",
-        "apps/base/jellyfin/**",
-        "apps/base/kite/**"
-      ],
-      "matchUpdateTypes": [
+        "patch",
         "minor"
       ],
       "automerge": true,
@@ -218,7 +199,7 @@
       "platformAutomerge": true
     },
     {
-      "description": "Guard: 0.x-Versionen — bei 0.y.z ist laut Semver das minor-Feld (y) die Breaking-Stelle. Minor-Automerge (Stufe 2) hier zurücknehmen, damit ein potenziell breaking 0.x-Minor nicht automatisch durchrutscht. Patch (0.y.Z) bleibt automerge.",
+      "description": "Guard: 0.x-Versionen — bei 0.y.z ist laut Semver das minor-Feld (y) die Breaking-Stelle. Minor-Automerge hier zurücknehmen, damit ein potenziell breaking 0.x-Minor nicht automatisch durchrutscht. Patch (0.y.Z) bleibt automerge.",
       "matchUpdateTypes": [
         "minor"
       ],

@@ -65,7 +65,23 @@ Ausnahmen (explizite Regeln, stehen nach der Gruppenregel und gewinnen):
 ## Timing & Automerge
 
 - Global `minimumReleaseAge: 7 days` — alles bekommt eine Woche Soak.
-- Automerge nur: nix/flake-Lock, Renovate-Selbstupdate, searxng, Homepage-Patches.
+- **Automerge ist die Regel, nicht die Ausnahme:** `digest`, `pin`, `patch` und
+  `minor` mergen nach Soak + grünem `validate`-Check automatisch (`automergeType:
+  pr` + `platformAutomerge`, d. h. Forgejo/GitHub merged selbst, sobald der
+  Check grün ist).
+- **Manuell bleibt nur `major`** — plus zwei Ausnahmen:
+  - **0.x-Minors** (`matchCurrentVersion: /^0\./`): bei `0.y.z` ist `y` laut
+    Semver die Breaking-Stelle, also wie ein Major behandeln. `0.y.Z` (patch)
+    automerged weiter.
+  - Was per `allowedVersions` gepinnt ist (CNPG-PG-Majors, Authentik-CalVer)
+    kommt ohnehin erst nach manuellem Anheben des Pins als PR.
+- Fast lane (searxng, Renovate selbst): 2 Tage Soak statt 7, Automerge für alle
+  Update-Typen — beides sind Rolling Releases, bei denen ein Major-Sprung
+  (CalVer-Jahreswechsel) kein Breaking-Change ist.
+- Konsequenz: stateful Dienste (Nextcloud, Immich, Authentik, Forgejo, DBs)
+  ziehen Minor-Upgrades inkl. Schema-Migration unbeaufsichtigt. Kontrolle
+  liegt beim Soak, beim CI-Check und bei den Backups (CNPG/Velero) — nicht
+  mehr beim Review.
 
 ## Verifikation nach Config-Änderungen
 
