@@ -20,7 +20,7 @@ spec:
     spec:
       chart: authentik
       # Upgrade path: 2026.5.x → 2026.8.x (see docs/migrations/authentik-upgrade-2026.md)
-      version: "2026.5.6"
+      version: "2026.8.0"
       sourceRef:
         kind: HelmRepository
         name: authentik-repo

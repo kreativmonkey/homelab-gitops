@@ -53,7 +53,7 @@ spec:
               # Must track the chart version in helmrelease.yaml — a mismatched
               # image talks to a different Django schema. Renovate keeps both on
               # the same pin (see renovate.json).
-              image: ghcr.io/goauthentik/server:2026.5.6
+              image: ghcr.io/goauthentik/server:2026.8.0
               args:
                 - shell
                 - -c
