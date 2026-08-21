@@ -359,12 +359,21 @@ spec:
         # den öffentlichen Reverse-Proxy/Ingress zu verifizieren.
         # Interne Trigger oben bleiben unangetastet.
         # ──────────────────────────────────────────────
+        - name: Authentik
+          group: external
+          url: https://login.f4mily.net/
+          interval: 60s
+          client: &external-dns
+            dns-resolver: tcp://1.1.1.1:53
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
         - name: audiobookshelf
           group: external
           url: https://audible.f4mily.net/healthcheck
           interval: 60s
-          client: &external-dns
-            dns-resolver: tcp://1.1.1.1:53
+          client: *external-dns
           conditions:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
