@@ -31,13 +31,18 @@ spec:
           repository: ghcr.io/mconfalonieri/external-dns-hetzner-webhook
           tag: v1.0.0
         env:
-          - name: HETZNER_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: hetzner-api-token
-                key: api-token
-          # USE_CLOUD_API dropped: v1.0.0 removed the legacy DNS provider,
-          # the Cloud API is now the only supported provider.
+        - name: HETZNER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: api-token
+              name: hetzner-api-token
+          # v1.0.0 is Cloud-API-only: the legacy dns.hetzner.com provider is gone.
+          # USE_CLOUD_API must be set explicitly, otherwise the webhook defaults to
+          # the legacy DNS API and rejects the Cloud token as "unauthorized" ->
+          # external-dns crashloops on every startup sync. The secret holds a
+          # Hetzner Cloud API token, which is what the Cloud DNS API expects.
+        - name: USE_CLOUD_API
+          value: "true"
         livenessProbe:
           httpGet:
             path: /health
