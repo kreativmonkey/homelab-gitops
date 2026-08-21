@@ -7,6 +7,15 @@ metadata:
     kustomize.toolkit.fluxcd.io/depends-on: helm.toolkit.fluxcd.io/HelmRelease/democratic-csi/democratic-csi-iscsi
 spec:
   interval: 1h
+  timeout: 15m
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
   targetNamespace: velero
   chart:
     spec:

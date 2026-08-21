@@ -9,9 +9,11 @@ spec:
   install:
     remediation:
       retries: 3
+      remediateLastFailure: true
   upgrade:
     remediation:
       retries: 3
+      remediateLastFailure: true
   chart:
     spec:
       chart: linkding

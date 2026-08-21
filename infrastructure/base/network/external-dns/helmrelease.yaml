@@ -5,6 +5,15 @@ metadata:
   namespace: external-dns
 spec:
   interval: 1h
+  timeout: 15m
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
   targetNamespace: external-dns
   chart:
     spec:

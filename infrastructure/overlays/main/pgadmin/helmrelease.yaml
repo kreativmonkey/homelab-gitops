@@ -11,9 +11,11 @@ spec:
   install:
     remediation:
       retries: 3
+      remediateLastFailure: true
   upgrade:
     remediation:
       retries: 3
+      remediateLastFailure: true
   targetNamespace: cnpg-system
   chart:
     spec:
