@@ -92,16 +92,35 @@ spec:
       ingress:
         enabled: false
       # HA (#740): replicas=2 + RollingUpdate keep ≥1 pod serving during every
-      # rollout / node drain / reschedule. maxSurge 0 / maxUnavailable 1 → the
-      # new pod is ready before the old is terminated (zero SSO downtime).
-      # Media PVC stays RWO (iSCSI): both replicas co-locate on one node, so the
-      # volume attaches fine. Cross-node spread needs RWX media (NFS) — follow-up.
+      # rollout / upgrade. maxSurge 0 / maxUnavailable 1 → the new pod is ready
+      # before the old is terminated (zero SSO downtime during rollouts).
+      # Media PVC stays RWO (iSCSI). RWO allows multiple pods on ONE node to
+      # share the volume, but Kubernetes does NOT know that — without explicit
+      # affinity a rollout can schedule the new pod on a different node, which
+      # then hits "Multi-Attach error" and hangs in Init (#760). The podAffinity
+      # below forces both server replicas onto the same node so RWO keeps
+      # working. Cross-node spread (true AZ-style HA) still needs RWX media
+      # (NFS) + extra worker nodes — tracked in issue #760.
       replicas: 2
       deploymentStrategy:
         type: RollingUpdate
         rollingUpdate:
           maxSurge: 0
           maxUnavailable: 1
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                      - server
+                  - key: app.kubernetes.io/instance
+                    operator: In
+                    values:
+                      - authentik
+              topologyKey: kubernetes.io/hostname
       # Explicit probes (mirror chart defaults) so a slow DB migration / cold
       # start never gets killed mid-boot. startupProbe gives 60*10s grace.
       startupProbe:
