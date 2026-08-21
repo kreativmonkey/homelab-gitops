@@ -20,9 +20,11 @@ spec:
   install:
     remediation:
       retries: 3
+      remediateLastFailure: true
   upgrade:
     remediation:
       retries: 3
+      remediateLastFailure: true
   values:
     # Official image. The chart at tag v0.1.3 still pins appVersion 0.1.2, so we
     # pin the image explicitly to the matching app release and let Renovate bump

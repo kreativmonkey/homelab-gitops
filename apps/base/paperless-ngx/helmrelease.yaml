@@ -8,6 +8,14 @@ metadata:
 spec:
   interval: 1h
   timeout: 15m
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
   # Release-Name = paperless-ngx enthält den String "paperless" → common.names.fullname
   # rendert Service/Deployment exakt als "paperless-ngx" (nötig für Ingress-Backend,
   # paperless-gpt PAPERLESS_BASE_URL und PAPERLESS_ALLOWED_HOSTS). Nicht umbenennen.

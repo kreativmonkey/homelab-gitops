@@ -8,6 +8,14 @@ metadata:
 spec:
   interval: 1h
   timeout: 15m
+  install:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
   chart:
     spec:
       chart: authentik

@@ -29,10 +29,12 @@ spec:
     crds: CreateReplace
     remediation:
       retries: 3
+      remediateLastFailure: true
   upgrade:
     crds: CreateReplace
     remediation:
       retries: 3
+      remediateLastFailure: true
   chart:
     spec:
       chart: netbird-operator

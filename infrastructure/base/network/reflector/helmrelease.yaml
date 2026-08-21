@@ -5,6 +5,7 @@ metadata:
   namespace: reflector-system
 spec:
   interval: 1h
+  timeout: 15m
   targetNamespace: reflector-system
   dependsOn:
     - name: cert-manager
@@ -19,8 +20,14 @@ spec:
         namespace: flux-system
   install:
     crds: CreateReplace
+    remediation:
+      retries: 3
+      remediateLastFailure: true
   upgrade:
     crds: CreateReplace
+    remediation:
+      retries: 3
+      remediateLastFailure: true
   values:
     resources:
       requests:
