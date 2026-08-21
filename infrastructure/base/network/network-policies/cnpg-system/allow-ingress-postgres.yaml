@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-postgres
+spec:
+  podSelector:
+    matchExpressions:
+      - key: cnpg.io/cluster
+        operator: Exists
+  policyTypes:
+    - Ingress
+  ingress:
+    # Consumers in any namespace may reach PostgreSQL on 5432 (auth-gated).
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 5432

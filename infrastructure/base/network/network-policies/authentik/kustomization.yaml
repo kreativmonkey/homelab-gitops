@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# authentik = Identity Provider. Baseline + external egress (error reporting,
+# OIDC discovery) + CNPG egress (postgres) + mail egress (SMTP 465). Redis
+# runs in-namespace (covered by baseline same-ns allow).
+namespace: authentik
+components:
+  - ../baseline
+  - ../egress-external
+  - ../egress-database
+  - ../egress-mail
