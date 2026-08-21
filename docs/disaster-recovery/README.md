@@ -58,7 +58,7 @@ Follow [cnpg-s3-dr.md](cnpg-s3-dr.md). Summary:
 1. `flux suspend kustomization apps -n flux-system`
 2. Set `infra-main` path to `./infrastructure/overlays/disaster-recovery` in `clusters/main/infrastructure.yaml`, push **GitHub `main`**.
 3. Wait for `homelab-postgres` and `immich-postgres` **Ready**.
-4. Revert `infra-main` to `./infrastructure/overlays/main`, push, `flux resume kustomization apps`.
+4. **Mandatory:** Revert `infra-main` to `./infrastructure/overlays/main`, push, `flux resume kustomization apps`. The DR path must never stay active — leaving it wired permanently re-bootstraps the central DBs from S3 on every reconcile/redeploy (see docs/adr/0001-dr-overlay-transient.md).
 
 DR patches include `cnpg.io/skipEmptyWalArchiveCheck: enabled` when reusing the same S3 `serverName` as production.
 

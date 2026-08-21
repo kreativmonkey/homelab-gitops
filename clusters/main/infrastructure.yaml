@@ -96,18 +96,18 @@ spec:
   timeout: 10m
   dependsOn:
     - name: infra-base
-  path: ./infrastructure/overlays/disaster-recovery
+  # Production path. DR overlay (../disaster-recovery) is transient only: activate
+  # during a CNPG S3 recovery, then revert here. Never leave it pointed at DR.
+  path: ./infrastructure/overlays/main
   prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
-  # ACME DNS-01 (wildcard-f4mily-net) can stay InProgress for a long time after DR; do not block apps.
-  wait: false
+  wait: true
   decryption:
     provider: sops
     secretRef:
       name: sops-age
-  force: true
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
