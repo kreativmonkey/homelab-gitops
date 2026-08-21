@@ -26,6 +26,13 @@ spec:
   values:
     priorityClassName: homelab-infrastructure
 
+    # ghcr statt Docker Hub: der Chart-Default twinproduction/gatus lief beim
+    # Pod-Neustart in Docker Hubs anonymes Pull-Limit (429 toomanyrequests) und
+    # Gatus blieb in ImagePullBackOff. ghcr.io/twin/gatus ist dasselbe Image
+    # ohne Limit. Tag bleibt leer = chart appVersion, wie vorher.
+    image:
+      repository: ghcr.io/twin/gatus
+
     # Eigenes Ingress (siehe ingress.yaml)
     ingress:
       enabled: false
