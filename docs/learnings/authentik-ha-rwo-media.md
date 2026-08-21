@@ -26,10 +26,21 @@ errors on apply, and the old iSCSI data would be lost.
 Keep `authentik-media` **RWO on iSCSI**. Schedule both server replicas on the
 same node (RWO allows multiple pods on one node to share the volume) and use
 `RollingUpdate` with `maxSurge: 0` / `maxUnavailable: 1` so the new pod is
-`ready` before the old is terminated — zero SSO downtime during rollouts.
-Worker is stateless (Redis broker), scale to `replicas: 2` independently.
-Explicit `liveness`/`readiness`/`startup` probes on `/-/health/*`
-(`startupProbe.failureThreshold: 60` for slow migrations).
+`ready` before the old is terminated. Worker is stateless (Redis broker), scale
+to `replicas: 2` independently. Explicit `liveness`/`readiness`/`startup`
+probes on `/-/health/*` (`startupProbe.failureThreshold: 60` for slow
+migrations).
+
+**Co-location must be enforced, not assumed.** Kubernetes does not know that an
+RWO volume can be shared by multiple pods on the *same* node — it only knows a
+volume cannot be attached to pods on *different* nodes. A `RollingUpdate` with
+no affinity therefore happily schedules the new server pod on a different node,
+hits `Multi-Attach error for volume ... Volume is already used by pod ...` and
+hangs in `Init` forever (issue #760). Fix: add `server.affinity.podAffinity`
+`requiredDuringSchedulingIgnoredDuringExecution` on
+`app.kubernetes.io/component=server` + `app.kubernetes.io/instance=authentik`
+with `topologyKey: kubernetes.io/hostname`. This pins both replicas to one node
+so RWO keeps working and rollouts never hang.
 
 ## Prevention
 
@@ -41,6 +52,6 @@ not flip the existing PVC class lightly.
 
 ## Related
 
-- `apps/base/authentik/helmrelease.yaml` (server/worker HA)
-- PR #757 / issue #740
+- `apps/base/authentik/helmrelease.yaml` (server/worker HA + `server.affinity`)
+- PR #757 / issue #740 / issue #760
 - `infrastructure/base/storage/pv-nfs.yaml`, `media-pvc.yaml`
