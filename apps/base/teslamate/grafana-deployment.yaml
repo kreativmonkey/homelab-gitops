@@ -24,7 +24,7 @@ spec:
       containers:
         - name: grafana
           # Pinned in lockstep with the teslamate app image (same version tag); bump both together.
-          image: docker.io/teslamate/grafana:4.0.1
+          image: docker.io/teslamate/grafana:4.1.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
