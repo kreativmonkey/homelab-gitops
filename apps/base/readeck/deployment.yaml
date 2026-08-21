@@ -68,9 +68,12 @@ spec:
             periodSeconds: 30
             failureThreshold: 3
           readinessProbe:
-            httpGet:
-              path: /
-              port: http
+            exec:
+              command:
+                - /bin/readeck
+                - healthcheck
+                - -config
+                - /readeck/config.toml
             initialDelaySeconds: 10
             periodSeconds: 10
           resources:
