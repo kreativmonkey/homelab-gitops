@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: mongo
-          image: docker.io/mongo:8.3.7
+          image: docker.io/mongo:8.3.8
           ports:
             - containerPort: 27017
               name: mongo
@@ -112,7 +112,7 @@ spec:
               drop: ["ALL"]
       containers:
         - name: unifi-controller
-          image: lscr.io/linuxserver/unifi-network-application:10.4.57
+          image: lscr.io/linuxserver/unifi-network-application:10.5.67
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8443
