@@ -1,13 +1,24 @@
+# RBAC for remediation-api (issue #744).
+# Previously a ClusterRole with pods delete + deployments/statefulsets/daemonsets
+# patch cluster-wide. Now scoped to the exact namespaces the API is allowed to
+# touch (ALLOWED_NAMESPACES in configmap.yaml) and the exact verbs its code uses
+# (delete-pod, rollout-restart, get-pods, investigate, fix-resources).
+# One Role + RoleBinding per allowed namespace; the SA keeps its mounted token
+# because the service genuinely calls the Kubernetes API.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: remediation-api
   namespace: ai-ops
+  labels:
+    app.kubernetes.io/name: remediation-api
+automountServiceAccountToken: true
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: remediation-api
+  namespace: monitoring
   labels:
     app.kubernetes.io/name: remediation-api
 rules:
@@ -19,26 +30,909 @@ rules:
     verbs: ["get"]
   - apiGroups: [""]
     resources: ["events"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["replicationcontrollers"]
-    verbs: ["get"]
+    verbs: ["list"]
   - apiGroups: ["apps"]
-    resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+    resources: ["deployments", "replicasets"]
     verbs: ["get", "list", "patch"]
-  - apiGroups: ["apps"]
-    resources: ["deployments/finalizers"]
-    verbs: ["get", "list", "patch", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
   name: remediation-api
+  namespace: monitoring
   labels:
     app.kubernetes.io/name: remediation-api
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: ai-ops
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: ai-ops
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: nextcloud
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: nextcloud
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: immich
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: immich
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: jellyfin
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: jellyfin
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: paperless-ngx
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: paperless-ngx
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: audiobookshelf
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: audiobookshelf
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: tandoor
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: tandoor
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: linkwarden
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: linkwarden
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: homepage
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: homepage
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: authentik
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: authentik
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: searxng
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: searxng
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: goloom
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: goloom
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: teslamate
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: teslamate
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: netbird
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: netbird
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: watchyourlan
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: watchyourlan
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: renovate
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: renovate
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: gatus
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: gatus
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: sparkyfitness
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: sparkyfitness
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: readeck
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: readeck
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: kavita
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: kavita
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: outline
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: outline
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: sterling-pdf
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: sterling-pdf
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: kite
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: kite
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation-api
+subjects:
+  - kind: ServiceAccount
+    name: remediation-api
+    namespace: ai-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation-api
+  namespace: homer
+  labels:
+    app.kubernetes.io/name: remediation-api
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation-api
+  namespace: homer
+  labels:
+    app.kubernetes.io/name: remediation-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
   name: remediation-api
 subjects:
   - kind: ServiceAccount

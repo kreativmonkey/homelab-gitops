@@ -13,3 +13,4 @@ resources:
   - database
   - remediation-api
   - mcp-server
+  - security/sa-no-token

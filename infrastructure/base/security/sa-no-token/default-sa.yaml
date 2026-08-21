@@ -1,0 +1,385 @@
+# Default ServiceAccount in every managed namespace.
+# automountServiceAccountToken:false removes the implicit API credential
+# from all workloads that use the default SA (the ~44 app/infra pods that
+# never call the Kubernetes API). Services that genuinely need API access
+# use a dedicated SA with automountServiceAccountToken:true
+# (remediation-api, n8n, mcp-server, ai-agents, operators).
+# Issue #744 — SA-Tokens überall gemountet.
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: ai-agents
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: ai-ops
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: audiobookshelf
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: authentik
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: backrest
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: backup-offsite
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: cnpg-system
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: dawarich
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: democratic-csi
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: forgejo
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: gatus
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: goloom
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: homepage
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: homer
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: immich
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: jellyfin
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: kavita
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: kite
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: linkding
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: linkwarden
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: local-path-storage
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: mcp-system
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: netbird
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: nextcloud
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: nextcloud-exapps
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: outline
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: paperless-ngx
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: pcm
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: readeck
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: renovate
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: searxng
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: sparkyfitness
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: spectrumknx
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: speedtest-tracker
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: sterling-pdf
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: tandoor
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: teslamate
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: unifi-controller
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: velero
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: watchyourlan
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: workshops
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false

@@ -16,8 +16,9 @@ spec:
         # Bump to force rollout when only ConfigMap content changes.
         config-version: "2026-06-04-adguard-http"
     spec:
-      serviceAccountName: homepage
-      automountServiceAccountToken: true
+      # Homepage needs no Kubernetes API access — use the default SA, whose
+      # token is disabled cluster-wide (issue #744). No dedicated SA/RBAC.
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
