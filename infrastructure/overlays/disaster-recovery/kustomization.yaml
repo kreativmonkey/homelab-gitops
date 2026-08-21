@@ -1,7 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 # DR overlay: same as main, but CNPG Cluster bootstraps via recovery from S3.
-# Activate by pointing Flux infra-main to ./infrastructure/overlays/disaster-recovery
+# Transient only — activate by pointing Flux infra-main here, then revert to ../main.
+# Never commit this as the permanent infra-main path (see docs/adr/0001-dr-overlay-transient.md).
 resources:
   - ../main
 patches:
