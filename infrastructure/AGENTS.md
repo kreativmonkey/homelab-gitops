@@ -17,6 +17,7 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 - Velero protects Kubernetes objects, not volume data: both schedules run `defaultVolumesToFsBackup: false`, so a volume is only included when its pod carries `backup.velero.io/backup-volumes`. Reason: the Garage bucket lives on the same TrueNAS pool as the source data, so an opt-out run would fill the pool. `deployNodeAgent: true` stays so single volumes can be opted in; the namespace uses privileged Pod Security labels because node-agent mounts kubelet host paths. Keep unused democratic-csi snapshotter sidecars disabled unless snapshot CRDs and a tested snapshot restore path are introduced together.
 - Storage: CNPG databases use node-local `local-path`; democratic-csi iSCSI serves app RWO volumes; NFS serves large media.
 - Ingress: NGINX with `nginx.org/*` annotations + Cilium CNI.
+- `base/security/sa-no-token/`: `default` ServiceAccount with `automountServiceAccountToken: false` for every managed namespace. Kills the implicit API credential on all workloads that don't call the K8s API. Workloads that need API access use a dedicated SA with `automountServiceAccountToken: true` (remediation-api, n8n, mcp-server, ai-agents, operators). See issue #744.
 
 # Work Guidance
 
