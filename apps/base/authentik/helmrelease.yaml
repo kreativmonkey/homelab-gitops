@@ -91,8 +91,46 @@ spec:
     server:
       ingress:
         enabled: false
+      # HA (#740): replicas=2 + RollingUpdate keep ≥1 pod serving during every
+      # rollout / node drain / reschedule. maxSurge 0 / maxUnavailable 1 → the
+      # new pod is ready before the old is terminated (zero SSO downtime).
+      # Media PVC stays RWO (iSCSI): both replicas co-locate on one node, so the
+      # volume attaches fine. Cross-node spread needs RWX media (NFS) — follow-up.
+      replicas: 2
       deploymentStrategy:
-        type: Recreate
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 0
+          maxUnavailable: 1
+      # Explicit probes (mirror chart defaults) so a slow DB migration / cold
+      # start never gets killed mid-boot. startupProbe gives 60*10s grace.
+      startupProbe:
+        httpGet:
+          path: /-/health/live/
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 60
+        successThreshold: 1
+      livenessProbe:
+        httpGet:
+          path: /-/health/live/
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 3
+        successThreshold: 1
+      readinessProbe:
+        httpGet:
+          path: /-/health/ready/
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 3
+        successThreshold: 1
       securityContext:
         fsGroup: 1000
       initContainers:
@@ -121,6 +159,12 @@ spec:
         - name: data
           mountPath: /data
     worker:
+      # HA (#740): decoupled from server, own RollingUpdate + replica. Stateless
+      # (pulls tasks from Redis broker), so multiple replicas are safe and keep
+      # blueprint/task processing alive during rollouts.
+      replicas: 2
+      deploymentStrategy:
+        type: RollingUpdate
       # OIDC client secrets for the blueprints above. Only the worker applies
       # blueprints, so only it needs them. The blueprints read these via
       # `!Env NAME`; if a variable is missing the blueprint fails instead of
