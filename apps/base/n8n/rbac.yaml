@@ -1,3 +1,9 @@
+# RBAC for n8n (issue #744).
+# Previously a ClusterRole with list/watch on all workload types cluster-wide
+# *including configmaps*. Now the cluster-wide role is read-only meta only
+# (workload/service enumeration); configmaps are restricted to the n8n
+# namespace (ai-ops) via a namespace-scoped Role, since n8n has no reason to
+# read configmaps in other namespaces.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -6,7 +12,7 @@ metadata:
     app.kubernetes.io/name: n8n
 rules:
   - apiGroups: [""]
-    resources: ["pods", "pods/log", "events", "services", "namespaces", "configmaps"]
+    resources: ["pods", "pods/log", "events", "services", "namespaces"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
@@ -25,6 +31,35 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: n8n-cluster-tool
+subjects:
+  - kind: ServiceAccount
+    name: n8n-app
+    namespace: ai-ops
+---
+# configmaps are only ever read in the n8n namespace (ai-ops).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: n8n-configmaps
+  namespace: ai-ops
+  labels:
+    app.kubernetes.io/name: n8n
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: n8n-configmaps
+  namespace: ai-ops
+  labels:
+    app.kubernetes.io/name: n8n
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: n8n-configmaps
 subjects:
   - kind: ServiceAccount
     name: n8n-app

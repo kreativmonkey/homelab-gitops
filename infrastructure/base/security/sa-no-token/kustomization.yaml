@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Default ServiceAccounts (automountServiceAccountToken:false) for all managed
+# namespaces. Disables the implicit API credential on every workload that uses
+# the default SA. See issue #744.
+resources:
+  - default-sa.yaml
