@@ -42,7 +42,9 @@ spec:
         enabled: false
       driver:
         image:
-          tag: next
+          # Pinned to a released version. `next` is the rolling dev tag (issue #736)
+          # and must not run in production.
+          tag: v1.9.5
         # p95/p99-derived (14d/7d VictoriaMetrics history), previously unset
         # (Burstable, first-to-be-OOM-killed). No CPU limit by convention.
         resources:
@@ -87,7 +89,9 @@ spec:
             memory: 128Mi
       driver:
         image:
-          tag: next
+          # Pinned to a released version. `next` is the rolling dev tag (issue #736)
+          # and must not run in production.
+          tag: v1.9.5
         extraEnv:
           - name: ISCSIADM_HOST_STRATEGY
             value: nsenter

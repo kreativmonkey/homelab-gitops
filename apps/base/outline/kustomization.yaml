@@ -6,3 +6,4 @@ resources:
   - helmrelease.yaml
   - outline-config.secret.yaml
   - ingress.yaml
+  - valkey.yaml
