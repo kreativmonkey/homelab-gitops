@@ -1,0 +1,20 @@
+# Trivy misconfig suppression — validated false positives for issue #781.
+# Real hardening gaps (KSV-0014 readOnlyRootFilesystem, KSV-0118 default
+# securityContext, and the non-blueprint KSV-0109 ConfigMaps below) are
+# intentionally NOT listed here; they remain tracked for remediation.
+misconfigurations:
+  # Authentik OAuth blueprint ConfigMaps only reference the client secret via
+  # !Env (injected at reconcile time from authentik-oidc-client-secrets). No
+  # literal secret is ever stored. Same class gitleaks allowlists in
+  # .gitleaks.toml.
+  - id: AVD-KSV-0109
+    paths:
+      - "apps/base/authentik/blueprints/**"
+  # Flux's own ClusterRoles (gotk-components) by design manage all resources
+  # and secrets — that is the GitOps controller's required RBAC.
+  - id: AVD-KSV-0046
+    paths:
+      - "clusters/main/flux-system/gotk-components.yaml"
+  - id: AVD-KSV-0041
+    paths:
+      - "clusters/main/flux-system/gotk-components.yaml"

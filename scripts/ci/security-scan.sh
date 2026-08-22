@@ -26,6 +26,7 @@ echo "== Trivy: filesystem scan (HIGH,CRITICAL) =="
 if ! trivy fs \
     --scanners vuln,secret,misconfig \
     --severity HIGH,CRITICAL \
+    --ignorefile .trivyignore.yaml \
     --exit-code 1 \
     --format table --output "$TRIVY_TXT" \
     . ; then

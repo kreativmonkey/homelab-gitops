@@ -40,7 +40,7 @@ secret-scan:
 
 # Filesystem CVE/secret/config scan (trivy, HIGH/CRITICAL)
 image-scan:
-    trivy fs --scanners vuln,secret,config --severity HIGH,CRITICAL --exit-code 1 .
+    trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --ignorefile .trivyignore.yaml --exit-code 1 .
 
 # Combined scheduled scan (gitleaks + trivy); exits non-zero on new findings
 security-scan:
