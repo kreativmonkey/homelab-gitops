@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-nextcloud-harp
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # ExApp pods reach the Nextcloud AppAPI harp proxy in the nextcloud NS.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nextcloud
+      ports:
+        - protocol: TCP
+          port: 8780
+        - protocol: TCP
+          port: 8782

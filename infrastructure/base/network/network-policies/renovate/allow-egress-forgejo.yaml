@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-forgejo
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # renovate talks to the Forgejo (Gitea) API for PRs / webhooks.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: forgejo
+      ports:
+        - protocol: TCP
+          port: 3000

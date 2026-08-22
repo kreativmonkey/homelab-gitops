@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# homepage = dashboard. Ingress; widgets ping LAN devices (192.168.10.0/24)
+# and in-cluster services (pod CIDR), plus external (icons/OAuth).
+namespace: homepage
+components:
+  - ../baseline
+  - ../egress-external
+resources:
+  - allow-egress-lan.yaml

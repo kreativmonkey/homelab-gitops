@@ -31,3 +31,12 @@ resources:
   - tandoor
   - teslamate
   - workshops
+  # Phase 4 (issue #739): app NS with bespoke egress/ingress.
+  - homepage
+  - kite
+  - renovate
+  - spectrumknx
+  - nextcloud-exapps
+  - mcp-system
+  - external-dns
+  - ai-ops

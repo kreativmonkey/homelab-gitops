@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-lan
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Homepage status widgets ping LAN devices (router, Proxmox, TrueNAS,
+    # Garage, printers, …) on arbitrary ports, plus in-cluster service
+    # ClusterIPs (pod CIDR). Read-only dashboard → broad but LAN-scoped
+    # egress. External icon/OAuth hosts are covered by egress-external.
+    - to:
+        - ipBlock:
+            cidr: 192.168.10.0/24
+    - to:
+        - ipBlock:
+            cidr: 10.244.0.0/16
