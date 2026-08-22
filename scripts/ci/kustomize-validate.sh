@@ -11,4 +11,6 @@ for path in "${KUSTOMIZE_PATHS[@]}"; do
   kustomize build "$path" | kubeconform "${KUBECONFORM_ARGS[@]}" -summary -output text
 done
 
+scripts/ci/homepage-kubernetes-access.sh
+
 log "Kustomize validate stage passed."
