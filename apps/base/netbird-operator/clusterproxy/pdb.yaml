@@ -1,0 +1,18 @@
+# PodDisruptionBudget für den operator-generierten clusterproxy-homelab
+# Deployment (3 Replicas). Der netbird-operator-Chart/ClusterProxy-CRD
+# unterstützt kein eigenes PDB-Feld, daher greift hier ein statisches PDB
+# über die vom Operator gesetzten Pod-Labels.
+# maxUnavailable 1 bei 3 Replicas → minAvailable 2: ein Proxy-Pod darf
+# während eines Node-Drains (system-upgrade-controller, concurrency 1)
+# wegfallen, K8S-API-Zugriff via NetBird bleibt bestehen.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: clusterproxy-homelab
+  namespace: netbird
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: homelab
+      app.kubernetes.io/name: clusterproxy
