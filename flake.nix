@@ -23,6 +23,8 @@
         age
         sops
         just
+        gitleaks
+        trivy
       ];
     in
     {

@@ -1,0 +1,14 @@
+# Local pre-commit hooks (issue #747) — run `pre-commit install` once.
+# yamllint matches CI; gitleaks protects staged changes before push.
+repos:
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+        args: ["-c", ".yamllint.yml"]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+        args: ["protect", "--staged", "--redact", "--no-banner", "--config", ".gitleaks.toml"]

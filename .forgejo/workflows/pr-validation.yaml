@@ -1,5 +1,9 @@
 name: PR Validation
 
+# Issue #747 — minimal default token scope (Fork-PR-Guard).
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches:
