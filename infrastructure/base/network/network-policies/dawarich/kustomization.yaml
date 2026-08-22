@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# dawarich = self-hosted location tracker. Ingress + same-ns valkey; CNPG
+# postgres (dawarich-postgres in cnpg-system); OIDC via login.f4mily.net.
+# Baseline + database + external egress.
+namespace: dawarich
+components:
+  - ../baseline
+  - ../egress-database
+  - ../egress-external

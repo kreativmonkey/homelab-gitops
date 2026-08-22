@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# sterling-pdf = PDF toolkit. Ingress only; Ghostscript/LibreOffice run
+# locally, no outbound calls. Baseline only.
+namespace: sterling-pdf
+components:
+  - ../baseline

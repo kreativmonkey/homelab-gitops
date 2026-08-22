@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# outline = wiki. Ingress + same-ns valkey; CNPG postgres
+# (homelab-postgres-outline in cnpg-system); OIDC; SMTP (465).
+# Baseline + database + external + mail egress.
+namespace: outline
+components:
+  - ../baseline
+  - ../egress-database
+  - ../egress-external
+  - ../egress-mail

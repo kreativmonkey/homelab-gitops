@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# jellyfin = media server. Ingress + external metadata providers (HTTPS).
+# Optional DLNA discovery (UDP 7359) is LAN multicast and not covered by
+# default-deny anyway. Baseline + external egress.
+namespace: jellyfin
+components:
+  - ../baseline
+  - ../egress-external
