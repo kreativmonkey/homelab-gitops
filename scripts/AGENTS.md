@@ -9,7 +9,7 @@ Helper scripts: CI validation/audit (`ci/`), monitoring purge tools (`monitoring
 
 # Local Contracts
 
-- CI validation is split into independent stage scripts: `ci/lib.sh` (shared helpers, sourced not run), `ci/kustomize-validate.sh`, `ci/helm-render.sh`, `ci/server-dry-run.sh` (needs Docker) — plus the pre-existing `ci/renovate-audit.sh` and the inline yamllint recipe in `justfile`. Wired together as `justfile` recipes (`just validate` = schema-only stages, `just validate-full` = + server-dry-run) and run as separate parallel jobs in `.forgejo/workflows/pr-validation.yaml` / `.github/workflows/pr-validation.yaml`.
+- CI validation is split into independent stage scripts: `ci/lib.sh` (shared helpers, sourced not run), `ci/kustomize-validate.sh`, `ci/helm-render.sh`, `ci/server-dry-run.sh` (needs Docker) — plus the pre-existing `ci/renovate-audit.sh` and the inline yamllint recipe in `justfile`. `ci/kustomize-validate.sh` also runs `ci/homepage-kubernetes-access.sh` to enforce the cross-resource discovery/RBAC contract. Wired together as `justfile` recipes (`just validate` = schema-only stages, `just validate-full` = + server-dry-run) and run as separate parallel jobs in `.forgejo/workflows/pr-validation.yaml` / `.github/workflows/pr-validation.yaml`.
 - Scripts must be POSIX/bash, idempotent where possible, and safe to run standalone.
 - Destructive scripts (`monitoring/purge-*`) must state scope and require explicit target.
 
