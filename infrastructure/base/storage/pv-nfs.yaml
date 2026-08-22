@@ -30,6 +30,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -54,6 +59,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -78,6 +88,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Documents
     server: 192.168.10.94
@@ -102,6 +117,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Documents
     server: 192.168.10.94
@@ -126,6 +146,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Documents
     server: 192.168.10.94
@@ -150,6 +175,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Documents
     server: 192.168.10.94
@@ -174,6 +204,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -198,6 +233,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -222,6 +262,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -246,6 +291,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -270,6 +320,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -294,6 +349,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -318,6 +378,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
     - ro
   nfs:
     path: /mnt/Storagepool/Media
@@ -343,6 +408,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -367,6 +437,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -391,6 +466,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -415,6 +495,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -439,6 +524,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
@@ -463,6 +553,11 @@ spec:
   storageClassName: nfs-media-static
   mountOptions:
     - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
   nfs:
     path: /mnt/Storagepool/Media
     server: 192.168.10.94
