@@ -32,6 +32,20 @@ helm-render:
 server-dry-run:
     ./scripts/ci/server-dry-run.sh
 
+# --- Scheduled security scans (issue #747) ---
+
+# Scan full git history for secrets (gitleaks, baseline-suppressed)
+secret-scan:
+    gitleaks detect --source . --config .gitleaks.toml --baseline-path .gitleaks.baseline.json --no-banner --redact
+
+# Filesystem CVE/secret/config scan (trivy, HIGH/CRITICAL)
+image-scan:
+    trivy fs --scanners vuln,secret,config --severity HIGH,CRITICAL --exit-code 1 .
+
+# Combined scheduled scan (gitleaks + trivy); exits non-zero on new findings
+security-scan:
+    ./scripts/ci/security-scan.sh
+
 # All schema-only stages (no Docker) — matches the old `just validate`.
 validate: ci-lint kustomize-validate helm-render
 

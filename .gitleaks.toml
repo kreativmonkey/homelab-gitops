@@ -1,0 +1,14 @@
+title = "homelab-gitops gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "SOPS-encrypted secrets and public audit artifacts are not real leaks"
+paths = [
+  '''.*\.secret\.yaml$''',
+  '''\.sops\.yaml$''',
+  '''audit/.*''',
+  '''\.gitleaks\.baseline\.json$''',
+  '''\.pre-commit-config\.yaml$''',
+]

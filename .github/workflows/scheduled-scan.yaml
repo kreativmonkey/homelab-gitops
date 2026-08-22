@@ -1,0 +1,41 @@
+name: Scheduled Security Scan
+
+# Issue #747 — continuous control instead of point-in-time audit.
+# Weekly gitleaks (full history, baseline-suppressed) + trivy fs scan.
+# On new findings the run fails and a tracking issue is opened/updated.
+on:
+  schedule:
+    - cron: "23 4 * * 1" # weekly, Monday 04:23
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31.11.1
+
+      - name: Run scans (gitleaks + trivy)
+        id: scan
+        continue-on-error: true
+        run: nix develop -c just security-scan
+
+      - name: Report findings to issue
+        if: steps.scan.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: ./scripts/ci/scan-findings-issue.sh
