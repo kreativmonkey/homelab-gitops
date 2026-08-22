@@ -55,6 +55,20 @@ spec:
               memory: 64Mi
             limits:
               memory: 256Mi
+          livenessProbe:
+            tcpSocket:
+              port: smb
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: smb
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
       volumes:
         - name: consume
           persistentVolumeClaim:

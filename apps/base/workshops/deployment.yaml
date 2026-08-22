@@ -95,6 +95,20 @@ spec:
               memory: 32Mi
             limits:
               memory: 64Mi
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  for p in /proc/[0-9]*; do
+                    if grep -qa git-sync "$p/cmdline" 2>/dev/null; then exit 0; fi
+                  done
+                  exit 1
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
       volumes:
         - name: web
           emptyDir: {}
