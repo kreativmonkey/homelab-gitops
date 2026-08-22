@@ -72,5 +72,5 @@ spec:
             homelab_owner: platform
           annotations:
             summary: "PVC {{ $labels.persistentvolumeclaim }} wächst Richtung Limit"
-            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} ({{ $value | humanizeBinary }} genutzt) erreicht bei aktuellem Wachstum in ~7d sein Kapazitätslimit. Vergrößerung einplanen, bevor PVCDiskSpaceLow greift."
+            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} ({{ $value | humanize1024 }} genutzt) erreicht bei aktuellem Wachstum in ~7d sein Kapazitätslimit. Vergrößerung einplanen, bevor PVCDiskSpaceLow greift."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/pvc-disk-space.md"
