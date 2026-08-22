@@ -76,6 +76,10 @@ spec:
         vmstorage:
           replicaCount: 2
           priorityClassName: homelab-infrastructure
+          podDisruptionBudget:
+            # 2 replicas, maxUnavailable 1 → minAvailable 1: one darf während
+            # Node-Drain wegfallen, Monitoring-Storage bleibt verfügbar.
+            maxUnavailable: 1
           podMetadata:
             annotations:
               backup.velero.io/backup-volumes: vm-data
@@ -96,6 +100,10 @@ spec:
           enabled: true
           replicaCount: 2
           priorityClassName: homelab-infrastructure
+          podDisruptionBudget:
+            # 2 replicas, maxUnavailable 1 → eine Instanz darf während
+            # Node-Drain wegfallen, Query-Path bleibt verfügbar.
+            maxUnavailable: 1
           resources:
             requests:
               cpu: 100m
@@ -106,6 +114,10 @@ spec:
           enabled: true
           replicaCount: 2
           priorityClassName: homelab-infrastructure
+          podDisruptionBudget:
+            # 2 replicas, maxUnavailable 1 → eine Instanz darf während
+            # Node-Drain wegfallen, Write-Path bleibt verfügbar.
+            maxUnavailable: 1
           resources:
             requests:
               cpu: 100m
