@@ -123,12 +123,15 @@ spec:
         limits:
           memory: 128Mi
     storageClasses:
-      - name: truenas-iscsi
-        defaultClass: true
-        reclaimPolicy: Delete
-        volumeBindingMode: Immediate
-        allowVolumeExpansion: true
-        parameters:
+    - name: truenas-iscsi
+      defaultClass: true
+      reclaimPolicy: Delete
+      # WaitForFirstConsumer binds the PV to the node where the pod actually
+      # schedules, instead of provisioning node-unbound up front. Affects only
+      # new PVCs — existing volumes keep their current binding.
+      volumeBindingMode: WaitForFirstConsumer
+      allowVolumeExpansion: true
+      parameters:
           detachedVolumesFromSnapshots: "false"
           fsType: ext4
           # VolumeSnapshotClass requires snapshot.storage.k8s.io CRDs (not installed yet).
