@@ -11,4 +11,9 @@ paths = [
   '''audit/.*''',
   '''\.gitleaks\.baseline\.json$''',
   '''\.pre-commit-config\.yaml$''',
+  # Authentik OAuth app blueprints only ever reference the client secret via
+  # !Env (injected at reconcile time from the authentik-oidc-client-secrets
+  # Secret) — never a literal. Trivy flags the same pattern as Ksv0109; both
+  # are false positives. See apps/base/authentik/blueprints/*-oauth.configmap.yaml.
+  '''apps/base/authentik/blueprints/.*-oauth\.configmap\.yaml$''',
 ]
