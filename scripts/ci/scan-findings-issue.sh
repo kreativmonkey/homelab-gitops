@@ -15,6 +15,10 @@ Please review the artifacts and triage. Reproduce locally with: \`just security-
 command -v gh >/dev/null 2>&1 || { echo "gh not available, skipping issue creation"; exit 0; }
 gh auth status >/dev/null 2>&1 || { echo "gh not authenticated, skipping issue creation"; exit 0; }
 
+# Ensure the tracking label exists so issue creation never fails on a missing label.
+gh label create "$LABEL" --color "d73a4a" \
+  --description "Automated scheduled security scan findings" 2>/dev/null || true
+
 EXISTING=$(gh issue list --label "$LABEL" --state open --json number --jq '.[0].number' 2>/dev/null || true)
 if [[ -n "$EXISTING" ]]; then
   echo "Updating existing issue #$EXISTING"
