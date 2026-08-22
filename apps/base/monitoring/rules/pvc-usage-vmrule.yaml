@@ -1,0 +1,76 @@
+# PVC-Füllstand-Alerts. Disk-full ist die häufigste Homelab-Ausfallart —
+# besonders fatal bei node-local `local-path` unter CNPG: ein volles Volume
+# blockiert den WAL-Write und die DB geht offline. Live fehlten diese Regeln,
+# während immich-CNPG Aug 15–18 drei Nächte hintereinander das Nightly-Backup
+# verfehlte — der Backup-stale-Alert zog zwar, das Volume-Wachstum wurde aber
+# nicht früh genug sichtbar.
+# `homelab_owner: platform` routet zu ntfy + n8n-Triage.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: homelab-pvc-usage
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.platform.pvc
+      interval: 1m
+      rules:
+        - alert: PVCDiskSpaceLow
+          # freier Anteil < 15 % gemessen über das kubelet-Volume-Stats-Paar.
+          expr: |
+            (
+              kubelet_volume_stats_available_bytes
+                / kubelet_volume_stats_capacity_bytes
+            ) * 100 < 15
+          for: 15m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "PVC {{ $labels.persistentvolumeclaim }} fast voll ({{ $value | printf \"%.1f\" }} % frei)"
+            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} hat nur noch {{ $value | printf \"%.1f\" }} % frei (< 15 %). Bei node-local local-path blockiert ein volles Volume den CNPG-WAL-Write. Volume vergrößern oder Daten aufräumen, bevor critical greift."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/pvc-disk-space.md"
+
+        - alert: PVCDiskSpaceCritical
+          # freier Anteil < 5 % — akute Gefahr von Disk-full / WAL-Stall.
+          expr: |
+            (
+              kubelet_volume_stats_available_bytes
+                / kubelet_volume_stats_capacity_bytes
+            ) * 100 < 5
+          for: 5m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "PVC {{ $labels.persistentvolumeclaim }} kritisch voll ({{ $value | printf \"%.1f\" }} % frei)"
+            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} hat nur noch {{ $value | printf \"%.1f\" }} % frei (< 5 %). Schreibende Workloads (v.a. CNPG/WAL) können jeden Moment blockieren. Sofort vergrößern oder aufräumen."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/pvc-disk-space.md"
+
+        - alert: PVCDiskSpaceGrowthForecast
+          # Nur große Volumes (> 50 Gi) betrachten: linearer Fit über 1d,
+          # extrapoliert auf 7d. Trifft die Kapazität in 7d -> früher Warn.
+          # Verhindert Überraschung durch stetiges Wachstum (z.B. Immich/Nextcloud).
+          expr: |
+            (
+              kubelet_volume_stats_capacity_bytes > 50 * 1024 * 1024 * 1024
+            )
+            and
+            (
+              predict_linear(kubelet_volume_stats_used_bytes[1d], 7 * 24 * 3600)
+                > kubelet_volume_stats_capacity_bytes
+            )
+          for: 1h
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "PVC {{ $labels.persistentvolumeclaim }} wächst Richtung Limit"
+            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} ({{ $value | humanizeBinary }} genutzt) erreicht bei aktuellem Wachstum in ~7d sein Kapazitätslimit. Vergrößerung einplanen, bevor PVCDiskSpaceLow greift."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/pvc-disk-space.md"
