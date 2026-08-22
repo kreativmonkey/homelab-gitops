@@ -18,6 +18,7 @@ spec:
     spec:
       # Homepage needs no Kubernetes API access — use the default SA, whose
       # token is disabled cluster-wide (issue #744). No dedicated SA/RBAC.
+      serviceAccountName: default
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
