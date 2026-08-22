@@ -70,6 +70,53 @@ is a single `flux suspend kustomization infra-network-policies`.
   `egress-database` component; the matching **ingress** already lives in
   `cnpg-system` (point c above).
 
+## Phase 3 (issue #739, remaining app NS — Batch A, DONE)
+
+14 low-risk app namespaces rolled out with only baseline + component-driven
+egress (no bespoke policies needed):
+
+| Namespace | Components | Why |
+|-----------|------------|-----|
+| `ai-agents` | baseline | placeholder NS, no workloads yet (covers first deploy) |
+| `audiobookshelf` | baseline + egress-external | optional cover/metadata fetch |
+| `jellyfin` | baseline + egress-external | external metadata providers |
+| `kavita` | baseline + egress-external | optional metadata fetch |
+| `searxng` | baseline + egress-external | upstream search engines |
+| `workshops` | baseline + egress-external | git-sync clones git.f4mily.net |
+| `sterling-pdf` | baseline | local Ghostscript/LibreOffice only |
+| `dawarich` | baseline + egress-database + egress-external | CNPG + OIDC |
+| `goloom` | baseline + egress-database + egress-external | CNPG + OIDC |
+| `paperless-ngx` | baseline + egress-database + egress-external | CNPG + optional fetch |
+| `sparkyfitness` | baseline + egress-database + egress-external | CNPG + OIDC |
+| `tandoor` | baseline + egress-database + egress-mail | CNPG + SMTP |
+| `outline` | baseline + egress-database + egress-external + egress-mail | CNPG + OIDC + SMTP |
+| `teslamate` | baseline + egress-database + egress-external | CNPG + Tesla API |
+
+## Phase 4 (issue #739 — remaining app NS, OPEN)
+
+Need bespoke egress/ingress policies (not just components):
+
+| Namespace | Bespoke needed |
+|-----------|----------------|
+| `homepage` | egress → LAN `192.168.10.0/24` (status-widget pings) + cluster CIDR |
+| `kite` | egress → `monitoring` vmselect `:8481` |
+| `renovate` | egress → `forgejo` `:3000` (+ egress-external) |
+| `spectrumknx` | egress → KNX gateway `192.168.10.20:3671` (TCP+UDP) |
+| `nextcloud-exapps` | egress → `nextcloud` `:8780/:8782` (+ egress-external) |
+| `mcp-system` | `+ egress-apiserver` (read-only k8s API) |
+| `external-dns` | `+ egress-external` + `egress-apiserver` |
+| `ai-ops` (n8n) | `+ egress-external` (+ optional `egress-apiserver`) |
+
+## Phase 5 (issue #739 — infra/operator NS, DEFER)
+
+`hostNetwork` bypasses NP (NP inert): `ingress-nginx`, `netbird`,
+`watchyourlan`, `system-upgrade` (plan jobs). Critical operators with LAN/API
+egress that break cluster-wide if wrongly denied: `cert-manager` (admission
+webhook ingress + ACME egress), `democratic-csi` (TrueNAS `:443`/iSCSI),
+`local-path-storage` (API), `velero` (Garage S3 `:30188` + API),
+`backup-offsite` (Storage Box `:23` + NFS), `reflector-system` (API TLS
+replication). Need bespoke, individually-verified policies.
+
 ## Onboarding another namespace
 
 1. **Map the namespace's real traffic first** — what does it need to reach?

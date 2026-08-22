@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# kavita = comics/manga server. Ingress; optional external metadata fetch.
+# Baseline + external egress.
+namespace: kavita
+components:
+  - ../baseline
+  - ../egress-external

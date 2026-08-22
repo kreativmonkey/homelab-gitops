@@ -16,3 +16,18 @@ resources:
   - nextcloud
   - monitoring
   - gatus
+  # Batch A (issue #739, remaining app NS): baseline + component-driven egress.
+  - ai-agents
+  - audiobookshelf
+  - dawarich
+  - goloom
+  - jellyfin
+  - kavita
+  - outline
+  - paperless-ngx
+  - searxng
+  - sparkyfitness
+  - sterling-pdf
+  - tandoor
+  - teslamate
+  - workshops

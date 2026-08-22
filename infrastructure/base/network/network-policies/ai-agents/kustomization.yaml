@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# ai-agents = placeholder namespace (namespace.yaml + rbac.yaml only, no
+# workloads yet). Baseline applied so first workloads are covered by
+# default-deny from the start.
+namespace: ai-agents
+components:
+  - ../baseline
