@@ -28,6 +28,11 @@ spec:
   values:
     controller:
       enableCustomResources: true
+      # Issue #736 asks for the ingress-nginx admissionWebhook, but this cluster
+      # runs NGINX Inc's nginx-ingress (nginx/nginx-ingress), whose chart has no
+      # standard-Ingress admission webhook. The NGINX Inc equivalent that catches
+      # invalid Ingress config before it reaches the data plane is config safety.
+      enableConfigSafety: true
       globalConfiguration:
         create: true
         spec:

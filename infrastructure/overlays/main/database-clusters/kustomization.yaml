@@ -9,4 +9,3 @@ resources:
   - credentials
   # Velero volume-level restore (optional, separate from Barman PITR)
   - restore.yaml
-  - postgres-restore-nodeport.yaml

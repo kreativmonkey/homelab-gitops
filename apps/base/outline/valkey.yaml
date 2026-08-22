@@ -1,0 +1,89 @@
+# Valkey replaces the deprecated bitnamilegacy/redis subchart (issue #736).
+# Bitnami-Legacy images are no longer maintained; Valkey is the maintained Redis
+# fork. Cache-only, no persistence (matches the prior redis config). Wired into
+# Outline via HelmRelease spec.values.externalRedis.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: outline-valkey
+  namespace: outline
+  labels:
+    app.kubernetes.io/name: outline-valkey
+    app.kubernetes.io/part-of: outline
+type: Opaque
+stringData:
+  # No auth (matches prior redis config); REDIS_PASSWORD stays empty.
+  redis-password: ""
+  redis-username: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: outline-valkey
+  namespace: outline
+  labels:
+    app.kubernetes.io/name: outline-valkey
+    app.kubernetes.io/part-of: outline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: outline-valkey
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: outline-valkey
+        app.kubernetes.io/part-of: outline
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      containers:
+        - name: valkey
+          # Pinned by digest to a released ghcr.io/valkey-io/valkey image (7.2.9).
+          image: ghcr.io/valkey-io/valkey@sha256:4a454e64f8df60b164e1407bceca31d7b65d0e654b8f9354b313a497b6904a73
+          imagePullPolicy: IfNotPresent
+          args:
+            - valkey-server
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+          ports:
+            - name: redis
+              containerPort: 6379
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            # Valkey needs a writable tmp dir under readOnlyRootFilesystem.
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: outline-valkey
+  namespace: outline
+  labels:
+    app.kubernetes.io/name: outline-valkey
+    app.kubernetes.io/part-of: outline
+spec:
+  selector:
+    app.kubernetes.io/name: outline-valkey
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis

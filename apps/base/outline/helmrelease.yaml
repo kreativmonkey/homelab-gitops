@@ -150,24 +150,14 @@ spec:
       existingSecret: homelab-postgres-outline
       passwordSecretKey: password
 
-    # Redis — Built-in Subchart, minimale Ressourcen (Cache only, kein Persistenz nötig)
+    # Redis — Valkey via externalRedis (replaces the deprecated bitnamilegacy
+    # subchart, issue #736). See valkey.yaml in this folder.
     redis:
-      enabled: true
-      architecture: standalone
-      auth:
-        enabled: false
-      master:
-        service:
-          ports:
-            redis: 6379
-        persistence:
-          enabled: false
-      resources:
-        requests:
-          cpu: 25m
-          memory: 64Mi
-        limits:
-          memory: 128Mi
+      enabled: false
+    externalRedis:
+      host: outline-valkey
+      port: 6379
+      existingSecret: outline-valkey
 
     resources:
       requests:
