@@ -1,6 +1,6 @@
 # Trivy misconfig suppression — validated false positives for issue #781.
 # Real hardening gaps (KSV-0014 readOnlyRootFilesystem, KSV-0118 default
-# securityContext, and the non-blueprint KSV-0109 ConfigMaps below) are
+# securityContext, KSV-0005/0009/0017/0047/0053/0056/0108/0119) are
 # intentionally NOT listed here; they remain tracked for remediation.
 misconfigurations:
   # Authentik OAuth blueprint ConfigMaps only reference the client secret via
@@ -10,6 +10,19 @@ misconfigurations:
   - id: AVD-KSV-0109
     paths:
       - "apps/base/authentik/blueprints/**"
+  # These ConfigMaps only MENTION secret-like key names (PASSWORD/TOKEN/SECRET)
+  # or reference secrets via env vars / placeholders ({{VAR}}, ${VAR},
+  # os.environ[...]). No literal secret value is stored. Verified 2026-08-22.
+  - id: AVD-KSV-0109
+    statement: "Key-name heuristic false positive; no literal secret stored (env/placeholder refs only)."
+    paths:
+      - "apps/base/dawarich/configmap.yaml"
+      - "apps/base/homepage/configmap.yaml"
+      - "apps/base/monitoring/ntfy-bridge/configmap.yaml"
+      - "apps/base/teslamate/teslamate-grafana-config.configmap.yaml"
+      - "apps/base/unifi-controller/configmap.yaml"
+      - "apps/overlays/main/cluster-config.yaml"
+      - "infrastructure/base/remediation-api/configmap.yaml"
   # Flux's own ClusterRoles (gotk-components) by design manage all resources
   # and secrets — that is the GitOps controller's required RBAC.
   - id: AVD-KSV-0046
