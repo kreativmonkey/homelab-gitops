@@ -14,7 +14,7 @@ spec:
         app: homepage
       annotations:
         # Bump to force rollout when only ConfigMap content changes.
-        config-version: "2026-06-04-adguard-http"
+        config-version: "2026-08-22-ping-to-sitemonitor"
     spec:
       # Homepage needs no Kubernetes API access — use the default SA, whose
       # token is disabled cluster-wide (issue #744). No dedicated SA/RBAC.

@@ -15,6 +15,9 @@ data:
     # Eager stats fire ~2×N parallel /api/kubernetes/* calls; intermittent 500 responses
     # ({error: ...} without stats) crash Homepage v1.13.1 (stats.cpuLimit). Stats on click still work.
     showStats: false
+    # v2: URL monitoring moved from `ping` to `siteMonitor`; `ping` is now ICMP-only (IPv4 host).
+    # Passing http(s) URLs to `ping` made every service fail validation and disappear after the
+    # initial render (issue #782). Keep `ping` only for raw host/IP ICMP checks.
     statusStyle: dot
     # Cache settings to reduce API server load.
     cache:
@@ -56,13 +59,13 @@ data:
             href: "https://opnsense.f4mily.net"
             external: true
             description: Network Firewall & Router
-            ping: https://opnsense.f4mily.net
+            siteMonitor: https://opnsense.f4mily.net
         - Adguard Home:
             icon: https://cdn.jsdelivr.net/gh/selfhst/icons/svg/adguard-home-central-manager.svg
             href: "http://192.168.10.1:3000"
             external: true
             description: Network-wide Ad Blocker
-            ping: http://192.168.10.1:3000
+            siteMonitor: http://192.168.10.1:3000
             widget:
               type: adguard
               url: http://192.168.10.1:3000
@@ -73,37 +76,37 @@ data:
             href: "https://192.168.10.5:8006"
             external: true
             description: Virtualization Platform
-            ping: https://192.168.10.5:8006
+            siteMonitor: https://192.168.10.5:8006
         - Truenas Scale:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/truenas.png
             href: "http://192.168.10.94"
             external: true
             description: Network Attached Storage
-            ping: http://192.168.10.94"
+            siteMonitor: http://192.168.10.94
         - Garage S3 Controller:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/garage.svg
             href: "http://192.168.10.94:30186"
             external: true
             description: Garage S3 Controller
-            ping: http://192.168.10.94:30186
+            siteMonitor: http://192.168.10.94:30186
         - FritzBox:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/fritzbox.png
             href: "http://192.168.10.158"
             external: false
             description: SIP Server
-            ping: http://192.168.10.158
+            siteMonitor: http://192.168.10.158
         - HP-2520G-8-PoE-Switch:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/hp.png
             href: "http://192.168.10.201"
             external: false
             description: Network Switch
-            ping: http://192.168.10.201
+            siteMonitor: http://192.168.10.201
         - HP-2530-24G-PoE-Switch:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/hp.png
             href: "http://192.168.10.200"
             external: false
             description: Network Switch
-            ping: http://192.168.10.200
+            siteMonitor: http://192.168.10.200
 
     - Survillance:
         - Frigate:
@@ -111,25 +114,25 @@ data:
             href: "https://frigate.f4mily.net"
             external: true
             description: NVR & Object Detection
-            ping: https://frigate.f4mily.net
+            siteMonitor: https://frigate.f4mily.net
         - Akuvox S563 Intercom:
             icon: mdi-doorbell-video
             href: "http://192.168.10.212"
             external: false
             description: Intercom System
-            ping: http://192.168.10.212
+            siteMonitor: http://192.168.10.212
         - Akuvox C313V2 Intercom:
             icon: mdi-doorbell-video
             href: "http://192.168.10.211"
             external: false
             description: Intercom System
-            ping: http://192.168.10.211
+            siteMonitor: http://192.168.10.211
         - Akuvox E12W Doorphone:
             icon: mdi-doorbell-video
             href: "http://192.168.10.210"
             external: false
             description: Doorphone System
-            ping: http://192.168.10.210
+            siteMonitor: http://192.168.10.210
 
     - Energy:
         - WarpCharger 3:
@@ -137,19 +140,19 @@ data:
             href: "http://192.168.10.49"
             external: true
             description: EV Charger Management
-            ping: http://192.168.10.49
+            siteMonitor: http://192.168.10.49
         - EVCC:
             icon: evcc.png
             href: "http://192.168.10.234:7070"
             external: true
             description: EV Charger Management
-            ping: "http://192.168.10.234:7070"
+            siteMonitor: "http://192.168.10.234:7070"
         - RS485 RTU Gateway:
             icon: mdi-serial-port
             href: "http://192.168.10.34"
             external: true
             description: RS485 Modbus Gateway
-            ping: http://192.168.10.34
+            siteMonitor: http://192.168.10.34
 
     - Sensoren:
         - Home Assistant:
@@ -157,13 +160,13 @@ data:
             href: "https://ha.f4mily.net"
             external: true
             description: Home Automation & Sensor Data
-            ping: https://ha.f4mily.net
+            siteMonitor: https://ha.f4mily.net
         - GW1200A Sensor Gateway:
             icon: mdi-weather-partly-cloudy
             href: "http://192.168.10.153"
             external: true
             description: Sensor Gateway
-            ping: http://192.168.10.153
+            siteMonitor: http://192.168.10.153
   widgets.yaml: |
     ---
     - search:
