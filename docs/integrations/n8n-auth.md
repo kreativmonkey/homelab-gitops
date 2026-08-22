@@ -59,7 +59,7 @@ See [n8n v2.0 breaking changes](https://docs.n8n.io/2-0-breaking-changes/).
 | Topic | Homelab choice |
 |-------|----------------|
 | Task runners | `N8N_RUNNERS_ENABLED=true`, `N8N_RUNNERS_MODE=internal` (single replica; no `n8nio/runners` sidecar) |
-| Code node `$env` | `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` (required for GitOps remediation workflow) |
+| Code node `$env` | `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` — pod env is blocked in Code nodes; secrets are provided via the n8n Credentials store (see `alerting-n8n-gitops-remediation.md`). Closed issue #745. |
 | SQLite | Unchanged on PVC |
 | Publish vs activate | Re-import workflow; **publish** active remediation workflow in UI if migration report flags it |
 

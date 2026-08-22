@@ -29,15 +29,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ ($env.NTFY_URL || 'https://ntfy.f4mily.net/monitoring').replace(/\\/$/, '') }}",
-        "authentication": "none",
+        "url": "https://ntfy.f4mily.net/monitoring",
+        "authentication": "genericCredentialType",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "={{ $env.NTFY_TOKEN ? 'Bearer ' + $env.NTFY_TOKEN : '' }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -49,7 +45,8 @@
         "jsonBody": "={{ JSON.stringify({ title: $json.ntfyTitle, message: $json.ntfyMessage, tags: $json.ntfyTags, priority: $json.ntfyPriority }) }}",
         "options": {
           "timeout": 15000
-        }
+        },
+        "genericAuthType": "httpHeaderAuth"
       },
       "id": "b2000001-0001-4000-8000-000000000003",
       "name": "ntfy Notify",
@@ -58,11 +55,17 @@
       "position": [
         560,
         300
-      ]
+      ],
+      "credentials": {
+        "ntfy": {
+          "id": "CONFIGURE_ME",
+          "name": "NTFY Homelab"
+        }
+      }
     },
     {
       "parameters": {
-        "content": "## Error workflow for GitOps remediation\\n\\nLink in **Homelab GitOps Remediation** → Settings → Error workflow.\\n\\nEnv: `NTFY_URL`, `NTFY_TOKEN` (optional) from `n8n-integration-credentials`.",
+        "content": "## Error workflow for GitOps remediation\n\nLink in **Homelab GitOps Remediation** → Settings → Error workflow.\n\nntfy notify uses n8n Credentials `NTFY Homelab` (httpHeaderAuth) — no `$env`.",
         "height": 160,
         "width": 420
       },

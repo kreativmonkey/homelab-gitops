@@ -153,7 +153,7 @@ parsen oder den HTTP EventSource-Ansatz nutzen.
 - [x] RBAC erweitert um `metrics.k8s.io`, `nodes/stats`, `nodes/proxy`
 - [x] Service `kubernetes-mcp-server.mcp-system:8080` existiert
 - [x] n8n Workflow ist aktiviert
-- [x] `N8N_BLOCK_ENV_ACCESS_IN_NODE: false` (Code-Nodes können fetch() nutzen)
+- [x] `N8N_BLOCK_ENV_ACCESS_IN_NODE: true` (pod env blocked in Code nodes; MCP token provided via n8n Credentials store — issue #745)
 
 ## Noch offen
 
