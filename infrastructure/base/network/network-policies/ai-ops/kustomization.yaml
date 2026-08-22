@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# ai-ops = n8n automation. Ingress; calls many external SaaS (GitHub, OpenAI,
+# Telegram, ntfy) and the remediation-api (same-ns). k8s API egress included
+# for the remediation workflow's cluster access.
+namespace: ai-ops
+components:
+  - ../baseline
+  - ../egress-external
+  - ../egress-apiserver

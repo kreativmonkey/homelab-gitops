@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# kite = GraphQL dashboard. Ingress; queries VictoriaMetrics prometheus API
+# (monitoring NS :8481) for widgets. External egress for the app host.
+namespace: kite
+components:
+  - ../baseline
+  - ../egress-external
+resources:
+  - allow-egress-monitoring.yaml

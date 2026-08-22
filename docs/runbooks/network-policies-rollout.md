@@ -92,20 +92,21 @@ egress (no bespoke policies needed):
 | `outline` | baseline + egress-database + egress-external + egress-mail | CNPG + OIDC + SMTP |
 | `teslamate` | baseline + egress-database + egress-external | CNPG + Tesla API |
 
-## Phase 4 (issue #739 — remaining app NS, OPEN)
+## Phase 4 (issue #739 — remaining app NS with bespoke egress, DONE)
 
-Need bespoke egress/ingress policies (not just components):
+App NS whose traffic needs more than the stock components — each got a
+bespoke egress policy:
 
-| Namespace | Bespoke needed |
-|-----------|----------------|
-| `homepage` | egress → LAN `192.168.10.0/24` (status-widget pings) + cluster CIDR |
-| `kite` | egress → `monitoring` vmselect `:8481` |
-| `renovate` | egress → `forgejo` `:3000` (+ egress-external) |
-| `spectrumknx` | egress → KNX gateway `192.168.10.20:3671` (TCP+UDP) |
-| `nextcloud-exapps` | egress → `nextcloud` `:8780/:8782` (+ egress-external) |
-| `mcp-system` | `+ egress-apiserver` (read-only k8s API) |
-| `external-dns` | `+ egress-external` + `egress-apiserver` |
-| `ai-ops` (n8n) | `+ egress-external` (+ optional `egress-apiserver`) |
+| Namespace | Bespoke | Components |
+|-----------|---------|------------|
+| `homepage` | egress → LAN `192.168.10.0/24` + pod CIDR `10.244.0.0/16` (status widgets) | baseline + egress-external |
+| `kite` | egress → `monitoring` vmselect `:8481` | baseline + egress-external |
+| `renovate` | egress → `forgejo` `:3000` | baseline + egress-external |
+| `spectrumknx` | egress → KNX gateway `192.168.10.20:3671` (TCP+UDP) | baseline |
+| `nextcloud-exapps` | egress → `nextcloud` `:8780/:8782` (AppAPI harp) | baseline + egress-external |
+| `mcp-system` | — | baseline + egress-apiserver + egress-external |
+| `external-dns` | — | baseline + egress-external + egress-apiserver |
+| `ai-ops` (n8n) | — | baseline + egress-external + egress-apiserver |
 
 ## Phase 5 (issue #739 — infra/operator NS, DEFER)
 
