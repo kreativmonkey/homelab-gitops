@@ -6,6 +6,7 @@ resources:
   - blackbox-vmrule.yaml
   - truenas-vmrule.yaml
   - iscsi-storage-vmrule.yaml
+  - pvc-usage-vmrule.yaml
   # authentik-vmrule.yaml entfaellt: die beiden Blueprint-Check-Alerts sind im
   # generischen Job-Watchdog aufgegangen (Labels am CronJob statt eigener Regeln).
   - job-watchdog-vmrule.yaml
