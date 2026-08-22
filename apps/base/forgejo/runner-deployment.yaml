@@ -94,6 +94,20 @@ spec:
             limits:
               cpu: "1"
               memory: 768Mi
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  for p in /proc/[0-9]*; do
+                    if grep -qa forgejo-runner "$p/cmdline" 2>/dev/null; then exit 0; fi
+                  done
+                  exit 1
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
         - name: dind
           image: docker.io/library/docker:29-dind
           securityContext:
@@ -114,6 +128,20 @@ spec:
             limits:
               cpu: "2"
               memory: 4Gi
+          livenessProbe:
+            tcpSocket:
+              port: 2375
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 2375
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
       volumes:
         - name: runner-data
           persistentVolumeClaim:

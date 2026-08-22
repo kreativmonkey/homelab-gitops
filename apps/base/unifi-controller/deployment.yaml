@@ -55,6 +55,27 @@ spec:
               memory: 512Mi
             limits:
               memory: 2Gi
+          startupProbe:
+            tcpSocket:
+              port: mongo
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            tcpSocket:
+              port: mongo
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: mongo
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -167,6 +188,27 @@ spec:
             runAsUser: 0
             runAsGroup: 0
             allowPrivilegeEscalation: true
+          startupProbe:
+            tcpSocket:
+              port: https
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            tcpSocket:
+              port: https
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: https
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
       volumes:
         - name: config
           persistentVolumeClaim:

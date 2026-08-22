@@ -18,3 +18,17 @@ spec:
               memory: 48Mi
             limits:
               memory: 128Mi
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  for p in /proc/[0-9]*; do
+                    if grep -qa system-upgrade-controller "$p/cmdline" 2>/dev/null; then exit 0; fi
+                  done
+                  exit 1
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
