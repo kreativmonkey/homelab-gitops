@@ -96,72 +96,14 @@ spec:
           value: "true"
         N8N_RUNNERS_MODE:
           value: internal
-        # GitOps remediation workflow reads $env in Code nodes (see workflows/).
+        # SECURITY (issue #745): block Code-node access to pod env so workflow authors /
+        # exposed webhook endpoints cannot exfiltrate secrets. Secrets now live in the
+        # n8n Credentials store (see workflows/); non-secret config is inlined there.
         N8N_BLOCK_ENV_ACCESS_IN_NODE:
-          value: "false"
+          value: "true"
         # Public editor URL behind ingress TLS (required for OIDC redirect if licensed later).
         N8N_EDITOR_BASE_URL:
           value: https://n8n.cluster.f4mily.net/
-        GITHUB_API_URL:
-          value: https://api.github.com
-        GITHUB_REPO_OWNER:
-          value: kreativmonkey
-        GITHUB_REPO_NAME:
-          value: homelab-gitops
-        GITHUB_DEFAULT_BRANCH:
-          value: main
-        GITOPS_MANIFESTS_PATH:
-          value: gitops-homelab
-        GITHUB_TOKEN:
-          valueFrom:
-            secretKeyRef:
-              name: n8n-integration-credentials
-              key: github-token
-        LLM_API_KEY:
-          valueFrom:
-            secretKeyRef:
-              name: n8n-integration-credentials
-              key: llm-api-key
-        # Optional: override for Ollama (http://ollama.llm.svc:11434/v1)
-        LLM_BASE_URL:
-          valueFrom:
-            secretKeyRef:
-              name: n8n-integration-credentials
-              key: llm-base-url
-              optional: true
-        # Error workflow → ntfy (topic URL, optional Bearer — same token as Alertmanager monitoring)
-        NTFY_URL:
-          valueFrom:
-            secretKeyRef:
-              name: n8n-integration-credentials
-              key: ntfy-url
-              optional: true
-        NTFY_TOKEN:
-          valueFrom:
-            secretKeyRef:
-              name: n8n-integration-credentials
-              key: ntfy-token
-              optional: true
-        # Webhook secret for Alertmanager→n8n alert triage (shared secret in URL path)
-        WEBHOOK_SECRET:
-          valueFrom:
-            secretKeyRef:
-              name: n8n-integration-credentials
-              key: webhook-secret
-        # Telegram chat ID for alert triage notifications
-        TELEGRAM_CHAT_ID:
-          valueFrom:
-            secretKeyRef:
-              name: n8n-integration-credentials
-              key: telegram-chat-id
-        # Remediation API for auto-remediation actions (Phase D)
-        REMEDIATION_API_URL:
-          value: http://remediation-api.ai-ops.svc.cluster.local:8080
-        REMEDIATION_API_KEY:
-          valueFrom:
-            secretKeyRef:
-              name: remediation-api-secret
-              key: hmac-secret
 
     # Single-node homelab: no queue/redis split
     worker:

@@ -1,5 +1,5 @@
 {
-  "name": "Homelab Alert Triage (AM \u2192 LLM \u2192 Telegram)",
+  "name": "Homelab Alert Triage (AM → LLM → Telegram)",
   "nodes": [
     {
       "parameters": {
@@ -20,7 +20,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const AUTO_FIX_ALLOWLIST = new Set(['NtfyBridgeDown','KubePodCrashLoopBackOff','KubePodOOMKilled','MonitoringVMAlertDown','MonitoringAlertmanagerDown']);\nconst expectedSecret = $env.WEBHOOK_SECRET || '';\nconst gotSecret = $input.first().json.params?.webhookSecret || $input.first().json.query?.webhookSecret || $input.first().json.headers?.['x-webhook-secret'] || '';\nif (expectedSecret && gotSecret !== expectedSecret) {\n  throw new Error('Invalid webhook secret');\n}\nconst body = $input.first().json.body ?? $input.first().json;\nconst alerts = body.alerts || [];\nconst first = alerts[0] || {};\nconst labels = { ...(body.commonLabels || {}), ...(first.labels || {}) };\nconst annotations = { ...(body.commonAnnotations || {}), ...(first.annotations || {}) };\nconst alertname = labels.alertname || body.groupLabels?.alertname || 'Unknown';\nconst autoTriage = labels['homelab/auto_triage'] === 'true' || labels['homelab_auto_remediate'] === 'true';\nconst allowAutoFix = autoTriage && AUTO_FIX_ALLOWLIST.has(alertname);\nreturn [{\n  json: {\n    status: body.status || 'firing',\n    alertname,\n    severity: labels.severity || 'warning',\n    namespace: labels.namespace || '',\n    instance: labels.instance || labels.pod || '',\n    cluster: labels.cluster || 'homelab',\n    owner: labels['homelab/owner'] || '',\n    autoTriage,\n    allowAutoFix,\n    runbookUrl: annotations.runbook_url || '',\n    summary: annotations.summary || '',\n    description: annotations.description || '',\n    alertCount: alerts.length,\n    fingerprint: first.fingerprint || '',\n    raw: body,\n  },\n}];"
+        "jsCode": "const AUTO_FIX_ALLOWLIST = new Set(['NtfyBridgeDown','KubePodCrashLoopBackOff','KubePodOOMKilled','MonitoringVMAlertDown','MonitoringAlertmanagerDown']);\nconst whCreds = await this.getCredentials('httpHeaderAuth');\nconst expectedSecret = (whCreds && whCreds.value) || '';\nconst gotSecret = $input.first().json.params?.webhookSecret || $input.first().json.query?.webhookSecret || $input.first().json.headers?.['x-webhook-secret'] || '';\nif (expectedSecret && gotSecret !== expectedSecret) {\n  throw new Error('Invalid webhook secret');\n}\nconst body = $input.first().json.body ?? $input.first().json;\nconst alerts = body.alerts || [];\nconst first = alerts[0] || {};\nconst labels = { ...(body.commonLabels || {}), ...(first.labels || {}) };\nconst annotations = { ...(body.commonAnnotations || {}), ...(first.annotations || {}) };\nconst alertname = labels.alertname || body.groupLabels?.alertname || 'Unknown';\nconst autoTriage = labels['homelab/auto_triage'] === 'true' || labels['homelab_auto_remediate'] === 'true';\nconst allowAutoFix = autoTriage && AUTO_FIX_ALLOWLIST.has(alertname);\nreturn [{\n  json: {\n    status: body.status || 'firing',\n    alertname,\n    severity: labels.severity || 'warning',\n    namespace: labels.namespace || '',\n    instance: labels.instance || labels.pod || '',\n    cluster: labels.cluster || 'homelab',\n    owner: labels['homelab/owner'] || '',\n    autoTriage,\n    allowAutoFix,\n    runbookUrl: annotations.runbook_url || '',\n    summary: annotations.summary || '',\n    description: annotations.description || '',\n    alertCount: alerts.length,\n    fingerprint: first.fingerprint || '',\n    raw: body,\n  },\n}];"
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000002",
       "name": "Parse Alert",
@@ -29,7 +29,13 @@
       "position": [
         240,
         300
-      ]
+      ],
+      "credentials": {
+        "webhook": {
+          "id": "CONFIGURE_ME",
+          "name": "Alertmanager Webhook Secret"
+        }
+      }
     },
     {
       "parameters": {
@@ -74,7 +80,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const a = $input.first().json;\nconst text = `\u2705 *RESOLVED*\\n\\n*${a.alertname}*\\n${a.summary || ''}\\n\\n_ns:_ ${a.namespace || '\u2014'}_`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+        "jsCode": "const a = $input.first().json;\nconst text = `✅ *RESOLVED*\\n\\n*${a.alertname}*\\n${a.summary || ''}\\n\\n_ns:_ ${a.namespace || '—'}_`;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000004",
       "name": "Format Resolved",
@@ -117,7 +123,7 @@
         "messages": {
           "values": [
             {
-              "content": "=Du bist Homelab-SRE. Antworte NUR mit g\u00fcltigem JSON (kein Markdown):\n{\"action_needed\":bool,\"automatable\":bool,\"risk\":\"low|medium|high\",\"outcome\":\"no_action|needs_human|cannot_fix|auto_fix_candidate\",\"summary_de\":\"...\",\"proposed_steps\":[\"...\"],\"telegram_message\":\"...\"}\n\nRegeln:\n- outcome=no_action bei reinem L\u00e4rm oder unklaren Chart-Defaults\n- outcome=needs_human bei CNPG, Disk, Memory, Velero, Datenverlust-Risiko\n- outcome=cannot_fix wenn Agent keine sichere Aktion hat\n- outcome=auto_fix_candidate nur bei klarer, risikoarmer Aktion (z.B. transiente Netzwerk-Glitches)\n- NIEMALS auto_fix_candidate bei Init:CrashLoopBackOff, Init-Container-Fehlern, occ/config-Fehlern oder HelmRelease-Init-Skripten — dort hilft Restart nicht\n- automatable=true nur wenn allowAutoFix={{ $json.allowAutoFix }} und Aktion in Allowlist\n\nAlert: {{ $json.alertname }}\nSeverity: {{ $json.severity }}\nStatus: {{ $json.status }}\nSummary: {{ $json.summary }}\nDescription: {{ $json.description }}\nRunbook: {{ $json.runbookUrl }}\nNamespace: {{ $json.namespace }}"
+              "content": "=Du bist Homelab-SRE. Antworte NUR mit gültigem JSON (kein Markdown):\n{\"action_needed\":bool,\"automatable\":bool,\"risk\":\"low|medium|high\",\"outcome\":\"no_action|needs_human|cannot_fix|auto_fix_candidate\",\"summary_de\":\"...\",\"proposed_steps\":[\"...\"],\"telegram_message\":\"...\"}\n\nRegeln:\n- outcome=no_action bei reinem Lärm oder unklaren Chart-Defaults\n- outcome=needs_human bei CNPG, Disk, Memory, Velero, Datenverlust-Risiko\n- outcome=cannot_fix wenn Agent keine sichere Aktion hat\n- outcome=auto_fix_candidate nur bei klarer, risikoarmer Aktion (z.B. transiente Netzwerk-Glitches)\n- NIEMALS auto_fix_candidate bei Init:CrashLoopBackOff, Init-Container-Fehlern, occ/config-Fehlern oder HelmRelease-Init-Skripten — dort hilft Restart nicht\n- automatable=true nur wenn allowAutoFix={{ $json.allowAutoFix }} und Aktion in Allowlist\n\nAlert: {{ $json.alertname }}\nSeverity: {{ $json.severity }}\nStatus: {{ $json.status }}\nSummary: {{ $json.summary }}\nDescription: {{ $json.description }}\nRunbook: {{ $json.runbookUrl }}\nNamespace: {{ $json.namespace }}"
             }
           ]
         }
@@ -237,7 +243,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const a = $('Parse Root Cause').first().json;\nconst rem = $input.first().json;\nconst httpCode = rem.statusCode || rem.httpCode || (rem.error ? 500 : 200);\nconst ok = httpCode >= 200 && httpCode < 300;\nconst body = typeof rem.body === 'string' ? JSON.parse(rem.body) : (rem.body || rem);\nconst fix = body.git_commit || {};\nlet text;\nif (ok) {\n  text = '\ud83d\udd27 *Auto-Fix ausgef\u00fchrt*\\n\\n*' + a.alertname + '*\\n' + (a.summary_de || '') + '\\n\\n';\n  if (a.memory_suggested) text += 'Memory: ' + (a.memory_current || '?') + ' \\u2192 ' + a.memory_suggested + '\\n';\n  if (a.cpu_suggested) text += 'CPU: ' + (a.cpu_current || '?') + ' \\u2192 ' + a.cpu_suggested + '\\n';\n  text += 'Deployment: ' + a.deployment_name + '\\n';\n  text += 'Git-Commit: ' + (fix.committed ? '\u2705 committed' : '\u274c fehlgeschlagen') + '\\n';\n  text += '\\n_audit: ' + (body.audit_id || '\u2014') + '_';\n} else {\n  text = '\u26a0\ufe0f *Auto-Fix fehlgeschlagen*\\n\\n*' + a.alertname + '*\\n' + (a.summary_de || '') + '\\n\\nHTTP ' + httpCode + ' \\u2014 ' + (body.message || JSON.stringify(body).slice(0,200)) + '\\n\\n*Human-in-the-Loop*: manuell eingreifen.';\n}\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+        "jsCode": "const a = $('Parse Root Cause').first().json;\nconst rem = $input.first().json;\nconst httpCode = rem.statusCode || rem.httpCode || (rem.error ? 500 : 200);\nconst ok = httpCode >= 200 && httpCode < 300;\nconst body = typeof rem.body === 'string' ? JSON.parse(rem.body) : (rem.body || rem);\nconst fix = body.git_commit || {};\nlet text;\nif (ok) {\n  text = '🔧 *Auto-Fix ausgeführt*\\n\\n*' + a.alertname + '*\\n' + (a.summary_de || '') + '\\n\\n';\n  if (a.memory_suggested) text += 'Memory: ' + (a.memory_current || '?') + ' \\u2192 ' + a.memory_suggested + '\\n';\n  if (a.cpu_suggested) text += 'CPU: ' + (a.cpu_current || '?') + ' \\u2192 ' + a.cpu_suggested + '\\n';\n  text += 'Deployment: ' + a.deployment_name + '\\n';\n  text += 'Git-Commit: ' + (fix.committed ? '✅ committed' : '❌ fehlgeschlagen') + '\\n';\n  text += '\\n_audit: ' + (body.audit_id || '—') + '_';\n} else {\n  text = '⚠️ *Auto-Fix fehlgeschlagen*\\n\\n*' + a.alertname + '*\\n' + (a.summary_de || '') + '\\n\\nHTTP ' + httpCode + ' \\u2014 ' + (body.message || JSON.stringify(body).slice(0,200)) + '\\n\\n*Human-in-the-Loop*: manuell eingreifen.';\n}\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000010",
       "name": "Format Auto-Fix Result",
@@ -273,7 +279,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Input either from needs_human path or from auto_fix investigate-only path\nconst input = $input.first().json;\nlet text;\n\nif (input.alertname && input.root_cause) {\n  // investigate-only format\n  const emoji = { CONFIG_ERROR: '\u26a0\ufe0f', IMAGE_ERROR: '\ud83d\udce6', DEPENDENCY: '\ud83d\udd17', UNKNOWN: '\u2753', OOM: '\ud83d\udca5' }[input.root_cause] || '\u2139\ufe0f';\n  text = emoji + ' *Investigation abgeschlossen - kein Auto-Fix*\\n\\n';\n  text += '*Alarm:* ' + input.alertname + '\\n';\n  text += '*Root Cause:* ' + input.root_cause + ' (confidence: ' + input.confidence + ')\\n';\n  text += '*Deployment:* ' + input.deployment_name + '\\n';\n  if (input.summary_de) text += '\\n' + input.summary_de + '\\n';\n  if (input.recommended_action) text += '\\nHandlungsempfehlung: ' + input.recommended_action;\n} else {\n  // Original needs_human / cannot_fix format\n  text = $json.telegramText || input.telegramText || 'Investigation abgeschlossen.';\n}\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+        "jsCode": "// Input either from needs_human path or from auto_fix investigate-only path\nconst input = $input.first().json;\nlet text;\n\nif (input.alertname && input.root_cause) {\n  // investigate-only format\n  const emoji = { CONFIG_ERROR: '⚠️', IMAGE_ERROR: '📦', DEPENDENCY: '🔗', UNKNOWN: '❓', OOM: '💥' }[input.root_cause] || 'ℹ️';\n  text = emoji + ' *Investigation abgeschlossen - kein Auto-Fix*\\n\\n';\n  text += '*Alarm:* ' + input.alertname + '\\n';\n  text += '*Root Cause:* ' + input.root_cause + ' (confidence: ' + input.confidence + ')\\n';\n  text += '*Deployment:* ' + input.deployment_name + '\\n';\n  if (input.summary_de) text += '\\n' + input.summary_de + '\\n';\n  if (input.recommended_action) text += '\\nHandlungsempfehlung: ' + input.recommended_action;\n} else {\n  // Original needs_human / cannot_fix format\n  text = $json.telegramText || input.telegramText || 'Investigation abgeschlossen.';\n}\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
       },
       "id": "f8a1c2e0-1111-4a2b-9c3d-000000000012",
       "name": "Format Notify",
@@ -309,7 +315,7 @@
     },
     {
       "parameters": {
-        "content": "## Human-in-the-Loop (Phase 2)\n\nAktiviere einen **Telegram Trigger** (Callback Query) + **Wait**-Node:\n- User tippt \u2705 \u2192 Remediation ausf\u00fchren\n- User tippt \u274c \u2192 Workflow beenden\n\nDokumentation: docs/integrations/alerting-n8n-telegram-triage.md",
+        "content": "## Human-in-the-Loop (Phase 2)\n\nAktiviere einen **Telegram Trigger** (Callback Query) + **Wait**-Node:\n- User tippt ✅ → Remediation ausführen\n- User tippt ❌ → Workflow beenden\n\nDokumentation: docs/integrations/alerting-n8n-telegram-triage.md",
         "height": 220,
         "width": 380
       },
@@ -332,7 +338,7 @@
           },
           "conditions": [
             {
-              "leftValue": "={{ $env.REMEDIATION_API_URL }}",
+              "leftValue": "={{ true }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
@@ -364,14 +370,10 @@
       "onError": "continueRegularOutput",
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.REMEDIATION_API_URL }}/v1/investigate",
+        "url": "=http://remediation-api.ai-ops.svc.cluster.local:8080/v1/investigate",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.REMEDIATION_API_KEY || '' }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -383,6 +385,14 @@
         "jsonBody": "={\"pod\": $(\"Merge Triage\").first().json.instance, \"namespace\": $(\"Merge Triage\").first().json.namespace}",
         "options": {
           "timeout": 30000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "credentials": {
+        "remediation": {
+          "id": "CONFIGURE_ME",
+          "name": "Remediation Homelab"
         }
       }
     },
@@ -448,7 +458,7 @@
         "messages": {
           "values": [
             {
-              "content": "=Du bist Homelab-SRE. Analysiere die Pod-Investigation-Daten und bestimme die Grundursache.\nAntworte NUR mit g\u00fcltigem JSON (kein Markdown):\n\n{\"root_cause\":\"OOM|CONFIG_ERROR|IMAGE_ERROR|DEPENDENCY|UNKNOWN\",\"confidence\":\"high|medium|low\",\"fix_type\":\"increase_memory|increase_cpu|fix_config|restart_only|none\",\"summary_de\":\"...\",\"recommended_action\":\"...\",\"memory_current\":\"...\",\"memory_suggested\":\"...\",\"cpu_current\":\"...\",\"cpu_suggested\":\"...\"}\n\n**Investigation Data:**\n{{ JSON.stringify($json) }}\n\n**Original Alert:**\n{{ JSON.stringify($(\"Merge Triage\").first().json) }}\n\nRegeln:\n- restart_recommended=false oder failed_init_containers nicht leer => fix_type=none, root_cause=CONFIG_ERROR, recommended_action=GitOps/Manifest prüfen\n- root_cause=OOM wenn termination_reason OOMKilled oder logs OOM/Out of memory zeigen\n- root_cause=CONFIG_ERROR wenn init_logs/logs Config/occ/Read-only/Can't write into config zeigen\n- root_cause=IMAGE_ERROR wenn events ImagePullBackOff/ErrImagePull zeigen\n- root_cause=DEPENDENCY wenn logs connection refused/timeout zu DB/Api zeigen\n- confidence=high nur bei klaren Signalen\n- fix_type=increase_memory nur bei OOM im Haupt-Container (nicht bei Init-Fehlern)\n- fix_type=restart_only ist verboten — Auto-Remediation führt keinen Restart aus\n- memory/cpu Angaben mit Einheit (z.B. \"256Mi\", \"500m\")"
+              "content": "=Du bist Homelab-SRE. Analysiere die Pod-Investigation-Daten und bestimme die Grundursache.\nAntworte NUR mit gültigem JSON (kein Markdown):\n\n{\"root_cause\":\"OOM|CONFIG_ERROR|IMAGE_ERROR|DEPENDENCY|UNKNOWN\",\"confidence\":\"high|medium|low\",\"fix_type\":\"increase_memory|increase_cpu|fix_config|restart_only|none\",\"summary_de\":\"...\",\"recommended_action\":\"...\",\"memory_current\":\"...\",\"memory_suggested\":\"...\",\"cpu_current\":\"...\",\"cpu_suggested\":\"...\"}\n\n**Investigation Data:**\n{{ JSON.stringify($json) }}\n\n**Original Alert:**\n{{ JSON.stringify($(\"Merge Triage\").first().json) }}\n\nRegeln:\n- restart_recommended=false oder failed_init_containers nicht leer => fix_type=none, root_cause=CONFIG_ERROR, recommended_action=GitOps/Manifest prüfen\n- root_cause=OOM wenn termination_reason OOMKilled oder logs OOM/Out of memory zeigen\n- root_cause=CONFIG_ERROR wenn init_logs/logs Config/occ/Read-only/Can't write into config zeigen\n- root_cause=IMAGE_ERROR wenn events ImagePullBackOff/ErrImagePull zeigen\n- root_cause=DEPENDENCY wenn logs connection refused/timeout zu DB/Api zeigen\n- confidence=high nur bei klaren Signalen\n- fix_type=increase_memory nur bei OOM im Haupt-Container (nicht bei Init-Fehlern)\n- fix_type=restart_only ist verboten — Auto-Remediation führt keinen Restart aus\n- memory/cpu Angaben mit Einheit (z.B. \"256Mi\", \"500m\")"
             }
           ]
         }
@@ -562,14 +572,10 @@
       "onError": "continueRegularOutput",
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.REMEDIATION_API_URL }}/v1/fix-resources",
+        "url": "=http://remediation-api.ai-ops.svc.cluster.local:8080/v1/fix-resources",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.REMEDIATION_API_KEY || '' }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -581,6 +587,14 @@
         "jsonBody": "={\n  \"namespace\": $json.namespace,\n  \"deployment\": $json.deployment_name,\n  \"resource_type\": \"all\",\n  \"memory\": $json.memory_suggested || null,\n  \"cpu\": $json.cpu_suggested || null\n}",
         "options": {
           "timeout": 60000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "credentials": {
+        "remediation": {
+          "id": "CONFIGURE_ME",
+          "name": "Remediation Homelab"
         }
       }
     },
@@ -594,7 +608,7 @@
         460
       ],
       "parameters": {
-        "jsCode": "const a = $input.first().json;\nconst emoji = {\n  CONFIG_ERROR: '\u26a0\ufe0f',\n  IMAGE_ERROR: '\ud83d\udce6',\n  DEPENDENCY: '\ud83d\udd17',\n  UNKNOWN: '\u2753',\n  OOM: '\ud83d\udca5'\n}[a.root_cause] || '\u2139\ufe0f';\nlet text = emoji + ' *Investigation abgeschlossen - kein Auto-Fix*\n\n';\ntext += '*Alarm:* ' + a.alertname + '\n';\ntext += '*Root Cause:* ' + a.root_cause + ' (confidence: ' + a.confidence + ')\n';\ntext += '*Deployment:* ' + a.deployment_name + '\n';\nif (a.summary_de) text += '\n' + a.summary_de + '\n';\nif (a.recommended_action) text += '\n_Handlungsempfehlung:_ ' + a.recommended_action;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
+        "jsCode": "const a = $input.first().json;\nconst emoji = {\n  CONFIG_ERROR: '⚠️',\n  IMAGE_ERROR: '📦',\n  DEPENDENCY: '🔗',\n  UNKNOWN: '❓',\n  OOM: '💥'\n}[a.root_cause] || 'ℹ️';\nlet text = emoji + ' *Investigation abgeschlossen - kein Auto-Fix*\n\n';\ntext += '*Alarm:* ' + a.alertname + '\n';\ntext += '*Root Cause:* ' + a.root_cause + ' (confidence: ' + a.confidence + ')\n';\ntext += '*Deployment:* ' + a.deployment_name + '\n';\nif (a.summary_de) text += '\n' + a.summary_de + '\n';\nif (a.recommended_action) text += '\n_Handlungsempfehlung:_ ' + a.recommended_action;\nreturn [{ json: { telegramText: text, parseMode: 'Markdown' } }];"
       }
     },
     {

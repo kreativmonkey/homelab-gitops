@@ -50,7 +50,7 @@ Webhook (in-cluster): `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmal
 
 2. Ensure both `*.secret.yaml` are listed in `kustomization.yaml`.
 3. Flux reconcile; n8n image is pinned in HelmRelease (`n8nio/n8n:2.21.7`). See [n8n-auth.md](n8n-auth.md) for UI OAuth vs webhooks.
-4. Import workflow (uses pod env — **no** n8n Credentials UI for GitOps flow):
+4. Import workflow (secrets come from the n8n **Credentials store** — never pod env, see below):
 
    ```bash
    export KUBECONFIG=../homelab-infrastructure/talos/kubeconfig
@@ -76,7 +76,27 @@ Webhook (in-cluster): `http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmal
 
 **Classic**: Scope `repo`.
 
-Token is read from Secret key `github-token` → pod env `GITHUB_TOKEN` (not stored in n8n credential store).
+Token is stored as an n8n Credential **`GitHub Homelab`** (type `HTTP Header Auth`, header `Authorization: Bearer <token>`). The SOPS secret `n8n-integration-credentials` (key `github-token`) remains the source of truth — copy its decrypted value into the n8n credential.
+
+### Required n8n credentials (issue #745)
+
+`N8N_BLOCK_ENV_ACCESS_IN_NODE=true` blocks Code-node access to pod env, so all
+secrets are provided via the n8n Credentials store instead of `$env`:
+
+| Credential (name)        | Type                | Value                                                  |
+|--------------------------|---------------------|--------------------------------------------------------|
+| `GitHub Homelab`         | HTTP Header Auth    | `Authorization: Bearer <github-token>`                 |
+| `OpenAI Homelab`         | OpenAi API          | API Key = `<llm-api-key>` (Base URL optional)          |
+| `NTFY Homelab`           | HTTP Header Auth    | `Authorization: Bearer <ntfy-token or token>`          |
+| `Remediation Homelab`    | HTTP Header Auth    | `Authorization: Bearer <remediation hmac-secret>`       |
+| `Alertmanager Webhook Secret` | HTTP Header Auth | `x-webhook-secret: <webhook-secret>`                 |
+
+Create these in **n8n → Credentials** (id `CONFIGURE_ME` if referenced by the
+imported workflows). The bootstrap import only wires the workflow nodes to these
+credential names; it does **not** create the secrets themselves.
+
+> `TELEGRAM_CHAT_ID` is inlined as a placeholder in the PR-auto-merge workflow —
+> set it to your chat id (or rely on the `Telegram Homelab Bot` credential default).
 
 ## Workflow (GitHub REST)
 
@@ -93,7 +113,7 @@ When the remediation workflow fails, n8n can run a linked **error workflow**:
 |------|------|
 | `homelab-gitops-remediation-error.workflow.json` | Error Trigger → format message → **ntfy** |
 
-1. Add `ntfy-url` and `ntfy-token` to SOPS secret `n8n-integration-credentials` (reuse Alertmanager `monitoring` topic token).
+1. Create the n8n Credential **`NTFY Homelab`** (HTTP Header Auth, `Authorization: Bearer <ntfy-token>`). The SOPS secret `n8n-integration-credentials` (keys `ntfy-url`/`ntfy-token`) is the source of truth.
 2. `just n8n-bootstrap` with `N8N_API_KEY` links the error workflow in remediation settings.
 3. Without API key: after import, set **Settings → Error workflow** → *Homelab GitOps Remediation — Error Notify* → Save.
 
@@ -131,11 +151,11 @@ curl -sS -X POST "http://n8n-app.ai-ops.svc.cluster.local:5678/webhook/vmalert" 
 2. Letzter Lauf öffnen:
    - **resolved/skip:** Endet nach `Skip?` (grüner Pfad „true“ = skip)
    - **firing:** Läuft durch `LLM Kustomize Patch` → `Plan PR` → ggf. GitHub-Nodes
-3. Fehler rot? Typisch: fehlender Workflow-Import (`just n8n-bootstrap`), leerer `LLM_API_KEY` / `GITHUB_TOKEN` im Pod:
+3. Fehler rot? Typisch: fehlender Workflow-Import (`just n8n-bootstrap`) oder fehlende n8n Credentials (`GitHub Homelab`, `OpenAI Homelab`):
 
    ```bash
    kubectl get secret -n ai-ops n8n-integration-credentials
-   # Keys: github-token, llm-api-key, llm-base-url (optional)
+   # Keys: github-token, llm-api-key, llm-base-url (optional) — Quelle für die n8n Credentials
    ```
 
 ### 3. End-to-end (optional)
