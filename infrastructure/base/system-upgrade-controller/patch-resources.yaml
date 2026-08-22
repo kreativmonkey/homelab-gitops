@@ -2,6 +2,21 @@
 # (Burstable, first-to-be-OOM-killed). No CPU limit by convention.
 # Plain kustomize base (fetched from upstream GitHub), no Helm values path —
 # resources are set via this strategic-merge patch on the container by name.
+# p95/p99-derived (14d/7d VictoriaMetrics history), previously unset
+# (Burstable, first-to-be-OOM-killed). No CPU limit by convention.
+# Plain kustomize base (fetched from upstream GitHub), no Helm values path —
+# resources are set via this strategic-merge patch on the container by name.
+#
+# No livenessProbe: the controller image (rancher/system-upgrade-controller)
+# is distroless and contains only the binary — no shell, no health port
+# (verified: /bin holds just `system-upgrade-controller`). Upstream ships no
+# probe for this reason. The Go binary calls logrus.Fatal/Panicf on fatal
+# errors, so it exits non-zero and restartPolicy: Always restarts it. A
+# shell-based probe (the previous config) fails with
+# `exec: "sh": executable file not found` and only emits misleading
+# Unhealthy events. A shell-less process-alive probe would require injecting
+# a shell binary into the distroless image — over-engineering for a controller
+# that already self-terminates on failure.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,17 +33,3 @@ spec:
               memory: 48Mi
             limits:
               memory: 128Mi
-          livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - |
-                  for p in /proc/[0-9]*; do
-                    if grep -qa system-upgrade-controller "$p/cmdline" 2>/dev/null; then exit 0; fi
-                  done
-                  exit 1
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 5
-            failureThreshold: 3
