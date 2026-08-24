@@ -22,7 +22,7 @@ spec:
           # Codeberg's container registry is not reliably resolvable by Renovate's
           # docker datasource; track the matching git tags via the Forgejo/Gitea API instead.
           # renovate: datasource=gitea-tags depName=readeck/readeck
-          image: codeberg.org/readeck/readeck:0.23.0
+          image: codeberg.org/readeck/readeck:0.23.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
