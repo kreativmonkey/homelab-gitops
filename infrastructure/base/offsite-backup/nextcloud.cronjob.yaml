@@ -86,8 +86,12 @@ spec:
                 - /bin/sh
                 - -c
                 - |
-                  /bin/sh /scripts/stage-objects.sh \
-                    || echo "Prefetch unvollstaendig, wird im Wartungsfenster nachgeholt"
+                  # Best-effort, aber zeitlich gedeckelt: ein langsamer/
+                  # ueberlasteter TrueNAS-Garage-Link (192.168.10.94) haengt
+                  # den Sync sonst stundenlang und zieht den ganzen Job mit.
+                  # Der autoritative Sync folgt im Wartungsfenster.
+                  timeout 1800 /bin/sh /scripts/stage-objects.sh \
+                    || echo "Prefetch unvollstaendig/timeout, wird im Wartungsfenster nachgeholt"
               volumeMounts:
                 - name: config
                   mountPath: /config
