@@ -241,6 +241,24 @@ data:
 
     trap 'release; exit 0' TERM INT
 
+    # Preflight: das Nextcloud-Config-Verzeichnis muss beschreibbar sein,
+    # sonst scheitert `occ maintenance:mode --on` still und der Job haengt
+    # sich 5x durch, ohne die Ursache zu benennen. Ein read-only Remount des
+    # iSCSI-Volumes (Kernel flippt bei I/O-Blueen des TrueNAS-Links) ist die
+    # haeufigste Ursache -- dann muss das Volume neu angebunden werden, nicht
+    # das Backup repariert werden.
+    if ! timeout 60 kubectl exec -n nextcloud deploy/nextcloud -c nextcloud -- \
+         sh -c 'touch /var/www/html/config/.maintenance-probe \
+                && rm -f /var/www/html/config/.maintenance-probe' 2>/dev/null; then
+      echo "FEHLER: /var/www/html/config im Nextcloud-Pod ist nicht beschreibbar"
+      echo "(read-only Remount des iSCSI-Volumes?). Wartungsmodus kann nicht"
+      echo "aktiviert werden -- Volume neu anbinden (deploy/nextcloud rollout"
+      echo "restart), dann Backup erneut anstossen."
+      touch /work/maintenance-ro.failed
+      touch /work/maintenance-failed
+      idle
+    fi
+
     # Sidecar-Neustart nach dem kritischen Teil darf den Wartungsmodus nicht
     # erneut setzen -- dann nur noch freigeben.
     if [ -f /work/capture-complete ]; then
