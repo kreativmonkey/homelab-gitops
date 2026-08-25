@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# cert-manager = cert controller, cainjector, webhook + Hetzner DNS-01 webhook.
+# Controller/cainjector/webhook watch the API (egress-apiserver). Issuance is
+# Let's Encrypt ACME DNS-01 via the Hetzner API (egress-external :443). The
+# admission webhook is invoked by the API server (ingress from API server VIP
+# + control-plane nodes). A wrong deny here breaks cert issuance + Ingress-TLS
+# cluster-wide, so the webhook ingress is mirrored from cnpg-system's pattern.
+namespace: cert-manager
+components:
+  - ../baseline
+  - ../egress-external
+  - ../egress-apiserver
+resources:
+  - allow-ingress-webhook.yaml

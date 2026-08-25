@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# local-path-provisioner watches PVCs/nodes via the API server (egress-apiserver)
+# and binds hostPath volumes (host-local, exempt from NP). No extra egress beyond
+# the API server. A wrong deny blocks PVC provisioning for node-local storage.
+namespace: local-path-storage
+components:
+  - ../baseline
+  - ../egress-apiserver

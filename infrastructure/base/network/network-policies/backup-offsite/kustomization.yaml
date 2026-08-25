@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# backup-offsite = restic CronJobs (appdata/forgejo/immich/nextcloud/paperless/
+# databases) + Storage Box quota/restore-verify. pg_dump hits the central CNPG
+# tier (egress-database); restic pushes to the Hetzner Storage Box over SFTP/SSH
+# (bespoke allow-egress-storagebox). NFS source mounts are node-side (kubelet),
+# not pod egress, so they are unaffected by default-deny. A wrong deny causes
+# silent offsite-backup loss.
+namespace: backup-offsite
+components:
+  - ../baseline
+  - ../egress-database
+resources:
+  - allow-egress-storagebox.yaml

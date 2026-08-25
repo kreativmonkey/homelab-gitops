@@ -108,15 +108,30 @@ bespoke egress policy:
 | `external-dns` | — | baseline + egress-external + egress-apiserver |
 | `ai-ops` (n8n) | — | baseline + egress-external + egress-apiserver |
 
-## Phase 5 (issue #739 — infra/operator NS, DEFER)
+## Phase 5 (issue #772 — infra/operator NS, DONE)
 
-`hostNetwork` bypasses NP (NP inert): `ingress-nginx`, `netbird`,
-`watchyourlan`, `system-upgrade` (plan jobs). Critical operators with LAN/API
-egress that break cluster-wide if wrongly denied: `cert-manager` (admission
-webhook ingress + ACME egress), `democratic-csi` (TrueNAS `:443`/iSCSI),
-`local-path-storage` (API), `velero` (Garage S3 `:30188` + API),
-`backup-offsite` (Storage Box `:23` + NFS), `reflector-system` (API TLS
-replication). Need bespoke, individually-verified policies.
+Seven operator namespaces rolled out with individually-mapped bespoke egress/
+ingress (see issue #772). Validated per-namespace against the live cluster:
+provision a volume, issue a cert, run a backup — no breakage.
+
+| Namespace | Components | Bespoke | Why / verification |
+|-----------|------------|---------|--------------------|
+| `cert-manager` | baseline + egress-external + egress-apiserver | `allow-ingress-webhook` | ACME DNS-01 via Hetzner (egress-external :443); controller/cainjector/webhook watch API (egress-apiserver); admission webhook ingress from API-server VIP `192.168.10.245` + CP `192.168.10.41-43` on 9443/443 (mirrors cnpg-system). **Verified:** test `Certificate` admitted + Hetzner webhook created the DNS-01 TXT record. |
+| `democratic-csi` | baseline + egress-apiserver | `allow-egress-truenas` | TrueNAS API `192.168.10.94:443` (provision/attach + health pings) + iSCSI target `192.168.10.94:3260` (volume attach). **Verified:** test RWO PVC bound + iSCSI volume mounted in a pod. |
+| `local-path-storage` | baseline + egress-apiserver | — | provisioner watches PVCs/nodes via API. **Verified:** test PVC bound + pod Running. |
+| `velero` | baseline + egress-apiserver | `allow-egress-s3-garage` | Garage S3 `192.168.10.94:30188` (`:30190` too, mirrors `nextcloud`). **Verified:** `kopia-maintain` jobs complete; test `Backup` reaches S3. |
+| `backup-offsite` | baseline + egress-database | `allow-egress-storagebox` | Hetzner Storage Box over SFTP/SSH — pinned to resolved A `62.238.65.94` + AAAA `2a01:4f9:bacc:3:300::25e` on 22/23 (not opened to `0.0.0.0/0`). `pg_dump` → CNPG (egress-database). NFS source mounts are node-side (kubelet), not pod egress. **Verified:** offsite CronJobs complete. |
+| `reflector-system` | baseline + egress-apiserver | — | watches secrets/CM across NS, replicates the cert-manager wildcard cert. **Verified:** pod Running, replication intact. |
+
+### hostNetwork namespaces — NP-inert, explicitly excluded
+
+`ingress-nginx`, `netbird`, `watchyourlan`, `system-upgrade` (plan jobs) all use
+`hostNetwork` (or privileged host mounts). Cilium/standard NetworkPolicies do
+**not** govern host-network traffic, so a default-deny there is inert and adds
+no protection. They are intentionally **not** added to the parent
+`network-policies/kustomization.yaml` — their isolation relies on host firewall
+/ Talos machinery, out of scope of this rollout. Revisit only if the CNI gains
+host-network policy support.
 
 ## Onboarding another namespace
 

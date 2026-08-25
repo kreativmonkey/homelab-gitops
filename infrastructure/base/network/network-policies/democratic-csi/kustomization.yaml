@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# democratic-csi = iSCSI CSI driver for TrueNAS. The controller watches the API
+# server (egress-apiserver) and calls the TrueNAS API (HTTPS :443) for
+# provisioning/attach + health pings. The node plugin logs iSCSI sessions to the
+# TrueNAS portal (TCP :3260) for volume attach/mount. A wrong deny here breaks
+# RWO volume provisioning/attach cluster-wide. Both targets are on 192.168.10.94.
+namespace: democratic-csi
+components:
+  - ../baseline
+  - ../egress-apiserver
+resources:
+  - allow-egress-truenas.yaml

@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-storagebox
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Hetzner Storage Box (restic repository) over SFTP/SSH. Pinned to the
+    # resolved A (62.238.65.94) and AAAA (2a01:4f9:bacc:3:300::25e) records so
+    # egress is not opened to the whole internet.
+    - to:
+        - ipBlock:
+            cidr: 62.238.65.94/32
+        - ipBlock:
+            cidr: 2a01:4f9:bacc:3:300::25e/128
+      ports:
+        - protocol: TCP
+          port: 22
+        - protocol: TCP
+          port: 23
