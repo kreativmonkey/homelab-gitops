@@ -8,7 +8,10 @@ resources:
   - nextcloud-collab.secret.yaml
   - nextcloud-s3-credentials.secret.yaml
   - pvc.yaml
+  # Bleibt vorerst stehen: Rueckweg, falls die local-path-Migration klemmt.
+  # Nach ein paar stabilen Wochen entfernen (dann loescht reclaimPolicy die LUN).
   - pvc-iscsi.yaml
+  - pvc-local.yaml
   - whiteboard-deployment.yaml
   - appapi-harp-rbac.yaml
   - appapi-harp-deployment.yaml

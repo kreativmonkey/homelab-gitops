@@ -138,7 +138,10 @@ spec:
           enabled: false
     persistence:
       enabled: true
-      existingClaim: nextcloud-app-iscsi
+      # War nextcloud-app-iscsi. Siehe pvc-local.yaml fuer die Begruendung —
+      # kurz: die iSCSI-LUN lief wiederholt in ext4-emergency_ro, und auf dem
+      # Volume steht ohnehin nur Programmcode plus 2,9 KB config.php.
+      existingClaim: nextcloud-app-local
 
     nextcloud:
       persistence:
@@ -188,6 +191,16 @@ spec:
             'maintenance_window_start' => 2,
             'default_phone_region' => 'DE',
             'serverid' => 1,
+          );
+        # Loggen nach stderr statt in eine Datei auf dem Volume. Die alte
+        # data/nextcloud.log.1 war auf 251 MB gewachsen — Dauerschreiblast auf
+        # genau dem Volume, das unter iSCSI-Contention ausgefallen ist, und die
+        # Logs waren nur per exec einsehbar. Mit errorlog landen sie ueber
+        # Apache auf stdout und damit in VictoriaLogs.
+        logging.config.php: |-
+          <?php
+          $CONFIG = array(
+            'log_type' => 'errorlog',
           );
       securityContext:
         runAsUser: 1000
