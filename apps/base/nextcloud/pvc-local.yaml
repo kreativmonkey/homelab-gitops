@@ -11,18 +11,55 @@
 # die CNPG-Failover-Kaskade beendet: dort fielen die Postgres-Restarts von
 # 19/Tag auf 7 in 30 Tagen.
 #
-# Preis: local-path bindet das Volume an einen Node, der Pod ist damit an
-# diesen Node gepinnt (PV-nodeAffinity). Vertretbar, weil der Zustand hier
-# 2,9 KB gross und aus dem Velero-Backup wiederherstellbar ist.
+# Warum ein statisches `local`-PV und nicht die StorageClass local-path:
+# local-path liefert PVs vom Typ `hostPath`, und damit funktioniert `subPath`
+# nicht — kubelet bindet dann ein leeres Verzeichnis ein, ohne Fehler zu
+# melden. Das Nextcloud-Chart mountet sieben subPaths (root, html, data,
+# config, custom_apps, tmp, themes). Begruendung siehe
+# infrastructure/base/storage/local-node-storageclass.yaml.
+#
+# Preis: das Volume haengt an talos-cp1, der Pod ist damit ueber nodeAffinity
+# dorthin gepinnt. Vertretbar, weil der Zustand 2,9 KB gross und aus dem
+# Velero-Backup wiederherstellbar ist.
+#
+# Der Pfad traegt noch den Namen des local-path-Provisioners, weil die Daten
+# dort bereits liegen; er wird beim naechsten Wartungsfenster zusammen mit
+# LEGACY-MOUNT-PATH /var/lib/longhorn umbenannt.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nextcloud-app-node
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-node-static
+  claimRef:
+    namespace: nextcloud
+    name: nextcloud-app-node
+  local:
+    path: /var/lib/longhorn/local-path/pvc-bcd7e514-5336-425f-915d-aaaf64075dcf_nextcloud_nextcloud-app-local
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - talos-cp1
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nextcloud-app-local
+  name: nextcloud-app-node
   namespace: nextcloud
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-path
+  storageClassName: local-node-static
+  volumeName: nextcloud-app-node
   resources:
     requests:
       storage: 10Gi

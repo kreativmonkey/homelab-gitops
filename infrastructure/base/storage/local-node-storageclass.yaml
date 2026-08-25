@@ -1,0 +1,19 @@
+# Statische node-lokale Volumes als PV-Typ `local` — bewusst NICHT local-path.
+#
+# local-path-provisioner erzeugt PVs vom Typ `hostPath`. Fuer die haelt kubelet
+# keinen echten Mount vor, aus dem es einen `subPath` ableiten koennte: statt zu
+# scheitern legt es ein leeres Verzeichnis an und bindet das ein — der Pod sieht
+# dann stillschweigend nichts vom Volume. Nachgewiesen am 25.08.2026 beim
+# Nextcloud-Umzug; CNPG faellt nicht darauf herein, weil es kein subPath nutzt.
+#
+# `local`-PVs werden dagegen echt gemountet, damit funktioniert subPath.
+# WaitForFirstConsumer, weil ein local-Volume an genau einen Node gebunden ist
+# und der Scheduler das vor der Bindung wissen muss.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-node-static
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: false
