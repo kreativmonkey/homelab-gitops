@@ -98,16 +98,46 @@ spec:
             description: "Velero liefert Metriken, aber keinen erfolgreichen Backup-Zeitstempel."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/velero-backup.md"
 
+        # Die Schwelle muss zum Schedule passen. Eine gemeinsame 36h-Schwelle
+        # fuer alle Schedules liess `weekly-backup` zwangslaeufig taeglich
+        # alarmieren (Intervall 7d > 36h) — der Alarm feuerte an ~5 von 7 Tagen
+        # ohne Defekt und hat echte Meldungen zugedeckt.
         - alert: VeleroBackupStale
-          expr: (time() - velero_backup_last_successful_timestamp) > 36 * 3600
+          expr: (time() - velero_backup_last_successful_timestamp{schedule="daily-backup"}) > 36 * 3600
           for: 1h
           labels:
             severity: warning
             cluster: homelab
             homelab_owner: platform
           annotations:
-            summary: "Velero: kein erfolgreiches Backup seit 36h"
-            description: "Schedule {{ $labels.schedule }} — letzter Erfolg zu lange her."
+            summary: "Velero: kein erfolgreiches Daily-Backup seit 36h"
+            description: "Schedule {{ $labels.schedule }} — letzter Erfolg zu lange her (Intervall 24h, Schwelle 36h)."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/velero-backup.md"
+
+        - alert: VeleroWeeklyBackupStale
+          expr: (time() - velero_backup_last_successful_timestamp{schedule="weekly-backup"}) > 9 * 24 * 3600
+          for: 1h
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Velero: kein erfolgreiches Weekly-Backup seit 9 Tagen"
+            description: "Schedule {{ $labels.schedule }} — letzter Erfolg zu lange her (Intervall 7d, Schwelle 9d)."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/velero-backup.md"
+
+        # Faengt jeden kuenftigen Schedule ab, der oben nicht namentlich steht —
+        # sonst waere ein neuer Schedule stillschweigend unueberwacht.
+        - alert: VeleroUnknownScheduleStale
+          expr: (time() - velero_backup_last_successful_timestamp{schedule!~"daily-backup|weekly-backup"}) > 36 * 3600
+          for: 1h
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Velero: Schedule {{ $labels.schedule }} ohne Erfolg seit 36h"
+            description: "Schedule {{ $labels.schedule }} hat keine eigene Schwelle in der VMRule. Passende Schwelle ergaenzen oder Ursache prüfen."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/velero-backup.md"
 
     - name: homelab.platform.nodes

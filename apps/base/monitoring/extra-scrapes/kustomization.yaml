@@ -10,3 +10,4 @@ resources:
   - blackbox-vmprobe-nextcloud.yaml
   - truenas-exporter-vmservicescrape.yaml
   - flux-vmpodscrape.yaml
+  - fs-health-exporter-vmpodscrape.yaml

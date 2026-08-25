@@ -1,0 +1,177 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fs-health-exporter-script
+  namespace: monitoring
+data:
+  exporter.py: |
+    #!/usr/bin/env python3
+    """Exportiert Dateisystem-Fehlerzustaende, die node-exporter nicht sieht.
+
+    node_filesystem_readonly kippt nur, wenn in den Mount-Optionen woertlich
+    `ro` steht. Ein ext4, das der Kernel nach einem I/O-Fehler abgeschaltet
+    hat, steht dort aber weiter als `rw,...,emergency_ro` — die Serie bleibt
+    auf 0, obwohl kein einziger Schreibvorgang mehr durchgeht. Genau so ist
+    der Nextcloud-Ausfall am 24.08.2026 36h lang unbemerkt geblieben.
+
+    Zwei Quellen schliessen die Luecke:
+      * /proc/mounts  — das Flag `emergency_ro` (bzw. `shutdown` bei XFS)
+      * /sys/fs/ext4/<dev>/errors_count — persistenter Fehlerzaehler, der
+        einen Reboot ueberlebt und erst ein fsck zuruecksetzt. Damit faellt
+        auch latenter Schaden auf, dessen Pod laengst neu gestartet wurde.
+    """
+    import os
+    import re
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    HOST_PROC = os.environ.get("HOST_PROC", "/host/proc")
+    HOST_SYS = os.environ.get("HOST_SYS", "/host/sys")
+    LISTEN_PORT = int(os.environ.get("LISTEN_PORT", "9850"))
+
+    # Der PV-Name steckt im Pod-Mountpfad des kubelet, nicht im globalmount
+    # (dort steht nur ein Hash). Solange irgendein Pod das Volume nutzt,
+    # liefert das ein direkt handhabbares Label.
+    PV_IN_PATH = re.compile(r"/(pvc-[0-9a-f-]{36})/")
+
+    # Dateisystem-Abschaltung: ext4 setzt `emergency_ro`, XFS `shutdown`.
+    SHUTDOWN_FLAGS = ("emergency_ro", "shutdown")
+
+
+    def read_mounts():
+        """device -> (shutdown 0/1, volume-label, fstype).
+
+        Gelesen wird /host/proc/1/mounts, nicht /host/proc/mounts: letzteres
+        ist ein Symlink auf self/mounts und liefert damit die Mounts *dieses*
+        Containers. Interessant ist aber der Mount-Namespace des Hosts — dort
+        haengen die CSI-globalmounts und die Pod-Bind-Mounts.
+        """
+        state = {}
+        lines = []
+        for candidate in ("1/mounts", "mounts"):
+            try:
+                with open(os.path.join(HOST_PROC, candidate)) as fh:
+                    lines = fh.readlines()
+                break
+            except OSError:
+                continue
+        if not lines:
+            return state
+        for line in lines:
+            parts = line.split()
+            if len(parts) < 4 or not parts[0].startswith("/dev/"):
+                continue
+            device = os.path.basename(parts[0])
+            mountpoint, fstype, options = parts[1], parts[2], parts[3].split(",")
+            shutdown = int(any(flag in options for flag in SHUTDOWN_FLAGS))
+            volume = ""
+            match = PV_IN_PATH.search(mountpoint)
+            if match:
+                volume = match.group(1)
+            prev = state.get(device)
+            if prev is None:
+                state[device] = [shutdown, volume, fstype]
+            else:
+                # Ein Device haengt an vielen Mountpunkten (globalmount +
+                # Pod-Bind-Mounts). Der schlechteste Zustand gewinnt, das
+                # erste gefundene PV-Label bleibt.
+                prev[0] = max(prev[0], shutdown)
+                prev[1] = prev[1] or volume
+        return state
+
+
+    def read_ext4_errors():
+        """device -> (errors_count, last_error_time, last_error_func)."""
+        result = {}
+        base = os.path.join(HOST_SYS, "fs", "ext4")
+        try:
+            devices = os.listdir(base)
+        except OSError:
+            return result
+
+        def read(device, attr, default=""):
+            try:
+                with open(os.path.join(base, device, attr)) as fh:
+                    return fh.read().strip()
+            except OSError:
+                return default
+
+        for device in devices:
+            count = read(device, "errors_count")
+            if not count.isdigit():
+                # `features` und aehnliche Pseudo-Eintraege sind keine Devices.
+                continue
+            last_time = read(device, "last_error_time", "0")
+            result[device] = (
+                int(count),
+                int(last_time) if last_time.isdigit() else 0,
+                read(device, "last_error_func"),
+            )
+        return result
+
+
+    def escape(value):
+        return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+    def render():
+        mounts = read_mounts()
+        ext4 = read_ext4_errors()
+        out = [
+            "# HELP node_fs_shutdown Dateisystem vom Kernel abgeschaltet (ext4 emergency_ro / xfs shutdown).",
+            "# TYPE node_fs_shutdown gauge",
+        ]
+        for device, (shutdown, volume, fstype) in sorted(mounts.items()):
+            out.append(
+                'node_fs_shutdown{device="%s",fstype="%s",volume="%s"} %d'
+                % (escape(device), escape(fstype), escape(volume), shutdown)
+            )
+
+        out += [
+            "# HELP node_fs_ext4_errors_count Persistenter ext4-Fehlerzaehler; erst ein fsck setzt ihn zurueck.",
+            "# TYPE node_fs_ext4_errors_count gauge",
+        ]
+        for device, (count, _, _) in sorted(ext4.items()):
+            volume = mounts.get(device, [0, "", ""])[1]
+            out.append(
+                'node_fs_ext4_errors_count{device="%s",volume="%s"} %d'
+                % (escape(device), escape(volume), count)
+            )
+
+        out += [
+            "# HELP node_fs_ext4_last_error_timestamp_seconds Zeitpunkt des letzten ext4-Fehlers.",
+            "# TYPE node_fs_ext4_last_error_timestamp_seconds gauge",
+        ]
+        for device, (_, last_time, func) in sorted(ext4.items()):
+            out.append(
+                'node_fs_ext4_last_error_timestamp_seconds{device="%s",func="%s"} %d'
+                % (escape(device), escape(func), last_time)
+            )
+
+        out += [
+            "# HELP node_fs_health_exporter_up Exporter hat /proc/mounts und /sys/fs/ext4 gelesen.",
+            "# TYPE node_fs_health_exporter_up gauge",
+            "node_fs_health_exporter_up %d" % int(bool(mounts)),
+            "",
+        ]
+        return "\n".join(out).encode()
+
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path.split("?")[0] != "/metrics":
+                self.send_error(404)
+                return
+            body = render()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; version=0.0.4")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            # Kein Zugriffslog: jeder Scrape wuerde sonst eine Zeile erzeugen.
+            pass
+
+
+    if __name__ == "__main__":
+        HTTPServer(("", LISTEN_PORT), Handler).serve_forever()

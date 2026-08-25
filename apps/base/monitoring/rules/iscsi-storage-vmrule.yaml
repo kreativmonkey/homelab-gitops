@@ -18,8 +18,11 @@ spec:
       interval: 30s
       rules:
         - alert: IScsiEmergencyReadOnly
-          # node-exporter sees CSI global mounts once its collector excludes
-          # only kubelet pod bind mounts instead of all /var/lib/kubelet.
+          # Faengt nur den Fall ab, in dem woertlich `ro` in den Mount-Optionen
+          # steht — also einen sauber read-only gemounteten Mount.
+          # ACHTUNG: Der haeufigere Fall, das vom Kernel abgeschaltete
+          # Dateisystem (`emergency_ro`), kippt diese Serie NICHT; er laeuft
+          # ueber FilesystemShutdown weiter unten. Beide Regeln braucht es.
           expr: |
             node_filesystem_readonly{
               fstype=~"ext4|xfs",
@@ -35,6 +38,39 @@ spec:
             description: "{{ $labels.mountpoint }} auf {{ $labels.instance }} ist read-only. Workload stoppen und Dateisystem offline prüfen; nicht im laufenden Betrieb reparieren."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/nextcloud-init-crashloop.md"
 
+        - alert: FilesystemShutdown
+          # Der Fall, der am 24.08.2026 36h unbemerkt blieb: ext4 setzt nach
+          # einem I/O-Fehler `emergency_ro`, laesst die Mount-Optionen aber auf
+          # `rw` stehen. node_filesystem_readonly bleibt deshalb 0, waehrend
+          # kein Schreibvorgang mehr durchgeht. Quelle ist der fs-health-
+          # exporter (DaemonSet), der /proc/1/mounts direkt auswertet.
+          expr: node_fs_shutdown == 1
+          for: 2m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Dateisystem abgeschaltet: {{ $labels.device }} auf {{ $labels.node }}"
+            description: "Der Kernel hat {{ $labels.device }} ({{ $labels.fstype }}, Volume {{ $labels.volume }}) auf {{ $labels.node }} abgeschaltet — Schreibzugriffe schlagen fehl, obwohl der Mount als rw gilt. Workload stoppen, Volume offline fsck'en; ein Pod-Neustart allein heilt das nicht."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/nextcloud-init-crashloop.md"
+
+        - alert: Ext4FilesystemErrorsPending
+          # errors_count ist persistent und ueberlebt Remounts wie Reboots —
+          # erst ein fsck setzt ihn zurueck. Ein Wert > 0 heisst deshalb:
+          # dieses Volume traegt unreparierten Schaden, auch wenn es gerade
+          # wieder schreibbar aussieht.
+          expr: node_fs_ext4_errors_count > 0
+          for: 30m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "ext4-Fehler unrepariert: {{ $labels.device }} auf {{ $labels.node }}"
+            description: "{{ $labels.device }} (Volume {{ $labels.volume }}) auf {{ $labels.node }} hat {{ $value }} unreparierte ext4-Fehler. Der Zaehler bleibt bis zu einem offline e2fsck stehen — Wartungsfenster einplanen."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/nextcloud-init-crashloop.md"
+
         - alert: NodeISCSIDiskWriteLatencyHigh
           # Avg write service time per op on the iSCSI block devices (sd*). Baseline ~1ms;
           # >250ms sustained means the initiator is waiting on the contended SSD/transport,
@@ -44,7 +80,10 @@ spec:
             rate(node_disk_write_time_seconds_total{device=~"sd.*"}[5m])
               / clamp_min(rate(node_disk_writes_completed_total{device=~"sd.*"}[5m]), 1)
               > 0.25
-          for: 10m
+          # 3m statt 10m: am 24.08.2026 lief der Stall, der ext4 abgeschaltet
+          # hat, keine 10 Minuten — der Kernel gab den Write nach 180s auf.
+          # Die Regel kam dadurch nur bis `pending` und hat nie alarmiert.
+          for: 3m
           labels:
             severity: warning
             cluster: homelab
