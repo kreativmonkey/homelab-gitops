@@ -40,3 +40,12 @@ resources:
   - mcp-system
   - external-dns
   - ai-ops
+  # Phase 5 (issue #772): infra/operator NS with bespoke egress/ingress.
+  - cert-manager
+  - democratic-csi
+  - local-path-storage
+  - velero
+  - backup-offsite
+  - reflector-system
+  # hostNetwork NS (ingress-nginx, netbird, watchyourlan, system-upgrade) are
+  # NP-inert and explicitly excluded — see runbook Phase 5.

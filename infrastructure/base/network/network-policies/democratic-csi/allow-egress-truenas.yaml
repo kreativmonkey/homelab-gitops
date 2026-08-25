@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-truenas
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # TrueNAS API (provisioning/attach, health pings) over HTTPS.
+    - to:
+        - ipBlock:
+            cidr: 192.168.10.94/32
+      ports:
+        - protocol: TCP
+          port: 443
+    # TrueNAS iSCSI target portal for volume attach/mount.
+    - to:
+        - ipBlock:
+            cidr: 192.168.10.94/32
+      ports:
+        - protocol: TCP
+          port: 3260
