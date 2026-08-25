@@ -141,7 +141,7 @@ spec:
       # War nextcloud-app-iscsi. Siehe pvc-local.yaml fuer die Begruendung —
       # kurz: die iSCSI-LUN lief wiederholt in ext4-emergency_ro, und auf dem
       # Volume steht ohnehin nur Programmcode plus 2,9 KB config.php.
-      existingClaim: nextcloud-app-local
+      existingClaim: nextcloud-app-node
 
     nextcloud:
       persistence:

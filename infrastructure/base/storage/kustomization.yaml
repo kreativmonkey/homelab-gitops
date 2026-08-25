@@ -4,4 +4,5 @@ resources:
   - democratic-csi
   - local-path-provisioner
   - nfs-storageclass.yaml
+  - local-node-storageclass.yaml
   - pv-nfs.yaml
