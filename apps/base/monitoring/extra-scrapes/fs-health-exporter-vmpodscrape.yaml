@@ -1,0 +1,28 @@
+# DaemonSet ohne Service — VMPodScrape spart die Umleitung ueber Endpoints.
+# Das node-Label kommt aus dem Pod-Metadatum, damit ein Alarm sofort sagt,
+# auf welchem Node das Dateisystem abgeschaltet wurde.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: fs-health-exporter
+  namespace: monitoring
+  labels:
+    release: victoriametrics
+spec:
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  selector:
+    matchLabels:
+      app: fs-health-exporter
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+      relabelConfigs:
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod

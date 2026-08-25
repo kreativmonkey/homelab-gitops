@@ -135,3 +135,17 @@ spec:
           detachedVolumesFromSnapshots: "false"
           fsType: ext4
           # VolumeSnapshotClass requires snapshot.storage.k8s.io CRDs (not installed yet).
+    # XFS-Variante. Vor der Nutzung docs/learnings/nextcloud-iscsi-emergency-readonly.md
+    # lesen: XFS erholt sich nach einem Transport-Stall zwar besser, ist dabei
+    # aber schlechter beobachtbar — es fuehrt keinen persistenten Fehlerzaehler
+    # wie /sys/fs/ext4/<dev>/errors_count, und ein XFS-Shutdown steht nur im
+    # Kernel-Log. Solange Talos-Kernel-Logs nicht in VictoriaLogs landen, kostet
+    # ein Wechsel genau das Signal, das den Ausfall vom 24.08.2026 sichtbar macht.
+    - name: truenas-iscsi-xfs
+      defaultClass: false
+      reclaimPolicy: Delete
+      volumeBindingMode: WaitForFirstConsumer
+      allowVolumeExpansion: true
+      parameters:
+          detachedVolumesFromSnapshots: "false"
+          fsType: xfs

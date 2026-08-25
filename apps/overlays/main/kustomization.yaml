@@ -57,6 +57,7 @@ resources:
   - ../../base/gatus
   - ../../base/truenas-exporter
   - truenas-exporter.secret.yaml
+  - ../../base/fs-health-exporter
 
   # --- Smart Home -------------------------------------------------------
   - ../../base/spectrumknx
