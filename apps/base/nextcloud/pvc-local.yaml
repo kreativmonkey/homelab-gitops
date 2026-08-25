@@ -1,0 +1,28 @@
+# Ersetzt nextcloud-app-iscsi. Dieses Volume traegt keine Nutzerdaten: die
+# liegen als Primaerspeicher in Garage/S3 (objectstore \OC\Files\ObjectStore\S3).
+# Auf dem Volume steht ausschliesslich Programmcode aus Image und App Store,
+# gerenderte ConfigMaps — und genau eine unersetzliche Datei: config/config.php
+# mit instanceid, passwordsalt und secret (2902 Byte).
+#
+# Warum weg von truenas-iscsi: die LUNs auf FastStorage sind seit Juni 2026
+# wiederholt in ext4-emergency_ro gelaufen, weil TrueNAS unter Contention
+# Writes minutenlang nicht bestaetigt (24.08.: 180s). Nextcloud traf es am
+# haeufigsten, weil sein Cron alle 5 Minuten schreibt. Dieselbe Umstellung hat
+# die CNPG-Failover-Kaskade beendet: dort fielen die Postgres-Restarts von
+# 19/Tag auf 7 in 30 Tagen.
+#
+# Preis: local-path bindet das Volume an einen Node, der Pod ist damit an
+# diesen Node gepinnt (PV-nodeAffinity). Vertretbar, weil der Zustand hier
+# 2,9 KB gross und aus dem Velero-Backup wiederherstellbar ist.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-app-local
+  namespace: nextcloud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 10Gi
