@@ -138,10 +138,20 @@ spec:
           enabled: false
     persistence:
       enabled: true
-      # War nextcloud-app-iscsi. Siehe pvc-local.yaml fuer die Begruendung —
-      # kurz: die iSCSI-LUN lief wiederholt in ext4-emergency_ro, und auf dem
-      # Volume steht ohnehin nur Programmcode plus 2,9 KB config.php.
-      existingClaim: nextcloud-app-node
+      # ZURUECK auf iSCSI (25.08.2026). Der Umzug auf node-lokalen Speicher
+      # ist zweimal am selben Punkt gescheitert: das Chart mountet sieben
+      # subPaths, und weder das hostPath-PV von local-path noch das statische
+      # local-PV haben die durchgereicht. Der Pod sah jeweils leere
+      # Verzeichnisse, schrieb sich eine frische config.php und hielt sich fuer
+      # eine Neuinstallation. Die Daten auf beiden Volumes blieben unversehrt,
+      # die Datenbank ebenfalls — aber der Cutover ist damit offen.
+      #
+      # Der vorbereitete Stand steht weiterhin bereit: PV/PVC nextcloud-app-node
+      # (Retain) mit der fertigen Kopie, StorageClass local-node-static.
+      # Naechster Schritt siehe Issue: subPath-freien Mount-Aufbau finden oder
+      # das Chart entsprechend konfigurieren, VORHER in einem Testpod
+      # verifizieren.
+      existingClaim: nextcloud-app-iscsi
 
     nextcloud:
       persistence:
