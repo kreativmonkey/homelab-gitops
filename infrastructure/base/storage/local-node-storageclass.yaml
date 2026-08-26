@@ -1,14 +1,57 @@
-# Statische node-lokale Volumes als PV-Typ `local` — bewusst NICHT local-path.
+# Statische node-lokale Volumes als PV-Typ `local`.
 #
-# local-path-provisioner erzeugt PVs vom Typ `hostPath`. Fuer die haelt kubelet
-# keinen echten Mount vor, aus dem es einen `subPath` ableiten koennte: statt zu
-# scheitern legt es ein leeres Verzeichnis an und bindet das ein — der Pod sieht
-# dann stillschweigend nichts vom Volume. Nachgewiesen am 25.08.2026 beim
-# Nextcloud-Umzug; CNPG faellt nicht darauf herein, weil es kein subPath nutzt.
+# Gedacht fuer Workloads, deren gesamter unersetzlicher Zustand klein ist und
+# die node-lokal robuster laufen als ueber truenas-iscsi. Kein Provisioner:
+# PV und PVC stehen explizit im Git, reclaimPolicy Retain, damit ein
+# geloeschtes Claim keine Daten mitnimmt.
 #
-# `local`-PVs werden dagegen echt gemountet, damit funktioniert subPath.
 # WaitForFirstConsumer, weil ein local-Volume an genau einen Node gebunden ist
 # und der Scheduler das vor der Bindung wissen muss.
+#
+# Abgrenzung zu local-path: local-path ist der richtige Weg fuer beliebig oft
+# neu erzeugbare Volumes (CNPG-Instanzen replizieren auf DB-Ebene, ein Replica
+# darf jederzeit weggeworfen werden). Diese StorageClass ist fuer den
+# umgekehrten Fall: Volumes, die man benannt, versioniert und mit Retain haben
+# will.
+#
+# ===========================================================================
+# VORAUSSETZUNG: `machine.kubelet.extraMounts` fuer den Datentraeger.
+#
+# `machine.disks` mountet die Datenplatte nur auf dem HOST. Fehlt der
+# kubelet-Bind, sieht der kubelet-Container den Mount nicht und loest den Pfad
+# gegen das darunterliegende, leere Verzeichnis der System-Partition
+# (EPHEMERAL) auf. Betroffen ist alles, was das kubelet SELBST mountet:
+# `local`-PVs und JEDER `subPath`-Mount. Beides schlaegt still fehl — der Pod
+# sieht ein leeres Verzeichnis, es gibt kein Event und keinen Fehler.
+# hostPath-PVs (und damit local-path-provisioner) sind unbetroffen, weil ihr
+# Pfad per CRI an containerd geht und dort im Host-Namespace aufgeloest wird.
+#
+# Genau daran sind die beiden Anlaeufe gescheitert, das Nextcloud-App-Volume
+# von truenas-iscsi wegzuholen (PR #802, #805): die Kopie landete korrekt auf
+# der Datenplatte, das Chart las seine sieben subPaths aber aus dem leeren
+# Schatten auf der System-Partition.
+#
+# Behoben am 26.08.2026 auf allen drei Nodes (homelab-infrastructure,
+# infrastructure/talos/envs/homelab-kube, `extra_config_patches`):
+#
+#   machine:
+#     kubelet:
+#       extraMounts:
+#         - destination: /var/lib/longhorn
+#           type: bind
+#           source: /var/lib/longhorn
+#           options: [bind, rshared, rw]
+#
+# Nachweis nach dem Rollout (cp3, dann cp2, dann cp1):
+#   talosctl read /proc/<kubelet-pid>/mounts | grep longhorn  -> /dev/sdb1 ...
+#   Marker per hostPath geschrieben, per subPath gelesen -> sichtbar.
+#
+# Beim Umbenennen des Mountpunkts (Marker LEGACY-MOUNT-PATH) den extraMount
+# mitziehen, sonst faellt das hier lautlos wieder auseinander. Und zum Pruefen
+# immer die Sicht per hostPath gegen die per subPath stellen, nie zwei Zugriffe
+# derselben Art — /proc/mounts taugt nicht, dort steht in beiden Faellen
+# `overlay`.
+# ===========================================================================
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:

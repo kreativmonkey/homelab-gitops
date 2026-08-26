@@ -8,9 +8,10 @@ resources:
   - nextcloud-collab.secret.yaml
   - nextcloud-s3-credentials.secret.yaml
   - pvc.yaml
-  # Bleibt vorerst stehen: Rueckweg, falls die local-path-Migration klemmt.
+  # Bleibt vorerst stehen: Rueckweg, falls das node-lokale Volume klemmt.
   # Nach ein paar stabilen Wochen entfernen (dann loescht reclaimPolicy die LUN).
   - pvc-iscsi.yaml
+  # Aktives App-Volume, node-lokal auf talos-cp1.
   - pvc-local.yaml
   - whiteboard-deployment.yaml
   - appapi-harp-rbac.yaml

@@ -1,30 +1,47 @@
-# Ersetzt nextcloud-app-iscsi. Dieses Volume traegt keine Nutzerdaten: die
-# liegen als Primaerspeicher in Garage/S3 (objectstore \OC\Files\ObjectStore\S3).
-# Auf dem Volume steht ausschliesslich Programmcode aus Image und App Store,
-# gerenderte ConfigMaps — und genau eine unersetzliche Datei: config/config.php
-# mit instanceid, passwordsalt und secret (2902 Byte).
+# Node-lokales App-Volume fuer Nextcloud, ersetzt nextcloud-app-iscsi.
 #
-# Warum weg von truenas-iscsi: die LUNs auf FastStorage sind seit Juni 2026
-# wiederholt in ext4-emergency_ro gelaufen, weil TrueNAS unter Contention
-# Writes minutenlang nicht bestaetigt (24.08.: 180s). Nextcloud traf es am
-# haeufigsten, weil sein Cron alle 5 Minuten schreibt. Dieselbe Umstellung hat
-# die CNPG-Failover-Kaskade beendet: dort fielen die Postgres-Restarts von
-# 19/Tag auf 7 in 30 Tagen.
+# Dieses Volume traegt keine Nutzerdaten: die liegen als Primaerspeicher in
+# Garage/S3 (objectstore \OC\Files\ObjectStore\S3), die Datenbank in CNPG.
+# Darauf stehen nur Programmcode aus Image und App Store, gerenderte
+# ConfigMaps — und genau eine unersetzliche Datei: config/config.php mit
+# instanceid, passwordsalt und secret (2902 Byte).
 #
-# Warum ein statisches `local`-PV und nicht die StorageClass local-path:
-# local-path liefert PVs vom Typ `hostPath`, und damit funktioniert `subPath`
-# nicht — kubelet bindet dann ein leeres Verzeichnis ein, ohne Fehler zu
-# melden. Das Nextcloud-Chart mountet sieben subPaths (root, html, data,
-# config, custom_apps, tmp, themes). Begruendung siehe
-# infrastructure/base/storage/local-node-storageclass.yaml.
+# Warum weg von truenas-iscsi: die LUNs auf FastStorage laufen seit Juni 2026
+# wiederholt in ext4-emergency_ro, weil TrueNAS unter Contention Writes
+# minutenlang nicht bestaetigt (25.08.: "waited 180s" → Aborting journal →
+# Remounting filesystem read-only). Nextcloud traf es am haeufigsten, weil sein
+# Cron alle 5 Minuten schreibt. Ein Pod-Neustart raeumt nur den Mount auf, das
+# Fehlerflag im Dateisystem bleibt — es kippt beim naechsten Write-Timeout
+# sofort wieder, es braucht ein offline e2fsck. Dieselbe Umstellung hat die
+# CNPG-Failover-Kaskade beendet: dort fielen die Postgres-Restarts von 19/Tag
+# auf 7 in 30 Tagen.
 #
-# Preis: das Volume haengt an talos-cp1, der Pod ist damit ueber nodeAffinity
-# dorthin gepinnt. Vertretbar, weil der Zustand 2,9 KB gross und aus dem
-# Velero-Backup wiederherstellbar ist.
+# Warum ein statisches `local`-PV und nicht die StorageClass local-path: weil
+# das Volume den einzigen unersetzlichen Zustand der Anwendung traegt und
+# deshalb explizit, versioniert und auf Retain stehen soll — statt von einem
+# Provisioner nach Claim-Namen erzeugt und bei reclaimPolicy=Delete per
+# `rm -rf` abgeraeumt zu werden.
 #
-# Der Pfad traegt noch den Namen des local-path-Provisioners, weil die Daten
-# dort bereits liegen; er wird beim naechsten Wartungsfenster zusammen mit
-# LEGACY-MOUNT-PATH /var/lib/longhorn umbenannt.
+# Voraussetzung, ohne die das hier lautlos leere Verzeichnisse liefert:
+# `machine.kubelet.extraMounts` fuer den Datentraeger. Begruendung und
+# Nachweis in infrastructure/base/storage/local-node-storageclass.yaml.
+# Daran sind die Vorlaeufer #802 und #805 gescheitert.
+#
+# Preis: das Volume haengt an talos-cp1, der Pod ist ueber die nodeAffinity des
+# PVs dorthin gepinnt. Vertretbar, weil der unersetzliche Zustand 2,9 KB gross
+# und im Restic-Offsite-Backup ist.
+#
+# ===========================================================================
+# LEGACY-MOUNT-PATH — grep diesen Marker beim Umbenennen des Node-Datentraegers.
+# Die Datenplatte (sdb1, 100 GB xfs) haengt derzeit unter /var/lib/longhorn;
+# der Name ist ein irrefuehrender Rest, Longhorn laeuft nicht mehr. Zielpfad
+# ist /var/mnt/local-storage. Beim Umzug anzupassen: hier, der local-path-
+# Provisioner (infrastructure/base/storage/local-path-provisioner/configmap.yaml)
+# UND der kubelet-extraMount im Repo homelab-infrastructure.
+# Achtung: spec.local.path ist nach dem Anlegen unveraenderlich — PV und PVC
+# muessen dafuer geloescht und neu erzeugt werden (Retain, die Daten auf dem
+# Node bleiben dabei liegen).
+# ===========================================================================
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -40,7 +57,7 @@ spec:
     namespace: nextcloud
     name: nextcloud-app-node
   local:
-    path: /var/lib/longhorn/local-path/pvc-bcd7e514-5336-425f-915d-aaaf64075dcf_nextcloud_nextcloud-app-local
+    path: /var/lib/longhorn/nextcloud-app
   nodeAffinity:
     required:
       nodeSelectorTerms:
