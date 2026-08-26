@@ -45,14 +45,28 @@ spec:
             "extends": ["config:recommended", ":dependencyDashboard"]
           },
           "timezone": "Europe/Berlin",
-          "persistRepoData": true
+          "persistRepoData": true,
+          "httpCacheTtlDays": 14
         }
 
       persistence:
         cache:
           enabled: true
-          storageClass: truenas-iscsi
-          storageSize: "10Gi"
+          # Node-lokal, nicht truenas-iscsi. Das Volume ist reiner Cache
+          # (Datasource-Antworten, HTTP-Cache, heruntergeladene Tools) und bei
+          # Verlust in einem Lauf wieder aufgebaut. Auf iSCSI legte es
+          # schreiblastigen Churn auf dieselbe ueberlastete FastStorage, von
+          # der Datenbanken und Nextcloud abhaengen.
+          storageClass: local-path
+          # 10Gi liefen am 26.08.2026 voll (90 %, 1 GB frei) und Renovate
+          # brach fuer JEDES Repo mit "Disk space error - skipping" ab. Die
+          # Aufteilung damals: 4,4 G cache/renovate (Datasource, TTL ueber
+          # cacheHardTtlMinutes, Default 7 Tage), 3,9 G cache/others
+          # (HTTP-Cache, TTL httpCacheTtlDays, Default 90 Tage), 0,4 G
+          # containerbase. Deshalb oben httpCacheTtlDays auf 14 — das deckelt
+          # den groessten unnoetig lang gehaltenen Posten. 20Gi auf der
+          # Datenplatte kostet nichts und laesst Luft.
+          storageSize: "20Gi"
 
     existingSecret: renovate-credentials
 

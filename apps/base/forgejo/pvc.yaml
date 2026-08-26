@@ -28,14 +28,33 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: forgejo-runner-dind
+  # Umbenannt von forgejo-runner-dind (26.08.2026): storageClassName ist
+  # unveraenderlich, ein neuer Name spart das Anhalten von Flux. Flux prunt das
+  # alte PVC, sobald das Deployment auf den neuen Namen zeigt.
+  name: forgejo-runner-dind-cache
   namespace: forgejo
 spec:
   # Persistent Docker storage for the dind sidecar: pulled images (golang, node24,
   # action images) and build layers survive pod restarts instead of being re-pulled.
+  #
+  # Node-lokal, nicht truenas-iscsi. Das hier ist reiner Cache: Image-Layer und
+  # Build-Artefakte, die bei Verlust einmal neu gezogen werden. Auf iSCSI war es
+  # doppelt falsch — es legte 40 GB schreiblastigen Layer-Churn auf dieselbe
+  # ueberlastete FastStorage, von der die Datenbanken und Nextcloud abhaengen,
+  # und ein I/O-Fehler dort hinterliess ein ext4 mit gesetztem Fehlerflag, das
+  # nur ein offline e2fsck zurueckdreht (Alert Ext4FilesystemErrorsPending,
+  # 2 unreparierte Fehler auf sdc/talos-cp1 am 26.08.2026).
+  #
+  # local-path statt eines statischen local-PVs, weil der Verlust dieses
+  # Volumes genau nichts kostet: reclaimPolicy Delete ist hier erwuenscht.
+  # Kein subPath im Spiel (Mount ist /var/lib/docker), der Weg ueber
+  # hostPath/containerd ist also unkritisch.
+  #
+  # Preis: der Runner ist an den Node gebunden, auf dem das Volume entsteht.
+  # Vertretbar — es ist ein einzelner Runner mit strategy Recreate.
   accessModes:
     - ReadWriteOnce
-  storageClassName: truenas-iscsi
+  storageClassName: local-path
   resources:
     requests:
       storage: 40Gi
