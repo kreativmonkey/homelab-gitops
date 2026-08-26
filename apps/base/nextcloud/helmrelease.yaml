@@ -138,26 +138,29 @@ spec:
           enabled: false
     persistence:
       enabled: true
-      # Bleibt auf truenas-iscsi — nicht, weil es gut ist, sondern weil der
-      # Umzug blockiert ist.
+      # Node-lokales Volume (26.08.2026, dritter und diesmal verifizierter
+      # Anlauf).
       #
-      # Das Problem mit iSCSI: dieses Volume lief seit Juni 2026 wiederholt in
-      # ext4-emergency_ro, weil TrueNAS unter Contention Writes minutenlang
-      # nicht bestaetigt (25.08.: "waited 180s" → Aborting journal → Remounting
-      # filesystem read-only). Nextcloud traf es am haeufigsten, weil sein Cron
-      # alle 5 Minuten schreibt. Ein Pod-Neustart raeumt nur den Mount auf, das
-      # Fehlerflag im Dateisystem bleibt — es kippt beim naechsten Write-Timeout
-      # sofort wieder. Ablauf der Reparatur:
-      # docs/learnings/nextcloud-iscsi-emergency-readonly.md
+      # Warum weg von truenas-iscsi: dieses Volume lief seit Juni 2026
+      # wiederholt in ext4-emergency_ro, weil TrueNAS unter Contention Writes
+      # minutenlang nicht bestaetigt (25.08.: "waited 180s" → Aborting journal
+      # → Remounting filesystem read-only). Nextcloud traf es am haeufigsten,
+      # weil sein Cron alle 5 Minuten schreibt. Ein Pod-Neustart raeumt nur den
+      # Mount auf, das Fehlerflag im Dateisystem bleibt — es kippt beim
+      # naechsten Write-Timeout sofort wieder und braucht ein offline e2fsck.
+      # Ablauf: docs/learnings/nextcloud-iscsi-emergency-readonly.md
       #
-      # Warum der Umzug auf node-lokalen Speicher blockiert ist: dem
-      # Talos-Machine-Config fehlt `machine.kubelet.extraMounts` fuer den
-      # Datentraeger, deshalb sieht das kubelet die Datenplatte nicht und
-      # loest alle sieben subPaths dieses Charts gegen ein leeres Verzeichnis
-      # auf der System-Partition auf. Genau daran sind #802 und #805
-      # gescheitert. Vollstaendige Messung und die Voraussetzung fuer den
-      # Umzug: infrastructure/base/storage/local-node-storageclass.yaml
-      existingClaim: nextcloud-app-iscsi
+      # Warum die Vorlaeufer #802 und #805 scheiterten: dem Talos-Machine-Config
+      # fehlte `machine.kubelet.extraMounts` fuer den Datentraeger, deshalb sah
+      # das kubelet die Datenplatte nicht und loeste alle sieben subPaths dieses
+      # Charts gegen ein leeres Verzeichnis auf der System-Partition auf — ohne
+      # Fehlermeldung. Behoben am 26.08.2026 auf allen drei Nodes; Messung und
+      # Nachweis in infrastructure/base/storage/local-node-storageclass.yaml
+      # und docs/learnings/talos-kubelet-extramounts-local-storage.md
+      #
+      # Rueckweg: existingClaim auf nextcloud-app-iscsi zuruecksetzen. Das
+      # iSCSI-Volume bleibt vorlaeufig unangetastet bestehen (pvc-iscsi.yaml).
+      existingClaim: nextcloud-app-node
 
     nextcloud:
       persistence:

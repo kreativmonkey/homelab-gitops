@@ -8,11 +8,11 @@ resources:
   - nextcloud-collab.secret.yaml
   - nextcloud-s3-credentials.secret.yaml
   - pvc.yaml
-  # App-Volume. Bleibt bis auf Weiteres auf truenas-iscsi: der Umzug auf
-  # node-lokalen Speicher ist blockiert, solange der Talos-Machine-Config
-  # `machine.kubelet.extraMounts` fuer den Datentraeger fehlt. Begruendung in
-  # infrastructure/base/storage/local-node-storageclass.yaml.
+  # Bleibt vorerst stehen: Rueckweg, falls das node-lokale Volume klemmt.
+  # Nach ein paar stabilen Wochen entfernen (dann loescht reclaimPolicy die LUN).
   - pvc-iscsi.yaml
+  # Aktives App-Volume, node-lokal auf talos-cp1.
+  - pvc-local.yaml
   - whiteboard-deployment.yaml
   - appapi-harp-rbac.yaml
   - appapi-harp-deployment.yaml

@@ -1,0 +1,82 @@
+# Node-lokales App-Volume fuer Nextcloud, ersetzt nextcloud-app-iscsi.
+#
+# Dieses Volume traegt keine Nutzerdaten: die liegen als Primaerspeicher in
+# Garage/S3 (objectstore \OC\Files\ObjectStore\S3), die Datenbank in CNPG.
+# Darauf stehen nur Programmcode aus Image und App Store, gerenderte
+# ConfigMaps — und genau eine unersetzliche Datei: config/config.php mit
+# instanceid, passwordsalt und secret (2902 Byte).
+#
+# Warum weg von truenas-iscsi: die LUNs auf FastStorage laufen seit Juni 2026
+# wiederholt in ext4-emergency_ro, weil TrueNAS unter Contention Writes
+# minutenlang nicht bestaetigt (25.08.: "waited 180s" → Aborting journal →
+# Remounting filesystem read-only). Nextcloud traf es am haeufigsten, weil sein
+# Cron alle 5 Minuten schreibt. Ein Pod-Neustart raeumt nur den Mount auf, das
+# Fehlerflag im Dateisystem bleibt — es kippt beim naechsten Write-Timeout
+# sofort wieder, es braucht ein offline e2fsck. Dieselbe Umstellung hat die
+# CNPG-Failover-Kaskade beendet: dort fielen die Postgres-Restarts von 19/Tag
+# auf 7 in 30 Tagen.
+#
+# Warum ein statisches `local`-PV und nicht die StorageClass local-path: weil
+# das Volume den einzigen unersetzlichen Zustand der Anwendung traegt und
+# deshalb explizit, versioniert und auf Retain stehen soll — statt von einem
+# Provisioner nach Claim-Namen erzeugt und bei reclaimPolicy=Delete per
+# `rm -rf` abgeraeumt zu werden.
+#
+# Voraussetzung, ohne die das hier lautlos leere Verzeichnisse liefert:
+# `machine.kubelet.extraMounts` fuer den Datentraeger. Begruendung und
+# Nachweis in infrastructure/base/storage/local-node-storageclass.yaml.
+# Daran sind die Vorlaeufer #802 und #805 gescheitert.
+#
+# Preis: das Volume haengt an talos-cp1, der Pod ist ueber die nodeAffinity des
+# PVs dorthin gepinnt. Vertretbar, weil der unersetzliche Zustand 2,9 KB gross
+# und im Restic-Offsite-Backup ist.
+#
+# ===========================================================================
+# LEGACY-MOUNT-PATH — grep diesen Marker beim Umbenennen des Node-Datentraegers.
+# Die Datenplatte (sdb1, 100 GB xfs) haengt derzeit unter /var/lib/longhorn;
+# der Name ist ein irrefuehrender Rest, Longhorn laeuft nicht mehr. Zielpfad
+# ist /var/mnt/local-storage. Beim Umzug anzupassen: hier, der local-path-
+# Provisioner (infrastructure/base/storage/local-path-provisioner/configmap.yaml)
+# UND der kubelet-extraMount im Repo homelab-infrastructure.
+# Achtung: spec.local.path ist nach dem Anlegen unveraenderlich — PV und PVC
+# muessen dafuer geloescht und neu erzeugt werden (Retain, die Daten auf dem
+# Node bleiben dabei liegen).
+# ===========================================================================
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nextcloud-app-node
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-node-static
+  claimRef:
+    namespace: nextcloud
+    name: nextcloud-app-node
+  local:
+    path: /var/lib/longhorn/nextcloud-app
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - talos-cp1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-app-node
+  namespace: nextcloud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-node-static
+  volumeName: nextcloud-app-node
+  resources:
+    requests:
+      storage: 10Gi

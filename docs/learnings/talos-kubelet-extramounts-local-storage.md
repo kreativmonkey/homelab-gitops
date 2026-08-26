@@ -3,7 +3,7 @@
 **Datum**: 2026-08-26
 **Schwere**: hoch (still, keine Fehlermeldung im Normalfall)
 **Betroffen**: node-lokaler Speicher clusterweit; konkret gescheitert: Nextcloud-App-Volume (PR #802, #805)
-**Status**: Ursache bestaetigt, Fix offen (Repo `homelab-infrastructure`)
+**Status**: behoben 2026-08-26 auf allen drei Nodes
 
 ## Kurzfassung
 
@@ -96,6 +96,51 @@ machine:
 
 Danach rollend anwenden (kubelet startet neu, kein Reboot) und mit einem
 Testpod nachweisen, dass subPath und hostPath denselben Inhalt zeigen.
+
+### Rollout 2026-08-26
+
+Angewendet per `talosctl patch machineconfig --mode=no-reboot`, Reihenfolge
+cp3 → cp2 → cp1 (cp1 zuletzt, weil dort Nextcloud und ein laufendes
+Offsite-Backup lagen). Talos meldet „Applied configuration without a reboot",
+startet den kubelet-Task neu, die Nodes bleiben `Ready` und laufende Container
+ueberleben. Alle drei CNPG-Cluster blieben `healthy`.
+
+Verifikation je Node:
+
+```bash
+pid=$(talosctl -n <node> service kubelet | grep -oP 'Started task kubelet \(PID \K[0-9]+' | head -1)
+talosctl -n <node> read /proc/$pid/mounts | grep longhorn   # -> /dev/sdb1 ...
+```
+
+Funktionsnachweis auf cp1, exakt der Wert, der vorher auseinanderlief:
+
+| `custom_apps` | vorher | nachher |
+|---|---|---|
+| per hostPath | 391 431 042 B | 391 431 042 B |
+| per subPath | **6 B** | **391 431 042 B** |
+
+**Stolperstein bei der Verifikation:** `talosctl processes \| grep kubelet`
+liefert nicht zuverlaessig die PID des kubelet-Tasks. Die PID aus
+`talosctl service kubelet` nehmen — sonst misst man den alten Prozess und
+haelt den Fix fuer wirkungslos. Ebenso: `HEALTH OK` abzufragen taugt nicht als
+Warteschleife, weil es vor dem Neustart schon `OK` ist; auf einen Wechsel der
+PID warten.
+
+### Danach: Nextcloud-Umzug
+
+Mit funktionierenden subPaths lief die Migration im dritten Anlauf durch —
+`html` deterministisch aus `/usr/src/nextcloud` des Images (nicht vom alten
+ext4, das „needs filesystem check" gemeldet hatte), `config`, `custom_apps`
+und `data` vom iSCSI-Volume, danach vollstaendige Verifikation
+(Checksummen inkl. Symlinks, `version.php` gegen das Image, `config.php`
+byteidentisch) VOR dem Umschalten von `existingClaim`.
+
+**Falle in der eigenen Pruefung:** `rsync -rcni` ohne `-l` meldet jeden
+Symlink als „skipping non-regular file" und laesst die Verifikation
+fehlschlagen, obwohl die Kopie (mit `-a`) korrekt ist. Zum Vergleichen
+`-r -l -c -i -n --no-perms --no-owner --no-group --no-times` nehmen: prueft
+Existenz, Inhalt und Linkziel, ignoriert Metadaten (das Ziel gehoert 1000:1000,
+das Image root).
 
 ### Zweite Mine im selben Bereich
 
