@@ -138,24 +138,30 @@ spec:
           enabled: false
     persistence:
       enabled: true
-      # ZURUECK auf iSCSI (25.08.2026). Der Umzug auf node-lokalen Speicher
-      # ist zweimal am selben Punkt gescheitert: das Chart mountet sieben
-      # subPaths, und weder das hostPath-PV von local-path noch das statische
-      # local-PV haben die durchgereicht. Der Pod sah jeweils leere
-      # Verzeichnisse, schrieb sich eine frische config.php und hielt sich fuer
-      # eine Neuinstallation. Die Daten auf beiden Volumes blieben unversehrt,
-      # die Datenbank ebenfalls — aber der Cutover ist damit offen.
+      # Bleibt auf truenas-iscsi — nicht, weil es gut ist, sondern weil der
+      # Umzug blockiert ist.
       #
-      # Der vorbereitete Stand steht weiterhin bereit: PV/PVC nextcloud-app-node
-      # (Retain) mit der fertigen Kopie, StorageClass local-node-static.
-      # Naechster Schritt siehe Issue: subPath-freien Mount-Aufbau finden oder
-      # das Chart entsprechend konfigurieren, VORHER in einem Testpod
-      # verifizieren.
+      # Das Problem mit iSCSI: dieses Volume lief seit Juni 2026 wiederholt in
+      # ext4-emergency_ro, weil TrueNAS unter Contention Writes minutenlang
+      # nicht bestaetigt (25.08.: "waited 180s" → Aborting journal → Remounting
+      # filesystem read-only). Nextcloud traf es am haeufigsten, weil sein Cron
+      # alle 5 Minuten schreibt. Ein Pod-Neustart raeumt nur den Mount auf, das
+      # Fehlerflag im Dateisystem bleibt — es kippt beim naechsten Write-Timeout
+      # sofort wieder. Ablauf der Reparatur:
+      # docs/learnings/nextcloud-iscsi-emergency-readonly.md
+      #
+      # Warum der Umzug auf node-lokalen Speicher blockiert ist: dem
+      # Talos-Machine-Config fehlt `machine.kubelet.extraMounts` fuer den
+      # Datentraeger, deshalb sieht das kubelet die Datenplatte nicht und
+      # loest alle sieben subPaths dieses Charts gegen ein leeres Verzeichnis
+      # auf der System-Partition auf. Genau daran sind #802 und #805
+      # gescheitert. Vollstaendige Messung und die Voraussetzung fuer den
+      # Umzug: infrastructure/base/storage/local-node-storageclass.yaml
       existingClaim: nextcloud-app-iscsi
 
     nextcloud:
       persistence:
-        # Empty subPath → chart uses "html", "config", etc. directly on iSCSI PVC.
+        # Empty subPath → chart uses "html", "config", etc. directly on the PVC root.
         subPath: ""
       existingSecret:
         enabled: true
@@ -535,14 +541,17 @@ spec:
         successfulJobsHistoryLimit: 2
         activeDeadlineSeconds: 1800
         backoffLimit: 2
-        # nextcloud-app-iscsi ist ReadWriteOnce auf truenas-iscsi. Der CronJob mountet
-        # dasselbe Volume wie der App-Pod, kann es aber nur auf DESSEN Node attachen.
-        # Ohne Affinity verteilt der Scheduler die Job-Pods über alle drei Nodes; die
-        # ~2/3, die nicht auf dem App-Node landen, hängen mit "Multi-Attach error" bis
+        # Das App-Volume ist ReadWriteOnce. Der CronJob mountet dasselbe Volume wie
+        # der App-Pod, kann es aber nur auf DESSEN Node attachen. Ohne Affinity
+        # verteilt der Scheduler die Job-Pods über alle drei Nodes; die ~2/3, die
+        # nicht auf dem App-Node landen, hängen mit "Multi-Attach error" bis
         # activeDeadlineSeconds (30 min) greift — und blockieren wegen
         # concurrencyPolicy=Forbid solange alle weiteren Läufe.
         # requiredDuringScheduling, nicht preferred: ein Job auf dem falschen Node
         # läuft nicht langsamer, er läuft gar nicht.
+        # Seit dem Umzug auf nextcloud-app-node erzwingt schon die nodeAffinity des
+        # local-PVs talos-cp1; die podAffinity bleibt als zweite Sicherung und
+        # verhindert zusätzlich Cron-Läufe, während der App-Pod unten ist.
         affinity:
           podAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
