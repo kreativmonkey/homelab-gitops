@@ -335,6 +335,15 @@ spec:
             - name: nextcloud-main
               mountPath: /var/www/html/config
               subPath: config
+            # Das echte Datenverzeichnis. Ohne diesen Mount sieht occ hier
+            # html/data aus dem Image -- ein Phantomverzeichnis ohne .ncdata,
+            # und occ bricht mit "Your data directory is invalid" ab. Auf dem
+            # alten iSCSI-Volume lag dort historisch ein .ncdata, deshalb fiel
+            # es nie auf; nebenbei landete auch nextcloud.log dort statt im
+            # echten data-Verzeichnis.
+            - name: nextcloud-main
+              mountPath: /var/www/html/data
+              subPath: data
 
         # S3 migration safeguard: clean up duplicate mounts and verify storage types.
         # Nextcloud ≥33 has a unique index on oc_mounts, but during migration
@@ -439,6 +448,15 @@ spec:
             - name: nextcloud-main
               mountPath: /var/www/html/config
               subPath: config
+            # Das echte Datenverzeichnis. Ohne diesen Mount sieht occ hier
+            # html/data aus dem Image -- ein Phantomverzeichnis ohne .ncdata,
+            # und occ bricht mit "Your data directory is invalid" ab. Auf dem
+            # alten iSCSI-Volume lag dort historisch ein .ncdata, deshalb fiel
+            # es nie auf; nebenbei landete auch nextcloud.log dort statt im
+            # echten data-Verzeichnis.
+            - name: nextcloud-main
+              mountPath: /var/www/html/data
+              subPath: data
 
         - name: occ-collab-setup
           image: docker.io/library/nextcloud:34.0.3-apache
@@ -512,6 +530,15 @@ spec:
             - name: nextcloud-main
               mountPath: /var/www/html/config
               subPath: config
+            # Das echte Datenverzeichnis. Ohne diesen Mount sieht occ hier
+            # html/data aus dem Image -- ein Phantomverzeichnis ohne .ncdata,
+            # und occ bricht mit "Your data directory is invalid" ab. Auf dem
+            # alten iSCSI-Volume lag dort historisch ein .ncdata, deshalb fiel
+            # es nie auf; nebenbei landete auch nextcloud.log dort statt im
+            # echten data-Verzeichnis.
+            - name: nextcloud-main
+              mountPath: /var/www/html/data
+              subPath: data
       extraEnv:
         - name: TZ
           value: Europe/Berlin
