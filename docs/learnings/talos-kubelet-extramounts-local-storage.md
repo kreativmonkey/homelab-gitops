@@ -142,6 +142,69 @@ fehlschlagen, obwohl die Kopie (mit `-a`) korrekt ist. Zum Vergleichen
 Existenz, Inhalt und Linkziel, ignoriert Metadaten (das Ziel gehoert 1000:1000,
 das Image root).
 
+### Drei Nachzieharbeiten, die eine reine Dateikopie nicht abdeckt
+
+Alle drei tauchten erst nach dem Cutover auf. `html` exakt dem Image
+gleichzumachen ist richtig — aber `html` enthaelt auch **generierte** Dateien,
+und der Entrypoint regeneriert sie nur, wenn er einen Versionssprung sieht.
+Weil `version.php` bewusst zum Image passte, lief dieser Pfad nicht.
+
+**1. `html/.htaccess` — Pretty-URL-Rewrites fehlten.** Unter der Zeile
+`#### DO NOT CHANGE ANYTHING ABOVE THIS LINE ####` haengt ein von
+`occ maintenance:update:htaccess` erzeugter Block (`RewriteRule . index.php`,
+`RewriteBase /`). Im Image fehlt er. Symptom: Apache **im Pod** antwortet
+`404 Not Found` auf `/login` und `403` auf `/apps/files/`, waehrend
+`/status.php` 200 liefert — der Ingress ist unschuldig, im 404-Body steht
+`Apache/2.4.68 (Debian)`. Behoben mit:
+
+```bash
+kubectl -n nextcloud exec deploy/nextcloud -c nextcloud -- php occ maintenance:update:htaccess
+```
+
+Nach einem Image-Upgrade erledigt der Entrypoint das wieder selbst; nach einer
+Handkopie von `html` muss es **einmal manuell** laufen.
+
+**2. `html/data/.ncdata` — Init-Container ohne Datenverzeichnis.** Die drei
+`occ`-Init-Container mounteten `html` und `config`, aber nicht `data`, und
+sahen als `datadirectory` das leere `html/data` aus dem Image:
+`Your data directory is invalid`, Init-CrashLoop. Auf dem alten Volume lag dort
+historisch ein `.ncdata` — und, verraeterisch, auch ein `nextcloud.log`: die
+Init-Container hatten die ganze Zeit **neben** das echte Datenverzeichnis
+geschrieben. Richtig geloest durch Mitmounten des `data`-subPath (PR #813),
+nicht durch Nachlegen der Datei.
+
+**3. `user_oidc` — Code und DB auseinandergelaufen.** `oc_appconfig` sagte
+`installed_version = 8.11.0`, auf dem Volume lag 8.10.1 — auf dem alten
+Volume genauso. Ursache ist der read-only-Vorfall: ein App-Update schrieb die
+Version in die Datenbank, konnte den Code aber nicht auf das abgeschaltete
+Dateisystem legen. Folge: `needsDbUpgrade: true`, Nextcloud antwortet Nutzern
+mit **503**. Die Datenbank ist dabei die Wahrheit (ihre Migrationen sind
+gelaufen), also den Code hochziehen, nicht die DB zuruecksetzen:
+
+```bash
+kubectl -n nextcloud exec deploy/nextcloud -c nextcloud -- php occ app:update user_oidc
+```
+
+`admin_audit` zeigte dieselbe Abweichung (DB 1.23.0, Code 1.24.0), ist aber
+`enabled = no` und loest deshalb nichts aus.
+
+**Merksatz:** Nach so einer Migration nicht nur Dateien vergleichen, sondern
+die Anwendung befragen — `occ status` (`needsDbUpgrade`), einen echten
+HTTP-Aufruf auf `/` und `/login` (nicht nur `/status.php`, das kommt an den
+Rewrites vorbei) und die DB-App-Versionen gegen die Versionen im Code.
+
+### Reste
+
+* Auf der System-Partition (sda6, EPHEMERAL) von talos-cp1 liegen unter dem
+  jetzt von sdb1 verdeckten `/var/lib/longhorn` noch ~860 MB der alten
+  Fehlkopie. Sie sind ueber keinen Namespace mehr erreichbar und verschwinden
+  erst beim Neuaufsetzen des Nodes. Kein Handlungsbedarf, aber es erklaert,
+  warum die Partition ungewoehnlich voll ist.
+* `/var/lib/longhorn/local-path/pvc-bcd7e514-…_nextcloud_nextcloud-app-local`
+  auf der Datenplatte haelt noch ~1,2 GB der Kopie aus PR #802. Das PV-Objekt
+  ist entfernt (Retain, es wurden keine Daten geloescht); das Verzeichnis kann
+  nach ein paar stabilen Wochen von Hand weg.
+
 ### Zweite Mine im selben Bereich
 
 `cluster.auto.tfvars` deklariert `default_data_disks` mit
