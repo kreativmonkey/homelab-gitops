@@ -153,4 +153,4 @@ spec:
         # layers are cached across pipeline runs instead of re-pulled every time.
         - name: dind-storage
           persistentVolumeClaim:
-            claimName: forgejo-runner-dind
+            claimName: forgejo-runner-dind-cache
