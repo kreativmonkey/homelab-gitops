@@ -24,8 +24,14 @@ data:
           name: "Immich Quota"
           scope_name: "immich_quota"
           description: "Set the storage size for immich foto app."
+          # Immich's Storage Quota Claim expects a NUMBER in GiB, not a string.
+          # A string is silently ignored and Immich falls back to its default
+          # quota. Parse int/"5"/"5 GB" -> int GiB so the claim stays numeric.
           expression: |-
-            return user.group_attributes().get("immich_quota", "5 GB")
+            raw = user.group_attributes().get("immich_quota", 5)
+            if isinstance(raw, str):
+                raw = raw.strip().split()[0]
+            return int(float(raw))
       - model: authentik_providers_oauth2.oauth2provider
         id: immich-provider
         # Match on client_id, not name: the name is an attribute the blueprint
