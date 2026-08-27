@@ -128,8 +128,13 @@ spec:
 
         # Faengt jeden kuenftigen Schedule ab, der oben nicht namentlich steht —
         # sonst waere ein neuer Schedule stillschweigend unueberwacht.
+        # schedule!="" ist zwingend: Velero exportiert die Serie auch ohne
+        # schedule-Label fuer manuell ausgeloeste Backups. Ein fehlendes Label
+        # gilt in PromQL als "" und matcht den Negativ-Matcher — ohne diesen
+        # Ausschluss feuert der Alert nach jedem Ad-hoc-Backup dauerhaft, weil
+        # ein einmaliges Backup per Definition nie wieder "aktuell" wird.
         - alert: VeleroUnknownScheduleStale
-          expr: (time() - velero_backup_last_successful_timestamp{schedule!~"daily-backup|weekly-backup"}) > 36 * 3600
+          expr: (time() - velero_backup_last_successful_timestamp{schedule!="", schedule!~"daily-backup|weekly-backup"}) > 36 * 3600
           for: 1h
           labels:
             severity: warning

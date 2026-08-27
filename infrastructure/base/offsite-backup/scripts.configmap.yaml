@@ -69,6 +69,22 @@ data:
     if ! restic snapshots >/dev/null 2>&1; then
       restic init || result=1
     fi
+
+    # Verwaiste Locks abraeumen, bevor gesperrt wird. Stirbt ein Pod mitten in
+    # einem restic-Lauf (geloeschter Ad-hoc-Job, OOM-Kill, Node-Reboot), bleibt
+    # sein Lock-File liegen. Restic prueft die PID nur bei gleichem Hostname —
+    # bei einem fremden Pod-Namen kann es das nicht und raeumt nie von selbst
+    # auf. Folge ohne diese Zeile: 'backup' laeuft noch (nicht-exklusiv), aber
+    # jedes 'forget' wartet --retry-lock ab und scheitert, in JEDEM Job, bis
+    # jemand manuell entsperrt. Genau so kippten am 2026-08-26 alle sechs Jobs.
+    # Sicher trotz erlaubter Ueberlappung: 'unlock' ohne --remove-all entfernt
+    # nur Locks, die restic selbst fuer stale haelt, und ein lebender
+    # restic-Prozess erneuert seinen Lock laufend — der eines echt parallel
+    # laufenden Jobs ist damit nie betroffen. --remove-all waere hier falsch.
+    if [ "${result}" -eq 0 ]; then
+      restic unlock || result=1
+    fi
+
     if [ "${result}" -eq 0 ]; then
       restic backup ${RETRY_LOCK} --host homelab --tag "${tag}" "$@" || result=1
     fi
@@ -376,6 +392,9 @@ data:
       restic snapshots >/dev/null 2>&1 && break
       sleep "${delay}"
     done
+    # Siehe restic-backup.sh: verwaiste Locks abraeumen, sonst blockieren check
+    # und prune hier genauso. Ohne --remove-all, also fuer parallele Jobs sicher.
+    restic unlock || fail "restic unlock"
     restic check ${RETRY_LOCK} --read-data-subset=5% || fail "restic check"
     # security.*-xattrs bleiben aussen vor: der Container darf den SELinux-Label
     # des Zielverzeichnisses nicht setzen, restic wertet das als Fatal, obwohl
