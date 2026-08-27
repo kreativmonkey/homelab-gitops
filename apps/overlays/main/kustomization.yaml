@@ -31,6 +31,7 @@ resources:
   - ../../base/paperless-ngx
   - ../../base/paperless-gpt
   - ../../base/immich
+  - ../../base/immich-power-tools
 
   # --- Infrastructure & Tools -------------------------------------------
   - ../../base/ai-agents
@@ -144,6 +145,16 @@ replacements:
       fieldPath: data.host_immich
     targets:
       - select: {kind: Ingress, name: immich}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_immich_power_tools
+    targets:
+      - select: {kind: Ingress, name: immich-power-tools}
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
@@ -375,6 +386,8 @@ replacements:
       - select: {kind: Ingress, name: searxng}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: immich}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: immich-power-tools}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: teslamate}
         fieldPaths: [spec.tls.0.secretName]

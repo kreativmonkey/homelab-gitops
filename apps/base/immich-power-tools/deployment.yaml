@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-power-tools
+  namespace: immich
+  labels:
+    app: immich-power-tools
+    app.kubernetes.io/name: immich-power-tools
+    app.kubernetes.io/part-of: immich
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: immich-power-tools
+  template:
+    metadata:
+      labels:
+        app: immich-power-tools
+        app.kubernetes.io/name: immich-power-tools
+        app.kubernetes.io/part-of: immich
+    spec:
+      # Image runs as USER nextjs (uid 1001); matches container identity below.
+      securityContext:
+        fsGroup: 1001
+      containers:
+        - name: immich-power-tools
+          # renovate: datasource=docker depName=ghcr.io/immich-power-tools/immich-power-tools versioning=semver
+          image: ghcr.io/immich-power-tools/immich-power-tools:v0.22.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            # Internal Immich server API (cluster DNS, no ingress round-trip).
+            - name: IMMICH_URL
+              value: http://immich-server.immich.svc.cluster.local:2283
+            # Public Immich URL used for share links / embeds. Keep in sync
+            # with host_immich in overlays/main/cluster-config.yaml.
+            - name: EXTERNAL_IMMICH_URL
+              value: https://immich.f4mily.net
+            - name: IMMICH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: immich-power-tools-api-key
+                  key: IMMICH_API_KEY
+            # Direct Immich Postgres access (same creds Immich uses). Power
+            # Tools runs DB migrations + analytics queries against this DB.
+            - name: DB_HOST
+              value: immich-postgres-rw.cnpg-system.svc.cluster.local
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE_NAME
+              value: immich
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-immich
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-immich
+                  key: password
+            # TLS terminates at ingress → secure cookies.
+            - name: SECURE_COOKIE
+              value: "true"
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          # Restricted profile: non-root, no privilege escalation, RO root FS.
+          # Writable paths /app/data (app.db) and /tmp get dedicated emptyDirs.
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-power-tools
+  namespace: immich
+  labels:
+    app: immich-power-tools
+    app.kubernetes.io/name: immich-power-tools
+    app.kubernetes.io/part-of: immich
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+      name: http
+  selector:
+    app: immich-power-tools
