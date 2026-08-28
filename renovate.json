@@ -63,6 +63,14 @@
       "versioningTemplate": "loose"
     }
   ],
+  "hostRules": [
+    {
+      "description": "data.forgejo.org liegt hinter Bot-Protection/Rate-Limit (Anubis); Renovate wird sonst mit no-result blockiert. Requests drosseln (siehe renovatebot/renovate#42144).",
+      "matchHost": "data.forgejo.org",
+      "concurrentRequestLimit": 1,
+      "maxRequestsPerSecond": 1
+    }
+  ],
   "customDatasources": {
     "grafana-plugins": {
       "defaultRegistryUrlTemplate": "https://grafana.com/api/plugins/{{packageName}}/versions",
