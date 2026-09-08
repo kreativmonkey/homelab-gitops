@@ -31,7 +31,7 @@ spec:
           # liegt nur der konsistenzkritische Kern (Nachsync + Dump + App-Tar).
           initContainers:
             - name: fetch-garage-credentials
-              image: docker.io/alpine/k8s:1.36.2
+              image: docker.io/alpine/k8s:1.37.0
               command:
                 - /bin/sh
                 - -ec
@@ -103,7 +103,7 @@ spec:
                   mountPath: /staging
             # Ab hier ist Nextcloud offline -- alles dahinter kurz halten.
             - name: maintenance
-              image: docker.io/alpine/k8s:1.36.2
+              image: docker.io/alpine/k8s:1.37.0
               restartPolicy: Always
               command: ["/bin/sh", "/scripts/nextcloud-maintenance.sh"]
               volumeMounts:
@@ -158,7 +158,7 @@ spec:
                 - name: staging
                   mountPath: /staging
             - name: capture-state
-              image: docker.io/alpine/k8s:1.36.2
+              image: docker.io/alpine/k8s:1.37.0
               command:
                 - /bin/sh
                 - -c

@@ -59,7 +59,7 @@ spec:
                 - name: config
                   mountPath: /config
             - name: databases-dump
-              image: docker.io/alpine/k8s:1.36.2
+              image: docker.io/alpine/k8s:1.37.0
               command: ["/bin/sh", "/scripts/databases-dump.sh"]
               volumeMounts:
                 - name: scripts
