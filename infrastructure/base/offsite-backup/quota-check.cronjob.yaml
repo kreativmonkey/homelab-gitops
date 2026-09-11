@@ -25,7 +25,7 @@ spec:
           terminationGracePeriodSeconds: 30
           initContainers:
             - name: prepare-rclone
-              image: docker.io/rclone/rclone:1.75.0
+              image: docker.io/rclone/rclone:1.75.1
               command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
               env:
                 - name: STORAGEBOX_HOST
@@ -45,7 +45,7 @@ spec:
                   readOnly: true
           containers:
             - name: check
-              image: docker.io/rclone/rclone:1.75.0
+              image: docker.io/rclone/rclone:1.75.1
               command: ["/bin/sh", "/scripts/storagebox-quota.sh"]
               env:
                 # 500 GiB. Reicht fuer mehrere Laeufe Vorlauf, bevor Retention

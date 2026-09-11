@@ -45,7 +45,7 @@ spec:
                 - name: config
                   mountPath: /config
             - name: prepare-rclone
-              image: docker.io/rclone/rclone:1.75.0
+              image: docker.io/rclone/rclone:1.75.1
               command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
               env:
                 - name: STORAGEBOX_HOST
@@ -64,7 +64,7 @@ spec:
                   mountPath: /scripts
                   readOnly: true
             - name: restic-server
-              image: docker.io/rclone/rclone:1.75.0
+              image: docker.io/rclone/rclone:1.75.1
               restartPolicy: Always
               args:
                 - serve
@@ -81,7 +81,7 @@ spec:
             # Prefetch ausserhalb des Wartungsmodus. Best effort -- Fehler
             # werden nicht bewertet, der autoritative Sync folgt im Freeze.
             - name: stage-objects-prefetch
-              image: docker.io/rclone/rclone:1.75.0
+              image: docker.io/rclone/rclone:1.75.1
               command:
                 - /bin/sh
                 - -c
@@ -113,7 +113,7 @@ spec:
                 - name: work
                   mountPath: /work
             - name: wait-maintenance
-              image: docker.io/rclone/rclone:1.75.0
+              image: docker.io/rclone/rclone:1.75.1
               command:
                 - /bin/sh
                 - -ec
@@ -131,7 +131,7 @@ spec:
                 - name: work
                   mountPath: /work
             - name: stage-objects
-              image: docker.io/rclone/rclone:1.75.0
+              image: docker.io/rclone/rclone:1.75.1
               command:
                 - /bin/sh
                 - -c
@@ -214,7 +214,7 @@ spec:
                   mountPath: /staging
           containers:
             - name: finalize
-              image: docker.io/rclone/rclone:1.75.0
+              image: docker.io/rclone/rclone:1.75.1
               command: ["/bin/sh", "/scripts/finalize.sh"]
               volumeMounts:
                 - name: scripts
