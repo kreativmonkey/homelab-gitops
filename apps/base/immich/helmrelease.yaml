@@ -71,7 +71,7 @@ spec:
               # VectorChord on immich-postgres; omit DB_VECTOR_EXTENSION so Immich auto-detects vchord.
             image:
               # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server versioning=semver
-              tag: v3.1.0
+              tag: v3.2.0
     server:
       controllers:
         main:
@@ -79,7 +79,7 @@ spec:
             main:
               image:
                 repository: ghcr.io/immich-app/immich-server
-                tag: v3.1.0
+                tag: v3.2.0
               # p95/p99-derived (14d/7d VictoriaMetrics history). Previously
               # nested as a sibling of `controllers` under `server:` — that
               # key does not exist in this bjw-s-common-based chart, so Helm
@@ -123,7 +123,7 @@ spec:
             main:
               image:
                 repository: ghcr.io/immich-app/immich-machine-learning
-                tag: v3.1.0
+                tag: v3.2.0
               # p95/p99-derived (14d/7d VictoriaMetrics history). Previously
               # nested as a sibling of `controllers` under `machine-learning:`
               # — same dead-key mistake as immich-server above (see comment
