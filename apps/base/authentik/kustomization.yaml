@@ -21,6 +21,7 @@ resources:
   - blueprints/forgejo-oauth.configmap.yaml
   - blueprints/immich-oauth.configmap.yaml
   - blueprints/nextcloud-oauth.configmap.yaml
+  - blueprints/homelable-oauth.configmap.yaml
   - media-pvc.yaml
   - helmrelease.yaml
   - ingress.yaml
