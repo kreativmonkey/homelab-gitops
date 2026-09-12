@@ -7,6 +7,7 @@ End-to-end recovery after control-plane loss or full cluster rebuild. **PostgreS
 | Layer | Mechanism | Doc |
 |-------|-----------|-----|
 | Talos / etcd / API | Reset CPs, bootstrap, Flux re-apply | [Talos control plane](#talos-control-plane) |
+| Talos Backup | Etcd-Snapshot, Machine Configs, Secrets-Bundle | [Talos Backup und Restore](talos-backup-restore.md) |
 | PostgreSQL | CNPG `bootstrap.recovery` from Garage S3 | [cnpg-s3-dr.md](cnpg-s3-dr.md) |
 | App manifests | Flux (`homelab-gitops` on **GitHub**) | This doc |
 | PV / namespace data | Velero (optional) | [cnpg-s3-dr.md](cnpg-s3-dr.md#velero-vs-barman) |
@@ -109,3 +110,4 @@ just validate   # from gitops-homelab, nix develop
 
 - [Cluster access](../cluster-access.md)
 - [CNPG runbook](../runbooks/cnpg-cluster-offline.md)
+- [Homelable Runbook](../runbooks/homelable.md)
