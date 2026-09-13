@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homelable
+  namespace: homelable
+  annotations:
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+    nginx.org/websocket-services: homelable
+    nginx.org/client-max-body-size: 20m
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Homelable
+    gethomepage.dev/description: Visual homelab topology, inventory and monitoring.
+    gethomepage.dev/group: Cluster Management
+    gethomepage.dev/icon: mdi-lan
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - homelable.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: homelable.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homelable
+                port:
+                  number: 3000

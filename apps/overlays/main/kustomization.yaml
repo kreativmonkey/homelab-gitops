@@ -51,6 +51,7 @@ resources:
   - ../../base/sparkyfitness
   - ../../base/authentik
   - ../../base/homepage
+  - ../../base/homelable
 
   # --- Network Monitoring -----------------------------------------------
   # - ../../base/speedtest-tracker   # wip: ingress only, no workload
@@ -88,6 +89,15 @@ resources:
 #   2. Append a target block here referencing the new key.
 # ============================================================================
 replacements:
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_homelable
+    targets:
+      - select: {kind: Ingress, name: homelable}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
   # -------- Per-app hostnames (full-value replacement) ----------------------
   - source:
       kind: ConfigMap
