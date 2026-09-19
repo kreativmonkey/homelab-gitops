@@ -40,9 +40,9 @@ spec:
             key: cloud
           config:
             region: garage
-            s3Url: http://192.168.10.94:30188
+            s3Url: https://s3.nas.f4mily.net
             s3ForcePathStyle: "true"
-            insecureSkipTLSVerify: "true"
+            insecureSkipTLSVerify: "false"
             checksumAlgorithm: ""
       volumeSnapshotLocation: []
     initContainers:

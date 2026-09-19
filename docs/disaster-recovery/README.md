@@ -15,7 +15,7 @@ End-to-end recovery after control-plane loss or full cluster rebuild. **PostgreS
 
 ## Prerequisites (before you need DR)
 
-1. **CNPG backups** reaching `http://192.168.10.94:30188` — verify `kubectl get backup -n cnpg-system`.
+1. **CNPG backups** reach `https://s3.nas.f4mily.net` with normal public-WebPKI certificate validation — verify `kubectl get backup -n cnpg-system`.
 2. **SOPS secrets** in Git decryptable by cluster (`sops-age` in `flux-system` from OpenTofu).
 3. **Offsite Restic verification** successful in `backup-offsite` — see [offsite-backup-restore.md](../runbooks/offsite-backup-restore.md).
 4. **pgadmin**: `pgadmin-credentials.secret.yaml` enabled in `infrastructure/overlays/main/pgadmin/kustomization.yaml` (see `just pgadmin-credentials`).
@@ -58,7 +58,7 @@ Follow [cnpg-s3-dr.md](cnpg-s3-dr.md). Summary:
 
 1. `flux suspend kustomization apps -n flux-system`
 2. Set `infra-main` path to `./infrastructure/overlays/disaster-recovery` in `clusters/main/infrastructure.yaml`, push **GitHub `main`**.
-3. Wait for `homelab-postgres` and `immich-postgres` **Ready**.
+3. Wait for `homelab-postgres`, `immich-postgres`, and `dawarich-postgres` **Ready**.
 4. **Mandatory:** Revert `infra-main` to `./infrastructure/overlays/main`, push, `flux resume kustomization apps`. The DR path must never stay active — leaving it wired permanently re-bootstraps the central DBs from S3 on every reconcile/redeploy (see docs/adr/0001-dr-overlay-transient.md).
 
 DR patches include `cnpg.io/skipEmptyWalArchiveCheck: enabled` when reusing the same S3 `serverName` as production.
