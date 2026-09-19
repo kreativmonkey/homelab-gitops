@@ -32,7 +32,7 @@ Application workloads deployed to the cluster. `base/<app>/` holds generic manif
 
 # Verification
 
-- `just fmt && just lint && just test` locally before PR.
+- `just validate` locally before PR; `just validate-full` for workload changes.
 
 # Child DOX Index
 

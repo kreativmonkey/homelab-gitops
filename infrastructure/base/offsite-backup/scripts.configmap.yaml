@@ -259,17 +259,26 @@ data:
 
     # Preflight: das Nextcloud-Config-Verzeichnis muss beschreibbar sein,
     # sonst scheitert `occ maintenance:mode --on` still und der Job haengt
-    # sich 5x durch, ohne die Ursache zu benennen. Ein read-only Remount des
-    # iSCSI-Volumes (Kernel flippt bei I/O-Blueen des TrueNAS-Links) ist die
-    # haeufigste Ursache -- dann muss das Volume neu angebunden werden, nicht
-    # das Backup repariert werden.
-    if ! timeout 60 kubectl exec -n nextcloud deploy/nextcloud -c nextcloud -- \
+    # sich 5x durch, ohne die Ursache zu benennen. Erst einen laufenden
+    # App-Pod aufloesen: bei einem Init-Crash gibt es keinen `nextcloud`
+    # Container, in den `kubectl exec deploy/...` greifen kann.
+    nextcloud_pod="$(kubectl get pods -n nextcloud \
+      -l app.kubernetes.io/name=nextcloud,app.kubernetes.io/component=app \
+      --field-selector=status.phase=Running \
+      -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+    if [ -z "${nextcloud_pod}" ]; then
+      echo "FEHLER: kein laufender Nextcloud-App-Pod gefunden"
+      echo "Init-Fehler oder nicht verfuegbares Deployment zuerst beheben"
+      touch /work/maintenance-pod.failed
+      touch /work/maintenance-failed
+      idle
+    fi
+    if ! timeout 60 kubectl exec -n nextcloud "${nextcloud_pod}" -c nextcloud -- \
          sh -c 'touch /var/www/html/config/.maintenance-probe \
                 && rm -f /var/www/html/config/.maintenance-probe' 2>/dev/null; then
       echo "FEHLER: /var/www/html/config im Nextcloud-Pod ist nicht beschreibbar"
-      echo "(read-only Remount des iSCSI-Volumes?). Wartungsmodus kann nicht"
-      echo "aktiviert werden -- Volume neu anbinden (deploy/nextcloud rollout"
-      echo "restart), dann Backup erneut anstossen."
+      echo "Wartungsmodus kann nicht aktiviert werden -- Volume und Pod-Logs"
+      echo "pruefen, dann Backup erneut anstossen."
       touch /work/maintenance-ro.failed
       touch /work/maintenance-failed
       idle

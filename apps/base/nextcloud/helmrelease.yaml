@@ -288,6 +288,10 @@ spec:
                   --database-user "${POSTGRES_USER}" \
                   --database-pass "${POSTGRES_PASSWORD}"
               fi
+              # Complete a DB upgrade if code on the PVC was already updated.
+              # Otherwise OIDC setup blocks the main container's entrypoint.
+              echo "occ-db-sync: checking database upgrade"
+              php occ upgrade --no-interaction
               # Fast path: do not rewrite config.php on every pod start (Recreate = outage if this fails).
               php occ maintenance:mode --off 2>/dev/null || true
               if php occ status 2>/dev/null | grep -q 'installed: true'; then
