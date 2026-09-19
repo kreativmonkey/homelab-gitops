@@ -2,22 +2,21 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: homelab-postgres
+  name: dawarich-postgres
   namespace: cnpg-system
   annotations:
-    # Restore into same S3 prefix/serverName as production backups (see cnpg-s3-dr.md)
     cnpg.io/skipEmptyWalArchiveCheck: enabled
 spec:
   bootstrap:
     recovery:
-      source: homelab-postgres
+      source: dawarich-postgres
   externalClusters:
-    - name: homelab-postgres
+    - name: dawarich-postgres
       barmanObjectStore:
-        destinationPath: s3://cnpg-backups/homelab-postgres
+        destinationPath: s3://cnpg-backups/dawarich-postgres
         # Public WebPKI endpoint; CNPG verifies the normal system trust store.
         endpointURL: https://s3.nas.f4mily.net
-        serverName: homelab-postgres
+        serverName: dawarich-postgres
         s3Credentials:
           accessKeyId:
             name: cnpg-barman-s3-credentials

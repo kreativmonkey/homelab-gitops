@@ -32,6 +32,28 @@ kubectl get podvolumebackup -n velero -l velero.io/backup-name=<backup>
 - Prove recovery with one `Completed` backup and a test restore; controller
   `Ready` status alone does not prove volume data was captured
 
+## HTTPS storage smoke
+
+The default BackupStorageLocation must use `https://s3.nas.f4mily.net` with
+`insecureSkipTLSVerify: "false"`. After the endpoint has passed hostname and
+chain validation and Flux has reconciled, run a narrowly scoped backup,
+download it, verify the archive, then remove it:
+
+```bash
+name="velero-https-smoke-$(date -u +%Y%m%d%H%M%S)"
+kubectl wait --for=jsonpath='{.status.phase}'=Available \
+  backupstoragelocation/default -n velero --timeout=2m
+velero backup create "$name" --include-namespaces default --wait
+velero backup describe "$name" --details
+velero backup download "$name" --output "/tmp/${name}.tar.gz"
+tar -tzf "/tmp/${name}.tar.gz" >/dev/null
+rm -f "/tmp/${name}.tar.gz"
+velero backup delete "$name" --confirm
+```
+
+No runtime smoke was run by this GitOps change. An x509, hostname, or SNI
+failure blocks rollout; do not disable verification as a workaround.
+
 ## Hanging PodVolumeBackups (zombie PVBs)
 
 ### Symptom

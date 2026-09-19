@@ -16,3 +16,8 @@ patches:
       kind: Cluster
       name: immich-postgres
       namespace: cnpg-system
+  - path: patches/cluster-recovery-dawarich.yaml
+    target:
+      kind: Cluster
+      name: dawarich-postgres
+      namespace: cnpg-system
