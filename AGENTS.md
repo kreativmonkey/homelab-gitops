@@ -151,7 +151,7 @@ Each learning is a standalone Markdown file in `docs/learnings/` with:
 2. Add/adjust HelmRelease in `apps/base/<app>/helmrelease.yaml` (or raw manifests if no chart).
 3. Add Ingress annotations per conventions above.
 4. If DB needed, add CNPG `Cluster` manifest in `infrastructure/overlays/main/database-clusters/<app>/` and corresponding secret in `apps/overlays/main/db-secrets/`.
-5. Run `just fmt && just lint && just test` locally.
+5. Run `just validate` locally; use `just validate-full` for workload or controller changes.
 6. Open PR – CI validates, Renovate may propose version bump.
 
 ---
