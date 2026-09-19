@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 
 source, destination = map(Path, sys.argv[1:])
-redact_keys = {"match", "matched", "snippet", "content", "code", "codeflows", "lines", "raw", "secret", "text", "markdown"}
+redact_keys = {"match", "matched", "snippet", "content", "code", "codeflows", "line", "lines", "raw", "secret", "text", "markdown", "message", "description", "author", "email"}
 
 def sanitize(value):
     if isinstance(value, dict):
