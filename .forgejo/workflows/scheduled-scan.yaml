@@ -1,0 +1,59 @@
+name: Scheduled Security Scan
+
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout recorded commit with full history
+        uses: actions/checkout@v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: https://github.com/cachix/install-nix-action@v31.10.6
+
+      - name: Record scanned commit
+        run: |
+          mkdir -p security-scan-artifacts
+          git rev-parse HEAD > security-scan-artifacts/commit.sha
+
+      - name: Run scanner classes
+        id: scan
+        continue-on-error: true
+        env:
+          REPORT_DIR: security-scan-artifacts
+          SCAN_TIMEOUT: 20m
+        run: nix develop -c just security-scan
+
+      - name: Upload sanitized scanner evidence
+        if: always()
+        uses: https://github.com/actions/upload-artifact@v4
+        with:
+          name: security-scan-${{ github.sha }}
+          path: security-scan-artifacts/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Report scan gate failure to issue
+        if: steps.scan.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: ./scripts/ci/scan-findings-issue.sh
+
+      - name: Fail on scanner gate or execution blocker
+        if: steps.scan.outcome == 'failure'
+        run: exit 1

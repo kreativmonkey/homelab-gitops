@@ -22,6 +22,10 @@
         age
         sops
         just
+        gitleaks
+        trivy
+        jq
+        python3
       ];
     in
     {

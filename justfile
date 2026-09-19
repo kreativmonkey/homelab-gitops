@@ -19,6 +19,10 @@ validate:
 validate-full:
     ./scripts/ci/validate.sh
 
+# Evidence-preserving scheduled scan. Reports require sanitization before upload.
+security-scan:
+    ./scripts/ci/security-scan.sh
+
 renovate-audit:
     ./scripts/ci/renovate-audit.sh
 
