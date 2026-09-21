@@ -7,11 +7,14 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # Garage S3 (Velero object store) on the TrueNAS/LAN host.
+    # Garage S3 via the Nginx Proxy Manager TLS endpoint on TrueNAS/LAN.
     - to:
         - ipBlock:
             cidr: 192.168.10.94/32
       ports:
+        - protocol: TCP
+          port: 443
+        # Retain HTTP consumers until their separately managed migration.
         - protocol: TCP
           port: 30188
         - protocol: TCP

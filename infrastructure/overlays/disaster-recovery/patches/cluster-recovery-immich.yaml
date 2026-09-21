@@ -14,7 +14,8 @@ spec:
     - name: immich-postgres
       barmanObjectStore:
         destinationPath: s3://cnpg-backups/immich-postgres
-        endpointURL: http://192.168.10.94:30188
+        # Public WebPKI endpoint; CNPG verifies the normal system trust store.
+        endpointURL: https://s3.nas.f4mily.net
         serverName: immich-postgres
         s3Credentials:
           accessKeyId:
