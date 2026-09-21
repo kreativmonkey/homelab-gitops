@@ -7,13 +7,14 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # TrueNAS API (provisioning/attach, health pings) over HTTPS.
+    # TrueNAS API (provisioning/attach, health pings) over HTTP — the
+    # appliance's web UI/API moved to :8080 (NPM now sits on 80/443).
     - to:
         - ipBlock:
             cidr: 192.168.10.94/32
       ports:
         - protocol: TCP
-          port: 443
+          port: 8080
     # TrueNAS iSCSI target portal for volume attach/mount.
     - to:
         - ipBlock:
