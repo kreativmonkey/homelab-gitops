@@ -3,11 +3,11 @@
 # Usage: TRUENAS_API_KEY=... ./scripts/truenas-discover-iscsi.sh
 set -euo pipefail
 
-HOST="${TRUENAS_HOST:-192.168.10.94}"
+HOST="${TRUENAS_HOST:-nas.f4mily.net}"
 API_KEY="${TRUENAS_API_KEY:?Set TRUENAS_API_KEY}"
 
 api() {
-  curl -sS -H "Authorization: Bearer ${API_KEY}" "http://${HOST}/api/v2.0/$1"
+  curl -sS -H "Authorization: Bearer ${API_KEY}" "https://${HOST}/api/v2.0/$1"
 }
 
 echo "=== iSCSI portals (use id for targetGroupPortalGroup) ==="

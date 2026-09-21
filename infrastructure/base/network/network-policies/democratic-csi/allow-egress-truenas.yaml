@@ -7,14 +7,14 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # TrueNAS API (provisioning/attach, health pings) over HTTP — the
-    # appliance's web UI/API moved to :8080 (NPM now sits on 80/443).
+    # TrueNAS API (provisioning/attach, health pings) over HTTPS via
+    # nas.f4mily.net, which resolves to 192.168.10.94 — hence the ipBlock.
     - to:
         - ipBlock:
             cidr: 192.168.10.94/32
       ports:
         - protocol: TCP
-          port: 8080
+          port: 443
     # TrueNAS iSCSI target portal for volume attach/mount.
     - to:
         - ipBlock:

@@ -3,8 +3,6 @@ kind: Kustomization
 # monitoring = vm-k8s-stack. vmagent scrapes pod + node IPs cluster-wide and
 # uses kubernetes_sd (API server). Grafana/Alertmanager need external (OIDC,
 # ntfy). Allow egress to pod CIDR + node CIDR (scrape) and the API server.
-# truenas-exporter additionally calls the TrueNAS API on :8080 (not covered
-# by egress-external, which only opens 80/443) — allow-egress-truenas.
 namespace: monitoring
 components:
   - ../baseline
@@ -12,4 +10,3 @@ components:
   - ../egress-apiserver
 resources:
   - allow-egress-cluster.yaml
-  - allow-egress-truenas.yaml
