@@ -79,10 +79,10 @@ data:
             siteMonitor: https://192.168.10.5:8006
         - Truenas Scale:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/truenas.png
-            href: "http://192.168.10.94:8080"
+            href: "https://nas.f4mily.net"
             external: true
             description: Network Attached Storage
-            siteMonitor: http://192.168.10.94:8080
+            siteMonitor: https://nas.f4mily.net
         - Garage S3 Controller:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/garage.svg
             href: "http://192.168.10.94:30186"

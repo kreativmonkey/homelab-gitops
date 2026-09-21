@@ -47,7 +47,7 @@ state.
 | talos-cp2    | control-plane | 192.168.10.42   | Talos v1.13+       |
 | talos-cp3    | control-plane | 192.168.10.43   | Talos v1.13+       |
 | VIP (API)    | virtual       | 192.168.10.245  | —                  |
-| TrueNAS       | storage       | 192.168.10.94   | NFS/iSCSI; API + UI on `:8080` |
+| TrueNAS       | storage       | 192.168.10.94   | NFS/iSCSI; API + UI via `https://nas.f4mily.net` |
 
 Pod CIDR & Service CIDR are configured in
 `homelab-infrastructure/talos/main.tf`.

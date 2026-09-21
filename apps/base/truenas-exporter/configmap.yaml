@@ -16,7 +16,7 @@ data:
     import urllib.request
     from http.server import BaseHTTPRequestHandler, HTTPServer
 
-    URL = os.environ.get("TRUENAS_URL", "http://192.168.10.94:8080").rstrip("/")
+    URL = os.environ.get("TRUENAS_URL", "https://nas.f4mily.net").rstrip("/")
     API_KEY = os.environ.get("TRUENAS_API_KEY", "")
     PORT = int(os.environ.get("LISTEN_PORT", "9849"))
     TIMEOUT = float(os.environ.get("TRUENAS_TIMEOUT", "15"))

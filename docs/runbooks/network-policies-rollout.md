@@ -48,7 +48,7 @@ is a single `flux suspend kustomization infra-network-policies`.
 | `forgejo` | baseline + egress-external + egress-database | postgres (CNPG), redis in-ns, webhooks/avatars/OIDC |
 | `immich` | baseline + egress-external + egress-database | postgres (CNPG), valkey in-ns, ML model download (443) |
 | `nextcloud` | baseline + egress-external + egress-database + egress-mail + `allow-egress-s3-garage` | postgres, redis in-ns, Garage S3 `192.168.10.94:30188/30190`, mail, OIDC |
-| `monitoring` | baseline + egress-external + egress-apiserver + `allow-egress-cluster` + `allow-egress-truenas` | vmagent scrapes pod CIDR `10.244.0.0/16` + node CIDR `192.168.10.0/24`; kubernetes_sd → API; truenas-exporter → TrueNAS API `192.168.10.94:8080` |
+| `monitoring` | baseline + egress-external + egress-apiserver + `allow-egress-cluster` | vmagent scrapes pod CIDR `10.244.0.0/16` + node CIDR `192.168.10.0/24`; kubernetes_sd → API |
 | `gatus` | baseline + `allow-egress-probe-dns` + `allow-egress-probes` | prober forces DNS via `192.168.10.1`/`1.1.1.1` and hits external + `*.f4mily.net` on 80/443 |
 
 ### Gotchas when onboarding the DB / observability tiers
@@ -117,7 +117,7 @@ provision a volume, issue a cert, run a backup — no breakage.
 | Namespace | Components | Bespoke | Why / verification |
 |-----------|------------|---------|--------------------|
 | `cert-manager` | baseline + egress-external + egress-apiserver | `allow-ingress-webhook` | ACME DNS-01 via Hetzner (egress-external :443); controller/cainjector/webhook watch API (egress-apiserver); admission webhook ingress from API-server VIP `192.168.10.245` + CP `192.168.10.41-43` on 9443/443 (mirrors cnpg-system). **Verified:** test `Certificate` admitted + Hetzner webhook created the DNS-01 TXT record. |
-| `democratic-csi` | baseline + egress-apiserver | `allow-egress-truenas` | TrueNAS API `192.168.10.94:8080` (provision/attach + health pings) + iSCSI target `192.168.10.94:3260` (volume attach). **Verified:** test RWO PVC bound + iSCSI volume mounted in a pod. |
+| `democratic-csi` | baseline + egress-apiserver | `allow-egress-truenas` | TrueNAS API `192.168.10.94:443` (provision/attach + health pings, via `nas.f4mily.net` which resolves to `192.168.10.94`) + iSCSI target `192.168.10.94:3260` (volume attach). **Verified:** test RWO PVC bound + iSCSI volume mounted in a pod. |
 | `local-path-storage` | baseline + egress-apiserver | — | provisioner watches PVCs/nodes via API. **Verified:** test PVC bound + pod Running. |
 | `velero` | baseline + egress-apiserver | `allow-egress-s3-garage` | Garage S3 `192.168.10.94:30188` (`:30190` too, mirrors `nextcloud`). **Verified:** `kopia-maintain` jobs complete; test `Backup` reaches S3. |
 | `backup-offsite` | baseline + egress-database | `allow-egress-storagebox` | Hetzner Storage Box over SFTP/SSH — pinned to resolved A `62.238.65.94` + AAAA `2a01:4f9:bacc:3:300::25e` on 22/23 (not opened to `0.0.0.0/0`). `pg_dump` → CNPG (egress-database). NFS source mounts are node-side (kubelet), not pod egress. **Verified:** offsite CronJobs complete. |
