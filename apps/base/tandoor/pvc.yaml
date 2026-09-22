@@ -3,6 +3,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: tandoor-static
   namespace: tandoor
+  # Preserve the legacy rollback PVC if it is ever removed from the app catalog.
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteMany
