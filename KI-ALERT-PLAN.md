@@ -103,6 +103,14 @@ State (`flux_resource_ready`, `flux_resource_suspended`), konfiguriert in
 (nützlich für Reconcile-Fehlerraten/-Latenzen), aber nicht mehr die Basis der
 vier Alerts — siehe `docs/runbooks/flux-reconcile.md`.
 
+**Architekturentscheidung:** Flux-native `Provider`/`Alert`-Objekte bleiben
+nicht eingesetzt; `notification-controller` wird nicht installiert. Die
+produktive Flux-Alarmierung läuft über `homelab-flux` VMRule → Alertmanager →
+ntfy. Die ebenfalls nicht verwendete Flux Image Automation bleibt deaktiviert;
+Renovate verwaltet Image-Updates. Einmalige Entfernung der dadurch verwaisten
+CRs/CRDs: `docs/runbooks/flux-stale-crd-cleanup.md` (erst nach Merge und
+Flux-Reconcile).
+
 ---
 
 ### Grafana ↔ Authentik (2026-05-21)
