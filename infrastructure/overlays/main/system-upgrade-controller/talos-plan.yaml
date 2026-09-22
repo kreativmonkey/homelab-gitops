@@ -23,6 +23,16 @@ spec:
   # job for the node running system-upgrade-controller stays Pending, and that job
   # is exactly what would drain/relocate the controller (circular). With a single
   # plan and concurrency 1 the exclusivity is redundant.
+  #
+  # SUC considers a node's job "complete" the moment the node rejoins — it does not
+  # wait for the workloads that just restarted on it to become healthy. CNPG
+  # standbys in particular need time after rejoin before they count as valid
+  # failover candidates. Without a pause, the *next* node's drain starts inside
+  # that window: if that drain needs to switch over a primary, the only standby
+  # may still be starting up, CNPG finds no valid candidate, and the primary sits
+  # on the node being drained until the job hits its deadline (2026-09-22 incident).
+  # 5m is comfortably longer than a CNPG standby's observed restart-to-ready time.
+  postCompleteDelay: 5m
   serviceAccountName: system-upgrade
   # 1h timeout: drain (10min) + talosctl upgrade + reboot + node rejoin.
   jobActiveDeadlineSecs: 3600

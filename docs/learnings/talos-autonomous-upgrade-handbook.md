@@ -1,7 +1,7 @@
 # Talos Autonomous Upgrade Handbook
 
 **Date**: 2026-07-25
-**Updated**: 2026-08-07
+**Updated**: 2026-09-22
 **Severity**: high
 **Affected**: cluster-wide
 **Status**: active guardrail
@@ -53,6 +53,11 @@ The repeated failure classes were:
 9. Node-pinned storage plus resource pressure: a `local-path` PV pins its pod to
    exactly one node. If that node lacks CPU or memory *requests* headroom, the pod is
    not delayed — it is permanently unschedulable, because it has no second candidate.
+10. CNPG switchover candidate race: a cluster with only one standby has no buffer
+    if that standby is itself restarting from the previous node's reboot. CNPG
+    checks candidates exactly once, logs "no valid candidates", and does not retry;
+    the primary stays on the node being drained and its PDB blocks the drain until
+    the job deadline.
 
 ## The Correct Approach
 
@@ -61,6 +66,7 @@ Keep the SUC Plan boring and explicit:
 ```yaml
 spec:
   concurrency: 1
+  postCompleteDelay: 5m
   cordon: true
   serviceAccountName: system-upgrade
   jobActiveDeadlineSecs: 3600
@@ -102,8 +108,18 @@ Hard requirements for this repo:
 - SUC kustomize manifest `?ref=` and `images.newTag` stay identical and published.
 - `talos-plan.yaml` version, talosctl image tag, installer image tag, and Terraform
   `talos_version`/schematic stay in sync.
-- CNPG clusters that must survive autonomous drains have at least two instances,
-  `podAntiAffinityType: required`, and `failoverDelay: 30`.
+- A CNPG cluster must survive autonomous drains one of two ways: either **three**
+  instances (two standbys, so a second switchover candidate exists even if one is
+  itself restarting from the previous node's reboot), or — if the service can
+  tolerate downtime across a node reboot — `enablePDB: false`, so it cannot block
+  a drain in the first place. Two instances with the PDB left enabled is the one
+  combination that can stall the entire node upgrade. `podAntiAffinityType:
+  required` and `failoverDelay: 30` apply to both cases. In this repo:
+  `homelab-postgres` and `immich-postgres` take the three-instances-with-PDB path;
+  `dawarich-postgres` takes the two-instances-with-`enablePDB: false` path, because
+  it is not critical enough to be worth the extra instance.
+- The Plan needs `postCompleteDelay` so the workloads on a freshly rejoined node get
+  time to settle before the next node is drained.
 - DB storage stays node-local `local-path`; iSCSI is acceptable for app RWO data,
   but those apps need `Recreate` strategy or chart-equivalent single-writer behavior.
 - No production app image uses `:latest`; avoid `imagePullPolicy: Always` unless
@@ -166,6 +182,32 @@ kubectl --context admin@homelab-kube describe pod -n <namespace> <pod>
   `kubectl -n system-upgrade scale deploy/system-upgrade-controller --replicas=0`.
 - Uncordon before CNPG repair; CNPG may freeze while a primary sits on an
   unschedulable node.
+- If the drain is stuck on a CNPG primary PDB (failure class 10), find the blocker
+  first:
+
+  ```bash
+  kubectl get pdb -n cnpg-system
+  # look for the <cluster>-primary PDB with disruptionsAllowed: 0
+  kubectl get cluster -n cnpg-system -o wide
+  # PRIMARY column names the pod; cross-check it sits on the cordoned node
+  kubectl get pod -n cnpg-system <primary> -o jsonpath='{.spec.nodeName}'
+  ```
+
+  Then trigger the switchover by hand. If the `cnpg` kubectl plugin is not
+  installed, patch the Cluster status directly — this is exactly what
+  `kubectl cnpg promote` does internally, and in the 2026-09-22 incident it
+  completed in ~20 seconds once the standby was actually ready:
+
+  ```bash
+  kubectl patch cluster -n cnpg-system <cluster> --subresource status --type merge \
+    -p '{"status":{"targetPrimary":"<standby>","phase":"Switchover in progress"}}'
+  ```
+
+  Then `kubectl uncordon <node>`. Pending pods, the CNPG cluster, and blocked Flux
+  Kustomizations resolve on their own once the node is schedulable again. SUC will
+  create a fresh upgrade Job for that node afterwards — its
+  `plan.upgrade.cattle.io/talos` label still carries the old version hash, so this
+  is expected, not a retry loop.
 - Re-clone diverged CNPG replicas by deleting pod + PVC; do not repair WAL-ahead
   replicas by hand.
 - For RWO `Multi-Attach`, verify Deployment strategy. Patch live to `Recreate` only
