@@ -106,3 +106,20 @@ spec:
         memory: 64Mi
       limits:
         memory: 512Mi
+    # Chart 0.15.1 exposes separate pod and container security contexts.
+    podSecurityContext:
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000

@@ -17,7 +17,12 @@ spec:
         app.kubernetes.io/name: audiobookshelf
     spec:
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: audiobookshelf
           image: ghcr.io/advplyr/audiobookshelf:2.36.0
@@ -31,7 +36,10 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+            runAsNonRoot: true
             allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           resources:
             requests:
               cpu: 10m
