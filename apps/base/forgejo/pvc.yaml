@@ -58,16 +58,3 @@ spec:
   resources:
     requests:
       storage: 40Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: renovate-data
-  namespace: forgejo
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: truenas-iscsi
-  resources:
-    requests:
-      storage: 2Gi

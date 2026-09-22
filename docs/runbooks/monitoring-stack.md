@@ -97,16 +97,40 @@ kubectl get deploy,po -n monitoring -l app.kubernetes.io/name=ntfy-bridge
 kubectl rollout restart deployment/ntfy-bridge -n monitoring
 ```
 
-## vmsingle CrashLoop (`read-only file system` / `flock.lock`)
+## vmcluster (vmstorage / vmselect / vminsert) Probleme
 
-VictoriaMetrics needs exclusive RW access to `/victoria-metrics-data`. If the pod loops with `read-only file system`:
+Seit 2026-06-09 laeuft der Storage-Layer als `vmcluster` (`vmsingle` abgeloest, Commit `38bdffc1`), nicht mehr als Einzelinstanz:
+
+| Komponente | Rolle | Port |
+|---|---|---|
+| `vmstorage` (2 Replicas) | persistente Zeitreihen; PVC `vmstorage-db-...-0`/`-1`, je 20Gi, `truenas-iscsi` | — |
+| `vminsert` (2 Replicas) | Write-Path, verteilt an vmstorage | — |
+| `vmselect` (2 Replicas) | Query-Path; PVC `vmselect-cachedir-...-0`/`-1`, je 2Gi, `truenas-iscsi` | 8481, Pfadpraefix `/select/0/prometheus` |
+| `vmalert` | Regelauswertung (`VMRule`, nicht `PrometheusRule`) | 8080 |
+| `vmalertmanager-vm` | Alert-Routing/Notifications | 9093 |
 
 ```bash
-kubectl delete pod -n monitoring -l app.kubernetes.io/name=vmsingle
-kubectl wait -n monitoring --for=condition=ready pod -l app.kubernetes.io/name=vmsingle --timeout=120s
+kubectl get pods -n monitoring -l 'app.kubernetes.io/name in (vmstorage,vmselect,vminsert)'
+kubectl get vmcluster -n monitoring
 ```
 
-If it persists: Longhorn UI → volume for `vmsingle-*` PVC → check health; last resort detach/reattach volume or restore from backup (metrics gap).
+**`vmstorage` CrashLoop / `read-only file system`:** vmstorage braucht wie frueher vmsingle exklusiven RW-Zugriff auf sein Datenverzeichnis. TrueNAS-iSCSI-Kontention kann denselben `emergency_ro`-Effekt ausloesen wie bei Nextcloud (siehe [nextcloud-iscsi-emergency-readonly.md](../learnings/nextcloud-iscsi-emergency-readonly.md)):
+
+```bash
+kubectl get pvc -n monitoring -l app.kubernetes.io/name=vmstorage
+kubectl exec -n monitoring <vmstorage-pod> -- cat /proc/mounts | grep -E 'ro,|emergency_ro'
+```
+
+Bei bestaetigtem `emergency_ro` den Reparaturablauf aus dem oben verlinkten Learning sinngemaess anwenden (Pod skalieren, iSCSI-Session neu aufbauen, `e2fsck`). Mit 2 Replicas bleibt der jeweils andere `vmstorage`-Pod verfuegbar, waehrend einer repariert wird — Query-/Write-Path faellt nicht komplett aus.
+
+Es gibt kein Longhorn mehr (durch TrueNAS-iSCSI abgeloest) und keine In-Cluster-Storage-UI: PVC-Zustand nur ueber `kubectl describe pvc -n monitoring` und noetigenfalls direkt auf TrueNAS pruefen.
+
+**`vmselect` Query-Fehler / Timeouts:** Grafana und `vmalert` fragen `vmselect` unter `:8481/select/0/prometheus/...` ab.
+
+```bash
+kubectl get pods -n monitoring -l app.kubernetes.io/name=vmselect
+kubectl logs -n monitoring -l app.kubernetes.io/name=vmselect --tail=50
+```
 
 ## Stale chart default alerts (KubeControllerManager*, ScrapePoolHasNoTargets, …)
 

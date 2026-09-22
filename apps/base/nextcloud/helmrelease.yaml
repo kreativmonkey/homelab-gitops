@@ -158,8 +158,9 @@ spec:
       # Nachweis in infrastructure/base/storage/local-node-storageclass.yaml
       # und docs/learnings/talos-kubelet-extramounts-local-storage.md
       #
-      # Rueckweg: existingClaim auf nextcloud-app-iscsi zuruecksetzen. Das
-      # iSCSI-Volume bleibt vorlaeufig unangetastet bestehen (pvc-iscsi.yaml).
+      # Node-lokales PV (talos-cp1), stabil seit 26.08.2026. Der iSCSI-Rueckweg
+      # (nextcloud-app-iscsi, pvc-iscsi.yaml) wurde am 22.09.2026 nach vier
+      # Wochen stoerungsfreiem Betrieb entfernt.
       existingClaim: nextcloud-app-node
 
     nextcloud:

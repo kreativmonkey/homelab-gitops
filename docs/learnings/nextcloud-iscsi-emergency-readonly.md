@@ -252,3 +252,9 @@ rendered Deployment has been verified.
 - Files: `apps/base/nextcloud/helmrelease.yaml`
 - Files: `infrastructure/base/storage/democratic-csi/helmrelease.yaml`
 - Runbook: `docs/runbooks/nextcloud-init-crashloop.md`
+
+**Update 2026-09-22:** Der iSCSI-Rueckweg (PVC `nextcloud-app-iscsi`,
+`apps/base/nextcloud/pvc-iscsi.yaml`) ist nach vier stoerungsfreien Wochen auf
+dem node-lokalen PV entfernt worden. Die obige Diagnose und die Reparaturschritte
+bleiben als Nachweis fuer das Fehlerbild stehen, sind aber nicht mehr auf ein
+existierendes Volume anwendbar.
