@@ -20,6 +20,20 @@ spec:
   # which stalled the v1.13.5 rollout until cp1 hung on jobActiveDeadlineSecs.
   instances: 2
 
+  # With only 2 instances there is exactly one standby. If a node reboot from
+  # *earlier* in the SUC rollout catches that standby mid-restart, the next node's
+  # drain hits CNPG's primary right when it has no valid switchover candidate —
+  # CNPG logs "no valid candidates" and never rechecks (2026-09-22 incident). With
+  # the PDB enabled that blocks the drain until the job deadline and stalls the
+  # whole node upgrade. dawarich is not critical enough to justify a third
+  # instance for this, so instead disable the PDB: the drain then just takes the
+  # primary down with the node, dawarich is briefly unavailable across the
+  # reboot, and it comes back once the node rejoins. This is CNPG's own
+  # recommendation for non-critical clusters. homelab-postgres and
+  # immich-postgres go the other way — 3 instances, PDB stays enabled — because
+  # they must not have any downtime during a drain.
+  enablePDB: false
+
   affinity:
     # required (hard): one instance per node, so a drain only ever evicts ONE instance —
     # a clean switchover instead of co-located both going down. Mirrors immich-postgres.
