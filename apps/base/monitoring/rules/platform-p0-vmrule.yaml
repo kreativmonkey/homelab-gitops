@@ -53,6 +53,40 @@ spec:
             description: "Letztes verfügbares Backup für Cluster {{ $labels.cluster }} ist älter als 50 Stunden."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/cnpg-backup-stale.md"
 
+        # Am 21.09.2026 brach die WAL-Archivierung aller drei CNPG-Cluster
+        # 24h unbemerkt ab (Proxy leitete s3.nas.f4mily.net auf Garages
+        # Web-UI statt S3-API). CNPGBackupStale greift erst nach 50h — bis
+        # dahin stauen sich WAL-Segmente node-lokal auf. Gemessener Anstieg
+        # im Ausfall: ~12 Segmente/h. 20 Segmente entsprechen damit einem
+        # Rückstand von unter zwei Stunden bei Normalwert 0.
+        - alert: CNPGWALArchivingStalled
+          expr: cnpg_collector_pg_wal_archive_status{namespace="cnpg-system",value="ready"} > 20
+          for: 30m
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "CNPG-WAL-Archivierung stockt: {{ $labels.pod }}"
+            description: "Pod {{ $labels.pod }} hat {{ $value }} nicht archivierte WAL-Segmente. Sie stauen sich lokal auf dem Node-Volume auf."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/cnpg-wal-archiving-stalled.md"
+
+        # 150 Segmente ≈ ein halber Tag Rückstand bei ~12 Segmenten/h. Ab
+        # hier wird der Platzbedarf auf den node-lokalen Volumes zur echten
+        # Gefahr (siehe talos-cp1, das während des Vorfalls auf 80 %
+        # nodefs lief).
+        - alert: CNPGWALArchivingCritical
+          expr: cnpg_collector_pg_wal_archive_status{namespace="cnpg-system",value="ready"} > 150
+          for: 15m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "CNPG-WAL-Archivierung kritisch gestockt: {{ $labels.pod }}"
+            description: "Pod {{ $labels.pod }} hat {{ $value }} nicht archivierte WAL-Segmente. Sie stauen sich lokal auf dem Node-Volume auf; Platz kann knapp werden."
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/cnpg-wal-archiving-stalled.md"
+
     - name: homelab.platform.velero
       interval: 30s
       rules:
