@@ -201,9 +201,11 @@ spec:
       #   Previous pod ran 3.5d then OOM. DockerException spam
       #   (outpost_service_connection_monitor → Docker) on Talos
       #   is harmless but adds CPU/memory pressure.
+      # Request lowered 1Gi→512Mi: real usage sits around ~300Mi; the limit above
+      # is unrelated and unchanged.
       resources:
         requests:
           cpu: 50m
-          memory: 1Gi
+          memory: 512Mi
         limits:
           memory: 4Gi
