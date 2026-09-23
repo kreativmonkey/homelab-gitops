@@ -67,8 +67,26 @@ spec:
           # den groessten unnoetig lang gehaltenen Posten. 20Gi auf der
           # Datenplatte kostet nichts und laesst Luft.
           storageSize: "20Gi"
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
 
     existingSecret: renovate-credentials
+
+    # These values apply to the CronJob Pod and the Renovate container.
+    securityContext:
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: RuntimeDefault
 
     resources:
       requests:
