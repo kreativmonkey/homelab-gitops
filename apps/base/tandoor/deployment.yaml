@@ -19,7 +19,12 @@ spec:
         app.kubernetes.io/name: tandoor
     spec:
       securityContext:
-        fsGroup: 0
+        # Tandoor image's nginx account is uid 100 / gid 101. fsGroup makes
+        # emptyDir staticfiles writable without reintroducing root for chown.
+        fsGroup: 101
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: tandoor
           image: docker.io/vabene1111/recipes:2.6.15
@@ -106,7 +111,6 @@ spec:
           volumeMounts:
             - name: static
               mountPath: /opt/recipes/staticfiles
-              subPath: docker/tandoor/staticfiles
             - name: media
               mountPath: /opt/recipes/mediafiles
               subPath: docker/tandoor/mediafiles
@@ -117,8 +121,9 @@ spec:
               httpHeaders:
                 - name: Host
                   value: rezepte.f4mily.net
-            initialDelaySeconds: 180
-            failureThreshold: 90
+            # Local emptyDir collectstatic must surface regressions promptly.
+            initialDelaySeconds: 60
+            failureThreshold: 30
             periodSeconds: 10
           livenessProbe:
             httpGet:
@@ -145,11 +150,11 @@ spec:
             limits:
               memory: 1536Mi
           securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
-            allowPrivilegeEscalation: true
+            runAsUser: 100
+            runAsGroup: 101
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
             capabilities:
-              add: ["CHOWN", "DAC_OVERRIDE", "SETGID", "SETUID"]
               drop: ["ALL"]
           # ── CSRF-Permanent-Fix ──────────────────────────────────────────────────
           # Tandoor container nginx v2.6.9 template (`Recipes.conf.template`) does
@@ -177,8 +182,9 @@ spec:
                     nginx -s reload 2>/dev/null || true
       volumes:
         - name: static
-          persistentVolumeClaim:
-            claimName: tandoor-static
+          # collectstatic rebuilds this directory on every pod start; nginx in
+          # this container serves the same pod-local files.
+          emptyDir: {}
         - name: media
           persistentVolumeClaim:
             claimName: tandoor-media
