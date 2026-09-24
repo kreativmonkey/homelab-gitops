@@ -58,6 +58,18 @@ spec:
               - op: add
                 path: /spec/suspend
                 value: false
+              # Beim job-watchdog anmelden (siehe
+              # apps/base/monitoring/rules/job-watchdog-vmrule.yaml): war
+              # bisher unangemeldet, deshalb blieb der stille Fehlschlag vom
+              # 22.09.2026 unbemerkt. Chart 9.2.6 bietet kein values-Feld fuer
+              # CronJob-Labels, daher hier als Patch statt in values. Schedule
+              # alle 5 Minuten -> max-age-hours 1.
+              - op: add
+                path: /metadata/labels/homelab.f4mily.net~1watchdog
+                value: "true"
+              - op: add
+                path: /metadata/labels/homelab.f4mily.net~1max-age-hours
+                value: "1"
   install:
     disableWait: true
     remediation:
