@@ -9,10 +9,10 @@
 # subdirectory via volumeMount.subPath (see apps/base/*/deployment.yaml and
 # immich/paperless HelmRelease values).
 #
-# subPath reference (relative to export root):
-#   Media/Bilder, Media/Fotos, Media/jellyfin/*,
-#   Documents/paperless/*, Media/MediaStack/media/*, Media/Books,
-#   Media/docker/* (create on NAS if missing)
+# subPath reference (relative to each export root):
+#   Media export: Bilder, Fotos, jellyfin/*, MediaStack/media/*, docker/*
+#   Documents export: paperless/*
+# Create referenced directories on the NAS before deploying workloads.
 apiVersion: v1
 kind: PersistentVolume
 metadata:

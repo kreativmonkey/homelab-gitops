@@ -12,6 +12,20 @@ spec:
     requests:
       storage: 5Gi
 ---
+# Migration target; workload switches only after verified copy from legacy NFS.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kavita-config-iscsi
+  namespace: kavita
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi
+  resources:
+    requests:
+      storage: 5Gi
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

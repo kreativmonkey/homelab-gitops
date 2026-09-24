@@ -26,6 +26,33 @@ spec:
     requests:
       storage: 5Gi
 ---
+# Migration targets; workloads switch only after verified copy from legacy NFS.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: audiobookshelf-config-iscsi
+  namespace: audiobookshelf
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: audiobookshelf-metadata-iscsi
+  namespace: audiobookshelf
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi
+  resources:
+    requests:
+      storage: 5Gi
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
