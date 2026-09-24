@@ -117,6 +117,63 @@ data:
     sha256sum "${sample_path}" | cut -d ' ' -f 1 \
       > "/staging/verify/${tag}-sample.sha256"
 
+  appdata-capture.sh: |
+    #!/bin/sh
+    set -eu
+
+    # RWO iSCSI-PVCs koennen nicht in diesem Namespace eingehangen werden.
+    # Genau ein laufender App-Pod verhindert stille Backups eines alten Pods.
+    pod_for() {
+      namespace="$1"
+      app="$2"
+      pods="$(kubectl get pods -n "${namespace}" \
+        -l "app.kubernetes.io/name=${app}" \
+        --field-selector=status.phase=Running \
+        -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')"
+      count="$(printf '%s\n' "${pods}" | sed '/^$/d' | wc -l | tr -d ' ')"
+      if [ "${count}" -ne 1 ]; then
+        echo "FEHLER: erwartet genau einen Running ${app}-Pod in ${namespace}, gefunden: ${count}"
+        exit 1
+      fi
+      printf '%s\n' "${pods}"
+    }
+
+    capture() {
+      namespace="$1"
+      app="$2"
+      container="$3"
+      source="$4"
+      archive="$5"
+      pod="$(pod_for "${namespace}" "${app}")"
+      kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- \
+        tar -C "$(dirname "${source}")" -czf - "$(basename "${source}")" \
+        > "/staging/${archive}"
+    }
+
+    capture audiobookshelf audiobookshelf audiobookshelf /config \
+      audiobookshelf-config.tar.gz
+    capture audiobookshelf audiobookshelf audiobookshelf /metadata \
+      audiobookshelf-metadata.tar.gz
+    capture jellyfin jellyfin jellyfin /config jellyfin-config.tar.gz
+    capture kavita kavita kavita /kavita/config kavita-config.tar.gz
+    capture tandoor tandoor tandoor /opt/recipes/mediafiles \
+      tandoor-mediafiles.tar.gz
+
+  forgejo-capture.sh: |
+    #!/bin/sh
+    set -eu
+
+    pods="$(kubectl get pods -n forgejo -l app.kubernetes.io/name=forgejo \
+      --field-selector=status.phase=Running \
+      -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')"
+    count="$(printf '%s\n' "${pods}" | sed '/^$/d' | wc -l | tr -d ' ')"
+    if [ "${count}" -ne 1 ]; then
+      echo "FEHLER: erwartet genau einen Running forgejo-Pod, gefunden: ${count}"
+      exit 1
+    fi
+    kubectl exec -n forgejo "${pods}" -c forgejo -- \
+      tar -C / -czf - data > /staging/forgejo-data.tar.gz
+
   databases-dump.sh: |
     #!/bin/sh
     set -u
@@ -423,6 +480,7 @@ data:
       || fail "Restore nextcloud-Dump/App-State"
     restic restore latest ${RETRY_LOCK} --host homelab --tag forgejo --exclude-xattr 'security.*' \
       --include '/staging/database/forgejo.dump' \
+      --include '/staging/forgejo-data.tar.gz' \
       --include '/staging/verify/forgejo-sample.path' \
       --include '/staging/verify/forgejo-sample.sha256' \
       --target /restore/forgejo \
@@ -434,6 +492,11 @@ data:
       --target /restore/paperless \
       || fail "Restore paperless-Dump/Manifest"
     restic restore latest ${RETRY_LOCK} --host homelab --tag appdata --exclude-xattr 'security.*' \
+      --include '/staging/audiobookshelf-config.tar.gz' \
+      --include '/staging/audiobookshelf-metadata.tar.gz' \
+      --include '/staging/jellyfin-config.tar.gz' \
+      --include '/staging/kavita-config.tar.gz' \
+      --include '/staging/tandoor-mediafiles.tar.gz' \
       --include '/staging/verify/appdata-sample.path' \
       --include '/staging/verify/appdata-sample.sha256' \
       --target /restore/appdata \

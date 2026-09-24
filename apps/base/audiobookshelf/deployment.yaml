@@ -59,13 +59,10 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 5
           volumeMounts:
-            # PV mounts export root /mnt/Storagepool/Media — subPath = path under /mnt/truenas/Media
             - name: config
               mountPath: /config
-              subPath: docker/audiobookshelf/config
             - name: metadata
               mountPath: /metadata
-              subPath: docker/audiobookshelf/metadata
             - name: audiobooks
               mountPath: /audiobooks
               subPath: MediaStack/media/audiobooks
@@ -75,10 +72,10 @@ spec:
       volumes:
         - name: config
           persistentVolumeClaim:
-            claimName: audiobookshelf-config
+            claimName: audiobookshelf-config-iscsi
         - name: metadata
           persistentVolumeClaim:
-            claimName: audiobookshelf-metadata
+            claimName: audiobookshelf-metadata-iscsi
         - name: audiobooks
           persistentVolumeClaim:
             claimName: audiobookshelf-audiobooks

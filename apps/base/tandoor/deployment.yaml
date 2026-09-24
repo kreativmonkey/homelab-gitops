@@ -113,7 +113,6 @@ spec:
               mountPath: /opt/recipes/staticfiles
             - name: media
               mountPath: /opt/recipes/mediafiles
-              subPath: docker/tandoor/mediafiles
           startupProbe:
             httpGet:
               path: /
@@ -187,7 +186,7 @@ spec:
           emptyDir: {}
         - name: media
           persistentVolumeClaim:
-            claimName: tandoor-media
+            claimName: tandoor-media-iscsi
 ---
 apiVersion: v1
 kind: Service

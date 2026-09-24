@@ -21,6 +21,7 @@ spec:
       activeDeadlineSeconds: 7200
       template:
         spec:
+          serviceAccountName: offsite-backup
           restartPolicy: Never
           terminationGracePeriodSeconds: 60
           initContainers:
@@ -57,6 +58,15 @@ spec:
                 # Schreibbar: rclone aktualisiert seine Config zur Laufzeit.
                 - name: config
                   mountPath: /config
+            - name: capture-appdata
+              image: docker.io/alpine/k8s:1.37.0
+              command: ["/bin/sh", "/scripts/appdata-capture.sh"]
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: staging
+                  mountPath: /staging
           containers:
             - name: backup
               image: docker.io/restic/restic:0.19.1
@@ -64,9 +74,8 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
-                  /bin/sh /scripts/record-sample.sh appdata /jellyfin /kavita
-                  exec /bin/sh /scripts/restic-backup.sh appdata \
-                    /jellyfin /kavita /tandoor-static /tandoor-media /staging
+                  /bin/sh /scripts/record-sample.sh appdata /staging
+                  exec /bin/sh /scripts/restic-backup.sh appdata /staging
               env:
                 - name: RESTIC_REPOSITORY
                   value: rest:http://127.0.0.1:8080/
@@ -91,25 +100,6 @@ spec:
                   mountPath: /work
                 - name: staging
                   mountPath: /staging
-                # Anwendungszustand, der nach einem Totalverlust Handarbeit
-                # spart: Bibliothekszuordnungen, Metadaten, Rezeptbilder.
-                # Die Datenbanken dieser Apps deckt der databases-Job ab.
-                - name: media
-                  mountPath: /jellyfin
-                  subPath: jellyfin/config
-                  readOnly: true
-                - name: media
-                  mountPath: /kavita
-                  subPath: docker/kavita/config
-                  readOnly: true
-                - name: media
-                  mountPath: /tandoor-static
-                  subPath: docker/tandoor/staticfiles
-                  readOnly: true
-                - name: media
-                  mountPath: /tandoor-media
-                  subPath: docker/tandoor/mediafiles
-                  readOnly: true
           volumes:
             - name: config
               emptyDir: {}
@@ -117,15 +107,8 @@ spec:
               emptyDir: {}
             - name: staging
               emptyDir:
-                sizeLimit: 512Mi
+                sizeLimit: 5Gi
             - name: scripts
               configMap:
                 name: offsite-backup-scripts
                 defaultMode: 0555
-            # Inline NFS wie bei Immich: PVCs sind nicht namespace-uebergreifend
-            # nutzbar. Pfad entspricht den statischen Media-PVs.
-            - name: media
-              nfs:
-                server: 192.168.10.94
-                path: /mnt/Storagepool/Media
-                readOnly: true

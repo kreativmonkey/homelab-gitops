@@ -63,7 +63,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /kavita/config
-              subPath: docker/kavita/config
             - name: media
               mountPath: /books
               subPath: MediaStack/media/books
@@ -73,7 +72,7 @@ spec:
       volumes:
         - name: config
           persistentVolumeClaim:
-            claimName: kavita-config
+            claimName: kavita-config-iscsi
         - name: media
           persistentVolumeClaim:
             claimName: kavita-books

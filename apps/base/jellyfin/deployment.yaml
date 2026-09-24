@@ -65,13 +65,10 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
           volumeMounts:
-            # PV mounts export root /mnt/Storagepool/Media — subPath = path under /mnt/truenas/Media
             - name: config
               mountPath: /config
-              subPath: jellyfin/config
             - name: cache
               mountPath: /cache
-              subPath: jellyfin/cache
             - name: media
               mountPath: /media
               subPath: MediaStack/media
@@ -79,10 +76,10 @@ spec:
       volumes:
         - name: config
           persistentVolumeClaim:
-            claimName: jellyfin-config
+            claimName: jellyfin-config-iscsi
         - name: cache
           persistentVolumeClaim:
-            claimName: jellyfin-cache
+            claimName: jellyfin-cache-iscsi
         - name: media
           persistentVolumeClaim:
             claimName: jellyfin-media

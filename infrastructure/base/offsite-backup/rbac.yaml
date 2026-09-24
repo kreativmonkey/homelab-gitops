@@ -65,3 +65,140 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: offsite-backup-cnpg
+---
+# Backup liest RWO-App-State ausschliesslich via kubectl exec aus dem jeweiligen
+# Pod. Die Rechte bleiben auf Pods und deren Namespace beschraenkt.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: offsite-backup-audiobookshelf
+  namespace: audiobookshelf
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: offsite-backup-audiobookshelf
+  namespace: audiobookshelf
+subjects:
+  - kind: ServiceAccount
+    name: offsite-backup
+    namespace: backup-offsite
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: offsite-backup-audiobookshelf
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: offsite-backup-jellyfin
+  namespace: jellyfin
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: offsite-backup-jellyfin
+  namespace: jellyfin
+subjects:
+  - kind: ServiceAccount
+    name: offsite-backup
+    namespace: backup-offsite
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: offsite-backup-jellyfin
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: offsite-backup-kavita
+  namespace: kavita
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: offsite-backup-kavita
+  namespace: kavita
+subjects:
+  - kind: ServiceAccount
+    name: offsite-backup
+    namespace: backup-offsite
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: offsite-backup-kavita
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: offsite-backup-tandoor
+  namespace: tandoor
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: offsite-backup-tandoor
+  namespace: tandoor
+subjects:
+  - kind: ServiceAccount
+    name: offsite-backup
+    namespace: backup-offsite
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: offsite-backup-tandoor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: offsite-backup-forgejo
+  namespace: forgejo
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: offsite-backup-forgejo
+  namespace: forgejo
+subjects:
+  - kind: ServiceAccount
+    name: offsite-backup
+    namespace: backup-offsite
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: offsite-backup-forgejo
