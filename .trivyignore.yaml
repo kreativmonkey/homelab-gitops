@@ -1,7 +1,16 @@
 # Trivy misconfig suppression — validated false positives for issue #781.
 # Real hardening gaps (KSV-0014 readOnlyRootFilesystem, KSV-0118 default
-# securityContext, KSV-0005/0009/0017/0047/0053/0056/0108/0119) are
-# intentionally NOT listed here; they remain tracked for remediation.
+# securityContext, KSV-0005/0009/0017/0108/0119) are intentionally NOT
+# listed here; they remain tracked for remediation.
+#
+# KSV-0056 (mcp-agent-reader delete verb) and KSV-0047 (nodes/proxy) were
+# FIXED (not suppressed) on 2026-09-24 by removing the underlying permissions
+# from infrastructure/base/mcp-server/rbac.yaml — see that file for the
+# reasoning per rule.
+#
+# KSV-0053 (pods/exec) moved from "tracked for remediation" to "suppressed
+# with justification" on 2026-09-24 — a deliberate policy decision, not an
+# oversight; see the entry below for the accepted residual risk.
 misconfigurations:
   # Authentik OAuth blueprint ConfigMaps only reference the client secret via
   # !Env (injected at reconcile time from authentik-oidc-client-secrets). No
@@ -31,3 +40,16 @@ misconfigurations:
   - id: AVD-KSV-0041
     paths:
       - "clusters/main/flux-system/gotk-components.yaml"
+  # pods/exec: create IS the backup mechanism (pg_dump in CNPG primaries,
+  # php occ und tar im Nextcloud-Pod). Ziele werden zur Laufzeit per Label-
+  # Selector aufgelöst (-l role=primary etc.), weil CNPG-Primaries bei
+  # Failover den Pod wechseln — resourceNames: ist dafür konstruktiv
+  # unmöglich. Bereits namespace-scoped auf nextcloud und cnpg-system
+  # (verifiziert: kein Zugriff in kube-system), kein delete, Secrets nur via
+  # resourceNames. Residuales Risiko bewusst akzeptiert und benannt: exec in
+  # einen CNPG-Primary bedeutet postgres-Superuser, also Lesezugriff auf
+  # jede Datenbank in diesem Cluster. Verifiziert 2026-09-24.
+  - id: AVD-KSV-0053
+    statement: "pods/exec: create IS the backup mechanism (pg_dump/php occ/tar); targets resolved at runtime via label selectors since CNPG primaries move on failover, so resourceNames scoping is constructively impossible. Already namespace-scoped to nextcloud/cnpg-system (verified denied in kube-system), no delete, secrets only via resourceNames. Residual risk accepted: exec into a CNPG primary means postgres superuser, i.e. read access to every database in that cluster. Verified 2026-09-24."
+    paths:
+      - "infrastructure/base/offsite-backup/rbac.yaml"

@@ -13,17 +13,31 @@ metadata:
   labels:
     app.kubernetes.io/name: mcp-server
 rules:
+  # "delete" (hinzugefügt in 230ab2f8, 2026-06-11, "restart capability") hatte
+  # nie einen Konsumenten: der Server läuft seit dem allerersten Commit
+  # (57a5545c, 2026-06-07) mit --read-only, und seine tools/list-Antwort
+  # enthält ausschließlich lesende Tools, keinerlei delete/write-Tool.
+  # Cluster-weites delete auf persistentvolumeclaims war dabei der schärfste
+  # Teil: beide relevanten StorageClasses nutzen reclaimPolicy: Delete, d. h.
+  # ein gelöschtes PVC hätte das dahinterliegende Volume zerstört. Entfernt
+  # 2026-09-24.
   - apiGroups: [""]
     resources: ["pods", "pods/log", "events", "services", "configmaps", "persistentvolumeclaims", "endpoints"]
-    verbs: ["get", "list", "watch", "delete"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "list", "watch"]
+  # "nodes/proxy" erlaubt Lesezugriff auf die Kubelet-API vorbei am
+  # per-Object-RBAC und Audit-Log des API-Servers (u. a. /logs/). Es hing nur
+  # an den beiden MCP-Tools nodes_stats_summary und nodes_log — nodes_top und
+  # pods_top laufen weiterhin über metrics.k8s.io (als dieser ServiceAccount
+  # verifiziert). Diese zwei Tools bewusst aufgegeben am 2026-09-24;
+  # Node-Metriken bleiben über VictoriaMetrics verfügbar.
   - apiGroups: [""]
-    resources: ["namespaces", "nodes", "nodes/stats", "nodes/proxy"]
+    resources: ["namespaces", "nodes", "nodes/stats"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["metrics.k8s.io"]
     resources: ["nodes", "pods"]
