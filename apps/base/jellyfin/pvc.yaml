@@ -26,6 +26,33 @@ spec:
     requests:
       storage: 50Gi
 ---
+# Migration targets; workloads switch only after verified copy from legacy NFS.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-config-iscsi
+  namespace: jellyfin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-cache-iscsi
+  namespace: jellyfin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi
+  resources:
+    requests:
+      storage: 50Gi
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
