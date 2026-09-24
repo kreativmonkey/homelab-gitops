@@ -30,6 +30,16 @@ spec:
       failedJobsHistoryLimit: 1
       jobBackoffLimit: 1
       ttlSecondsAfterFinished: 86400
+      # Beim job-watchdog anmelden (siehe
+      # apps/base/monitoring/rules/job-watchdog-vmrule.yaml): war bisher
+      # unangemeldet, deshalb fiel das EACCES-Scheitern seit 23.09.2026 (uid
+      # 1000 vs. cache-owner 12021, siehe securityContext-Kommentar unten)
+      # nirgendwo als Alert auf. Schedule alle 4h -> max-age-hours 9 (zwei
+      # verpasste Laeufe plus Puffer; lastSuccessfulTime wird erst am Ende
+      # eines Laufs gesetzt).
+      labels:
+        homelab.f4mily.net/watchdog: "true"
+        homelab.f4mily.net/max-age-hours: "9"
 
     renovate:
       # GitHub token via RENOVATE_GITHUB_COM_TOKEN in renovate-credentials (existingSecret).
@@ -72,19 +82,29 @@ spec:
         capabilities:
           drop:
             - ALL
-        runAsGroup: 1000
+        runAsGroup: 12021
         runAsNonRoot: true
-        runAsUser: 1000
+        runAsUser: 12021
 
     existingSecret: renovate-credentials
 
     # These values apply to the CronJob Pod and the Renovate container.
+    # uid/gid 12021 statt 1000: das Image laeuft nativ als eingebauter
+    # "ubuntu"-User (uid=12021), und die 20Gi renovate-cache-PVC ist komplett
+    # (alle ~102k Eintraege, verifiziert 24.09.2026) diesem uid gehoerig. Jeder
+    # andere uid scheitert mit EACCES beim Schreiben in
+    # /tmp/renovate/cache/__renovate-private-cache. Vor #982 auf 1000 gesetzt
+    # und dadurch seit 23.09.2026 bei jedem Lauf gescheitert (silent, da
+    # renovate/renovate nicht am Job-Watchdog haengt) — siehe
+    # docs/pss-restricted-rollout.md. fsGroupChangePolicy: OnRootMismatch
+    # loest beim naechsten Lauf einmalig ein rekursives chgrp ueber die ~102k
+    # Cache-Eintraege aus (erwartet, einmalig).
     securityContext:
-      fsGroup: 1000
+      fsGroup: 12021
       fsGroupChangePolicy: OnRootMismatch
-      runAsGroup: 1000
+      runAsGroup: 12021
       runAsNonRoot: true
-      runAsUser: 1000
+      runAsUser: 12021
       seccompProfile:
         type: RuntimeDefault
 

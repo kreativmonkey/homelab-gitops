@@ -29,26 +29,6 @@ spec:
               - op: add
                 path: /spec/tls/0/secretName
                 value: wildcard-f4mily-net-tls
-          # Chart 3.1.0 omits some PodSecurityContext fields. Keep this
-          # chart-version-specific patch until upstream passes them through.
-          - target:
-              group: apps
-              version: v1
-              kind: Deployment
-            patch: |
-              - op: add
-                path: /spec/template/spec/securityContext/fsGroupChangePolicy
-                value: OnRootMismatch
-              - op: add
-                path: /spec/template/spec/securityContext/runAsGroup
-                value: 1000
-              - op: add
-                path: /spec/template/spec/securityContext/runAsUser
-                value: 1000
-              - op: add
-                path: /spec/template/spec/securityContext/seccompProfile
-                value:
-                  type: RuntimeDefault
   install:
     timeout: 30m
     remediation:
@@ -104,23 +84,17 @@ spec:
       extraVolumeMounts:
         - name: storage-volume
           mountPath: /configs
+    # Restricted (runAsUser/runAsNonRoot, capabilities.drop: [ALL]) probiert und
+    # am 23.09.2026 (#982) verworfen: der 2.14.3-Entrypoint braucht root, um
+    # /tmp/stirling-pdf zu chown/chmod und einen Symlink nach /usr/local/bin zu
+    # legen (CAP_CHOWN, auch bei nur teilweise gedroppten Capabilities). Am
+    # 24.09.2026 im Cluster mit genau dieser securityContext reproduziert:
+    # Container exitet mit "Permission denied" / "Operation not permitted".
+    # Restricted bleibt blockiert, bis Stirling-PDF einen rootless Entrypoint
+    # liefert.
     securityContext:
       enabled: true
       fsGroup: 1000
-      fsGroupChangePolicy: OnRootMismatch
-      runAsGroup: 1000
-      runAsNonRoot: true
-      runAsUser: 1000
-      seccompProfile:
-        type: RuntimeDefault
-    containerSecurityContext:
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-          - ALL
-      runAsGroup: 1000
-      runAsNonRoot: true
-      runAsUser: 1000
     probes:
       # stirling-pdf takes 2-3 minutes to initialise the JVM + LibreOffice
       # backend on first start. Use a generous startup probe so liveness
