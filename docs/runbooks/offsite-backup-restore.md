@@ -11,16 +11,17 @@ Daily Restic snapshots are stored encrypted on the Hetzner Storage Box under
 - `paperless`: the document archive and search-index data plus a dump of the
   `paperless` database. `consume/` and `export/` are transit directories and
   stay out.
-- `appdata`: application state that would otherwise be rebuilt by hand —
-  Jellyfin and Kavita library config, Tandoor static and media files. Their
-  databases come from the `databases` tag.
+- `appdata`: application state captured from the running pods into tar archives
+  before upload — Audiobookshelf config/metadata, Jellyfin and Kavita library
+  config, and Tandoor media files. Embedded application databases are part of
+  these archives; PostgreSQL databases come from the `databases` tag.
 - `databases`: a dump of every database in every CNPG cluster, discovered at
   runtime. This is the offsite copy of what Barman keeps locally — use it when
   the NAS is gone, and Barman when a single database needs a fast rollback. The
   per-app tags keep their own dump as well, so app data and its database can be
   restored as a matching pair.
-- `forgejo`: the git data directory (`docker/forgejo` on the media share —
-  repositories, LFS, attachments, avatars, `app.ini`) plus a dump of the
+- `forgejo`: a tar archive captured from `/data` in the running pod
+  (repositories, LFS, attachments, avatars, `app.ini`) plus a dump of the
   `forgejo` database from `homelab-postgres`. Forgejo keeps running during the
   backup; git writes objects before it moves refs, so a push in flight leaves
   at most an unreferenced object behind.

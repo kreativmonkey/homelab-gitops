@@ -109,7 +109,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-              subPath: docker/forgejo
             - name: comments-tmpl
               mountPath: /data/gitea/templates/repo/issue/view_content/comments.tmpl
               subPath: comments.tmpl
@@ -117,7 +116,7 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: forgejo-data
+            claimName: forgejo-data-iscsi
         - name: comments-tmpl
           configMap:
             name: forgejo-comments-tmpl

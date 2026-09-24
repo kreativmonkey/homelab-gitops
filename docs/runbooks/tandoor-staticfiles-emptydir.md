@@ -18,8 +18,9 @@ It does not increase probe timeouts to conceal a failed startup.
 - The Tandoor container must have `runAsUser: 100`, `runAsGroup: 101`,
   `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, and all Linux
   capabilities dropped. The pod must use `RuntimeDefault` seccomp.
-- `/opt/recipes/mediafiles` must remain the `media` mount from
-  `PersistentVolumeClaim/tandoor-media`, `subPath docker/tandoor/mediafiles`.
+- `/opt/recipes/mediafiles` must remain the `media` mount from the RWO
+  `PersistentVolumeClaim/tandoor-media-iscsi`; it mounts the claim root without
+  a `subPath`.
 - `PersistentVolumeClaim/tandoor-static` and its backing PV are retained. Do
   not delete, resize, or manually alter them. Their deletion is a separate
   work item after successful acceptance.
@@ -83,7 +84,7 @@ yq 'select(.kind == "Deployment" and .metadata.namespace == "tandoor" and .metad
 
 Success: the server dry-run exits zero. The first query is exactly `name:
 static` plus `emptyDir: {}`; the static mount has no `subPath`. The media mount
-shows `name: media` plus `subPath: docker/tandoor/mediafiles`. The last query
+shows `name: media` without a `subPath`. The last query
 shows `volumeName: pv-nfs-tandoor-static` and
 `kustomize.toolkit.fluxcd.io/prune: disabled`. The security query shows uid 100,
 gid/fsGroup 101, `RuntimeDefault`, `allowPrivilegeEscalation: false`, dropped
@@ -110,7 +111,7 @@ kubectl get deployment,pvc -n tandoor
 
 ```bash
 kubectl get deploy tandoor -n tandoor -o yaml
-kubectl get pvc tandoor-static tandoor-media -n tandoor
+kubectl get pvc tandoor-static tandoor-media-iscsi -n tandoor
 ```
 
 Success: Flux reports `Ready=True` at the merged revision, the Deployment has
@@ -181,8 +182,8 @@ Success:
 - collectstatic completes without recurring `rpc_wait_bit_killable`, `D` state,
   or an equivalent NFS-RPC wait attributable to static-file writes;
 - `/tmp/tandoor.sock` appears before the 360-second budget;
-- staticfiles is local `emptyDir`, while mediafiles still resolves to the media
-  PVC/NFS mount; and
+- staticfiles is local `emptyDir`, while mediafiles resolves to the RWO iSCSI
+  PVC; and
 - the pod reaches `Ready=True` without a restart or startup-probe failure.
 
 If the static mount remains NFS, the socket misses budget, the pod restarts, or
@@ -213,7 +214,7 @@ In the authenticated UI, perform two non-destructive checks:
    record. Confirm it renders in the UI. Do not use an unapproved account,
    production-sensitive file, or direct filesystem writes.
 
-This proves the retained `/opt/recipes/mediafiles` NFS path through the
+This proves the retained `/opt/recipes/mediafiles` iSCSI path through the
 application, without treating user data as a test fixture.
 
 ## 5. Second controlled fresh pod start
@@ -232,7 +233,7 @@ Repeat all first-start measurements: container start, collectstatic completion,
 socket time, Ready time, probe reserve, effective mounts, events, and NFS-wait
 evidence. Then revisit the authorized test recipe and confirm the upload still
 renders. This confirms it survived the pod-local staticfiles recreation because
-it is on the unchanged mediafiles NFS mount.
+it is on the persistent mediafiles iSCSI mount.
 
 Success: pod 2 meets every section-3 criterion, has a positive socket reserve,
 and the approved upload plus pre-existing media remain available. Record both

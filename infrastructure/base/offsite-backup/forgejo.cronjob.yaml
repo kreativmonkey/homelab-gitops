@@ -73,6 +73,15 @@ spec:
               volumeMounts:
                 - name: staging
                   mountPath: /staging
+            - name: capture-data
+              image: docker.io/alpine/k8s:1.37.0
+              command: ["/bin/sh", "/scripts/forgejo-capture.sh"]
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: staging
+                  mountPath: /staging
           containers:
             - name: backup
               image: docker.io/restic/restic:0.19.1
@@ -80,8 +89,8 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
-                  /bin/sh /scripts/record-sample.sh forgejo /data
-                  exec /bin/sh /scripts/restic-backup.sh forgejo /data /staging
+                  /bin/sh /scripts/record-sample.sh forgejo /staging/forgejo-data.tar.gz
+                  exec /bin/sh /scripts/restic-backup.sh forgejo /staging
               env:
                 - name: RESTIC_REPOSITORY
                   value: rest:http://127.0.0.1:8080/
@@ -106,10 +115,6 @@ spec:
                   mountPath: /work
                 - name: staging
                   mountPath: /staging
-                - name: data
-                  mountPath: /data
-                  subPath: docker/forgejo
-                  readOnly: true
           volumes:
             - name: config
               emptyDir: {}
@@ -117,15 +122,8 @@ spec:
               emptyDir: {}
             - name: staging
               emptyDir:
-                sizeLimit: 2Gi
+                sizeLimit: 5Gi
             - name: scripts
               configMap:
                 name: offsite-backup-scripts
                 defaultMode: 0555
-            # Inline NFS wie bei Immich: PVCs sind nicht namespace-uebergreifend
-            # nutzbar. Pfad entspricht dem statischen PV pv-nfs-forgejo-data.
-            - name: data
-              nfs:
-                server: 192.168.10.94
-                path: /mnt/Storagepool/Media
-                readOnly: true

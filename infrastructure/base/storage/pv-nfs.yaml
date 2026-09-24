@@ -10,7 +10,8 @@
 # immich/paperless HelmRelease values).
 #
 # subPath reference (relative to each export root):
-#   Media export: Bilder, Fotos, jellyfin/*, MediaStack/media/*, docker/*
+#   Media export: Bilder, Fotos, MediaStack/media/*
+#   Legacy rollback only: docker/tandoor/staticfiles
 #   Documents export: paperless/*
 # Create referenced directories on the NAS before deploying workloads.
 apiVersion: v1
@@ -190,64 +191,6 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-nfs-audiobookshelf-config
-  labels:
-    app: audiobookshelf
-    storage.type: nfs-media
-spec:
-  capacity:
-    storage: 5Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: nfs-media-static
-  mountOptions:
-    - nfsvers=4.1
-    - nosuid
-    - nodev
-    - hard
-    - timeo=600
-    - retrans=2
-  nfs:
-    path: /mnt/Storagepool/Media
-    server: 192.168.10.94
-  claimRef:
-    name: audiobookshelf-config
-    namespace: audiobookshelf
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv-nfs-audiobookshelf-metadata
-  labels:
-    app: audiobookshelf
-    storage.type: nfs-media
-spec:
-  capacity:
-    storage: 5Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: nfs-media-static
-  mountOptions:
-    - nfsvers=4.1
-    - nosuid
-    - nodev
-    - hard
-    - timeo=600
-    - retrans=2
-  nfs:
-    path: /mnt/Storagepool/Media
-    server: 192.168.10.94
-  claimRef:
-    name: audiobookshelf-metadata
-    namespace: audiobookshelf
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
   name: pv-nfs-audiobookshelf-audiobooks
   labels:
     app: audiobookshelf
@@ -306,64 +249,6 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-nfs-jellyfin-config
-  labels:
-    app: jellyfin
-    storage.type: nfs-media
-spec:
-  capacity:
-    storage: 10Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: nfs-media-static
-  mountOptions:
-    - nfsvers=4.1
-    - nosuid
-    - nodev
-    - hard
-    - timeo=600
-    - retrans=2
-  nfs:
-    path: /mnt/Storagepool/Media
-    server: 192.168.10.94
-  claimRef:
-    name: jellyfin-config
-    namespace: jellyfin
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv-nfs-jellyfin-cache
-  labels:
-    app: jellyfin
-    storage.type: nfs-media
-spec:
-  capacity:
-    storage: 50Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: nfs-media-static
-  mountOptions:
-    - nfsvers=4.1
-    - nosuid
-    - nodev
-    - hard
-    - timeo=600
-    - retrans=2
-  nfs:
-    path: /mnt/Storagepool/Media
-    server: 192.168.10.94
-  claimRef:
-    name: jellyfin-cache
-    namespace: jellyfin
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
   name: pv-nfs-jellyfin-media
   labels:
     app: jellyfin
@@ -390,35 +275,6 @@ spec:
   claimRef:
     name: jellyfin-media
     namespace: jellyfin
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv-nfs-kavita-config
-  labels:
-    app: kavita
-    storage.type: nfs-media
-spec:
-  capacity:
-    storage: 5Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: nfs-media-static
-  mountOptions:
-    - nfsvers=4.1
-    - nosuid
-    - nodev
-    - hard
-    - timeo=600
-    - retrans=2
-  nfs:
-    path: /mnt/Storagepool/Media
-    server: 192.168.10.94
-  claimRef:
-    name: kavita-config
-    namespace: kavita
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -452,35 +308,6 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-nfs-nextcloud
-  labels:
-    app: nextcloud
-    storage.type: nfs-media
-spec:
-  capacity:
-    storage: 500Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: nfs-media-static
-  mountOptions:
-    - nfsvers=4.1
-    - nosuid
-    - nodev
-    - hard
-    - timeo=600
-    - retrans=2
-  nfs:
-    path: /mnt/Storagepool/Media
-    server: 192.168.10.94
-  claimRef:
-    name: nextcloud-data
-    namespace: nextcloud
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
   name: pv-nfs-tandoor-static
   labels:
     app: tandoor
@@ -506,61 +333,3 @@ spec:
   claimRef:
     name: tandoor-static
     namespace: tandoor
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv-nfs-tandoor-media
-  labels:
-    app: tandoor
-    storage.type: nfs-media
-spec:
-  capacity:
-    storage: 50Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: nfs-media-static
-  mountOptions:
-    - nfsvers=4.1
-    - nosuid
-    - nodev
-    - hard
-    - timeo=600
-    - retrans=2
-  nfs:
-    path: /mnt/Storagepool/Media
-    server: 192.168.10.94
-  claimRef:
-    name: tandoor-media
-    namespace: tandoor
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv-nfs-forgejo-data
-  labels:
-    app: forgejo
-    storage.type: nfs-media
-spec:
-  capacity:
-    storage: 200Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: nfs-media-static
-  mountOptions:
-    - nfsvers=4.1
-    - nosuid
-    - nodev
-    - hard
-    - timeo=600
-    - retrans=2
-  nfs:
-    path: /mnt/Storagepool/Media
-    server: 192.168.10.94
-  claimRef:
-    name: forgejo-data
-    namespace: forgejo
