@@ -16,6 +16,13 @@ entries:
       client_type: confidential
       client_id: homelab-nextcloud
       client_secret: homelab-nextcloud-change-me
+      # Default (minutes=5) triggers nextcloud/user_oidc#1139: Nextcloud re-checks
+      # token credentials every 5 min (Session::checkTokenCredentials), OIDC users
+      # have no checkable password, so the recheck fails and permanently kills the
+      # app/mobile-client token (oc_authtoken.password_invalid=1, no client-side
+      # recovery). Upstream bug still open as of 2026-09; community-confirmed
+      # workaround is raising this validity. No known code fix in user_oidc yet.
+      access_token_validity: hours=6
       authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
