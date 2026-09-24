@@ -150,7 +150,7 @@ parsen oder den HTTP EventSource-Ansatz nutzen.
 ## Voraussetzungen (bereits erledigt)
 
 - [x] MCP-Server läuft in `mcp-system` (Port 8080)
-- [x] RBAC erweitert um `metrics.k8s.io`, `nodes/stats`, `nodes/proxy`
+- [x] RBAC erweitert um `metrics.k8s.io`, `nodes/stats`, `nodes/proxy` (`nodes/proxy` seit 2026-09-24 wieder entfernt, siehe Update unten)
 - [x] Service `kubernetes-mcp-server.mcp-system:8080` existiert
 - [x] n8n Workflow ist aktiviert
 - [x] `N8N_BLOCK_ENV_ACCESS_IN_NODE: true` (pod env blocked in Code nodes; MCP token provided via n8n Credentials store — issue #745)
@@ -183,6 +183,13 @@ Bereits durchgeführt — `infrastructure/base/mcp-server/rbac.yaml` um
 
 Damit sind alle MCP-Tools (nodes_top, pods_top, nodes_stats_summary)
 nutzbar. Flux wendet das beim nächsten Sync automatisch an.
+
+> **Update 2026-09-24:** `nodes/proxy` wurde im Rahmen einer RBAC-
+> Least-Privilege-Härtung wieder entfernt (Trivy KSV-0047; siehe
+> `infrastructure/base/mcp-server/rbac.yaml`). `nodes_top`/`pods_top`
+> funktionieren weiterhin unverändert über `metrics.k8s.io`.
+> `nodes_stats_summary` und `nodes_log` wurden bewusst aufgegeben — Node-
+> Metriken bleiben über VictoriaMetrics verfügbar.
 
 ---
 
