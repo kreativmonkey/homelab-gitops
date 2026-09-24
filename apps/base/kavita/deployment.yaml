@@ -64,14 +64,17 @@ spec:
             - name: config
               mountPath: /kavita/config
               subPath: docker/kavita/config
-            - name: books
+            - name: media
               mountPath: /books
-              subPath: Books
+              subPath: MediaStack/media/books
+            - name: media
+              mountPath: /comics
+              subPath: MediaStack/media/comics
       volumes:
         - name: config
           persistentVolumeClaim:
             claimName: kavita-config
-        - name: books
+        - name: media
           persistentVolumeClaim:
             claimName: kavita-books
 ---
