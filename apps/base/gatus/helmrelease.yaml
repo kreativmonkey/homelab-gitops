@@ -134,15 +134,6 @@ spec:
              - "[RESPONSE_TIME] < 5000"
              - '[BODY] == Healthy'
 
-        - name: navidrome
-          group: media
-          url: https://music.f4mily.net
-          interval: 60s
-          client: *default-dns
-          conditions:
-             - "[STATUS] == 200"
-             - "[RESPONSE_TIME] < 5000"
-
         - name: kavita
           group: media
           url: https://books.f4mily.net/api/health
@@ -366,6 +357,15 @@ spec:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
 
+        - name: navidrome
+          group: media
+          url: https://music.cluster.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
         - name: spectrumknx
           group: automation
           url: https://knx.cluster.f4mily.net
@@ -458,15 +458,6 @@ spec:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
              - '[BODY] == Healthy'
-
-        - name: navidrome
-          group: external
-          url: https://music.f4mily.net
-          interval: 60s
-          client: *external-dns
-          conditions:
-             - "[STATUS] == 200"
-             - "[RESPONSE_TIME] < 5000"
 
         - name: nextcloud
           group: external

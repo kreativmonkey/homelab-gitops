@@ -54,7 +54,6 @@ data:
   host_immich_power_tools: immich-tools.f4mily.net
   host_jellyfin: jellyfin.f4mily.net
   host_kavita: books.f4mily.net
-  host_navidrome: music.f4mily.net
   host_paperless: paperless.f4mily.net
   host_sterling_pdf: pdf.f4mily.net
   host_searxng: search.f4mily.net
@@ -88,6 +87,7 @@ data:
   host_watchyourlan: watchyourlan.cluster.f4mily.net
   host_gatus: status.cluster.f4mily.net
   host_spectrumknx: knx.cluster.f4mily.net
+  host_navidrome: music.cluster.f4mily.net
 
   # Full base URL for n8n production webhooks (trailing slash required by n8n)
   url_n8n_webhook: https://n8n.cluster.f4mily.net/

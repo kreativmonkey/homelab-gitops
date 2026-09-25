@@ -16,10 +16,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - music.f4mily.net
-      secretName: wildcard-f4mily-net-tls
+        - music.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
   rules:
-    - host: music.f4mily.net
+    - host: music.cluster.f4mily.net
       http:
         paths:
           - path: /

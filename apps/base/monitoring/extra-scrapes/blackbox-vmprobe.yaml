@@ -23,7 +23,6 @@ spec:
         - https://home.f4mily.net
         - https://immich.f4mily.net
         - https://jellyfin.f4mily.net
-        - https://music.f4mily.net
         - https://books.f4mily.net/api/health
         - https://paperless.f4mily.net
         - https://pdf.f4mily.net
@@ -43,4 +42,5 @@ spec:
         - https://n8n.cluster.f4mily.net
         - https://homer.cluster.f4mily.net
         - https://watchyourlan.cluster.f4mily.net
+        - https://music.cluster.f4mily.net
   interval: 30s
