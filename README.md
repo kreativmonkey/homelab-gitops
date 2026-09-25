@@ -101,6 +101,7 @@ via [Gatus](https://status.cluster.f4mily.net).
 | [**kavita**](https://www.kavitareader.com/) | Ebook, comic & manga reader | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_kavita/uptimes/30d/badge.svg) |
 | [**linkding**](https://github.com/sissis-m/linkding) | Minimal bookmark manager | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_linkding/uptimes/30d/badge.svg) |
 | [**n8n**](https://n8n.io/) | Workflow automation & integrations | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_n8n/uptimes/30d/badge.svg) |
+| [**navidrome**](https://www.navidrome.org/) | Music library server (Subsonic/OpenSubsonic API), feeds Music Assistant | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_navidrome/uptimes/30d/badge.svg) |
 | [**nextcloud**](https://nextcloud.com/) | File sync, share & collaboration | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_nextcloud/uptimes/30d/badge.svg) |
 | [**Outline**](https://www.getoutline.com/) | Team wiki & knowledge base | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/application_outline/uptimes/30d/badge.svg) |
 | [**paperless-ngx**](https://docs.paperless-ngx.com/) | Document management with OCR & archiving | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/documents_paperless/uptimes/30d/badge.svg) |

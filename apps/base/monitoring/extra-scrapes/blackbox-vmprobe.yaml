@@ -42,4 +42,5 @@ spec:
         - https://n8n.cluster.f4mily.net
         - https://homer.cluster.f4mily.net
         - https://watchyourlan.cluster.f4mily.net
+        - https://music.cluster.f4mily.net
   interval: 30s

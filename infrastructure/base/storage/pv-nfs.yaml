@@ -10,7 +10,7 @@
 # immich/paperless HelmRelease values).
 #
 # subPath reference (relative to each export root):
-#   Media export: Bilder, Fotos, MediaStack/media/*
+#   Media export: Bilder, Fotos, MediaStack/media/*, MediaStack/media/Music
 #   Legacy rollback only: docker/tandoor/staticfiles
 #   Documents export: paperless/*
 # Create referenced directories on the NAS before deploying workloads.
@@ -333,3 +333,33 @@ spec:
   claimRef:
     name: tandoor-static
     namespace: tandoor
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-navidrome-music
+  labels:
+    app: navidrome
+    storage.type: nfs-media
+spec:
+  capacity:
+    storage: 2Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-static
+  mountOptions:
+    - nfsvers=4.1
+    - nosuid
+    - nodev
+    - hard
+    - timeo=600
+    - retrans=2
+    - ro
+  nfs:
+    path: /mnt/Storagepool/Media
+    server: 192.168.10.94
+  claimRef:
+    name: navidrome-music
+    namespace: navidrome
