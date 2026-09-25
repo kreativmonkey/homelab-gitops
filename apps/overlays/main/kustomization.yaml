@@ -426,8 +426,6 @@ replacements:
         fieldPaths: [spec.values.ingress.tls.0.secretName]
       - select: {kind: Ingress, name: searxng}
         fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: hister}
-        fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: immich}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: immich-power-tools}
@@ -463,6 +461,8 @@ replacements:
       - select: {kind: Ingress, name: watchyourlan}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: gatus}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: hister}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: spectrumknx}
         fieldPaths: [spec.tls.0.secretName]
