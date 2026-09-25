@@ -41,11 +41,30 @@ spec:
               value: https://search.f4mily.net/search?q={query}
             - name: HISTER__APP__REDIRECT_ON_NO_RESULTS
               value: "true"
+            - name: HISTER__APP__USER_HANDLING
+              value: "true"
             - name: HISTER__APP__ACCESS_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: hister-secret
                   key: HISTER_ACCESS_TOKEN
+            - name: HISTER__SERVER__OAUTH_ONLY
+              value: "true"
+            - name: HISTER__SERVER__OAUTH__OIDC__CLIENT_ID
+              value: homelab-hister
+            - name: HISTER__SERVER__OAUTH__OIDC__CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hister-secret
+                  key: HISTER_OIDC_CLIENT_SECRET
+            # Browser authorization stays public; back-channel calls use the
+            # cluster Service because auth.f4mily.net is not reachable from Pods.
+            - name: HISTER__SERVER__OAUTH__OIDC__AUTH_URL
+              value: https://auth.f4mily.net/application/o/authorize/
+            - name: HISTER__SERVER__OAUTH__OIDC__TOKEN_URL
+              value: http://authentik-server.authentik.svc.cluster.local/application/o/token/
+            - name: HISTER__SERVER__OAUTH__OIDC__USERINFO_URL
+              value: http://authentik-server.authentik.svc.cluster.local/application/o/userinfo/
           ports:
             - containerPort: 4433
               name: http
