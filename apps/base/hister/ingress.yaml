@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hister
+  namespace: hister
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Hister
+    gethomepage.dev/description: Private search history
+    gethomepage.dev/group: Tools
+    gethomepage.dev/icon: mdi-history
+    gethomepage.dev/pod-selector: app=hister
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+    # Browser ingestion can submit full rendered pages; upstream recommends 100 MiB.
+    nginx.org/client-max-body-size: "100m"
+    # Live search uses a WebSocket on /search.
+    nginx.org/websocket-services: "hister"
+    nginx.org/proxy-read-timeout: "86400s"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - hister.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: hister.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hister
+                port:
+                  number: 4433

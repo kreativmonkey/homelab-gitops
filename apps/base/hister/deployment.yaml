@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hister
+  namespace: hister
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hister
+  template:
+    metadata:
+      labels:
+        app: hister
+        app.kubernetes.io/name: hister
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: hister
+          # renovate: datasource=docker depName=ghcr.io/asciimoo/hister
+          image: ghcr.io/asciimoo/hister:v0.19.0@sha256:dae5ae63f292bf6075c7c60cfef031e15d809a19b09db34d9e54306aab490e9b
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: HISTER__SERVER__ADDRESS
+              value: "0.0.0.0:4433"
+            - name: HISTER__SERVER__BASE_URL
+              value: https://hister.f4mily.net
+            - name: HISTER__SERVER__MAX_BATCH_BODY_SIZE
+              value: "100"
+            - name: HISTER__APP__SEARCH_URL
+              value: https://search.f4mily.net/search?q={query}
+            - name: HISTER__APP__REDIRECT_ON_NO_RESULTS
+              value: "true"
+            - name: HISTER__APP__ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hister-secret
+                  key: HISTER_ACCESS_TOKEN
+          ports:
+            - containerPort: 4433
+              name: http
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /hister/data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hister-data
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hister
+  namespace: hister
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 4433
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: hister

@@ -34,6 +34,7 @@ data:
       - authentik
       - forgejo
       - goloom
+      - hister
       - tandoor
       - n8n
       - gatus
