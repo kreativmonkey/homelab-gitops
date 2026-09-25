@@ -224,7 +224,7 @@ spec:
 
         - name: hister
           group: core
-          url: https://hister.f4mily.net/health
+          url: https://hister.cluster.f4mily.net/health
           interval: 60s
           client: *default-dns
           conditions:

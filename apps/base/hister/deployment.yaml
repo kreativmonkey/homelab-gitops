@@ -34,7 +34,7 @@ spec:
             - name: HISTER__SERVER__ADDRESS
               value: "0.0.0.0:4433"
             - name: HISTER__SERVER__BASE_URL
-              value: https://hister.f4mily.net
+              value: https://hister.cluster.f4mily.net
             - name: HISTER__SERVER__MAX_BATCH_BODY_SIZE
               value: "100"
             - name: HISTER__APP__SEARCH_URL

@@ -21,10 +21,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - hister.f4mily.net
-      secretName: wildcard-f4mily-net-tls
+        - hister.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
   rules:
-    - host: hister.f4mily.net
+    - host: hister.cluster.f4mily.net
       http:
         paths:
           - path: /

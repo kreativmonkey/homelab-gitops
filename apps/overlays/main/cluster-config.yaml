@@ -49,8 +49,6 @@ data:
   host_outline: outline.f4mily.net
   host_linkding: bookmarks.f4mily.net
   host_homepage: home.f4mily.net
-  host_hister: hister.f4mily.net
-  url_hister: https://hister.f4mily.net
   host_homelable: homelable.f4mily.net
   host_immich: immich.f4mily.net
   host_immich_power_tools: immich-tools.f4mily.net
@@ -88,6 +86,8 @@ data:
   host_unifi_controller: unifi-controller.cluster.f4mily.net
   host_watchyourlan: watchyourlan.cluster.f4mily.net
   host_gatus: status.cluster.f4mily.net
+  host_hister: hister.cluster.f4mily.net
+  url_hister: https://hister.cluster.f4mily.net
   host_spectrumknx: knx.cluster.f4mily.net
   host_navidrome: music.cluster.f4mily.net
 
