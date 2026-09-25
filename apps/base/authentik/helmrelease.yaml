@@ -68,28 +68,27 @@ spec:
       error_reporting:
         enabled: true
     # Production DB is authoritative for migrated apps; add new providers here only.
-      blueprints:
-        configMaps:
-          - authentik-homelable-blueprint
-          - authentik-paperless-blueprint
-          - authentik-gatus-blueprint
-          - authentik-linkding-blueprint
-          - authentik-dawarich-blueprint
-          - authentik-grafana-blueprint
-          - authentik-teslamate-grafana-blueprint
-          - authentik-goloom-blueprint
-          - authentik-kavita-blueprint
-          - authentik-kite-blueprint
-          - authentik-linkwarden-blueprint
-          - authentik-pcm-blueprint
-          - authentik-sparky-fitness-blueprint
-          - authentik-tandoor-blueprint
-          - authentik-outline-blueprint
-          - authentik-audiobookshelf-blueprint
-          - authentik-forgejo-blueprint
-          - authentik-immich-blueprint
-          - authentik-nextcloud-blueprint
-          - authentik-hister-blueprint
+    blueprints:
+      configMaps:
+        - authentik-paperless-blueprint
+        - authentik-gatus-blueprint
+        - authentik-linkding-blueprint
+        - authentik-dawarich-blueprint
+        - authentik-grafana-blueprint
+        - authentik-teslamate-grafana-blueprint
+        - authentik-goloom-blueprint
+        - authentik-kavita-blueprint
+        - authentik-kite-blueprint
+        - authentik-linkwarden-blueprint
+        - authentik-pcm-blueprint
+        - authentik-sparky-fitness-blueprint
+        - authentik-tandoor-blueprint
+        - authentik-outline-blueprint
+        - authentik-audiobookshelf-blueprint
+        - authentik-forgejo-blueprint
+        - authentik-immich-blueprint
+        - authentik-nextcloud-blueprint
+        - authentik-hister-blueprint
     server:
       ingress:
         enabled: false
@@ -185,7 +184,7 @@ spec:
       # blueprint/task processing alive during rollouts.
       replicas: 2
       podAnnotations:
-        homelab.f4mily.net/oidc-secrets-revision: "2026-09-26-hister"
+        homelab.f4mily.net/oidc-secrets-revision: "2026-09-26-blueprint-mounts"
       deploymentStrategy:
         type: RollingUpdate
       # OIDC client secrets for the blueprints above. Only the worker applies
