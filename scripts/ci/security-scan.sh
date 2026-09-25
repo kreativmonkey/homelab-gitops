@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Scheduled security scan: gitleaks (full history, baseline-suppressed) + trivy fs.
+# Scheduled security scan: Gitleaks full history + Trivy manifest checks.
+# This manifests-only checkout has no package manifests or image layers. Keep
+# Trivy's secret/misconfiguration scanners as gate; scan deployed images from
+# rendered image references, cluster, or SBOMs separately.
 # Exits non-zero when NEW findings appear so the workflow flags the run and
 # opens/updates a tracking issue.
 set -euo pipefail
@@ -24,7 +27,7 @@ fi
 
 echo "== Trivy: filesystem scan (HIGH,CRITICAL) =="
 if ! trivy fs \
-    --scanners vuln,secret,misconfig \
+    --scanners secret,misconfig \
     --severity HIGH,CRITICAL \
     --ignorefile .trivyignore.yaml \
     --exit-code 1 \
