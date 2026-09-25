@@ -64,7 +64,7 @@ spec:
               mountPath: /data
             - name: music
               mountPath: /music
-              subPath: MediaStack/media/Music
+              subPath: MediaStack/media/music
               readOnly: true
       volumes:
         - name: data
