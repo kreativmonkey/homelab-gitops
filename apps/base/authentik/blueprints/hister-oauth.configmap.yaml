@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-hister-blueprint
+  namespace: authentik
+  labels:
+    app.kubernetes.io/part-of: authentik
+data:
+  hister.yaml: |
+    version: 1
+    metadata:
+      name: Homelab Hister OIDC
+      labels:
+        blueprints.goauthentik.io/description: OAuth2 provider and application for Hister
+    entries:
+      - model: authentik_providers_oauth2.oauth2provider
+        id: hister-provider
+        identifiers:
+          client_id: homelab-hister
+        attrs:
+          name: Provider for Hister
+          client_type: confidential
+          client_id: homelab-hister
+          client_secret: !Env OIDC_HISTER_CLIENT_SECRET
+          grant_types:
+            - authorization_code
+            - refresh_token
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          encryption_key: null
+          redirect_uris:
+            - matching_mode: strict
+              url: https://hister.cluster.f4mily.net/api/oauth/callback?provider=oidc
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+      - model: authentik_core.application
+        identifiers:
+          slug: hister
+        attrs:
+          name: Hister
+          slug: hister
+          provider: !KeyOf hister-provider
+          launch_url: https://hister.cluster.f4mily.net
+          meta_launch_url: https://hister.cluster.f4mily.net
+          icon: https://cdn.jsdelivr.net/gh/asciimoo/hister@v0.19.0/webui/app/static/logo.png

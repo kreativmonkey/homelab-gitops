@@ -89,6 +89,7 @@ spec:
           - authentik-forgejo-blueprint
           - authentik-immich-blueprint
           - authentik-nextcloud-blueprint
+          - authentik-hister-blueprint
     server:
       ingress:
         enabled: false
@@ -183,6 +184,8 @@ spec:
       # (pulls tasks from Redis broker), so multiple replicas are safe and keep
       # blueprint/task processing alive during rollouts.
       replicas: 2
+      podAnnotations:
+        homelab.f4mily.net/oidc-secrets-revision: "2026-09-26-hister"
       deploymentStrategy:
         type: RollingUpdate
       # OIDC client secrets for the blueprints above. Only the worker applies
