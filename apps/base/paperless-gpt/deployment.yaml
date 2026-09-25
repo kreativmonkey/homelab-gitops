@@ -19,7 +19,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: paperless-gpt
-          image: icereed/paperless-gpt:v0.27.0
+          image: icereed/paperless-gpt:v0.28.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
