@@ -40,6 +40,7 @@ resources:
   - ../../base/netbird-operator
   # - ../../base/backrest            # wip: ingress only, no workload
   - ../../base/searxng
+  - ../../base/hister
   # - ../../base/unifi-controller    # disabled: dropped from catalog (DR test)
 
   # --- Cloud & Management -----------------------------------------------
@@ -299,6 +300,25 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.host_hister
+    targets:
+      - select: {kind: Ingress, name: hister}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.url_hister
+    targets:
+      - select: {kind: Deployment, name: hister}
+        fieldPaths:
+          - spec.template.spec.containers.[name=hister].env.[name=HISTER__SERVER__BASE_URL].value
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.host_tandoor
     targets:
       - select: {kind: Ingress, name: tandoor}
@@ -405,6 +425,8 @@ replacements:
       - select: {kind: HelmRelease, name: sterling-pdf}
         fieldPaths: [spec.values.ingress.tls.0.secretName]
       - select: {kind: Ingress, name: searxng}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: hister}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: immich}
         fieldPaths: [spec.tls.0.secretName]

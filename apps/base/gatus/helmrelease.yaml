@@ -222,6 +222,15 @@ spec:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
 
+        - name: hister
+          group: core
+          url: https://hister.f4mily.net/health
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
         - name: tandoor
           group: application
           url: https://rezepte.f4mily.net

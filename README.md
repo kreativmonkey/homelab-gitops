@@ -95,6 +95,7 @@ via [Gatus](https://status.cluster.f4mily.net).
 | [**goloom**](https://github.com/Goloom-App/goloom) | Plan & schedule social-media posts (Mastodon, Bluesky, …) | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/automation_goloom/uptimes/30d/badge.svg) |
 | [**grafana**](https://grafana.com/) | Metrics dashboards & visualization | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_grafana/uptimes/30d/badge.svg) |
 | [**homepage**](https://gethomepage.dev/) | Central start page / service dashboard | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_homepage/uptimes/30d/badge.svg) |
+| [**Hister**](https://hister.org/) | Private full-text search for visited pages and files | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_hister/uptimes/30d/badge.svg) |
 | [**homer**](https://github.com/bastienwirtz/homer) | Static services dashboard | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_homer/uptimes/30d/badge.svg) |
 | [**immich**](https://immich.app/) | Self-hosted photo & video backup | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_immich/uptimes/30d/badge.svg) |
 | [**jellyfin**](https://jellyfin.org/) | Movie & TV media server | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_jellyfin/uptimes/30d/badge.svg) |
