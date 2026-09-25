@@ -93,7 +93,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 # Application Scope
 | Category | Apps |
 |----------|------|
-| Media & Docs | Audiobookshelf, Jellyfin, Tandoor, Paperless‑ngx, Immich |
+| Media & Docs | Audiobookshelf, Jellyfin, Navidrome, Tandoor, Paperless‑ngx, Immich |
 | Infra & Tools | Netbird (hostNetwork), Backrest (Restic), SearXNG, Uptime‑Kuma, Unifi‑Controller |
 | Cloud & Management | Nextcloud, Linkwarden, Authentik, Homepage |
 | Network Monitoring | Speedtest‑tracker, WatchYourLAN |

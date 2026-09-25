@@ -26,6 +26,7 @@ resources:
   - ../../base/outline
   - ../../base/audiobookshelf
   - ../../base/jellyfin
+  - ../../base/navidrome
   - ../../base/kavita
   - ../../base/tandoor
   - ../../base/paperless-ngx
@@ -175,6 +176,16 @@ replacements:
       fieldPath: data.host_jellyfin
     targets:
       - select: {kind: Ingress, name: jellyfin}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_navidrome
+    targets:
+      - select: {kind: Ingress, name: navidrome}
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
@@ -382,6 +393,8 @@ replacements:
       - select: {kind: Ingress, name: homepage}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: jellyfin}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: navidrome}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: kavita}
         fieldPaths: [spec.tls.0.secretName]

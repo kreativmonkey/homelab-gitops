@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: navidrome
+  namespace: navidrome
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Navidrome
+    gethomepage.dev/description: Musik-Streaming (Subsonic/OpenSubsonic API)
+    gethomepage.dev/group: Medien
+    gethomepage.dev/icon: navidrome.png
+    gethomepage.dev/pod-selector: app=navidrome
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - music.f4mily.net
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: music.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: navidrome
+                port:
+                  number: 4533

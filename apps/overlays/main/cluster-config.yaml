@@ -54,6 +54,7 @@ data:
   host_immich_power_tools: immich-tools.f4mily.net
   host_jellyfin: jellyfin.f4mily.net
   host_kavita: books.f4mily.net
+  host_navidrome: music.f4mily.net
   host_paperless: paperless.f4mily.net
   host_sterling_pdf: pdf.f4mily.net
   host_searxng: search.f4mily.net
