@@ -1,24 +1,35 @@
-# Trivy misconfig suppression — validated false positives for issue #781.
-# Real hardening gaps (KSV-0014 readOnlyRootFilesystem, KSV-0118 default
-# securityContext, KSV-0005/0009/0017/0108/0119) are intentionally NOT
-# listed here; they remain tracked for remediation.
-#
-# KSV-0056 (mcp-agent-reader delete verb) and KSV-0047 (nodes/proxy) were
-# FIXED (not suppressed) on 2026-09-24 by removing the underlying permissions
-# from infrastructure/base/mcp-server/rbac.yaml — see that file for the
-# reasoning per rule.
-#
-# KSV-0053 (pods/exec) moved from "tracked for remediation" to "suppressed
-# with justification" on 2026-09-24 — a deliberate policy decision, not an
-# oversight; see the entry below for the accepted residual risk.
-misconfigurations:
-  # Authentik OAuth blueprint ConfigMaps only reference the client secret via
-  # !Env (injected at reconcile time from authentik-oidc-client-secrets). No
-  # literal secret is ever stored. Same class gitleaks allowlists in
-  # .gitleaks.toml.
-  - id: AVD-KSV-0109
+# Trivy exceptions: exact inventory paths only. A same-rule finding in any new
+# path remains visible. Each exception below maps to issue #781 inventory.
+secrets:
+  # Masked historical Gitleaks suppression evidence self-triggers Trivy;
+  # no live credential is present.
+  - id: private-key
     paths:
-      - "apps/base/authentik/blueprints/**"
+      - ".gitleaks.baseline.json"
+misconfigurations:
+  # Exact Authentik OAuth blueprints: client_secret is !Env-injected, never literal.
+  - id: AVD-KSV-0109
+    statement: "Exact Authentik OAuth blueprints: client_secret is !Env-injected, never literal."
+    paths:
+      - "apps/base/authentik/blueprints/audiobookshelf-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/dawarich-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/forgejo-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/gatus-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/goloom-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/grafana-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/homelable-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/immich-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/kavita-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/kite-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/linkding-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/linkwarden-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/nextcloud-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/outline-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/paperless-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/pcm-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/sparky-fitness-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/tandoor-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/teslamate-grafana-oauth.configmap.yaml"
   # These ConfigMaps only MENTION secret-like key names (PASSWORD/TOKEN/SECRET)
   # or reference secrets via env vars / placeholders ({{VAR}}, ${VAR},
   # os.environ[...]). No literal secret value is stored. Verified 2026-08-22.
@@ -40,6 +51,39 @@ misconfigurations:
   - id: AVD-KSV-0041
     paths:
       - "clusters/main/flux-system/gotk-components.yaml"
+  # apps/base/forgejo/runner-deployment.yaml: dind needs privileged mode to build CI images.
+  - id: AVD-KSV-0017
+    paths:
+      - "apps/base/forgejo/runner-deployment.yaml"
+  # apps/base/fs-health-exporter/daemonset.yaml: exporter needs readonly host mounts for node filesystem metrics.
+  - id: AVD-KSV-0121
+    paths:
+      - "apps/base/fs-health-exporter/daemonset.yaml"
+  # apps/base/netbird/daemonset.yaml: node agent needs SYS_ADMIN, host networking, and privileged TUN setup.
+  - id: AVD-KSV-0005
+    paths:
+      - "apps/base/netbird/daemonset.yaml"
+  - id: AVD-KSV-0009
+    paths:
+      - "apps/base/netbird/daemonset.yaml"
+  - id: AVD-KSV-0017
+    paths:
+      - "apps/base/netbird/daemonset.yaml"
+  # Intentional LAN endpoints for Paperless ingestion and external TeslaMate MQTT clients.
+  - id: AVD-KSV-0108
+    paths:
+      - "apps/base/paperless-ngx/scanner-smb-deployment.yaml"
+      - "apps/base/teslamate/mosquitto-external-service.yaml"
+  # apps/base/watchyourlan/daemonset.yaml: L2 device discovery needs host networking, privileged raw sockets, and NET_RAW.
+  - id: AVD-KSV-0009
+    paths:
+      - "apps/base/watchyourlan/daemonset.yaml"
+  - id: AVD-KSV-0017
+    paths:
+      - "apps/base/watchyourlan/daemonset.yaml"
+  - id: AVD-KSV-0119
+    paths:
+      - "apps/base/watchyourlan/daemonset.yaml"
   # pods/exec: create IS the backup mechanism (pg_dump in CNPG primaries,
   # php occ und tar im Nextcloud-Pod). Ziele werden zur Laufzeit per Label-
   # Selector aufgelöst (-l role=primary etc.), weil CNPG-Primaries bei
@@ -53,3 +97,78 @@ misconfigurations:
     statement: "pods/exec: create IS the backup mechanism (pg_dump/php occ/tar); targets resolved at runtime via label selectors since CNPG primaries move on failover, so resourceNames scoping is constructively impossible. Already namespace-scoped to nextcloud/cnpg-system (verified denied in kube-system), no delete, secrets only via resourceNames. Residual risk accepted: exec into a CNPG primary means postgres superuser, i.e. read access to every database in that cluster. Verified 2026-09-24."
     paths:
       - "infrastructure/base/offsite-backup/rbac.yaml"
+  # Issue #746: duplicate container-hardening findings tracked through the
+  # namespace rollout. Listed paths only; any same-rule finding in a new path fails.
+  - id: AVD-KSV-0014
+    paths:
+      - "apps/base/audiobookshelf/deployment.yaml"
+      - "apps/base/authentik/blueprint-check.cronjob.yaml"
+      - "apps/base/dawarich/deployment.yaml"
+      - "apps/base/dawarich/valkey-deployment.yaml"
+      - "apps/base/forgejo/deployment.yaml"
+      - "apps/base/forgejo/redis-deployment.yaml"
+      - "apps/base/forgejo/runner-deployment.yaml"
+      - "apps/base/homepage/deployment.yaml"
+      - "apps/base/homer/deployment.yaml"
+      - "apps/base/jellyfin/deployment.yaml"
+      - "apps/base/kavita/deployment.yaml"
+      - "apps/base/linkwarden/deployment.yaml"
+      - "apps/base/netbird/daemonset.yaml"
+      - "apps/base/nextcloud/appapi-harp-deployment.yaml"
+      - "apps/base/nextcloud/whiteboard-deployment.yaml"
+      - "apps/base/paperless-gpt/deployment.yaml"
+      - "apps/base/paperless-ngx/document-services-deployment.yaml"
+      - "apps/base/paperless-ngx/scanner-smb-deployment.yaml"
+      - "apps/base/readeck/deployment.yaml"
+      - "apps/base/searxng/deployment.yaml"
+      - "apps/base/searxng/valkey-deployment.yaml"
+      - "apps/base/spectrumknx/statefulset.yaml"
+      - "apps/base/spectrumknx/timescaledb-statefulset.yaml"
+      - "apps/base/tandoor/deployment.yaml"
+      - "apps/base/teslamate/deployment.yaml"
+      - "apps/base/teslamate/grafana-deployment.yaml"
+      - "apps/base/teslamate/mosquitto-deployment.yaml"
+      - "apps/base/unifi-controller/deployment.yaml"
+      - "apps/base/watchyourlan/daemonset.yaml"
+      - "apps/base/workshops/deployment.yaml"
+      - "infrastructure/base/offsite-backup/appdata.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/databases.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/forgejo.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/immich.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/nextcloud.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/paperless.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/quota-check.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/verify.cronjob.yaml"
+      - "infrastructure/base/remediation-api/deployment.yaml"
+      - "infrastructure/base/storage/local-path-provisioner/deployment.yaml"
+      - "infrastructure/base/system-upgrade-controller/patch-resources.yaml"
+  - id: AVD-KSV-0118
+    paths:
+      - "apps/base/dawarich/deployment.yaml"
+      - "apps/base/forgejo/redis-deployment.yaml"
+      - "apps/base/forgejo/runner-deployment.yaml"
+      - "apps/base/homer/deployment.yaml"
+      - "apps/base/linkwarden/deployment.yaml"
+      - "apps/base/netbird/daemonset.yaml"
+      - "apps/base/nextcloud/appapi-harp-deployment.yaml"
+      - "apps/base/nextcloud/whiteboard-deployment.yaml"
+      - "apps/base/paperless-gpt/deployment.yaml"
+      - "apps/base/paperless-ngx/document-services-deployment.yaml"
+      - "apps/base/paperless-ngx/redis-deployment.yaml"
+      - "apps/base/paperless-ngx/scanner-smb-deployment.yaml"
+      - "apps/base/readeck/deployment.yaml"
+      - "apps/base/spectrumknx/statefulset.yaml"
+      - "apps/base/spectrumknx/timescaledb-statefulset.yaml"
+      - "apps/base/unifi-controller/deployment.yaml"
+      - "apps/base/workshops/deployment.yaml"
+      - "infrastructure/base/offsite-backup/appdata.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/databases.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/forgejo.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/immich.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/nextcloud.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/paperless.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/quota-check.cronjob.yaml"
+      - "infrastructure/base/offsite-backup/verify.cronjob.yaml"
+      - "infrastructure/base/storage/local-path-provisioner/deployment.yaml"
+      - "infrastructure/base/system-upgrade-controller/patch-controller-anti-affinity.yaml"
+      - "infrastructure/base/system-upgrade-controller/patch-resources.yaml"
