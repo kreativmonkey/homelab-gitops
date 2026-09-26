@@ -1,7 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 # Hister accepts browser ingestion through ingress and fetches arbitrary web pages.
+# CNPG postgres (homelab-postgres-hister in cnpg-system).
 namespace: hister
 components:
   - ../baseline
+  - ../egress-database
   - ../egress-external
