@@ -18,6 +18,7 @@ misconfigurations:
       - "apps/base/authentik/blueprints/goloom-oauth.configmap.yaml"
       - "apps/base/authentik/blueprints/grafana-oauth.configmap.yaml"
       - "apps/base/authentik/blueprints/homelable-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/hister-oauth.configmap.yaml"
       - "apps/base/authentik/blueprints/immich-oauth.configmap.yaml"
       - "apps/base/authentik/blueprints/kavita-oauth.configmap.yaml"
       - "apps/base/authentik/blueprints/kite-oauth.configmap.yaml"

@@ -43,11 +43,24 @@ spec:
               value: https://search.f4mily.net/search?q={query}
             - name: HISTER__APP__REDIRECT_ON_NO_RESULTS
               value: "true"
+            - name: HISTER__APP__USER_HANDLING
+              value: "true"
             - name: HISTER__APP__ACCESS_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: hister-secret
                   key: HISTER_ACCESS_TOKEN
+            - name: HISTER__SERVER__OAUTH_ONLY
+              value: "true"
+            - name: HISTER__SERVER__OAUTH__OIDC__CLIENT_ID
+              value: homelab-hister
+            - name: HISTER__SERVER__OAUTH__OIDC__CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hister-secret
+                  key: HISTER_OIDC_CLIENT_SECRET
+            - name: HISTER__SERVER__OAUTH__OIDC__CONFIGURATION_URL
+              value: https://login.f4mily.net/application/o/hister/.well-known/openid-configuration
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
