@@ -4,8 +4,6 @@ kind: Kustomization
 # OIDC discovery) + CNPG egress (postgres) + mail egress (SMTP 465). Redis
 # runs in-namespace (covered by baseline same-ns allow).
 namespace: authentik
-resources:
-  - allow-ingress-hister.yaml
 components:
   - ../baseline
   - ../egress-external

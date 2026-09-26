@@ -57,14 +57,8 @@ spec:
                 secretKeyRef:
                   name: hister-secret
                   key: HISTER_OIDC_CLIENT_SECRET
-            # Browser authorization stays public; back-channel calls use the
-            # cluster Service because auth.f4mily.net is not reachable from Pods.
-            - name: HISTER__SERVER__OAUTH__OIDC__AUTH_URL
-              value: https://auth.f4mily.net/application/o/authorize/
-            - name: HISTER__SERVER__OAUTH__OIDC__TOKEN_URL
-              value: http://authentik-server.authentik.svc.cluster.local/application/o/token/
-            - name: HISTER__SERVER__OAUTH__OIDC__USERINFO_URL
-              value: http://authentik-server.authentik.svc.cluster.local/application/o/userinfo/
+            - name: HISTER__SERVER__OAUTH__OIDC__CONFIGURATION_URL
+              value: https://login.f4mily.net/application/o/hister/.well-known/openid-configuration
           ports:
             - containerPort: 4433
               name: http
