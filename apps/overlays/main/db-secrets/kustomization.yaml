@@ -15,6 +15,7 @@ resources:
   - tandoor-db-credentials.secret.yaml
   - outline-db-credentials.secret.yaml
   - dawarich-db-credentials.secret.yaml
+  - hister-db-credentials.secret.yaml
 patches:
   - target:
       kind: Secret
@@ -136,3 +137,13 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: dawarich
+  - target:
+      kind: Secret
+      name: hister-db-credentials
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: homelab-postgres-hister
+      - op: replace
+        path: /metadata/namespace
+        value: hister

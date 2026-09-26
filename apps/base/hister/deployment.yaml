@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: hister
   namespace: hister
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-hister
 spec:
   replicas: 1
   strategy:
@@ -59,6 +61,18 @@ spec:
                   key: HISTER_OIDC_CLIENT_SECRET
             - name: HISTER__SERVER__OAUTH__OIDC__CONFIGURATION_URL
               value: https://login.f4mily.net/application/o/hister/.well-known/openid-configuration
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-hister
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-hister
+                  key: password
+            - name: HISTER__SERVER__DATABASE
+              value: "host=homelab-postgres-rw.cnpg-system.svc.cluster.local user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) dbname=hister port=5432 sslmode=disable TimeZone=Europe/Berlin"
           ports:
             - containerPort: 4433
               name: http

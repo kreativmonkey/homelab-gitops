@@ -157,3 +157,8 @@ spec:
         login: true
         passwordSecret:
           name: outline-db-credentials
+      - name: hister
+        ensure: present
+        login: true
+        passwordSecret:
+          name: hister-db-credentials
