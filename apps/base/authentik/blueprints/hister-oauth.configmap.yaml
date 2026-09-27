@@ -31,7 +31,7 @@ data:
           encryption_key: null
           redirect_uris:
             - matching_mode: strict
-              url: https://hister.cluster.f4mily.net/api/oauth/callback?provider=oidc
+              url: https://hister.f4mily.net/api/oauth/callback?provider=oidc
           property_mappings:
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
@@ -43,6 +43,6 @@ data:
           name: Hister
           slug: hister
           provider: !KeyOf hister-provider
-          launch_url: https://hister.cluster.f4mily.net
-          meta_launch_url: https://hister.cluster.f4mily.net
+          launch_url: https://hister.f4mily.net
+          meta_launch_url: https://hister.f4mily.net
           icon: https://cdn.jsdelivr.net/gh/asciimoo/hister@v0.19.0/webui/app/static/logo.png

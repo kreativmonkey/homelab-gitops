@@ -444,6 +444,8 @@ replacements:
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: goloom}
         fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: hister}
+        fieldPaths: [spec.tls.0.secretName]
 
   - source:
       kind: ConfigMap
@@ -461,8 +463,6 @@ replacements:
       - select: {kind: Ingress, name: watchyourlan}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: gatus}
-        fieldPaths: [spec.tls.0.secretName]
-      - select: {kind: Ingress, name: hister}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: spectrumknx}
         fieldPaths: [spec.tls.0.secretName]
