@@ -31,6 +31,7 @@ spec:
       shared_buffers: 256MB
       effective_cache_size: 768MB
       max_wal_size: "2GB"
+      max_slot_wal_keep_size: "2GB"
       min_wal_size: "256MB"
       checkpoint_timeout: "15min"
       checkpoint_completion_target: "0.9"
