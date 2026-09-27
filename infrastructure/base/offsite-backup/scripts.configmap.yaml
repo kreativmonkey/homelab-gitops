@@ -16,26 +16,26 @@ data:
       > /config/storagebox-known-hosts
     storagebox_password="$(rclone obscure "${STORAGEBOX_PASSWORD}")"
     rclone config create storagebox sftp \
-      host "${STORAGEBOX_HOST}" \
-      user "${STORAGEBOX_USERNAME}" \
-      port 23 \
-      pass "${storagebox_password}" \
-      shell_type unix \
-      known_hosts_file /config/storagebox-known-hosts \
-      host_key_algorithms ssh-ed25519 \
+      host="${STORAGEBOX_HOST}" \
+      user="${STORAGEBOX_USERNAME}" \
+      port=23 \
+      pass="${storagebox_password}" \
+      shell_type=unix \
+      known_hosts_file=/config/storagebox-known-hosts \
+      host_key_algorithms=ssh-ed25519 \
       --config /config/rclone.conf >/dev/null
 
     if [ -s /config/garage-access-key.b64 ]; then
       garage_access_key="$(base64 -d </config/garage-access-key.b64)"
       garage_secret_key="$(base64 -d </config/garage-secret-key.b64)"
       rclone config create garage s3 \
-        provider Other \
-        env_auth false \
-        access_key_id "${garage_access_key}" \
-        secret_access_key "${garage_secret_key}" \
-        endpoint http://192.168.10.94:30188 \
-        region garage \
-        force_path_style true \
+        provider=Other \
+        env_auth=false \
+        access_key_id="${garage_access_key}" \
+        secret_access_key="${garage_secret_key}" \
+        endpoint=http://192.168.10.94:30188 \
+        region=garage \
+        force_path_style=true \
         --config /config/rclone.conf >/dev/null
     fi
 
