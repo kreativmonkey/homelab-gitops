@@ -118,4 +118,4 @@ just sops-create cnpg-barman-s3-credentials cnpg-system \
 | PostgreSQL logical/physical | Barman (`barmanObjectStore`) | PITR, cross-cluster restore |
 | Kubernetes volumes | Velero | Namespace/PV disaster recovery |
 
-[`restore.yaml`](../../infrastructure/overlays/main/database-clusters/restore.yaml) remains for optional Velero-based CNPG namespace restore.
+Normal CNPG recovery uses Barman through the documented disaster-recovery overlay. A one-shot Velero `Restore` CR must be created explicitly with a concrete `backupName` (or selected schedule backup); it must not live in the continuously reconciled main overlay.
