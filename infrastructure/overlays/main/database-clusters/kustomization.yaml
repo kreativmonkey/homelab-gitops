@@ -7,5 +7,3 @@ resources:
   - scheduled-backup.yaml
   - barman-s3-credentials.secret.yaml
   - credentials
-  # Velero volume-level restore (optional, separate from Barman PITR)
-  - restore.yaml
