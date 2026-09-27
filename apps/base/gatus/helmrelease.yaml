@@ -224,7 +224,7 @@ spec:
 
         - name: hister
           group: core
-          url: https://hister.cluster.f4mily.net/health
+          url: https://hister.f4mily.net/health
           interval: 60s
           client: *default-dns
           conditions:
@@ -504,6 +504,15 @@ spec:
             timeout: 180s
           conditions:
              - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
+
+        - name: hister
+          group: external
+          url: https://hister.f4mily.net/health
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
 
         # ──────────────────────────────────────────────
