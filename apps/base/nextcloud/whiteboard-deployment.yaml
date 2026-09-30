@@ -21,7 +21,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: whiteboard
-          image: ghcr.io/nextcloud-releases/whiteboard:v1.5.9
+          image: ghcr.io/nextcloud-releases/whiteboard:v2.0.0
           ports:
             - name: http
               containerPort: 3002
