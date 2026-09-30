@@ -27,7 +27,7 @@ spec:
       containers:
         - name: immich-power-tools
           # renovate: datasource=docker depName=ghcr.io/immich-power-tools/immich-power-tools versioning=semver
-          image: ghcr.io/immich-power-tools/immich-power-tools:v0.22.0
+          image: ghcr.io/immich-power-tools/immich-power-tools:v0.24.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
