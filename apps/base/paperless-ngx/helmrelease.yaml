@@ -34,7 +34,7 @@ spec:
       # wechselt Whoosh -> Tantivy, Index wird beim ersten Start neu gebaut). App-Image
       # wird via customManager (datasource=docker) von Renovate getrackt.
       # renovate: datasource=docker depName=ghcr.io/paperless-ngx/paperless-ngx
-      tag: "3.1.0"
+      tag: "3.2.1"
 
     controller:
       type: deployment
