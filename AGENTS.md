@@ -174,6 +174,7 @@ Each learning is a standalone Markdown file in `docs/learnings/` with:
    - Add the ConfigMap to `apps/base/authentik/kustomization.yaml` resources.
    - Add the ConfigMap name to `apps/base/authentik/helmrelease.yaml` under `blueprints.configMaps`.
    - Store OIDC `client-id` / `client-secret` as SOPS-encrypted secret in `apps/base/<app>/` and wire via `valuesFrom` in the app's HelmRelease.
+   - Authentik side (`!Env OIDC_<APP>_CLIENT_SECRET`): new Secret `authentik-oidc-client-secrets-<app>` in private repo `homelab-gitops-private` (`apps/overlays/main/authentik-private/oidc-client-secret-<app>.secret.yaml`, public age key suffices) plus an `optional: true` `envFrom` entry on the worker in `apps/base/authentik/helmrelease.yaml`. Do not edit the shared `oidc-client-secrets.secret.yaml`.
 
 4. **Icon suchen** – Search `https://dashboardicons.com/` for the app's icon. Prefer SVG. Set as `icon:` field on the application entry in the blueprint. Use the jsDelivr CDN URL from the dashboardicons collection.
 

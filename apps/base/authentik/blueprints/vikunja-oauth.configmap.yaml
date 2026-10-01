@@ -40,8 +40,8 @@ data:
           name: Provider for Vikunja
           client_type: confidential
           client_id: homelab-vikunja
-          # Injected into the worker from the authentik-oidc-client-secrets Secret
-          # (private repo, key OIDC_VIKUNJA_CLIENT_SECRET). Never hardcode it.
+          # Injected into the worker from the authentik-oidc-client-secrets-vikunja
+          # Secret (private repo, key OIDC_VIKUNJA_CLIENT_SECRET). Never hardcode it.
           client_secret: !Env OIDC_VIKUNJA_CLIENT_SECRET
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
