@@ -52,6 +52,13 @@ spec:
                 secretKeyRef:
                   name: vikunja-secret
                   key: jwt-secret
+            # 30 days (seconds). OIDC logins get a short session (default 3 days without use);
+            # family opens the list via QR/NFC tag and must not hit the login each time.
+            - name: VIKUNJA_SERVICE_JWTTTL
+              value: "2592000"
+            # No public share links without login.
+            - name: VIKUNJA_SERVICE_ENABLELINKSHARING
+              value: "false"
             - name: VIKUNJA_FILES_BASEPATH
               value: /app/vikunja/files
             - name: VIKUNJA_FILES_MAXSIZE
