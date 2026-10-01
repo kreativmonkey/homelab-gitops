@@ -312,7 +312,7 @@ spec:
 
         - name: victoria-metrics
           group: observability
-          url: https://metrics.cluster.f4mily.net
+          url: https://metrics.cluster.f4mily.net/health
           interval: 60s
           client: *default-dns
           conditions:

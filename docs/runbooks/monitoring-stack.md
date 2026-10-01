@@ -65,7 +65,7 @@ Aktivierung: Route `n8n-remediation` in `vm-k8s-stack/helmrelease.yaml` wieder e
 ```bash
 # Metrik (über metrics.cluster.f4mily.net oder Port-Forward)
 curl -sk --resolve metrics.cluster.f4mily.net:443:192.168.10.41 \
-  'https://metrics.cluster.f4mily.net/api/v1/query?query=sum(alertmanager_notifications_total{receiver="n8n-remediation"})'
+  'https://metrics.cluster.f4mily.net/select/0/prometheus/api/v1/query?query=sum(alertmanager_notifications_total{receiver="n8n-remediation"})'
 ```
 
 Nach GitOps-Änderung an `vm-k8s-stack/helmrelease.yaml`:

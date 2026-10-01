@@ -10,6 +10,7 @@ metadata:
     gethomepage.dev/group: Cluster Management
     gethomepage.dev/icon: victoriametrics.png
     gethomepage.dev/app: vmselect
+    gethomepage.dev/href: https://metrics.cluster.f4mily.net/select/0/vmui/
     # TLS: wildcard-cluster-f4mily-net-tls via reflector (no cluster-issuer).
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
@@ -25,8 +26,19 @@ spec:
     - host: metrics.cluster.f4mily.net
       http:
         paths:
-          - path: /
+          # Nur lesende Pfade routen, kein `/`: vmselect liefert unter /delete/,
+          # /admin/ und /internal/ destruktive Endpunkte (delete_series) ohne Auth.
+          # Alles Nicht-Gelistete endet als 404 am nginx. Siehe BUT-44.
+          - path: /select/
             pathType: Prefix
+            backend:
+              service:
+                # VMCluster: vmselect bedient HTTP-Queries auf Port 8481
+                name: vmselect-vm-k8s-stack-victoria-metrics-k8s-stack
+                port:
+                  number: 8481
+          - path: /health
+            pathType: Exact
             backend:
               service:
                 # VMCluster: vmselect bedient HTTP-Queries auf Port 8481
