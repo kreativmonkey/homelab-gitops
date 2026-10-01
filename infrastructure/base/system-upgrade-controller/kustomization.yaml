@@ -4,7 +4,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: system-upgrade
 resources:
-  - https://github.com/rancher/system-upgrade-controller?ref=v0.20.1
+  - https://github.com/rancher/system-upgrade-controller?ref=v0.20.2
 patches:
   - path: patch-deployment-strategy.yaml
   - path: patch-controller-anti-affinity.yaml
@@ -15,4 +15,4 @@ images:
     # so its image 404s on docker.io — the controller only survived on cached layers
     # and would fail to reschedule onto a freshly-rebooted (cache-wiped) Talos node
     # during an upgrade, stalling the rollout. Keep in sync with the manifest ref above.
-    newTag: v0.20.1
+    newTag: v0.20.2
