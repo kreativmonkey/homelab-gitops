@@ -102,6 +102,12 @@ spec:
                 secretKeyRef:
                   name: vikunja-secret
                   key: client-secret
+            # Vikunja runs OIDC discovery once at start and caches the result; if
+            # Authentik (or the blueprint) is not ready yet the provider is dropped
+            # until the next restart and the login page shows no SSO button.
+            # Fail fast instead so Kubernetes restarts the pod until discovery works.
+            - name: VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_REQUIREAVAILABILITY
+              value: "true"
           ports:
             - containerPort: 3456
               name: http
