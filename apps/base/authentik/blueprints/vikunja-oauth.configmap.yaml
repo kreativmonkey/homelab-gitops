@@ -43,6 +43,11 @@ data:
           # Injected into the worker from the authentik-oidc-client-secrets-vikunja
           # Secret (private repo, key OIDC_VIKUNJA_CLIENT_SECRET). Never hardcode it.
           client_secret: !Env OIDC_VIKUNJA_CLIENT_SECRET
+          # Required: grant_types defaults to [] on newly created providers and
+          # Authentik then rejects every /authorize with invalid_request.
+          grant_types:
+            - authorization_code
+            - refresh_token
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
           signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]

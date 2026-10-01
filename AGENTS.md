@@ -197,6 +197,10 @@ entries:
       client_type: confidential
       client_id: <client-id>
       client_secret: <placeholder-change-me>
+      # Mandatory: new providers default to grant_types [] → every login fails with invalid_request
+      grant_types:
+        - authorization_code
+        - refresh_token
       authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
