@@ -88,6 +88,8 @@ data:
   host_gatus: status.cluster.f4mily.net
   host_hister: hister.f4mily.net
   url_hister: https://hister.f4mily.net
+  host_vikunja: aufgaben.f4mily.net
+  url_vikunja: https://aufgaben.f4mily.net
   host_spectrumknx: knx.cluster.f4mily.net
   host_navidrome: music.cluster.f4mily.net
 

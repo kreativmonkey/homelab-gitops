@@ -35,6 +35,7 @@ data:
       - forgejo
       - goloom
       - hister
+      - vikunja
       - tandoor
       - n8n
       - gatus

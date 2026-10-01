@@ -231,6 +231,15 @@ spec:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
 
+        - name: vikunja
+          group: core
+          url: https://aufgaben.f4mily.net/api/v1/info
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
         - name: tandoor
           group: application
           url: https://rezepte.f4mily.net
@@ -509,6 +518,15 @@ spec:
         - name: hister
           group: external
           url: https://hister.f4mily.net/health
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
+        - name: vikunja
+          group: external
+          url: https://aufgaben.f4mily.net/api/v1/info
           interval: 60s
           client: *external-dns
           conditions:

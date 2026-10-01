@@ -22,6 +22,7 @@ resources:
   - blueprints/immich-oauth.configmap.yaml
   - blueprints/nextcloud-oauth.configmap.yaml
   - blueprints/hister-oauth.configmap.yaml
+  - blueprints/vikunja-oauth.configmap.yaml
   - blueprints/homelable-oauth.configmap.yaml
   - media-pvc.yaml
   - helmrelease.yaml

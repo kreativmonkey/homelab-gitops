@@ -1,0 +1,164 @@
+# No official Helm chart (vikunja.io/docs only documents the container image),
+# so raw manifests following the hister pattern.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vikunja
+  namespace: vikunja
+  annotations:
+    kustomize.toolkit.fluxcd.io/depends-on: postgresql.cnpg.io/Database/cnpg-system/homelab-postgres-vikunja
+spec:
+  replicas: 1
+  # RWO PVC: old pod must release the volume before the new one starts.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: vikunja
+  template:
+    metadata:
+      labels:
+        app: vikunja
+        app.kubernetes.io/name: vikunja
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: vikunja
+          # renovate: datasource=docker depName=vikunja/vikunja
+          image: vikunja/vikunja:2.6.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: Europe/Berlin
+            # Replaced from cluster-config url_vikunja.
+            - name: VIKUNJA_SERVICE_PUBLICURL
+              value: https://aufgaben.f4mily.net
+            # Login only via Authentik OIDC; no local accounts, no self-registration.
+            - name: VIKUNJA_SERVICE_ENABLEREGISTRATION
+              value: "false"
+            - name: VIKUNJA_AUTH_LOCAL_ENABLED
+              value: "false"
+            # Stable JWT signing key; a random per-start key would log everybody out on every restart.
+            - name: VIKUNJA_SERVICE_JWTSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vikunja-secret
+                  key: jwt-secret
+            # 30 days (seconds). OIDC logins get a short session (default 3 days without use);
+            # family opens the list via QR/NFC tag and must not hit the login each time.
+            - name: VIKUNJA_SERVICE_JWTTTL
+              value: "2592000"
+            # No public share links without login.
+            - name: VIKUNJA_SERVICE_ENABLELINKSHARING
+              value: "false"
+            - name: VIKUNJA_FILES_BASEPATH
+              value: /app/vikunja/files
+            - name: VIKUNJA_FILES_MAXSIZE
+              value: 50MB
+            - name: VIKUNJA_DATABASE_TYPE
+              value: postgres
+            - name: VIKUNJA_DATABASE_HOST
+              value: homelab-postgres-rw.cnpg-system.svc.cluster.local
+            - name: VIKUNJA_DATABASE_DATABASE
+              value: vikunja
+            - name: VIKUNJA_DATABASE_SSLMODE
+              value: disable
+            - name: VIKUNJA_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-vikunja
+                  key: username
+            - name: VIKUNJA_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-postgres-vikunja
+                  key: password
+            # OIDC provider id "authentik" -> redirect URI /auth/openid/authentik
+            # (https://vikunja.io/docs/openid). vikunja_scope delivers the
+            # vikunja_groups claim used for team sync (see authentik blueprint).
+            - name: VIKUNJA_AUTH_OPENID_ENABLED
+              value: "true"
+            - name: VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_NAME
+              value: Authentik
+            - name: VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_AUTHURL
+              value: https://login.f4mily.net/application/o/vikunja/
+            - name: VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_SCOPE
+              value: openid profile email vikunja_scope
+            - name: VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_CLIENTID
+              valueFrom:
+                secretKeyRef:
+                  name: vikunja-secret
+                  key: client-id
+            - name: VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_CLIENTSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vikunja-secret
+                  key: client-secret
+          ports:
+            - containerPort: 3456
+              name: http
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          startupProbe:
+            httpGet:
+              path: /api/v1/info
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /api/v1/info
+              port: http
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v1/info
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: files
+              mountPath: /app/vikunja/files
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: files
+          persistentVolumeClaim:
+            claimName: vikunja-files
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vikunja
+  namespace: vikunja
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 3456
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: vikunja

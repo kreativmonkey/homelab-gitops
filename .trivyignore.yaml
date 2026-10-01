@@ -25,6 +25,7 @@ misconfigurations:
       - "apps/base/authentik/blueprints/linkding-oauth.configmap.yaml"
       - "apps/base/authentik/blueprints/linkwarden-oauth.configmap.yaml"
       - "apps/base/authentik/blueprints/nextcloud-oauth.configmap.yaml"
+      - "apps/base/authentik/blueprints/vikunja-oauth.configmap.yaml"
       - "apps/base/authentik/blueprints/outline-oauth.configmap.yaml"
       - "apps/base/authentik/blueprints/paperless-oauth.configmap.yaml"
       - "apps/base/authentik/blueprints/pcm-oauth.configmap.yaml"

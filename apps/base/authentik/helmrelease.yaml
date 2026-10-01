@@ -89,6 +89,7 @@ spec:
         - authentik-immich-blueprint
         - authentik-nextcloud-blueprint
         - authentik-hister-blueprint
+        - authentik-vikunja-blueprint
     server:
       ingress:
         enabled: false
@@ -192,13 +193,21 @@ spec:
       # `!Env NAME`; if a variable is missing the blueprint fails instead of
       # writing an empty secret into Authentik.
       #
-      # Whole Secret via envFrom, so adding an app means adding one key in the
-      # private repo (apps/overlays/main/authentik-private) — no change here and
-      # no worker rollout. The keys are already named OIDC_<APP>_CLIENT_SECRET;
+      # Whole Secrets via envFrom. Keys are named OIDC_<APP>_CLIENT_SECRET;
       # envFrom silently skips keys that are not valid env var names.
+      #
+      # `authentik-oidc-client-secrets` is frozen (editing it needs the private
+      # age key). New apps get their own file in the private repo
+      # (apps/overlays/main/authentik-private/oidc-client-secret-<app>.secret.yaml,
+      # Secret `authentik-oidc-client-secrets-<app>`, creatable with the public
+      # key) plus an `optional: true` entry here. If that Secret is missing,
+      # only that app's blueprint fails on `!Env`, not the whole worker.
       envFrom:
         - secretRef:
             name: authentik-oidc-client-secrets
+        - secretRef:
+            name: authentik-oidc-client-secrets-vikunja
+            optional: true
       # 2026-06-09: limit raised 2Gi→4Gi (OOMKilled, exit 137)
       #   Previous pod ran 3.5d then OOM. DockerException spam
       #   (outpost_service_connection_monitor → Docker) on Talos
