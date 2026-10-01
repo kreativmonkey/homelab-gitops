@@ -165,6 +165,14 @@
       "allowedVersions": "/^2026\\.8\\./"
     },
     {
+      "description": "Vikunja: exakten Unstable-Digest mit MCP einfrieren, bis 2.7.x stabil verfügbar ist",
+      "matchPackageNames": [
+        "vikunja/vikunja"
+      ],
+      "matchCurrentVersion": "/^unstable$/",
+      "enabled": false
+    },
+    {
       "description": "Nix-Flake-Inputs gruppiert + Automerge",
       "matchManagers": [
         "nix"

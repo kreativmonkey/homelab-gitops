@@ -32,8 +32,9 @@ spec:
           type: RuntimeDefault
       containers:
         - name: vikunja
-          # renovate: datasource=docker depName=vikunja/vikunja
-          image: vikunja/vikunja:2.6.0
+          # MCP ships with 2.7.0. Until its stable release, pin the exact unstable
+          # manifest so every node runs the same build and rollback stays possible.
+          image: vikunja/vikunja:unstable@sha256:3b233b2e6824244ead60bfdf8f7bb57fd00579327cc8edbaf20f9553391faaea
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ
