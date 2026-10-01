@@ -41,6 +41,7 @@ resources:
   # - ../../base/backrest            # wip: ingress only, no workload
   - ../../base/searxng
   - ../../base/hister
+  - ../../base/vikunja
   # - ../../base/unifi-controller    # disabled: dropped from catalog (DR test)
 
   # --- Cloud & Management -----------------------------------------------
@@ -319,6 +320,25 @@ replacements:
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
+      fieldPath: data.host_vikunja
+    targets:
+      - select: {kind: Ingress, name: vikunja}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.url_vikunja
+    targets:
+      - select: {kind: Deployment, name: vikunja}
+        fieldPaths:
+          - spec.template.spec.containers.[name=vikunja].env.[name=VIKUNJA_SERVICE_PUBLICURL].value
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
       fieldPath: data.host_tandoor
     targets:
       - select: {kind: Ingress, name: tandoor}
@@ -445,6 +465,8 @@ replacements:
       - select: {kind: Ingress, name: goloom}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: hister}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: vikunja}
         fieldPaths: [spec.tls.0.secretName]
 
   - source:

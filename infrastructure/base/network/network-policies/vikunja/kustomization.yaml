@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# vikunja = tasks. Ingress + CNPG postgres (homelab-postgres-vikunja in
+# cnpg-system) + OIDC against login.f4mily.net (outbound HTTPS).
+namespace: vikunja
+components:
+  - ../baseline
+  - ../egress-database
+  - ../egress-external

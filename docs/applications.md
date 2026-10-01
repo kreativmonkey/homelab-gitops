@@ -65,6 +65,7 @@ here so it is obvious what is **planned** but not deployed:
 | backrest           | wip    | ingress only, missing HelmRelease         |
 | searxng            | on     | Deployment + ingress at search.f4mily.net |
 | hister             | on     | Deployment, Postgres (CNPG) + index on PVC, hister.f4mily.net; SearXNG fallback |
+| vikunja            | on     | Deployment, Postgres (CNPG) + attachments on PVC, aufgaben.f4mily.net, Authentik OIDC only |
 | unifi-controller   | off    | removed from catalog (DR test)            |
 | nextcloud          | on     | HelmRelease + CNPG + NFS at cluster domain  |
 | linkwarden         | off    | temporarily removed from catalog          |

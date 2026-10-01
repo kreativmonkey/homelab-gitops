@@ -16,6 +16,7 @@ resources:
   - outline-db-credentials.secret.yaml
   - dawarich-db-credentials.secret.yaml
   - hister-db-credentials.secret.yaml
+  - vikunja-db-credentials.secret.yaml
 patches:
   - target:
       kind: Secret
@@ -147,3 +148,13 @@ patches:
       - op: replace
         path: /metadata/namespace
         value: hister
+  - target:
+      kind: Secret
+      name: vikunja-db-credentials
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: homelab-postgres-vikunja
+      - op: replace
+        path: /metadata/namespace
+        value: vikunja

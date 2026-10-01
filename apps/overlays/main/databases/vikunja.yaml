@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: homelab-postgres-vikunja
+  namespace: cnpg-system
+spec:
+  name: vikunja
+  owner: vikunja
+  cluster:
+    name: homelab-postgres

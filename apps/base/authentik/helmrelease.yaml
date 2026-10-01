@@ -89,6 +89,7 @@ spec:
         - authentik-immich-blueprint
         - authentik-nextcloud-blueprint
         - authentik-hister-blueprint
+        - authentik-vikunja-blueprint
     server:
       ingress:
         enabled: false

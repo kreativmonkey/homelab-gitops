@@ -163,3 +163,8 @@ spec:
         login: true
         passwordSecret:
           name: hister-db-credentials
+      - name: vikunja
+        ensure: present
+        login: true
+        passwordSecret:
+          name: vikunja-db-credentials
