@@ -6,6 +6,10 @@ metadata:
   annotations:
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
+    # Basic-Auth: MCP liest Pod-Logs/ConfigMaps clusterweit (BUT-44). Secret
+    # `mcp-basic-auth` (SOPS), User `paperclip`. /healthz: eigener Ingress unten.
+    nginx.org/basic-auth-secret: mcp-basic-auth
+    nginx.org/basic-auth-realm: kubernetes-mcp
 spec:
   ingressClassName: nginx
   tls:
@@ -18,6 +22,35 @@ spec:
         paths:
           - path: /
             pathType: Prefix
+            backend:
+              service:
+                name: kubernetes-mcp-server
+                port:
+                  number: 8080
+---
+# Health ohne Auth, damit Monitoring kein Credential braucht. Basic-Auth gilt pro
+# Ingress-Objekt, daher getrennt vom Haupt-Ingress. NGINX bevorzugt den
+# spezifischeren Exact-Pfad vor Prefix `/`.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubernetes-mcp-server-health
+  namespace: mcp-system
+  annotations:
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - mcp.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
+  rules:
+    - host: mcp.cluster.f4mily.net
+      http:
+        paths:
+          - path: /healthz
+            pathType: Exact
             backend:
               service:
                 name: kubernetes-mcp-server
