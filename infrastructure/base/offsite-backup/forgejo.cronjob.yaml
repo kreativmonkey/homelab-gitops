@@ -59,7 +59,7 @@ spec:
                 - name: config
                   mountPath: /config
             - name: database-dump
-              image: docker.io/alpine/k8s:1.37.0
+              image: docker.io/alpine/k8s:1.37.1
               command:
                 - /bin/sh
                 - -ec
@@ -74,7 +74,7 @@ spec:
                 - name: staging
                   mountPath: /staging
             - name: capture-data
-              image: docker.io/alpine/k8s:1.37.0
+              image: docker.io/alpine/k8s:1.37.1
               command: ["/bin/sh", "/scripts/forgejo-capture.sh"]
               volumeMounts:
                 - name: scripts
