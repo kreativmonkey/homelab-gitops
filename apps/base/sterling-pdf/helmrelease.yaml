@@ -50,10 +50,12 @@ spec:
         namespace: flux-system
   values:
     replicaCount: 1
-    # The RWO iSCSI PVC cannot attach to a replacement pod while the old pod
-    # remains on another node. Recreate releases the volume before startup.
+    # Stop the old pod before replacement so its RWO iSCSI PVC can detach.
     strategy:
-      type: Recreate
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 1
     image:
       repository: stirlingtools/stirling-pdf
       tag: "3.0.2"
