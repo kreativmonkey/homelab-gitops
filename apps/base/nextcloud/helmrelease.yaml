@@ -41,6 +41,15 @@ spec:
                   name: php-confd
                   mountPath: /usr/local/etc/php/conf.d/redis-session.ini
                   subPath: redis-session.ini
+              # /status.php remains healthy while Nextcloud serves 503 during maintenance
+              # (for example while an upgrade is incomplete). Gate traffic and restarts on
+              # the UI endpoint instead; its normal unauthenticated response is a redirect.
+              - op: replace
+                path: /spec/template/spec/containers/0/readinessProbe/httpGet/path
+                value: /index.php/login
+              - op: replace
+                path: /spec/template/spec/containers/0/livenessProbe/httpGet/path
+                value: /index.php/login
           - target:
               group: batch
               version: v1
