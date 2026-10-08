@@ -397,16 +397,18 @@ data:
     # geschrieben: nur ein gzip-verifizierter Tar wird zum Endergebnis, ein
     # abgebrochener Tar bleibt nie als scheinbar gueltiges Archiv liegen.
     attempts="${CAPTURE_ATTEMPTS:-3}"
-    ready_wait="${CAPTURE_READY_WAIT:-300}"
+    pod_wait="${CAPTURE_POD_WAIT:-300}"
     retry_sleep="${CAPTURE_RETRY_SLEEP:-15}"
 
-    # Gibt den Namen eines Pods mit bereitem nextcloud-Container aus.
-    ready_pod() {
+    # Gibt den Namen eines Pods aus, dessen nextcloud-Container laeuft (state.running).
+    # Bewusst NICHT .ready: im Wartungsmodus liefert die Readiness-Probe 503, Ready
+    # ist dort per Design false, der Tar muss trotzdem laufen.
+    running_pod() {
       kubectl get pods -n nextcloud \
         -l app.kubernetes.io/name=nextcloud,app.kubernetes.io/component=app \
         --field-selector=status.phase=Running \
-        -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[?(@.name=="nextcloud")].ready}{"\n"}{end}' \
-        2>/dev/null | awk '$2 == "true" {print $1; exit}'
+        -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[?(@.name=="nextcloud")].state.running.startedAt}{"\n"}{end}' \
+        2>/dev/null | awk '$2 != "" {print $1; exit}'
     }
 
     capture_app_state() {
@@ -414,14 +416,14 @@ data:
       attempt=1
       while [ "${attempt}" -le "${attempts}" ]; do
         waited=0
-        pod="$(ready_pod)"
-        while [ -z "${pod}" ] && [ "${waited}" -lt "${ready_wait}" ]; do
+        pod="$(running_pod)"
+        while [ -z "${pod}" ] && [ "${waited}" -lt "${pod_wait}" ]; do
           sleep 5
           waited=$((waited + 5))
-          pod="$(ready_pod)"
+          pod="$(running_pod)"
         done
         if [ -z "${pod}" ]; then
-          echo "FEHLER: kein bereiter Nextcloud-App-Pod nach ${ready_wait}s" \
+          echo "FEHLER: kein laufender Nextcloud-App-Pod nach ${pod_wait}s" \
             "(Versuch ${attempt}/${attempts})"
         elif kubectl exec -n nextcloud "${pod}" -c nextcloud -- \
                tar -C /var/www/html -czf - . \
