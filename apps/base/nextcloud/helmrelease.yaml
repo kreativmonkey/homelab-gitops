@@ -43,13 +43,16 @@ spec:
                   subPath: redis-session.ini
               # /status.php remains healthy while Nextcloud serves 503 during maintenance
               # (for example while an upgrade is incomplete). Gate traffic and restarts on
-              # the UI endpoint instead; its normal unauthenticated response is a redirect.
+              # the UI endpoint instead. user_oidc (allow_multiple_user_backends=0) auto-redirects
+              # plain /index.php/login to the IdP, which kubelet reports as
+              # "Probe terminated redirects"; ?direct=1 (user_oidc README) serves the login form
+              # with 200 and still returns 503 in maintenance mode. No auth/ingress change.
               - op: replace
                 path: /spec/template/spec/containers/0/readinessProbe/httpGet/path
-                value: /index.php/login
+                value: /index.php/login?direct=1
               - op: replace
                 path: /spec/template/spec/containers/0/livenessProbe/httpGet/path
-                value: /index.php/login
+                value: /index.php/login?direct=1
           - target:
               group: batch
               version: v1
