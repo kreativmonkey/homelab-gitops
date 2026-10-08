@@ -43,6 +43,16 @@ jobs:
       - name: Helm chart render + kubeconform
         run: nix develop -c just helm-render
 
+  offsite-capture-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31.11.1
+      - name: Nextcloud offsite capture regression
+        run: nix develop -c just offsite-capture-test
+
   server-dry-run:
     runs-on: ubuntu-latest
     steps:
