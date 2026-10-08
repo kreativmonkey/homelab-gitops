@@ -389,9 +389,63 @@ data:
       result=1
     fi
 
-    if ! kubectl exec -n nextcloud deploy/nextcloud -c nextcloud -- \
-      tar -C /var/www/html -czf - . > /staging/nextcloud-app.tar.gz; then
-      echo "FEHLER: App-State-Tar aus /var/www/html fehlgeschlagen"
+    # Ein Container-Restart waehrend des Tars (z.B. Apache SIGWINCH, exec
+    # endet mit 143) darf den Capture nicht dauerhaft scheitern lassen. Der
+    # Wartungsmodus liegt in config.php auf dem Volume und ueberlebt den
+    # Restart, ein erneuter Tar bleibt also konsistent. Pro Versuch wird der
+    # Pod neu aufgeloest, auf Ready gewartet und in eine .partial-Datei
+    # geschrieben: nur ein gzip-verifizierter Tar wird zum Endergebnis, ein
+    # abgebrochener Tar bleibt nie als scheinbar gueltiges Archiv liegen.
+    attempts="${CAPTURE_ATTEMPTS:-3}"
+    pod_wait="${CAPTURE_POD_WAIT:-300}"
+    retry_sleep="${CAPTURE_RETRY_SLEEP:-15}"
+
+    # Gibt den Namen eines Pods aus, dessen nextcloud-Container laeuft (state.running).
+    # Bewusst NICHT .ready: im Wartungsmodus liefert die Readiness-Probe 503, Ready
+    # ist dort per Design false, der Tar muss trotzdem laufen.
+    running_pod() {
+      kubectl get pods -n nextcloud \
+        -l app.kubernetes.io/name=nextcloud,app.kubernetes.io/component=app \
+        --field-selector=status.phase=Running \
+        -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[?(@.name=="nextcloud")].state.running.startedAt}{"\n"}{end}' \
+        2>/dev/null | awk '$2 != "" {print $1; exit}'
+    }
+
+    capture_app_state() {
+      rm -f /staging/nextcloud-app.tar.gz /staging/nextcloud-app.tar.gz.partial
+      attempt=1
+      while [ "${attempt}" -le "${attempts}" ]; do
+        waited=0
+        pod="$(running_pod)"
+        while [ -z "${pod}" ] && [ "${waited}" -lt "${pod_wait}" ]; do
+          sleep 5
+          waited=$((waited + 5))
+          pod="$(running_pod)"
+        done
+        if [ -z "${pod}" ]; then
+          echo "FEHLER: kein laufender Nextcloud-App-Pod nach ${pod_wait}s" \
+            "(Versuch ${attempt}/${attempts})"
+        elif kubectl exec -n nextcloud "${pod}" -c nextcloud -- \
+               tar -C /var/www/html -czf - . \
+               > /staging/nextcloud-app.tar.gz.partial \
+             && gzip -t /staging/nextcloud-app.tar.gz.partial; then
+          mv /staging/nextcloud-app.tar.gz.partial /staging/nextcloud-app.tar.gz
+          echo "App-State-Tar aus ${pod} erstellt (Versuch ${attempt}/${attempts})"
+          return 0
+        else
+          echo "FEHLER: App-State-Tar aus ${pod} fehlgeschlagen" \
+            "(Versuch ${attempt}/${attempts}), Container-Restart moeglich"
+        fi
+        rm -f /staging/nextcloud-app.tar.gz.partial
+        attempt=$((attempt + 1))
+        [ "${attempt}" -le "${attempts}" ] && sleep "${retry_sleep}"
+      done
+      return 1
+    }
+
+    if ! capture_app_state; then
+      echo "FEHLER: App-State-Tar aus /var/www/html fehlgeschlagen" \
+        "(${attempts} Versuche)"
       result=1
     fi
 

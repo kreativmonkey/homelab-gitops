@@ -25,6 +25,7 @@ Encrypted offsite backups of irreplaceable Immich, Nextcloud, and Forgejo data t
 - Every maintenance-mode change is verified against `occ config:system:get maintenance`. A release that cannot be confirmed leaves `/work/maintenance-off.failed` behind and must fail the job; never swallow the error.
 - The maintenance sidecar resolves a running Nextcloud app pod before probing `/var/www/html/config` for writability. An absent pod (for example, an init-container crash) writes `maintenance-pod.failed`; a failed write writes `maintenance-ro.failed`. Investigate pod and volume state before retrying.
 - `stage-objects-prefetch` runs `rclone sync` under `timeout 1800`; the TrueNAS→Garage link (`192.168.10.94`) is shared with CNPG/Velero and an unbound sync previously stretched a failed job to 3.5h. The authoritative sync in the maintenance window is unaffected.
+- The app-state tar retries (`CAPTURE_ATTEMPTS`, default 3): each attempt re-resolves a Running pod whose `nextcloud` container is running (`state.running`, not Ready: readiness returns 503 in maintenance mode by design; waits up to `CAPTURE_POD_WAIT`), writes to `nextcloud-app.tar.gz.partial`, and only a `gzip -t`-verified file is renamed to the final name. A container restart mid-tar (exec exit 143) therefore costs one retry; exhausting all attempts logs `App-State-Tar aus /var/www/html fehlgeschlagen` and writes `nextcloud-capture.failed`. Maintenance mode lives in `config.php` on the volume and survives the restart. Regression: `just offsite-capture-test`.
 - `capture-complete` releases the maintenance mode and must be written on every path out of the capture step, including failures.
 - RWO app-state volumes are captured through namespace-scoped `pods`/`pods/exec` RBAC into disposable on-site staging; they are never mounted in the backup namespace. Staging is disposable and remains on-site.
 - Weekly verification must check repository data, restore every database dump (Immich, Nextcloud, Forgejo), tar-test Nextcloud, Forgejo, and app-state archives, and hash-check a restored user-data sample per backup tag. A new backup job is only complete once `verify.sh` and the `validate` container cover it.
@@ -41,6 +42,7 @@ Encrypted offsite backups of irreplaceable Immich, Nextcloud, and Forgejo data t
 # Verification
 
 - `just lint`
+- `just offsite-capture-test` (part of `just validate`)
 - `just kustomize-validate`
 - Server-side dry-run of decrypted output before merge.
 
