@@ -48,8 +48,12 @@ image-scan:
 security-scan:
     ./scripts/ci/security-scan.sh
 
+# Regression: Nextcloud offsite capture survives a container restart mid-tar (stubbed kubectl)
+offsite-capture-test:
+    ./scripts/ci/offsite-capture-test.sh
+
 # All schema-only stages (no Docker) — matches the old `just validate`.
-validate: ci-lint kustomize-validate helm-render
+validate: ci-lint kustomize-validate helm-render offsite-capture-test
 
 # Everything, including the server-side dry-run (needs Docker; local or ENABLE_KIND_CI=1).
 validate-full: validate server-dry-run
