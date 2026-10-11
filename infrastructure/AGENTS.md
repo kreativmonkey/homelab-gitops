@@ -10,6 +10,7 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 
 # Local Contracts
 
+- OCI Helm charts: `OCIRepository` (tag = chart version) + HelmRelease `chartRef`, not `HelmRepository type: oci` (no status/Ready, maintenance mode). Set `layerSelector` helm chart content + `operation: copy`. Judge health via OCIRepository/HelmRelease Ready.
 - Single CNPG cluster operator in `base/database/cnpg/`. Per-app DB clusters live in `overlays/main/database-clusters/<app>/`.
 - CNPG `barmanObjectStore` (S3-compatible) for base-backup + WAL archiving. S3 creds never plaintext — SealedSecrets/ExternalSecrets placeholders.
 - DR overlay `overlays/disaster-recovery/` patches CNPG `Cluster` with `spec.bootstrap.recovery`. Restore flow: apply DR overlay → CNPG restores → Flux syncs apps.
