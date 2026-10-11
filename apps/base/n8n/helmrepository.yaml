@@ -1,10 +1,13 @@
-# Official community n8n chart (8gears / open-8gears on Artifact Hub)
+# Official community n8n chart (8gears / open-8gears on Artifact Hub).
+# OCIRepository + HelmRelease chartRef: HelmRepository type=oci is maintenance
+# mode and exposes no status/Ready. Chart version = spec.ref.tag (Renovate flux manager).
 apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
+kind: OCIRepository
 metadata:
-  name: n8n-repo
+  name: n8n-chart
   namespace: flux-system
 spec:
   interval: 24h
-  type: oci
-  url: oci://8gears.container-registry.com/library
+  url: oci://8gears.container-registry.com/library/n8n
+  ref:
+    tag: "2.1.0"
