@@ -17,6 +17,9 @@ spec:
   url: oci://ghcr.io/nginx/charts/nginx-ingress
   ref:
     tag: "2.6.4"
+  layerSelector:
+    mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+    operation: copy
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
