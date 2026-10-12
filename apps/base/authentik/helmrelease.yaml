@@ -90,6 +90,7 @@ spec:
         - authentik-nextcloud-blueprint
         - authentik-hister-blueprint
         - authentik-vikunja-blueprint
+        - authentik-outpost-cleanup-blueprint
     server:
       ingress:
         enabled: false
@@ -209,9 +210,7 @@ spec:
             name: authentik-oidc-client-secrets-vikunja
             optional: true
       # 2026-06-09: limit raised 2Gi→4Gi (OOMKilled, exit 137)
-      #   Previous pod ran 3.5d then OOM. DockerException spam
-      #   (outpost_service_connection_monitor → Docker) on Talos
-      #   is harmless but adds CPU/memory pressure.
+      #   Previous pod ran 3.5d then OOM.
       # Request lowered 1Gi→512Mi: real usage sits around ~300Mi; the limit above
       # is unrelated and unchanged.
       resources:

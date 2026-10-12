@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-outpost-cleanup-blueprint
+  namespace: authentik
+  labels:
+    app.kubernetes.io/part-of: authentik
+data:
+  outpost-cleanup.yaml: |
+    # Removes dead Docker service connections that made
+    # outpost_service_connection_monitor log unhandled exceptions every cycle.
+    # - pk (not name): the default "Local Docker ..." connection name is not
+    #   unique-safe across restores; pk is exact.
+    # - Idempotent: a missing instance is skipped by the importer (importer.py),
+    #   so re-applying after cleanup is a no-op.
+    # - Intentionally kept permanently: protects against a DB restore from
+    #   backup that would bring the dead connections back.
+    version: 1
+    metadata:
+      name: Homelab Outpost Cleanup
+      labels:
+        blueprints.goauthentik.io/description: Remove dead Docker service connections
+    entries:
+      # Local Docker (unix socket, FileNotFoundError)
+      - model: authentik_outposts.dockerserviceconnection
+        state: absent
+        identifiers:
+          pk: 88b4c7ea-3756-4a9b-a5ab-a6ecab1089b9
+      # tcp 192.168.10.151:2376 (No route to host)
+      - model: authentik_outposts.dockerserviceconnection
+        state: absent
+        identifiers:
+          pk: 746d3936-74d3-4db4-8097-805e29a04cba
+      # tcp f4mily.net:2376 (NewConnectionError)
+      - model: authentik_outposts.dockerserviceconnection
+        state: absent
+        identifiers:
+          pk: 0d786307-e7b2-4902-8609-81fec4b8b233
