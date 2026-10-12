@@ -1,6 +1,6 @@
-# Zugriffs-Namespace für die KI-Agents auf clawd (openclaw, hermes):
-# enthält nur ServiceAccounts + Token-Secrets für deren Kubernetes-MCP
-# (mcp-server-kubernetes), keine Workloads.
+# Zugriffs-Namespace für KI-Agents: ServiceAccounts (+ Token-Secrets) für
+# openclaw/hermes auf clawd und mcp-laptop, dazu Paperclip-Lookout
+# (lookout-rbac.yaml, ohne Token-Secret). Keine Workloads.
 apiVersion: v1
 kind: Namespace
 metadata:

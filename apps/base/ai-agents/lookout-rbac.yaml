@@ -1,0 +1,57 @@
+# Lese-Zugriff für den Paperclip-Agent Lookout (BUT-222): Pods finden und
+# Pod-Logs lesen, ausschließlich im Namespace authentik (Worker-Log-Checks).
+# Eigene Identität, getrennt von mcp-openclaw/mcp-hermes/mcp-laptop und vom
+# geteilten mcp-server-sa.
+#
+# Bewusst KEIN statisches Token-Secret: Zugangsdaten nur als kurzlebiger,
+# gebundener TokenRequest (`kubectl create token --duration ...`), Ablage
+# ausschließlich im Paperclip-Secret-Store. Widerruf: RoleBinding löschen
+# (Rechte sofort weg) oder ServiceAccount löschen (alle Tokens ungültig).
+#
+# Bewusst NICHT: secrets, configmaps, pods/exec, pods/attach,
+# pods/portforward, pods/proxy, Schreib-Verben, andere Namespaces,
+# cluster-weite Objekte.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lookout-authentik-reader
+  namespace: ai-agents
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: lookout-authentik-log-reader
+  namespace: authentik
+rules:
+  # kubectl get pods / kubectl logs <pod> bzw. -l <selector>.
+  # `kubectl logs deploy/<name>` braucht zusätzlich get auf deployments —
+  # absichtlich nicht vergeben; Pods per Label-Selector adressieren.
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods/log
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lookout-authentik-log-reader
+  namespace: authentik
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: lookout-authentik-log-reader
+subjects:
+  - kind: ServiceAccount
+    name: lookout-authentik-reader
+    namespace: ai-agents

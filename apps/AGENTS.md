@@ -22,6 +22,7 @@ Application workloads deployed to the cluster. `base/<app>/` holds generic manif
 - DB consumer: app gets dedicated CNPG `Cluster` in `infrastructure/overlays/main/database-clusters/<app>/`; credential secret in `overlays/main/db-secrets/`; wire via `valuesFrom`.
 - OIDC/Authentik onboarding: do NOT auto-enable. Ask user first. Blueprint format + checklist in root AGENTS.md `# OIDC / Authentik Blueprint Onboarding`.
 - Backup monitoring treats Velero `PartiallyFailed` as failure and alerts when Velero metrics or successful timestamps are absent. Keep node-exporter CSI `globalmount` metrics visible so read-only iSCSI filesystems remain alertable.
+- `base/ai-agents/`: one ServiceAccount per agent identity, never shared. New agent access gets the narrowest Role/RoleBinding in the target namespace; no `secrets`, `pods/exec|attach|portforward|proxy` or write verbs unless reviewed by Ward. `lookout-authentik-reader` (Paperclip Lookout) = pods + pods/log read in `authentik` only, no token Secret — credentials only as short-lived TokenRequest stored in the Paperclip secret store.
 - Homepage cluster mode discovers annotated Ingresses. Keep its dedicated ServiceAccount, projected token, and read-only ClusterRole/Binding aligned with `kubernetes.yaml`; never restore a static ServiceAccount token Secret.
 
 # Work Guidance
