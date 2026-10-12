@@ -117,6 +117,14 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 
 ---
 
+# Flux-Quellbaum (führend)
+- **GitHub `main` ist führend** für `infrastructure/overlays/main` und `apps/overlays/main` (öffentlicher Baum, `flux-system`, `prune: true`). Board-Entscheidung aus BUT-29.
+- PRs für den Live-Cluster gehen gegen GitHub `main`.
+- Der private Migrationspfad aus `clusters/main/private-gitops.yaml` (`prune: false`) ist **nicht führend**. Keine Änderungen, die nur dort landen.
+- Status der Migration: offen, kein Enddatum. Bis zu einer neuen Board-Entscheidung bleibt GitHub `main` maßgeblich.
+
+---
+
 # Operational Learnings
 
 > **Check `docs/learnings/` first** before attempting complex migrations or configuration changes.
