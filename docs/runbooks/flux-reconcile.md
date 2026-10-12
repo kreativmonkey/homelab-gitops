@@ -283,7 +283,47 @@ geblieben, solange niemand auch in den `Unknown`-Zustand geschaut hätte.
 Deshalb gibt es `FluxReconcileFailing` und `FluxReconcileStalled` als zwei
 getrennte Regeln statt einer gemeinsamen `!= "True"`-Regel.
 
-## 6. Bekannte Grenzen
+## 6. OCI-Charts: OCIRepository + chartRef
+
+OCI-Helm-Charts (n8n, netbird-operator, nginx-ingress) laufen über
+`OCIRepository` + HelmRelease `chartRef` statt `HelmRepository type: oci`
+(PR #1138). Grund: `HelmRepository type=oci` ist im Maintenance-Mode und
+liefert weder Status noch `Ready` — ein kaputter Registry-Zugriff blieb
+unsichtbar.
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: <app>-chart
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: oci://<registry>/<pfad>/<chart>
+  ref:
+    tag: "<chart-version>"   # = Chart-Version, Renovate-flux-Manager trackt das
+  layerSelector:
+    mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+    operation: copy          # ohne Selector/copy: Flux entpackt das Artifact, HelmRelease findet kein Chart
+---
+# HelmRelease
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: <app>-chart
+    namespace: flux-system
+```
+
+- Kein `spec.chart.spec.version` mehr — Version nur in `ref.tag`.
+- Health prüfen: `kubectl -n flux-system get ocirepository` (Ready=True,
+  Revision `<tag>@sha256:...`) und HelmRelease Ready. Routineprüfungen
+  bewerten `OCIRepository` Ready; ein `HelmRepository type=oci` zeigt keinen
+  Status und ist kein Gesundheitsindikator.
+- Reconcile erzwingen: `flux reconcile source oci <name> -n flux-system`.
+- Neue OCI-Charts immer in diesem Muster anlegen. Nicht-OCI-Charts bleiben
+  `HelmRepository` (`infrastructure/base/sources/helm-repositories.yaml`).
+
+## 7. Bekannte Grenzen
 
 1. **Kein eigener ntfy-Receiver.** Die vier Alerts nutzen ausschließlich die
    bestehende Routing-Logik über `severity` + `homelab_owner: platform`. Das
