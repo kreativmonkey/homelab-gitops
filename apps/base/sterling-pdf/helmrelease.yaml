@@ -58,7 +58,7 @@ spec:
         maxUnavailable: 1
     image:
       repository: stirlingtools/stirling-pdf
-      tag: "3.0.2"
+      tag: "3.1.0"
     envs:
       - name: DOCKER_ENABLE_SECURITY
         value: "false"
