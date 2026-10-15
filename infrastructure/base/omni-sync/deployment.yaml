@@ -9,6 +9,12 @@
 # re-syncs every 5 minutes, which also reverts drift from the Omni UI.
 # A failed sync exits the container -> CrashLoopBackOff -> existing pod alerts.
 #
+# After the template sync the loop also applies Talos bootstrap manifests
+# (`omnictl cluster kubernetes manifest-sync`) when they drift — Omni leaves them
+# at the old version after a Kubernetes upgrade. Gated on no upgrade/rotation in
+# flight; applies only when the dry-run shows a diff. Manual edits to CoreDNS,
+# kube-proxy or flannel get reverted.
+#
 # omnictl ships no container image; the init container fetches the release
 # binary and checks it against the release's sha256sum.txt. Keep the version
 # close to the Omni server (homelab-infrastructure, NixOS host srv1).
@@ -78,10 +84,27 @@ spec:
             - sh
             - -ec
             - |
-              /tools/omnictl cluster template validate -f /template/cluster-template.yaml
+              o=/tools/omnictl c=homelab-kube
+              $o cluster template validate -f /template/cluster-template.yaml
               while true; do
-                /tools/omnictl cluster template sync -f /template/cluster-template.yaml
+                $o cluster template sync -f /template/cluster-template.yaml
                 echo "$(date -u +%FT%TZ) sync ok"
+                # Bootstrap manifests (kube-proxy, flannel, CoreDNS): Omni does not
+                # apply them on a Kubernetes upgrade. Only when nothing is in flight:
+                # K8s + Talos upgrade Done (2), no CA rotation (0), cluster ready.
+                k=$($o get kubernetesupgradestatus $c -o jsonpath='{.spec.phase}')
+                t=$($o get talosupgradestatus $c -o jsonpath='{.spec.phase}')
+                r=$($o get clustersecretsrotationstatus $c -o jsonpath='{.spec.phase}')
+                ready=$($o get clusterstatus $c -o jsonpath='{.spec.ready}')
+                if [ "$k" = 2 ] && [ "$t" = 2 ] && [ "${r:-0}" = 0 ] && [ "$ready" = true ]; then
+                  if $o cluster kubernetes manifest-sync $c --dry-run | grep -q '^--- a/'; then
+                    echo "$(date -u +%FT%TZ) bootstrap manifests out of sync, applying"
+                    $o cluster kubernetes manifest-sync $c --dry-run=false
+                    echo "$(date -u +%FT%TZ) manifest-sync ok"
+                  fi
+                else
+                  echo "$(date -u +%FT%TZ) manifest-sync skipped (k8s=$k talos=$t rotation=$r ready=$ready)"
+                fi
                 sleep 300
               done
           envFrom:
