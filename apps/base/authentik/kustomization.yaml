@@ -24,6 +24,7 @@ resources:
   - blueprints/hister-oauth.configmap.yaml
   - blueprints/vikunja-oauth.configmap.yaml
   - blueprints/homelable-oauth.configmap.yaml
+  - blueprints/omni-oauth.configmap.yaml
   - blueprints/outpost-cleanup.configmap.yaml
   - media-pvc.yaml
   - helmrelease.yaml
