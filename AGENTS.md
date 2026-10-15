@@ -175,6 +175,8 @@ Each learning is a standalone Markdown file in `docs/learnings/` with:
    - Add the ConfigMap name to `apps/base/authentik/helmrelease.yaml` under `blueprints.configMaps`.
    - Store OIDC `client-id` / `client-secret` as SOPS-encrypted secret in `apps/base/<app>/` and wire via `valuesFrom` in the app's HelmRelease.
    - Authentik side (`!Env OIDC_<APP>_CLIENT_SECRET`): new Secret `authentik-oidc-client-secrets-<app>` in private repo `homelab-gitops-private` (`apps/overlays/main/authentik-private/oidc-client-secret-<app>.secret.yaml`, public age key suffices) plus an `optional: true` `envFrom` entry on the worker in `apps/base/authentik/helmrelease.yaml`. Do not edit the shared `oidc-client-secrets.secret.yaml`.
+   - Apps outside the cluster (e.g. Omni on srv1): no app-side SOPS secret here — the client secret lives off-store on that host; the Authentik side stays the same.
+   - App rejects `email_verified=false` (Omni, go-oidc strict apps): the managed default `email` mapping always sends `false` — use `!Find [authentik_providers_oauth2.scopemapping, [name, "OAuth Mapping: email with email_verified true"]]` instead.
 
 4. **Icon suchen** – Search `https://dashboardicons.com/` for the app's icon. Prefer SVG. Set as `icon:` field on the application entry in the blueprint. Use the jsDelivr CDN URL from the dashboardicons collection.
 

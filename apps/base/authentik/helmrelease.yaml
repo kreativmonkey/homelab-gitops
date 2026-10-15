@@ -90,6 +90,7 @@ spec:
         - authentik-nextcloud-blueprint
         - authentik-hister-blueprint
         - authentik-vikunja-blueprint
+        - authentik-omni-blueprint
         - authentik-outpost-cleanup-blueprint
     server:
       ingress:
@@ -208,6 +209,9 @@ spec:
             name: authentik-oidc-client-secrets
         - secretRef:
             name: authentik-oidc-client-secrets-vikunja
+            optional: true
+        - secretRef:
+            name: authentik-oidc-client-secrets-omni
             optional: true
       # 2026-06-09: limit raised 2Gi→4Gi (OOMKilled, exit 137)
       #   Previous pod ran 3.5d then OOM.
