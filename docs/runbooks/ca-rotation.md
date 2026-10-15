@@ -33,7 +33,39 @@ omnictl cluster -n homelab-kube secret rotate status
 Während POST_ROTATE stehen kube-apiserver/-scheduler kurz in CrashLoopBackOff
 (Static-Pod-Neustart) — normal, fängt sich in < 1 min.
 
-## Nach der Kubernetes-CA: Pods neu starten
+## ⚠️ Nach der Kubernetes-CA: CSI-Volumes laufender Pods prüfen
+
+**2026-10-15:** Beim kubelet-Neustart während der K8s-CA-Rotation rief der
+kubelet auf cp1 und cp3 `NodeUnpublishVolume`/`NodeUnstageVolume` für
+iSCSI-Volumes **laufender** Pods auf. democratic-csi meldete die Sessions ab,
+die Geräte gingen `offline`, ext4 brach das Journal ab — 18 Volumes, die Pods
+liefen auf toten Mounts weiter (Forgejo: `fork/exec /usr/bin/git: input/output
+error`, Datenbanken ohne Schreibzugriff, ~2 h Metriken/Logs/KNX-Daten verloren).
+Keine x509-Meldung — der TLS-Sweep unten findet das **nicht**. cp2 war nicht
+betroffen.
+
+Sofort nach der Rotation:
+
+```bash
+# Unstage-Aufrufe im Rotationsfenster je Node
+for p in $(kubectl -n democratic-csi get pods -o name | grep iscsi-node); do
+  kubectl -n democratic-csi logs $p -c csi-driver --since=30m --timestamps \
+    | grep -E 'method: NodeUnstageVolume call' | grep -oE 'pvc-[0-9a-f-]{36}'
+done | sort -u      # -> PV-Namen -> PVC -> Pods
+```
+
+Betroffene Pods **löschen** (nicht `rollout restart` — RWO), in kleinen
+Gruppen (TrueNAS-Last), Datenbanken zuerst. Danach prüfen:
+
+- `dmesg`: `EXT4-fs (sdX): recovery complete` / `mounted filesystem r/w`
+- `dumpe2fs -h` je Gerät im csi-driver-Container: `Filesystem state: clean`,
+  kein `FS Error count` (sonst offline `e2fsck` nötig)
+- App-Logs frei von `input/output error`
+
+Besser beim nächsten Mal: iSCSI-Workloads vorher herunterskalieren oder
+direkt danach den Check oben fahren, bevor irgendetwas anderes passiert.
+
+## Nach der Kubernetes-CA: TLS-Fehler, Pods neu starten
 
 Pods mit API-Zugriff halten das alte CA-Bundle im Speicher und loggen danach
 dauerhaft `x509: certificate signed by unknown authority`. Nur Pods mit

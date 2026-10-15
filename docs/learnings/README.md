@@ -69,6 +69,7 @@ How to avoid this in the future. Include specific checks or guardrails.
 | [authentik-ha-rwo-media.md](authentik-ha-rwo-media.md) | Authentik HA: keep media PVC RWO, co-locate replicas | 2026-08-21 |
 | [authentik-blueprint-grant-types-empty.md](authentik-blueprint-grant-types-empty.md) | Authentik: blueprint without grant_types breaks new OIDC providers | 2026-10-01 |
 | [omni-import-kubelet-multidoc-migration.md](omni-import-kubelet-multidoc-migration.md) | Omni import: K8s upgrade blocked by legacy `.machine.kubelet`; data disk to `/var/mnt` | 2026-10-15 |
+| [omni-ca-rotation-csi-unstage.md](omni-ca-rotation-csi-unstage.md) | Kubernetes CA rotation unstaged iSCSI volumes of running pods | 2026-10-15 |
 
 ---
 
