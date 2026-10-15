@@ -93,8 +93,12 @@ spec:
           # and must not run in production.
           tag: v1.9.5
         extraEnv:
+          # chroot, not nsenter: under Talos 1.14 workload isolation (sandboxd)
+          # hostPID only shows the sandbox, so nsenter's `pgrep iscsid` fails.
+          # chroot runs the host iscsiadm and reaches the ext-iscsid abstract
+          # socket via hostNetwork; works with and without isolation.
           - name: ISCSIADM_HOST_STRATEGY
-            value: nsenter
+            value: chroot
           - name: ISCSIADM_HOST_PATH
             value: /usr/local/sbin/iscsiadm
         iscsiDirHostPath: /var/iscsi
