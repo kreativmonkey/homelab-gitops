@@ -1,0 +1,36 @@
+# Omni (cluster management on srv1) — credential expiry.
+#
+# The omni-sync Deployment (infrastructure/base/omni-sync) authenticates with
+# the Omni service account `omni-sync`, whose key has a hard expiry. Once it
+# expires every template sync fails: no more automatic Talos/Kubernetes
+# upgrades and Omni-UI drift is no longer reverted. Omni exposes no metric for
+# key expiry, so the date is pinned here.
+#
+# WHEN ROTATING THE KEY: update OMNI_SYNC_KEY_EXPIRY below (unix seconds, from
+# `omnictl serviceaccount list` -> EXPIRATION). Procedure:
+# docs/runbooks/omni-sync-key-rotation.md
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: homelab-omni
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.platform.omni
+      interval: 1h
+      rules:
+        - alert: OmniSyncKeyExpiringSoon
+          # OMNI_SYNC_KEY_EXPIRY = 1823626761 (2027-10-15T18:59:21Z)
+          expr: |
+            (1823626761 - vector(time())) < 30 * 86400
+          labels:
+            severity: warning
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Omni-Service-Account omni-sync läuft bald ab"
+            description: "Der Key von omni-sync läuft in {{ $value | humanizeDuration }} ab (2027-10-15). Danach stoppen automatische Talos-/Kubernetes-Upgrades. Rotation: docs/runbooks/omni-sync-key-rotation.md"
+            runbook_url: "https://github.com/kreativmonkey/homelab-gitops/blob/main/docs/runbooks/omni-sync-key-rotation.md"

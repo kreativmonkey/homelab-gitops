@@ -1,174 +1,78 @@
-# CA Rotation (Talos API & Kubernetes API)
+# CA Rotation (Talos API & Kubernetes API) via Omni
 
-> **Wann nötig**: Bei Kompromittierung von `talosconfig`- oder `kubeconfig`-Client-Keys,
-> oder einmal in 10 Jahren (CA-Ablauf).
+> **Wann nötig**: Kompromittierung eines talosconfig/kubeconfig-Client-Keys,
+> nach einem Cluster-Import in Omni (Label `tainted-by-importing`), oder vor
+> CA-Ablauf.
 >
-> Talos v1.13.3, 3 Control-Plane Nodes (talos-cp{1,2,3}), `192.168.10.0/24`.
+> Zuletzt durchgeführt: **2026-10-15** (beide CAs, nach dem Omni-Import).
 
-## Übersicht
+Omni verwaltet die CAs. Kein `talosctl rotate-ca`, kein OpenTofu — Omni würde
+abweichende Secrets zurückdrehen bzw. kennt sie sonst nicht.
 
-Talos rotiert server-seitige Zertifikate (etcd, Kubernetes, Talos API) automatisch.
-**Client-Zertifikate** (`talosconfig`, `kubeconfig`) sind Benutzerverantwortung und werden
-**nicht** automatisch rotiert.
+## Ablauf
 
-Bei Kompromittierung der Client-Private-Keys muss die **CA (Certificate Authority)**
-rotiert werden, um alle alten Zertifikate zu invalidieren — das bloße Ausstellen neuer
-Client-Certs reicht nicht, da die alten bis zum Ablauf gültig blieben.
-
-`talosctl rotate-ca` (seit Talos v1.7) führt den gesamten Trust-Bundle-Wechsel automatisch durch.
-
-## Voraussetzungen
-
-- Gültiger `talosconfig` mit `os:admin`-Rolle
-- `talosctl` installiert (via `nix develop .#talos`)
-- Zugriff auf die Control-Plane Nodes via LAN (192.168.10.0/24)
-- **LAN-IPs in `machine.api.advertisedAddresses` konfiguriert** (s.u. — sonst verwendet Talos Netbird-IPs)
-
-## Phase 1: Vorbereitung
+Omni rotiert in drei Phasen, Node für Node: PRE_ROTATE (neue CA zusätzlich
+akzeptiert) → ROTATE (neue CA stellt aus) → POST_ROTATE (alte CA entfernt).
 
 ```bash
-# Backup: aktuellen talosconfig sichern
-cp ~/.talos/config ~/.talos/config.backup.$(date +%Y%m%d)
+NIXPKGS_ALLOW_UNFREE=1 nix shell --impure nixpkgs#omnictl
+# Zugang über Omni (nicht über alte Client-Zertifikate) — siehe docs/cluster-access.md
 
-# Etcd-Snapshot (Notfall-Rollback)
-talosctl -n 192.168.10.41 etcd snapshot etcd-pre-rotation.snapshot
+# 0. Vorbereitung
+omnictl kubeconfig -c homelab-kube ...   # Omni-Zugänge holen und TESTEN
+talosctl -n talos-cp1 etcd snapshot ~/homelab-backups/etcd-$(date +%Y%m%d-%H%M).snapshot
 
-# Machine-Configs aller Nodes sichern
-for ip in 192.168.10.41 192.168.10.42 192.168.10.43; do
-  talosctl -n $ip get machineconfig -o yaml > "machineconfig-${ip}.backup.yaml"
-done
+# 1. Talos-CA (kein Reboot, keine Unterbrechung im Cluster; 2026-10-15: ~5 s)
+omnictl cluster -n homelab-kube secret rotate talos-ca --wait-timeout 30m
 
-# Terraform State backup
-cp terraform.tfstate terraform.tfstate.pre-rotation.backup
+# 2. Kubernetes-CA (Control Plane + kubelets starten neu; 2026-10-15: ~3 min)
+omnictl cluster -n homelab-kube secret rotate kubernetes-ca --wait-timeout 60m
+omnictl cluster -n homelab-kube secret rotate status
 ```
 
-## Phase 2: Talos API CA rotieren
+Während POST_ROTATE stehen kube-apiserver/-scheduler kurz in CrashLoopBackOff
+(Static-Pod-Neustart) — normal, fängt sich in < 1 min.
+
+## Nach der Kubernetes-CA: Pods neu starten
+
+Pods mit API-Zugriff halten das alte CA-Bundle im Speicher und loggen danach
+dauerhaft `x509: certificate signed by unknown authority`. Nur Pods mit
+**anhaltenden** Fehlern neu starten (die erste Minute ist Übergang):
 
 ```bash
-# Dry-Run (zeigt alle Schritte an ohne Änderungen)
-talosctl -n 192.168.10.41 rotate-ca --dry-run=true --talos=true --kubernetes=false
-
-# Echte Rotation
-# UNBEDINGT Output sichern — enthält neue CA-Keys!
-talosctl -n 192.168.10.41 rotate-ca --dry-run=false --talos=true --kubernetes=false 2>&1 | tee talos-ca-rotation-output.txt
+kubectl get pods -A --field-selector status.phase=Running \
+  -o jsonpath='{range .items[*]}{.metadata.namespace} {.metadata.name}{"\n"}{end}' \
+| xargs -P 10 -L 1 sh -c 'c=$(kubectl -n $0 logs $1 --all-containers --since=60s 2>/dev/null \
+  | grep -ciE "x509|certificate signed by unknown authority|Unauthorized"); [ "$c" -gt 0 ] && echo "$c $0/$1"'
 ```
 
-Der Befehl:
-1. Generiert neues Talos API CA (Key + Cert)
-2. Fügt neues CA zu `machine.acceptedCAs` aller Nodes (beide CAs parallel trusted)
-3. Tauscht `machine.ca` gegen neues CA (altes CA bleibt in `acceptedCAs`)
-4. Entfernt altes CA aus `acceptedCAs`
-5. Gibt neuen `talosconfig` als Datei aus
+Reihenfolge 2026-10-15:
 
-> **⚠️ CA-Private-Keys sofort sichern** und in `secrets.yaml` ablegen.
+1. Netz-Kern: `kubectl -n kube-system rollout restart ds/kube-proxy ds/kube-flannel deploy/coredns`
+2. CNPG über den Operator (Replikas zuerst, Primary per Switchover — nicht Pods
+   löschen): `kubectl -n cnpg-system annotate clusters.postgresql.cnpg.io <c> kubectl.kubernetes.io/restartedAt=$(date -u +%FT%TZ) --overwrite`.
+   CNPG-Instanzen ohne API-Kontakt riskieren die Primary-Isolation-Abschaltung
+   — früh erledigen.
+3. Rest per `rollout restart` des Owners (2026-10-15: ingress-nginx, metrics-server,
+   cert-manager-Webhooks, velero + node-agent, local-path-provisioner, vmagent,
+   kite); operator-verwaltete StatefulSet-Pods (vmalertmanager) einzeln löschen.
+4. Suche wiederholen, bis sie leer ist; Flux-Kustomizations und HelmReleases prüfen.
 
-## Phase 3: Kubernetes API CA rotieren
+## Danach
 
-```bash
-# Erreichbarkeit prüfen
-talosctl -n 192.168.10.41 version
-
-# Dry-Run
-talosctl -n 192.168.10.41 rotate-ca --dry-run=true --talos=false --kubernetes=true
-
-# Echte Rotation
-talosctl -n 192.168.10.41 rotate-ca --dry-run=false --talos=false --kubernetes=true 2>&1 | tee k8s-ca-rotation-output.txt
-```
-
-Nach der K8s CA-Rotation:
-- Control-Plane Komponenten werden automatisch neugestartet
-- Kubelet joined mit neuem Client-Cert neu
-- **Pods ggf. manuell neustarten**: `kubectl delete pods --all --all-namespaces`
-
-Neuen `kubeconfig` abholen:
-```bash
-talosctl -n 192.168.10.41 kubeconfig ~/.kube/config --force
-```
-
-## Phase 4: Terraform State aktualisieren
-
-Nach der Rotation haben die Live-Nodes neue CAs. Das Terraform-`talos_machine_secrets`
-hat noch die alten. Für zukünftiges `terraform plan` muss das synchronisiert werden:
-
-```bash
-# Altes machine_secrets aus State entfernen
-terraform state rm talos_machine_secrets.this
-
-# Neues machine_secrets mit den neuen CAs aus rotate-ca Output erzeugen
-# Dazu die neuen CA-Keys aus dem Output extrahieren und in ein secrets.yaml schreiben
-
-# Danach: terraform apply (neues machine_secrets + Configs)
-terraform apply
-```
-
-**Alternativ**: Wenn Terraform nur für initiales Provisioning verwendet wird, kann der
-State-Konflikt ignoriert werden — Flux läuft unabhängig.
-
-## Phase 5: Configs im Repo ersetzen
-
-```bash
-# Neuen talosconfig einspielen
-cp ./new-talosconfig /pfad/zu/homelab-infrastructure/talos/talosconfig
-
-# Neuen kubeconfig einspielen (für Flux)
-cp ./new-kubeconfig /pfad/zu/homelab-infrastructure/talos/kubeconfig
-```
-
-Beide Configs in `.gitignore` aufnehmen (falls nicht schon geschehen):
-```gitignore
-kubeconfig
-talosconfig
-```
-
-## Phase 6: Netzwerk-Konfiguration (advertisedAddresses)
-
-**Nur nötig, wenn `rotate-ca` Netbird- statt LAN-IPs verwendet.**
-
-Prüfen mit:
-```bash
-talosctl -n 192.168.10.41 get members
-```
-
-Wenn Member-Adressen `100.96.x.x` (Netbird) enthalten, muss
-`machine.api.advertisedAddresses` in der Talos-Config gesetzt werden:
-
-```hcl
-# In homelab-infrastructure/talos/main.tf als config_patch:
-yamlencode({
-  machine = {
-    api = {
-      advertisedAddresses = [var.nodes[count.index].ip_address]
-    }
-  }
-})
-```
-
-Nach dem Patch (`terraform apply`) die Nodes neu booten:
-```bash
-for ip in 192.168.10.41 192.168.10.42 192.168.10.43; do
-  talosctl -n $ip reboot
-  talosctl -n $ip health --wait-timeout 5m
-done
-```
-
-Dann erneut `rotate-ca` versuchen.
+- Alte kubeconfig/talosconfig-Dateien (OpenTofu, `~/.kube`, kubie) sind
+  ungültig — neue über `omnictl kubeconfig/talosconfig` (docs/cluster-access.md).
+- Omni entfernt das Label `tainted-by-importing` selbst.
 
 ## Rollback
 
-```bash
-# Bei Fehlschlag: Machine-Configs zurücksetzen
-for ip in 192.168.10.41 192.168.10.42 192.168.10.43; do
-  talosctl -n $ip apply-config --file "machineconfig-${ip}.backup.yaml"
-  sleep 30
-done
-
-# Etcd aus Snapshot restaurieren (nur wenn nötig)
-talosctl -n 192.168.10.41 etcd restore --snapshot=etcd-pre-rotation.snapshot
-```
+Kein dokumentierter Abbruch in Omni. Notfall: etcd-Snapshot aus Schritt 0
+(Disaster-Recovery: etcd auf allen Control-Plane-Nodes zurücksetzen, dann
+`talosctl bootstrap --recover-from=<snapshot>`, siehe
+docs/disaster-recovery/talos-backup-restore.md), Omni-Import-Backup unter
+`~/homelab-backups/`.
 
 ## Referenzen
 
-- [Talos PKI & Certificate Management](https://docs.siderolabs.com/talos/v1.13/security/cert-management)
-- [Talos CA Rotation](https://docs.siderolabs.com/talos/v1.13/security/ca-rotation)
-- [Terraform Provider Talos](https://registry.terraform.io/providers/siderolabs/talos/latest)
-- [Cluster Access](../cluster-access.md)
+- [Omni: CA rotation](https://docs.siderolabs.com/omni/cluster-management/ca-rotation)
+- [Omni: importing Talos clusters](https://docs.siderolabs.com/omni/cluster-management/importing-talos-clusters)
