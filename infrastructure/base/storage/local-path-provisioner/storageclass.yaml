@@ -2,8 +2,7 @@
 # (Postgres replicates at the DB layer, so node-local beats networked storage and
 # removes the truenas-iscsi single-point-of-failure from the database path).
 #
-# Backing path is the LEGACY-MOUNT-PATH /var/lib/longhorn/local-path — see
-# configmap.yaml. Not the default class (truenas-iscsi stays default); opt in via
+# Backing path is /var/mnt/local-storage/local-path — see configmap.yaml. Not the default class (truenas-iscsi stays default); opt in via
 # storageClassName: local-path.
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
