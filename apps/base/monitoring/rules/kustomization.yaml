@@ -12,3 +12,4 @@ resources:
   - job-watchdog-vmrule.yaml
   - dead-mans-switch-vmrule.yaml
   - flux-vmrule.yaml
+  - omni-vmrule.yaml
