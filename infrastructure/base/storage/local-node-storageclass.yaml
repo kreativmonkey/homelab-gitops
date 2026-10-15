@@ -15,42 +15,24 @@
 # will.
 #
 # ===========================================================================
-# VORAUSSETZUNG: `machine.kubelet.extraMounts` fuer den Datentraeger.
+# VORAUSSETZUNG: der Datentraeger muss fuer das kubelet sichtbar sein.
 #
-# `machine.disks` mountet die Datenplatte nur auf dem HOST. Fehlt der
-# kubelet-Bind, sieht der kubelet-Container den Mount nicht und loest den Pfad
-# gegen das darunterliegende, leere Verzeichnis der System-Partition
-# (EPHEMERAL) auf. Betroffen ist alles, was das kubelet SELBST mountet:
-# `local`-PVs und JEDER `subPath`-Mount. Beides schlaegt still fehl — der Pod
-# sieht ein leeres Verzeichnis, es gibt kein Event und keinen Fehler.
-# hostPath-PVs (und damit local-path-provisioner) sind unbetroffen, weil ihr
-# Pfad per CRI an containerd geht und dort im Host-Namespace aufgeloest wird.
+# Betroffen ist alles, was das kubelet SELBST mountet: `local`-PVs und JEDER
+# `subPath`-Mount. Sieht das kubelet den Datentraeger nicht, loest es den Pfad
+# gegen ein leeres Verzeichnis der System-Partition auf — still, ohne Event.
+# hostPath-PVs (local-path-provisioner) sind unbetroffen, ihr Pfad geht per CRI
+# an containerd im Host-Namespace. Daran scheiterten PR #802 und #805.
 #
-# Genau daran sind die beiden Anlaeufe gescheitert, das Nextcloud-App-Volume
-# von truenas-iscsi wegzuholen (PR #802, #805): die Kopie landete korrekt auf
-# der Datenplatte, das Chart las seine sieben subPaths aber aus dem leeren
-# Schatten auf der System-Partition.
+# Seit Talos 1.14 Multi-Doc-Config gibt es kein `kubelet.extraMounts` mehr
+# (KubeletConfig kennt es nicht, `.machine.kubelet` kollidiert mit
+# KubeletConfig). Das kubelet sieht nur `/var/mnt` (rbind, rslave). Darum
+# haengt die Datenplatte als ExistingVolumeConfig `local-storage` unter
+# /var/mnt/local-storage (Omni-Config-Patch je Node, `mount.secure: false`
+# fuer exec-Paritaet mit dem frueheren Mount).
 #
-# Behoben am 26.08.2026 auf allen drei Nodes (homelab-infrastructure,
-# infrastructure/talos/envs/homelab-kube, `extra_config_patches`):
-#
-#   machine:
-#     kubelet:
-#       extraMounts:
-#         - destination: /var/lib/longhorn
-#           type: bind
-#           source: /var/lib/longhorn
-#           options: [bind, rshared, rw]
-#
-# Nachweis nach dem Rollout (cp3, dann cp2, dann cp1):
-#   talosctl read /proc/<kubelet-pid>/mounts | grep longhorn  -> /dev/sdb1 ...
-#   Marker per hostPath geschrieben, per subPath gelesen -> sichtbar.
-#
-# Beim Umbenennen des Mountpunkts (Marker LEGACY-MOUNT-PATH) den extraMount
-# mitziehen, sonst faellt das hier lautlos wieder auseinander. Und zum Pruefen
-# immer die Sicht per hostPath gegen die per subPath stellen, nie zwei Zugriffe
+# Pruefen immer per hostPath-Sicht gegen subPath-Sicht, nie zwei Zugriffe
 # derselben Art — /proc/mounts taugt nicht, dort steht in beiden Faellen
-# `overlay`.
+# `overlay`. Details: docs/learnings/talos-kubelet-extramounts-local-storage.md
 # ===========================================================================
 apiVersion: storage.k8s.io/v1
 kind: StorageClass

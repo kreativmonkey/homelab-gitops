@@ -141,10 +141,8 @@ one-size-fits-all default.
   blip → WAL corruption → cluster-wide CNPG outage). Provisioner:
   `infrastructure/base/storage/local-path-provisioner/`; class `local-path`
   (non-default).
-  > ⚠️ **Legacy mount path:** the backing data disk is still mounted at
-  > `/var/lib/longhorn` (a misleading leftover — Longhorn was never deployed).
-  > Grep **`LEGACY-MOUNT-PATH`** for the pending rename to
-  > `/var/mnt/local-storage` (already in the IaC, awaiting a Talos `tofu apply`).
+  Backing disk: each node's `sdb1`, mounted by Talos as `ExistingVolumeConfig`
+  `local-storage` at `/var/mnt/local-storage` (Omni config patch per node).
 * **App RWO volumes (iSCSI):** Application config/data volumes that have **no
   app-level replication** use Democratic CSI on TrueNAS (`truenas-iscsi`, the
   default class), backed up via Velero. (Such volumes are better served by

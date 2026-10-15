@@ -22,26 +22,19 @@
 # Provisioner nach Claim-Namen erzeugt und bei reclaimPolicy=Delete per
 # `rm -rf` abgeraeumt zu werden.
 #
-# Voraussetzung, ohne die das hier lautlos leere Verzeichnisse liefert:
-# `machine.kubelet.extraMounts` fuer den Datentraeger. Begruendung und
-# Nachweis in infrastructure/base/storage/local-node-storageclass.yaml.
+# Voraussetzung, ohne die das hier lautlos leere Verzeichnisse liefert: der
+# Datentraeger muss fuer das kubelet sichtbar sein, also unter /var/mnt haengen.
+# Begruendung in infrastructure/base/storage/local-node-storageclass.yaml.
 # Daran sind die Vorlaeufer #802 und #805 gescheitert.
 #
 # Preis: das Volume haengt an talos-cp1, der Pod ist ueber die nodeAffinity des
 # PVs dorthin gepinnt. Vertretbar, weil der unersetzliche Zustand 2,9 KB gross
 # und im Restic-Offsite-Backup ist.
 #
-# ===========================================================================
-# LEGACY-MOUNT-PATH — grep diesen Marker beim Umbenennen des Node-Datentraegers.
-# Die Datenplatte (sdb1, 100 GB xfs) haengt derzeit unter /var/lib/longhorn;
-# der Name ist ein irrefuehrender Rest, Longhorn laeuft nicht mehr. Zielpfad
-# ist /var/mnt/local-storage. Beim Umzug anzupassen: hier, der local-path-
-# Provisioner (infrastructure/base/storage/local-path-provisioner/configmap.yaml)
-# UND der kubelet-extraMount im Repo homelab-infrastructure.
-# Achtung: spec.local.path ist nach dem Anlegen unveraenderlich — PV und PVC
-# muessen dafuer geloescht und neu erzeugt werden (Retain, die Daten auf dem
-# Node bleiben dabei liegen).
-# ===========================================================================
+# Pfad: /var/mnt/local-storage = Datenplatte sdb1 als Talos-ExistingVolume
+# `local-storage` (Omni-Config-Patch je Node). spec.local.path ist nach dem
+# Anlegen unveraenderlich — fuer einen Pfadwechsel PV und PVC loeschen und neu
+# erzeugen (Retain, die Daten auf dem Node bleiben liegen).
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -57,7 +50,7 @@ spec:
     namespace: nextcloud
     name: nextcloud-app-node
   local:
-    path: /var/lib/longhorn/nextcloud-app
+    path: /var/mnt/local-storage/nextcloud-app
   nodeAffinity:
     required:
       nodeSelectorTerms:
