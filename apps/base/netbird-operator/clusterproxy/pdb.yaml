@@ -3,7 +3,7 @@
 # unterstützt kein eigenes PDB-Feld, daher greift hier ein statisches PDB
 # über die vom Operator gesetzten Pod-Labels.
 # maxUnavailable 1 bei 3 Replicas → minAvailable 2: ein Proxy-Pod darf
-# während eines Node-Drains (system-upgrade-controller, concurrency 1)
+# während eines Node-Drains (Talos-Upgrade via Omni, ein Node nach dem anderen)
 # wegfallen, K8S-API-Zugriff via NetBird bleibt bestehen.
 apiVersion: policy/v1
 kind: PodDisruptionBudget

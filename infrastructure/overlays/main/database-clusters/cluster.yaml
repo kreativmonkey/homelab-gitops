@@ -14,7 +14,7 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:18.6
 
   # HA across the 3 Talos nodes. CNPG auto-creates a minAvailable:2 PDB at >=2
-  # instances, so a node drain (system-upgrade-controller) evicts one replica at
+  # instances, so a node drain (Talos upgrade via Omni) evicts one replica at
   # a time with failover instead of taking the database down.
   instances: 3
 

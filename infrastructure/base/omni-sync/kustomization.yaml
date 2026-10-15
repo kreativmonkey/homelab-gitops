@@ -1,0 +1,14 @@
+# Omni cluster template sync — Talos/Kubernetes versions and node config for
+# homelab-kube are declared in cluster-template.yaml and pushed to Omni by the
+# omni-sync Deployment. Replaces the former system-upgrade-controller Talos Plan.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: omni-sync
+resources:
+  - namespace.yaml
+  - omni-sync-credentials.secret.yaml
+  - deployment.yaml
+configMapGenerator:
+  - name: omni-cluster-template
+    files:
+      - cluster-template.yaml

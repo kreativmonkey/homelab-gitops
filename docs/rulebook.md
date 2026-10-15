@@ -178,6 +178,13 @@ loop.
   Before merging, grep the repo for un-pinned images (`:latest`,
   `imagePullPolicy: Always`) — on reboot those become unreviewed, unrevertible
   upgrades.
+- **Declare versions and node config in exactly one place the orchestrator
+  reads** (here: the Omni cluster template), not in parallel IaC/upgrade plans
+  that silently fight each other.
+- **A node whose config fails to render can block the whole rollout.**
+  Orchestrators that roll one node at a time keep the slot on the failing node.
+  Check removed/deprecated config fields against the target OS version before
+  the upgrade, not during it.
 - **Expect update waves to fill node disks with image pulls.** Nodes have limited
   ephemeral storage; batch upgrades can cause transient disk-pressure/evictions
   (usually self-healing via kubelet GC) — don't panic, but leave headroom.
@@ -322,7 +329,7 @@ context (products, commands, PRs). Files are under [`docs/learnings/`](./learnin
 | §2 Databases — ≥2 instances, freeze-on-cordon | `talos-suc-upgrade-blockers` |
 | §2 Databases — owner, superuser extensions, operator upgrade | `upgrade-session-2026-07-04`, `immich-vchord-extension-update` |
 | §2 Databases — version pinning | `renovate-single-owner-refactor` |
-| §3 Node/OS upgrades — scheduling deadlock, image pin, auth | `talos-automatic-upgrade-suc-auth`, `talos-autonomous-upgrade-handbook`, `talos-suc-upgrade-blockers` |
+| §3 Node/OS upgrades — scheduling deadlock, image pin, auth, single declaration | `talos-automatic-upgrade-suc-auth`, `talos-autonomous-upgrade-handbook`, `talos-suc-upgrade-blockers`, `omni-import-kubelet-multidoc-migration` |
 | §4 Dependency automation | `renovate-single-owner-refactor`, `renovate-calver-docker-image-not-detected` |
 | §5 GitOps | `goloom-rwo-upgrade-race`, `democratic-csi-truenas-apikey-purge`, `truenas-iscsi-spof-storage-incident` |
 | §6 Networking | `netbird-reverse-proxy-traefik-grpc-timeout`, `public-app-needs-netbird-proxy-entry`, `talos-autonomous-upgrade-handbook` |

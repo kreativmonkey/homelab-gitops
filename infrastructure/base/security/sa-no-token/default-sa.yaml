@@ -226,6 +226,15 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: default
+  namespace: omni-sync
+  labels:
+    app.kubernetes.io/part-of: sa-token-hardening
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
   namespace: outline
   labels:
     app.kubernetes.io/part-of: sa-token-hardening

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: omni-sync
+  labels:
+    app.kubernetes.io/name: omni-sync
+    app.kubernetes.io/part-of: homelab-infrastructure
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

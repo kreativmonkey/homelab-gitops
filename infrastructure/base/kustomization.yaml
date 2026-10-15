@@ -6,7 +6,7 @@ resources:
   - network/external-dns
   - network/ingress
   - metrics-server
-  - system-upgrade-controller
+  - omni-sync
   - blackbox-exporter
   - backup
   - offsite-backup

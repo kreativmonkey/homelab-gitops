@@ -3,7 +3,7 @@
 **Datum**: 2026-08-26
 **Schwere**: hoch (still, keine Fehlermeldung im Normalfall)
 **Betroffen**: node-lokaler Speicher clusterweit; konkret gescheitert: Nextcloud-App-Volume (PR #802, #805)
-**Status**: behoben 2026-08-26 auf allen drei Nodes
+**Status**: behoben 2026-08-26 auf allen drei Nodes; abgeloest 2026-10-15 (siehe unten)
 
 ## Kurzfassung
 
@@ -217,3 +217,13 @@ zurueckziehen, oder den Umzug bewusst als eigene Massnahme fahren
 `infrastructure/base/storage/local-path-provisioner/configmap.yaml`
 mitziehen, Marker `LEGACY-MOUNT-PATH`, CNPG-Instanzen neu aufbauen).
 Beides nicht beilaeufig mit einem unbeteiligten Apply.
+
+## Update 2026-10-15: extraMounts gibt es nicht mehr
+
+Mit Talos 1.14 Multi-Doc-Config und Omni ist `machine.kubelet.extraMounts`
+weggefallen (`KubeletConfig` kennt es nicht, `.machine.kubelet` kollidiert mit
+Omnis `KubeletConfig`-Dokument). Die Datenplatte haengt jetzt als
+`ExistingVolumeConfig` `local-storage` unter `/var/mnt/local-storage`, das
+kubelet nativ sieht. Der Messansatz oben (hostPath- gegen subPath-Sicht) gilt
+unveraendert. Ablauf und Fallen:
+[omni-import-kubelet-multidoc-migration.md](omni-import-kubelet-multidoc-migration.md).
