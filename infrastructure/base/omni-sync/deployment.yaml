@@ -1,0 +1,125 @@
+# Applies cluster-template.yaml to Omni with `omnictl cluster template sync`.
+#
+# Why in-cluster and not CI: Omni (omni.f4mily.net on srv1) is LAN-only, the
+# GitHub-hosted runners cannot reach it — and the management API should stay
+# off the internet.
+#
+# Trigger: the template is a configMapGenerator ConfigMap (hash suffix), so
+# every template change rolls this Deployment and syncs at once. The loop
+# re-syncs every 5 minutes, which also reverts drift from the Omni UI.
+# A failed sync exits the container -> CrashLoopBackOff -> existing pod alerts.
+#
+# omnictl ships no container image; the init container fetches the release
+# binary and checks it against the release's sha256sum.txt. Keep the version
+# close to the Omni server (homelab-infrastructure, NixOS host srv1).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omni-sync
+  labels:
+    app.kubernetes.io/name: omni-sync
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: omni-sync
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: omni-sync
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: fetch-omnictl
+          image: docker.io/alpine/k8s:1.37.1
+          env:
+            - name: OMNICTL_VERSION
+              # renovate: datasource=github-releases depName=siderolabs/omni
+              value: v1.12.4
+          command:
+            - sh
+            - -ec
+            - |
+              base="https://github.com/siderolabs/omni/releases/download/${OMNICTL_VERSION}"
+              cd /tools
+              curl -fsSL -o omnictl-linux-amd64 "${base}/omnictl-linux-amd64"
+              curl -fsSL -o sha256sum.txt "${base}/sha256sum.txt"
+              grep ' omnictl-linux-amd64$' sha256sum.txt | sha256sum -c -
+              mv omnictl-linux-amd64 omnictl && chmod 0755 omnictl && rm sha256sum.txt
+              # busybox has no CA bundle; omnictl (Go) needs one for the Omni TLS cert
+              cp /etc/ssl/certs/ca-certificates.crt /tools/ca-certificates.crt
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: tools
+              mountPath: /tools
+      containers:
+        - name: sync
+          image: busybox:1.38
+          command:
+            - sh
+            - -ec
+            - |
+              /tools/omnictl cluster template validate -f /template/cluster-template.yaml
+              while true; do
+                /tools/omnictl cluster template sync -f /template/cluster-template.yaml
+                echo "$(date -u +%FT%TZ) sync ok"
+                sleep 300
+              done
+          envFrom:
+            - secretRef:
+                name: omni-sync-credentials
+          env:
+            # omnictl writes its config/cache under $HOME
+            - name: HOME
+              value: /tmp
+            - name: SSL_CERT_FILE
+              value: /tools/ca-certificates.crt
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: tools
+              mountPath: /tools
+              readOnly: true
+            - name: template
+              mountPath: /template
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tools
+          emptyDir:
+            sizeLimit: 200Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 50Mi
+        - name: template
+          configMap:
+            name: omni-cluster-template

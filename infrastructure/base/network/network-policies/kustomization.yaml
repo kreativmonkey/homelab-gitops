@@ -49,5 +49,5 @@ resources:
   - velero
   - backup-offsite
   - reflector-system
-  # hostNetwork NS (ingress-nginx, netbird, watchyourlan, system-upgrade) are
+  # hostNetwork NS (ingress-nginx, netbird, watchyourlan) are
   # NP-inert and explicitly excluded — see runbook Phase 5.

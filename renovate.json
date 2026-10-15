@@ -27,14 +27,15 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Marker '# renovate: datasource=X depName=Y [versioning=Z]' — nur für Felder ohne nativen Manager (siehe docs/renovate.md): tag-only values, imageName/image-Strings direkt unter dem Marker, 'version: X # marker' (Talos-Plan)",
+      "description": "Marker '# renovate: datasource=X depName=Y [versioning=Z]' — nur für Felder ohne nativen Manager (siehe docs/renovate.md): tag-only values, imageName/image-Strings direkt unter dem Marker, 'version: X # marker' (Omni-Cluster-Template), Env-'value:' direkt unter dem Marker",
       "managerFilePatterns": [
         "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n(?:[^\\n]*\\n)*?\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?",
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*(?:-\\s+)?(?:image|imageName):\\s*[\"']?[^:\\s\"']+:(?<currentValue>[^\"'\\s]+)[\"']?",
-        "\\sversion:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?"
+        "\\sversion:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?",
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*value:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
@@ -98,11 +99,19 @@
       "groupName": "{{parentDir}}"
     },
     {
-      "description": "Talos-OS-Upgrade nicht mit dem SUC-Controller mischen",
+      "description": "Talos-OS: eigene Gruppe; Merge -> omni-sync -> Omni rollt Node fuer Node aus (infrastructure/base/omni-sync)",
       "matchDepNames": [
         "siderolabs/talos"
       ],
       "groupName": "talos linux"
+    },
+    {
+      "description": "Kubernetes via Omni-Template: eigene Gruppe, eine Minor pro PR (Omni kann nur Minor fuer Minor)",
+      "matchDepNames": [
+        "ghcr.io/siderolabs/kubelet"
+      ],
+      "groupName": "kubernetes",
+      "separateMultipleMinor": true
     },
     {
       "description": "CNPG: Postgres-Major = manuelle Migration; Pin auf aktuelle Major filtert auch Betas (19beta1). Für ein Major-Upgrade die Regex anheben.",
@@ -220,6 +229,14 @@
         "minor"
       ],
       "matchCurrentVersion": "/^0\\./",
+      "automerge": false
+    },
+    {
+      "description": "omnictl gehoert zur Omni-Server-Version (homelab-infrastructure, srv1) — kein Automerge, zusammen mit dem Server anheben (steht nach der Automerge-Basis, damit automerge:false gewinnt)",
+      "matchDepNames": [
+        "siderolabs/omni"
+      ],
+      "groupName": "omnictl",
       "automerge": false
     }
   ]

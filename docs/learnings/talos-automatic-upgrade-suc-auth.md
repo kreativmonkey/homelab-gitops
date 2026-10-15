@@ -1,5 +1,10 @@
 # Automatic Talos OS Upgrades via System Upgrade Controller
 
+> **Superseded 2026-10-15:** Talos and Kubernetes upgrades now run through Omni
+> (`infrastructure/base/omni-sync/`). The system-upgrade-controller is removed;
+> this document is kept as history. See
+> [omni-import-kubelet-multidoc-migration.md](omni-import-kubelet-multidoc-migration.md).
+
 **Date**: 2026-06-18
 **Severity**: high
 **Affected**: cluster-wide (all control-plane nodes; Talos OS upgrades)

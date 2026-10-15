@@ -1,0 +1,257 @@
+# Omni cluster template for homelab-kube — single source of truth for the Talos
+# and Kubernetes versions and the per-node Talos config patches.
+#
+# Rolled out by the omni-sync Deployment (deployment.yaml): every change here
+# re-syncs via `omnictl cluster template sync`; Omni then upgrades Talos and
+# Kubernetes node by node. Renovate bumps both versions (renovate.json).
+#
+# Exported from the imported cluster (`omnictl cluster template export`).
+# Machines are Omni machine UUIDs: 2df1… = talos-cp1, 3ea7… = talos-cp2,
+# faf9… = talos-cp3. Adding/removing nodes happens HERE — the sync reverts
+# changes made in the Omni UI.
+#
+# Data disk: sdb1 as ExistingVolumeConfig `local-storage` at
+# /var/mnt/local-storage. No `.machine.kubelet` / `.machine.disks` — they
+# conflict with the KubeletConfig document Omni writes for K8s upgrades, see
+# infrastructure/base/storage/local-node-storageclass.yaml.
+kind: Cluster
+name: homelab-kube
+kubernetes:
+  version: v1.37.1 # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
+talos:
+  version: v1.14.2 # renovate: datasource=github-releases depName=siderolabs/talos
+features:
+  disablePublicDiscoveryService: false
+---
+kind: ControlPlane
+machines:
+  - 2df1a117-2512-416f-ac7c-3702e30ee523
+  - 3ea7a37a-3c61-493f-8c1c-abeef304cd61
+  - faf974c8-e5cc-4962-a225-85aa137f70c1
+---
+kind: Workers
+---
+kind: Machine
+name: 2df1a117-2512-416f-ac7c-3702e30ee523
+patches:
+  - idOverride: 10-2df1a117-2512-416f-ac7c-3702e30ee523
+    annotations:
+      description: Config patch imported from existing Talos node
+      name: User defined patch
+    inline: |
+      $patch: delete
+      apiVersion: v1alpha1
+      kind: VolumeConfig
+      name: EPHEMERAL
+      ---
+      $patch: delete
+      apiVersion: v1alpha1
+      kind: FilesystemTrimConfig
+      ---
+      cluster:
+        etcd:
+          advertisedSubnets:
+          - 192.168.10.0/24
+          - '!100.64.0.0/10'
+          listenSubnets:
+          - 192.168.10.0/24
+      machine:
+        network:
+          interfaces:
+          - addresses:
+            - 192.168.10.41/24
+            deviceSelector:
+              physical: true
+            routes:
+            - gateway: 192.168.10.1
+              network: 0.0.0.0/0
+            vip:
+              ip: 192.168.10.245
+      version: v1alpha1
+      ---
+      apiVersion: v1alpha1
+      auto: 'off'
+      hostname: talos-cp1
+      kind: HostnameConfig
+      ---
+      apiVersion: v1alpha1
+      issuer:
+        issuerURL: https://192.168.10.245:6443
+      kind: KubeServiceAccountConfig
+      ---
+      apiVersion: v1alpha1
+      kind: ResolverConfig
+      nameservers:
+      - address: 192.168.10.1
+      ---
+      apiVersion: v1alpha1
+      kind: KubeNodeConfig
+      nodeIP:
+        validSubnets:
+        - 192.168.10.0/24
+      taints:
+        $patch: delete
+      ---
+      apiVersion: v1alpha1
+      kind: ExistingVolumeConfig
+      name: local-storage
+      discovery:
+        volumeSelector:
+          match: disk.dev_path == "/dev/sdb" && volume.partition_index == 1u && volume.name
+            == "xfs"
+      mount:
+        secure: false
+      ---
+      apiVersion: v1alpha1
+      kind: KubeletConfig
+      defaultRuntimeSeccompProfileEnabled: true
+---
+kind: Machine
+name: 3ea7a37a-3c61-493f-8c1c-abeef304cd61
+patches:
+  - idOverride: 10-3ea7a37a-3c61-493f-8c1c-abeef304cd61
+    annotations:
+      description: Config patch imported from existing Talos node
+      name: User defined patch
+    inline: |
+      $patch: delete
+      apiVersion: v1alpha1
+      kind: VolumeConfig
+      name: EPHEMERAL
+      ---
+      $patch: delete
+      apiVersion: v1alpha1
+      kind: FilesystemTrimConfig
+      ---
+      apiVersion: v1alpha1
+      auto: 'off'
+      hostname: talos-cp2
+      kind: HostnameConfig
+      ---
+      apiVersion: v1alpha1
+      issuer:
+        issuerURL: https://192.168.10.245:6443
+      kind: KubeServiceAccountConfig
+      ---
+      apiVersion: v1alpha1
+      kind: ResolverConfig
+      nameservers:
+      - address: 192.168.10.1
+      ---
+      cluster:
+        etcd:
+          advertisedSubnets:
+          - 192.168.10.0/24
+          - '!100.64.0.0/10'
+          listenSubnets:
+          - 192.168.10.0/24
+      machine:
+        network:
+          interfaces:
+          - addresses:
+            - 192.168.10.42/24
+            deviceSelector:
+              physical: true
+            routes:
+            - gateway: 192.168.10.1
+              network: 0.0.0.0/0
+            vip:
+              ip: 192.168.10.245
+      version: v1alpha1
+      ---
+      apiVersion: v1alpha1
+      kind: KubeNodeConfig
+      nodeIP:
+        validSubnets:
+        - 192.168.10.0/24
+      taints:
+        $patch: delete
+      ---
+      apiVersion: v1alpha1
+      kind: ExistingVolumeConfig
+      name: local-storage
+      discovery:
+        volumeSelector:
+          match: disk.dev_path == "/dev/sdb" && volume.partition_index == 1u && volume.name
+            == "xfs"
+      mount:
+        secure: false
+      ---
+      apiVersion: v1alpha1
+      kind: KubeletConfig
+      defaultRuntimeSeccompProfileEnabled: true
+---
+kind: Machine
+name: faf974c8-e5cc-4962-a225-85aa137f70c1
+patches:
+  - idOverride: 10-faf974c8-e5cc-4962-a225-85aa137f70c1
+    annotations:
+      description: Config patch imported from existing Talos node
+      name: User defined patch
+    inline: |
+      $patch: delete
+      apiVersion: v1alpha1
+      kind: VolumeConfig
+      name: EPHEMERAL
+      ---
+      $patch: delete
+      apiVersion: v1alpha1
+      kind: FilesystemTrimConfig
+      ---
+      apiVersion: v1alpha1
+      auto: 'off'
+      hostname: talos-cp3
+      kind: HostnameConfig
+      ---
+      apiVersion: v1alpha1
+      kind: KubeNodeConfig
+      nodeIP:
+        validSubnets:
+        - 192.168.10.0/24
+      taints:
+        $patch: delete
+      ---
+      apiVersion: v1alpha1
+      kind: ResolverConfig
+      nameservers:
+      - address: 192.168.10.1
+      ---
+      apiVersion: v1alpha1
+      issuer:
+        issuerURL: https://192.168.10.245:6443
+      kind: KubeServiceAccountConfig
+      ---
+      cluster:
+        etcd:
+          advertisedSubnets:
+          - 192.168.10.0/24
+          - '!100.64.0.0/10'
+          listenSubnets:
+          - 192.168.10.0/24
+      machine:
+        network:
+          interfaces:
+          - addresses:
+            - 192.168.10.43/24
+            deviceSelector:
+              physical: true
+            routes:
+            - gateway: 192.168.10.1
+              network: 0.0.0.0/0
+            vip:
+              ip: 192.168.10.245
+      version: v1alpha1
+      ---
+      apiVersion: v1alpha1
+      kind: ExistingVolumeConfig
+      name: local-storage
+      discovery:
+        volumeSelector:
+          match: disk.dev_path == "/dev/sdb" && volume.partition_index == 1u && volume.name
+            == "xfs"
+      mount:
+        secure: false
+      ---
+      apiVersion: v1alpha1
+      kind: KubeletConfig
+      defaultRuntimeSeccompProfileEnabled: true

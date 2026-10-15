@@ -4,7 +4,7 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 
 # Ownership
 
-- Owns: CNPG operator, democratic-csi (TrueNAS iSCSI + NFS), Cilium/NGINX ingress, cert-manager, Flux sources, backup schedules, DR overlay, system-upgrade-controller, metrics-server, exporters, per-app CNPG `Cluster` manifests under `overlays/main/database-clusters/`.
+- Owns: CNPG operator, democratic-csi (TrueNAS iSCSI + NFS), Cilium/NGINX ingress, cert-manager, Flux sources, backup schedules, DR overlay, Omni cluster template sync (`base/omni-sync/`), metrics-server, exporters, per-app CNPG `Cluster` manifests under `overlays/main/database-clusters/`.
 - App workloads owned by [[apps]].
 - Parent root AGENTS.md owns global rules + DOX rail.
 
@@ -17,6 +17,8 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 - Backup split: **volume data goes offsite** (restic to the Hetzner Storage Box, `base/offsite-backup/`). Locally we keep only what needs a fast restore and is at risk of corruption rather than site loss: databases via CNPG `barmanObjectStore` and Kubernetes objects via Velero. Local capacity is limited and sits on a RAID 5 — that absorbs disk failures, it is not a backup.
 - Velero protects Kubernetes objects, not volume data: both schedules run `defaultVolumesToFsBackup: false`, so a volume is only included when its pod carries `backup.velero.io/backup-volumes`. Reason: the Garage bucket lives on the same TrueNAS pool as the source data, so an opt-out run would fill the pool. `deployNodeAgent: true` stays so single volumes can be opted in; the namespace uses privileged Pod Security labels because node-agent mounts kubelet host paths. Keep unused democratic-csi snapshotter sidecars disabled unless snapshot CRDs and a tested snapshot restore path are introduced together.
 - Storage: CNPG databases use node-local `local-path`; democratic-csi iSCSI serves app RWO volumes; NFS serves large media.
+- Talos + Kubernetes versions and per-node Talos config live in `base/omni-sync/cluster-template.yaml` (Omni cluster template). The `omni-sync` Deployment pushes it with `omnictl cluster template sync` on every change and every 5 min; Omni rolls upgrades node by node. Do not change nodes via `talosctl patch/upgrade`, OpenTofu machine config or the Omni UI — the sync reverts UI drift. Renovate bumps both versions (`docs/renovate.md`).
+- Node data disk `sdb1` = Talos `ExistingVolumeConfig` `local-storage` at `/var/mnt/local-storage` (local-path + static `local` PVs). No `.machine.kubelet` / `.machine.disks` in the template: they conflict with the `KubeletConfig` document Omni writes for K8s upgrades, and kubelet only sees `/var/mnt`.
 - democratic-csi node plugin uses `ISCSIADM_HOST_STRATEGY: chroot` (host `iscsiadm` via `/host`). `nsenter` breaks under Talos workload isolation (sandboxd) because hostPID no longer shows the host `iscsid`. Verify a strategy change with a fresh iSCSI PVC on an isolated and a non-isolated node.
 - Ingress: NGINX with `nginx.org/*` annotations + Cilium CNI.
 - `base/security/sa-no-token/`: `default` ServiceAccount with `automountServiceAccountToken: false` for every managed namespace. Kills the implicit API credential on all workloads that don't call the K8s API. Workloads that need API access use a dedicated SA with `automountServiceAccountToken: true` (remediation-api, n8n, mcp-server, ai-agents, operators). See issue #744.

@@ -143,7 +143,6 @@ misconfigurations:
       - "infrastructure/base/offsite-backup/verify.cronjob.yaml"
       - "infrastructure/base/remediation-api/deployment.yaml"
       - "infrastructure/base/storage/local-path-provisioner/deployment.yaml"
-      - "infrastructure/base/system-upgrade-controller/patch-resources.yaml"
   - id: AVD-KSV-0118
     paths:
       - "apps/base/dawarich/deployment.yaml"
@@ -172,5 +171,3 @@ misconfigurations:
       - "infrastructure/base/offsite-backup/quota-check.cronjob.yaml"
       - "infrastructure/base/offsite-backup/verify.cronjob.yaml"
       - "infrastructure/base/storage/local-path-provisioner/deployment.yaml"
-      - "infrastructure/base/system-upgrade-controller/patch-controller-anti-affinity.yaml"
-      - "infrastructure/base/system-upgrade-controller/patch-resources.yaml"

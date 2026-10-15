@@ -68,6 +68,7 @@ How to avoid this in the future. Include specific checks or guardrails.
 | [talos-autonomous-upgrade-handbook.md](talos-autonomous-upgrade-handbook.md) | Talos Autonomous Upgrade Handbook | 2026-07-25 |
 | [authentik-ha-rwo-media.md](authentik-ha-rwo-media.md) | Authentik HA: keep media PVC RWO, co-locate replicas | 2026-08-21 |
 | [authentik-blueprint-grant-types-empty.md](authentik-blueprint-grant-types-empty.md) | Authentik: blueprint without grant_types breaks new OIDC providers | 2026-10-01 |
+| [omni-import-kubelet-multidoc-migration.md](omni-import-kubelet-multidoc-migration.md) | Omni import: K8s upgrade blocked by legacy `.machine.kubelet`; data disk to `/var/mnt` | 2026-10-15 |
 
 ---
 
