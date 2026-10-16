@@ -49,10 +49,10 @@ spec:
             # KNX_PASSWORD / KNX_PROJECT_PATH intentionally unset: the .knxproj
             # is uploaded via the web UI on first start and persisted to /project.
             # Explicit gateway: multicast AUTO-discovery does not cross the
-            # Cilium overlay reliably.
+            # Flannel overlay reliably.
             - name: KNX_GATEWAY_IP
               value: 192.168.10.20
-            # Pod sits behind Cilium masquerade (NAT); without route-back the
+            # Pod sits behind Flannel masquerade (NAT); without route-back the
             # client advertises its unroutable pod IP as the tunnel data
             # endpoint and the gateway can't reach it.
             - name: KNX_ROUTE_BACK

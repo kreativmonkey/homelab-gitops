@@ -6,7 +6,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 # Technology Stack
 - **OS / K8s**: Talos Linux (upstream Kubernetes, resource‑optimized)
 - **GitOps Controller**: FluxCD
-- **Ingress / Networking**: NGINX Ingress Controller with `nginx.org/*` annotations (or Gateway API) + Cilium CNI
+- **Ingress / Networking**: NGINX Ingress Controller with `nginx.org/*` annotations (or Gateway API) + Flannel CNI; NetworkPolicies enforced by kube-network-policies (Talos sidecar, `docs/runbooks/network-policies-rollout.md`)
 - **Storage**: CNPG databases on **node-local `local-path`** (off the TrueNAS iSCSI SPOF — CNPG replicates at the DB layer); Democratic CSI (TrueNAS iSCSI) for app RWO volumes; NFS for large media. See README "Persistence Strategy".
 - **Database Operator**: CloudNativePG (central PostgreSQL)
 - **VCS / CI‑CD**: GitHub (Leading) + Forgejo (Mirror) + GitHub Runners

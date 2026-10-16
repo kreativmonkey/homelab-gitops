@@ -7,7 +7,7 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # Pod CIDR (Talos/Cilium 10.244.0.0/16) — vmagent endpoint scraping.
+    # Pod CIDR (Talos/Flannel 10.244.0.0/16) — vmagent endpoint scraping.
     - to:
         - ipBlock:
             cidr: 10.244.0.0/16
