@@ -36,10 +36,12 @@ sidecar in the `kube-flannel` DaemonSet.
 - **`externalIPs` Services keep the LAN client IP** when the backend runs on
   the VIP node (`paperless-smb`, `mosquitto-external`) — they need an explicit
   `192.168.10.0/24` ingress rule.
-- **A newly selected pod loses its open connections once.** Established
-  connections without the engine's conntrack label are re-evaluated; replies
-  (e.g. from the apiserver) count as new ingress and are dropped, clients
-  reconnect. The observer step below avoids this.
+- **Enforcing a namespace breaks its open connections once.** Connections
+  opened before the namespace was enforced are re-evaluated packet by packet;
+  replies (apiserver → Flux, CNPG → authentik) count as new flows and are
+  dropped, clients reconnect. The allow-all observer does **not** prevent
+  this. Expect a few minutes of retransmit drops on ephemeral ports right
+  after enforcing — harmless if the workload stays Ready.
 - Cross-namespace flows need **both** sides: egress at the caller and ingress
   at the target.
 - Policies never apply to hostNetwork pods: `ingress-nginx`, `netbird`,
@@ -93,7 +95,8 @@ Measure first, then enforce. Tools in `scripts/netpol/`.
    allows everything.
 5. **Enforce**: `kubectl -n <ns> delete netpol observe-allow-all`. Then check
    ingress hosts via every node IP, pod readiness and drop verdicts (log
-   command above).
+   command above). Drops to ephemeral ports in the first minutes are dying
+   pre-existing connections; anything on a service port is a missing rule.
 
 ## Rollback
 
