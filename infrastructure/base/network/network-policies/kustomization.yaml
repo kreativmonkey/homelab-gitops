@@ -1,53 +1,56 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-# Phase 1 pilot: default-deny NetworkPolicies on self-contained namespaces.
+# Re-onboarding for real enforcement (Flannel + kube-network-policies, Talos
+# KubeFlannelCNIConfig). The policies below were written for Cilium and never
+# enforced; they are pulled from the cluster first and re-added batch by batch
+# with verification — see docs/runbooks/network-policies-rollout.md.
 # Wired as its own Flux Kustomization (infra-network-policies) so a rollback is
-# a single `flux suspend` / file removal. Onboard further namespaces by adding a
-# <namespace>/ overlay here — see docs/runbooks/network-policies-rollout.md.
-resources:
-  - homer
-  - linkding
-  - readeck
-  # Phase 2 (issue #739): Identity provider, data crown, DB tier, observability.
-  - authentik
-  - cnpg-system
-  - forgejo
-  - immich
-  - nextcloud
-  - monitoring
-  - gatus
-  # Batch A (issue #739, remaining app NS): baseline + component-driven egress.
-  - ai-agents
-  - audiobookshelf
-  - dawarich
-  - goloom
-  - hister
-  - jellyfin
-  - kavita
-  - outline
-  - paperless-ngx
-  - searxng
-  - sparkyfitness
-  - sterling-pdf
-  - tandoor
-  - vikunja
-  - teslamate
-  - workshops
-  # Phase 4 (issue #739): app NS with bespoke egress/ingress.
-  - homepage
-  - kite
-  - renovate
-  - spectrumknx
-  - nextcloud-exapps
-  - mcp-system
-  - external-dns
-  - ai-ops
-  # Phase 5 (issue #772): infra/operator NS with bespoke egress/ingress.
-  - cert-manager
-  - democratic-csi
-  - local-path-storage
-  - velero
-  - backup-offsite
-  - reflector-system
-  # hostNetwork NS (ingress-nginx, netbird, watchyourlan) are
-  # NP-inert and explicitly excluded — see runbook Phase 5.
+# a single `flux suspend` / file removal.
+resources: []
+# Pending re-onboarding (uncomment per verified batch):
+#   - homer
+#   - linkding
+#   - readeck
+#   # Phase 2 (issue #739): Identity provider, data crown, DB tier, observability.
+#   - authentik
+#   - cnpg-system
+#   - forgejo
+#   - immich
+#   - nextcloud
+#   - monitoring
+#   - gatus
+#   # Batch A (issue #739, remaining app NS): baseline + component-driven egress.
+#   - ai-agents
+#   - audiobookshelf
+#   - dawarich
+#   - goloom
+#   - hister
+#   - jellyfin
+#   - kavita
+#   - outline
+#   - paperless-ngx
+#   - searxng
+#   - sparkyfitness
+#   - sterling-pdf
+#   - tandoor
+#   - vikunja
+#   - teslamate
+#   - workshops
+#   # Phase 4 (issue #739): app NS with bespoke egress/ingress.
+#   - homepage
+#   - kite
+#   - renovate
+#   - spectrumknx
+#   - nextcloud-exapps
+#   - mcp-system
+#   - external-dns
+#   - ai-ops
+#   # Phase 5 (issue #772): infra/operator NS with bespoke egress/ingress.
+#   - cert-manager
+#   - democratic-csi
+#   - local-path-storage
+#   - velero
+#   - backup-offsite
+#   - reflector-system
+#   hostNetwork NS (ingress-nginx, netbird, watchyourlan) are
+#   NP-inert and explicitly excluded — see runbook Phase 5.
