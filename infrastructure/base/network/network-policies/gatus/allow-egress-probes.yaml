@@ -11,6 +11,16 @@ spec:
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
+        # 0.0.0.0/0 is Cilium's `world` entity and excludes the local host:
+        # the ingress VIP and node IPs (ingress hairpin) need explicit /32s.
+        - ipBlock:
+            cidr: 192.168.10.245/32
+        - ipBlock:
+            cidr: 192.168.10.41/32
+        - ipBlock:
+            cidr: 192.168.10.42/32
+        - ipBlock:
+            cidr: 192.168.10.43/32
       ports:
         - protocol: TCP
           port: 80

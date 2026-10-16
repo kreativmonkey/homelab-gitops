@@ -7,6 +7,5 @@ kind: Component
 resources:
   - 00-default-deny.yaml
   - 10-allow-dns.yaml
-  - 20-allow-from-host-network.yaml
   - 30-allow-same-namespace.yaml
   - 40-allow-from-monitoring.yaml

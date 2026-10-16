@@ -7,10 +7,10 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # Pod CIDR (Talos/Flannel 10.244.0.0/16) — vmagent endpoint scraping.
+    # All pods — vmagent endpoint scraping. ipBlock never matches pod IPs
+    # under Cilium, so select them by namespace instead.
     - to:
-        - ipBlock:
-            cidr: 10.244.0.0/16
+        - namespaceSelector: {}
     # Node CIDR — kubelet (10250) and node-exporter (9100), control-plane
     # component metrics.
     - to:

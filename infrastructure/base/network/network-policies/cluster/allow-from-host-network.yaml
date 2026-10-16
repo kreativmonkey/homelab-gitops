@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: allow-from-host-network
+spec:
+  # hostNetwork clients — ingress-nginx, kube-apiserver (admission webhooks),
+  # NetBird — reach pods as Cilium entities host (same node) or remote-node
+  # (other node, via the tunnel with the sender's cilium_host IP). Standard
+  # NetworkPolicy cannot select them: an ipBlock with node IPs only matches
+  # the local host. enableDefaultDeny=false: this only adds an allow, it does
+  # not isolate any pod. Replaces the Flannel-era baseline
+  # allow-from-host-network (gateway /32s).
+  endpointSelector: {}
+  enableDefaultDeny:
+    ingress: false
+    egress: false
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
