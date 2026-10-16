@@ -61,6 +61,9 @@ spec:
     # --- Policy ---
     # ipBlock rules also match node IPs (VIP 192.168.10.245, apiserver :6443).
     policyCIDRMatchMode: [nodes]
+    # TEMPORARY while re-onboarding the NetworkPolicy tree: policies are
+    # evaluated and verdicts show as AUDIT in Hubble, nothing is dropped.
+    policyAuditMode: true
 
     # --- Observability ---
     hubble:
