@@ -37,8 +37,8 @@ spec:
       hostRoot: /sys/fs/cgroup
 
     # --- Networking ---
-    # Overlay on its own VXLAN port and pod CIDR, so it can run next to the
-    # Flannel overlay (8472, 10.244.0.0/16) during the per-node migration.
+    # VXLAN 8473 and 10.245.0.0/16 come from the dual-overlay migration off
+    # Flannel (8472, 10.244.0.0/16); changing either now means re-IPing pods.
     routingMode: tunnel
     tunnelProtocol: vxlan
     tunnelPort: 8473
@@ -48,19 +48,15 @@ spec:
         clusterPoolIPv4PodCIDRList: ["10.245.0.0/16"]
         clusterPoolIPv4MaskSize: 24
 
-    # --- Migration phase (docs.cilium.io k8s-install-migration) ---
-    # Nodes switch to Cilium only once labelled
-    # io.cilium.migration/cilium-default=true (CiliumNodeConfig cilium-default).
+    # Migration from Flannel finished 2026-10-16: Cilium owns the CNI config
+    # and enforces policies. hostLegacyRouting stays on (switching it off
+    # interrupts traffic briefly; eBPF host routing is only a performance win).
     cni:
-      customConf: true
-      uninstall: false
-    policyEnforcementMode: never
+      exclusive: true
     bpf:
       hostLegacyRouting: true
     operator:
       replicas: 2
-      unmanagedPodWatcher:
-        restart: false
 
     # --- Policy ---
     # ipBlock rules also match node IPs (VIP 192.168.10.245, apiserver :6443).

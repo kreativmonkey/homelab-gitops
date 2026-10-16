@@ -29,19 +29,16 @@ machines:
   - 3ea7a37a-3c61-493f-8c1c-abeef304cd61
   - faf974c8-e5cc-4962-a225-85aa137f70c1
 patches:
-  # NetworkPolicy enforcement: Talos adds the kube-network-policies sidecar
-  # (nfqueue, fail-open) to the kube-flannel DaemonSet. KubeFlannelCNIConfig is
-  # control-plane-only. Talos itself never updates existing bootstrap manifests;
-  # omni-sync's manifest-sync rolls the DaemonSet change out.
-  # See docs/runbooks/network-policies-rollout.md.
-  - idOverride: 200-flannel-network-policies
+  # CNI is Cilium (Flux HelmRelease infrastructure/base/network/cilium). Drop the
+  # Talos-managed Flannel; Talos never deletes the old objects, they were
+  # removed by hand (docs/runbooks/cilium.md). kube-proxy stays.
+  - idOverride: 200-disable-flannel
     annotations:
-      name: flannel-network-policies
+      name: disable-flannel
     inline:
       apiVersion: v1alpha1
       kind: KubeFlannelCNIConfig
-      backendType: vxlan
-      kubeNetworkPoliciesEnabled: true
+      $patch: delete
 ---
 kind: Workers
 ---
