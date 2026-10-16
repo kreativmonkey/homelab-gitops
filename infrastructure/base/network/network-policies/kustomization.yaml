@@ -5,50 +5,54 @@ kind: Kustomization
 # — see docs/runbooks/network-policies-rollout.md.
 # Wired as its own Flux Kustomization (infra-network-policies) so a rollback is
 # a single `flux suspend` / file removal.
-resources:
-  # Batch 1 (enforced 2026-10-16): pilot.
-  - homer
-  - linkding
-  - readeck
-  # Batch 2 (enforced 2026-10-16): app namespaces, flows replayed against
-  # 40 min of observed traffic before enabling.
-  - authentik
-  - forgejo
-  - immich
-  - nextcloud
-  - gatus
-  - ai-agents
-  - audiobookshelf
-  - dawarich
-  - goloom
-  - hister
-  - jellyfin
-  - kavita
-  - outline
-  - paperless-ngx
-  - searxng
-  - sparkyfitness
-  - sterling-pdf
-  - tandoor
-  - vikunja
-  - teslamate
-  - workshops
-  - homepage
-  - kite
-  - renovate
-  - spectrumknx
-  - nextcloud-exapps
-  - ai-ops
-  # Batch 3 (enforced 2026-10-16): infra/operator namespaces.
-  - cnpg-system
-  - monitoring
-  - cert-manager
-  - democratic-csi
-  - local-path-storage
-  - velero
-  - backup-offsite
-  - reflector-system
-  - external-dns
-  - mcp-system
+resources: []
+# Pulled for the Cilium cutover (2026-10-16): the baseline still allows
+# host-network sources by Flannel gateway IPs, which Cilium never matches —
+# enforcing it blocked ingress-nginx from remote nodes. Re-enable once the
+# baseline is adapted (docs/runbooks/cilium.md).
+#   # Batch 1 (enforced 2026-10-16): pilot.
+#   - homer
+#   - linkding
+#   - readeck
+#   # Batch 2 (enforced 2026-10-16): app namespaces, flows replayed against
+#   # 40 min of observed traffic before enabling.
+#   - authentik
+#   - forgejo
+#   - immich
+#   - nextcloud
+#   - gatus
+#   - ai-agents
+#   - audiobookshelf
+#   - dawarich
+#   - goloom
+#   - hister
+#   - jellyfin
+#   - kavita
+#   - outline
+#   - paperless-ngx
+#   - searxng
+#   - sparkyfitness
+#   - sterling-pdf
+#   - tandoor
+#   - vikunja
+#   - teslamate
+#   - workshops
+#   - homepage
+#   - kite
+#   - renovate
+#   - spectrumknx
+#   - nextcloud-exapps
+#   - ai-ops
+#   # Batch 3 (enforced 2026-10-16): infra/operator namespaces.
+#   - cnpg-system
+#   - monitoring
+#   - cert-manager
+#   - democratic-csi
+#   - local-path-storage
+#   - velero
+#   - backup-offsite
+#   - reflector-system
+#   - external-dns
+#   - mcp-system
 # hostNetwork NS (ingress-nginx, netbird, watchyourlan) stay out: policies
 # never apply to hostNetwork pods.
