@@ -28,6 +28,20 @@ machines:
   - 2df1a117-2512-416f-ac7c-3702e30ee523
   - 3ea7a37a-3c61-493f-8c1c-abeef304cd61
   - faf974c8-e5cc-4962-a225-85aa137f70c1
+patches:
+  # NetworkPolicy enforcement: Talos adds the kube-network-policies sidecar
+  # (nfqueue, fail-open) to the kube-flannel DaemonSet. KubeFlannelCNIConfig is
+  # control-plane-only. Talos itself never updates existing bootstrap manifests;
+  # omni-sync's manifest-sync rolls the DaemonSet change out.
+  # See docs/runbooks/network-policies-rollout.md.
+  - idOverride: 200-flannel-network-policies
+    annotations:
+      name: flannel-network-policies
+    inline:
+      apiVersion: v1alpha1
+      kind: KubeFlannelCNIConfig
+      backendType: vxlan
+      kubeNetworkPoliciesEnabled: true
 ---
 kind: Workers
 ---
