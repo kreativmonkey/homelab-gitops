@@ -6,8 +6,8 @@ spec:
   # Empty podSelector = applies to every Pod in the namespace.
   podSelector: {}
   # Deny everything; the allow-* policies below add back the required flows.
-  # (Kubelet health probes come from uid 0 on the local node, which
-  # kube-network-policies exempts, so readiness/liveness keep working.)
+  # (Kubelet health probes come from the local host, which Cilium always
+  # allows, so readiness/liveness keep working.)
   policyTypes:
     - Ingress
     - Egress

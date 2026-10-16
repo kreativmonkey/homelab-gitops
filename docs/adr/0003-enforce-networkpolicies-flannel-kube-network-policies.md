@@ -1,6 +1,6 @@
 # ADR 0003: Enforce NetworkPolicies with Flannel + kube-network-policies
 
-- Status: accepted
+- Status: superseded by ADR 0004 (2026-10-16)
 - Date: 2026-10-16
 - Supersedes: ADR 0002
 - PRs: #1177, #1179, #1180, #1182 and the infra batch

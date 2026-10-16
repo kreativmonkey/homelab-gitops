@@ -238,6 +238,16 @@
       ],
       "groupName": "omnictl",
       "automerge": false
+    },
+    {
+      "description": "Cilium ist das CNI: kein Automerge, auch nicht fuer Minor/Patch. Ein Bump rollt die Agents auf allen Nodes neu; Release Notes und Talos-Kompatibilitaet (KubePrism, cgroup) vorher pruefen. Steht nach der Automerge-Basis, damit automerge:false gewinnt. 1.20.2 rutschte am 2026-10-16 mitten in die Flannel-Migration.",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "cilium"
+      ],
+      "automerge": false
     }
   ]
 }

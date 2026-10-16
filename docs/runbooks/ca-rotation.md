@@ -97,7 +97,7 @@ kubectl get pods -A --field-selector status.phase=Running \
 
 Reihenfolge 2026-10-15:
 
-1. Netz-Kern: `kubectl -n kube-system rollout restart ds/kube-proxy ds/kube-flannel deploy/coredns`
+1. Netz-Kern: `kubectl -n kube-system rollout restart ds/kube-proxy ds/cilium deploy/cilium-operator deploy/coredns`
 2. CNPG über den Operator (Replikas zuerst, Primary per Switchover — nicht Pods
    löschen): `kubectl -n cnpg-system annotate clusters.postgresql.cnpg.io <c> kubectl.kubernetes.io/restartedAt=$(date -u +%FT%TZ) --overwrite`.
    CNPG-Instanzen ohne API-Kontakt riskieren die Primary-Isolation-Abschaltung

@@ -19,7 +19,7 @@ in-cluster mirror.
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 [![FluxCD](https://img.shields.io/badge/GitOps-FluxCD-5468FF?style=for-the-badge&logo=flux&logoColor=white)](https://fluxcd.io/)
 [![Helm](https://img.shields.io/badge/Helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)](https://helm.sh/)
-[![Flannel](https://img.shields.io/badge/CNI-Flannel-0083C1?style=for-the-badge)](https://github.com/flannel-io/flannel)
+[![Cilium](https://img.shields.io/badge/CNI-Cilium-F8C517?style=for-the-badge&logo=cilium&logoColor=black)](https://cilium.io/)
 [![NGINX Ingress](https://img.shields.io/badge/Ingress-NGINX-009639?style=for-the-badge&logo=nginx&logoColor=white)](https://kubernetes.github.io/ingress-nginx/)
 [![CloudNativePG](https://img.shields.io/badge/Postgres-CloudNativePG-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://cloudnative-pg.io/)
 [![cert-manager](https://img.shields.io/badge/TLS-cert--manager-2E77BC?style=for-the-badge&logo=letsencrypt&logoColor=white)](https://cert-manager.io/)
@@ -69,7 +69,7 @@ Flux reconciles it every hour (or on demand). Changes land via **PRs to
 | **Secrets** | [SOPS](https://github.com/getsops/sops) + [age](https://github.com/FiloSottile/age) | Encrypted GitOps secrets (in-repo encryption) |
 | **OS & K8s** | [Talos Linux](https://www.talos.dev/) | Immutable, RAM-based, API-managed OS |
 | **GitOps** | [FluxCD](https://fluxcd.io/) | Reconciles Git state to cluster state |
-| **CNI** | [Flannel](https://github.com/flannel-io/flannel) + [kube-network-policies](https://kube-network-policies.sigs.k8s.io/) | Talos-default vxlan pod network; NetworkPolicies enforced by the sidecar |
+| **CNI** | [Cilium](https://cilium.io/) + [Hubble](https://github.com/cilium/hubble) | eBPF pod network (VXLAN), NetworkPolicy enforcement, flow visibility; kube-proxy stays |
 | **Storage (DB)** | node-local `local-path` | Per-node disks for CloudNativePG (off the iSCSI SPOF; CNPG replicates at the DB layer) |
 | **Storage (Fast)** | TrueNAS iSCSI (democratic-csi) | RWO block storage for app state/config |
 | **Storage (Mass)** | NFS (External NAS) | Persistent storage for media and archives |
@@ -97,6 +97,7 @@ via [Gatus](https://status.cluster.f4mily.net).
 | [**homepage**](https://gethomepage.dev/) | Central start page / service dashboard | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_homepage/uptimes/30d/badge.svg) |
 | [**Vikunja**](https://vikunja.io/) | Tasks & tickets, recurring chores | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_vikunja/uptimes/30d/badge.svg) |
 | [**Hister**](https://hister.org/) | Private full-text search for visited pages and files | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/core_hister/uptimes/30d/badge.svg) |
+| [**Hubble**](https://github.com/cilium/hubble) | Cilium network flow & policy-verdict UI (admins, via Authentik) | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_hubble/uptimes/30d/badge.svg) |
 | [**homer**](https://github.com/bastienwirtz/homer) | Static services dashboard | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/observability_homer/uptimes/30d/badge.svg) |
 | [**immich**](https://immich.app/) | Self-hosted photo & video backup | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_immich/uptimes/30d/badge.svg) |
 | [**jellyfin**](https://jellyfin.org/) | Movie & TV media server | ![Uptime](https://status.cluster.f4mily.net/api/v1/endpoints/media_jellyfin/uptimes/30d/badge.svg) |
@@ -125,9 +126,11 @@ Standard tools (Helm charts, Docker images) are managed by Renovate. GitHub is
 the primary source of truth.
 
 ### 2. Networking
-Talos nodes run Flannel (vxlan) with kube-network-policies enforcing standard
-NetworkPolicies (`docs/runbooks/network-policies-rollout.md`). Ingress is
-handled by the NGINX Ingress Controller.
+Talos nodes run Cilium (VXLAN tunnel, kube-proxy kept), which also enforces
+the NetworkPolicies (`docs/runbooks/cilium.md`,
+`docs/runbooks/network-policies-rollout.md`). Hubble shows every flow at
+[hubble.cluster.f4mily.net](https://hubble.cluster.f4mily.net) (Authentik,
+admins only). Ingress is handled by the NGINX Ingress Controller.
 SSL certificates are automated via cert-manager (Let's Encrypt).
 
 ### 3. Persistence Strategy
@@ -272,5 +275,6 @@ S3 on a fresh deploy.
 
 - [`docs/rulebook.md`](./docs/rulebook.md) — distilled build rules (avoid the mistakes we already made)
 - [`docs/cluster-access.md`](./docs/cluster-access.md) — get a kubeconfig
+- [`docs/runbooks/cilium.md`](./docs/runbooks/cilium.md) — CNI operations, Hubble, emergency reinstall
 - [`docs/applications.md`](./docs/applications.md) — enable/disable apps & hostnames
 - [`docs/disaster-recovery/README.md`](./docs/disaster-recovery/README.md) — recovery runbook

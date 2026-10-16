@@ -57,13 +57,18 @@ spec:
       hostLegacyRouting: true
     operator:
       replicas: 2
+      rollOutPods: true
+    # Restart agents/operator when cilium-config changes; the chart does not by
+    # default, and config changes otherwise only take effect on the next
+    # manual restart (bit us twice during the migration).
+    rollOutCiliumPods: true
 
     # --- Policy ---
     # ipBlock rules also match node IPs (VIP 192.168.10.245, apiserver :6443).
     policyCIDRMatchMode: [nodes]
-    # TEMPORARY while re-onboarding the NetworkPolicy tree: policies are
-    # evaluated and verdicts show as AUDIT in Hubble, nothing is dropped.
-    policyAuditMode: true
+    # Set true for big policy changes: violations show as AUDIT in Hubble and
+    # nothing is dropped (docs/runbooks/network-policies-rollout.md).
+    policyAuditMode: false
 
     # --- Observability ---
     hubble:
