@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  # Lives in authentik: the backend is the embedded outpost in authentik-server,
+  # which authenticates and proxies to hubble-ui (kube-system).
+  # Blueprint: blueprints/hubble-proxy.configmap.yaml.
+  name: hubble
+  namespace: authentik
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Hubble
+    gethomepage.dev/description: Cilium network flows
+    gethomepage.dev/group: Tools
+    gethomepage.dev/icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/cilium.svg
+    gethomepage.dev/pod-selector: app.kubernetes.io/component=server
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - hubble.cluster.f4mily.net
+      secretName: wildcard-cluster-f4mily-net-tls
+  rules:
+    - host: hubble.cluster.f4mily.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: authentik-server
+                port:
+                  number: 80

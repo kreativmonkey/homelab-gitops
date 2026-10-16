@@ -92,6 +92,7 @@ spec:
         - authentik-vikunja-blueprint
         - authentik-omni-blueprint
         - authentik-outpost-cleanup-blueprint
+        - authentik-hubble-blueprint
     server:
       ingress:
         enabled: false

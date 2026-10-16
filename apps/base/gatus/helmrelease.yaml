@@ -328,6 +328,25 @@ spec:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
 
+        # Hubble: the public URL runs through the Authentik outpost (302 to
+        # login = outpost + ingress up); the Service check covers the UI itself.
+        - name: hubble
+          group: observability
+          url: https://hubble.cluster.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
+
+        - name: hubble-ui
+          group: observability
+          url: http://hubble-ui.kube-system.svc.cluster.local/
+          interval: 60s
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
         - name: homer
           group: observability
           url: https://homer.cluster.f4mily.net

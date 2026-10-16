@@ -7,5 +7,6 @@ namespace: gatus
 components:
   - ../baseline
 resources:
+  - allow-egress-hubble-ui.yaml
   - allow-egress-probe-dns.yaml
   - allow-egress-probes.yaml

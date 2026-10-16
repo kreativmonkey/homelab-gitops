@@ -81,6 +81,7 @@ data:
   host_grafana: grafana.cluster.f4mily.net
   host_victoria_metrics: metrics.cluster.f4mily.net
   host_kite: kite.cluster.f4mily.net
+  host_hubble: hubble.cluster.f4mily.net
   host_n8n: n8n.cluster.f4mily.net
   host_uptime_kuma: uptime-kuma.cluster.f4mily.net
   host_unifi_controller: unifi-controller.cluster.f4mily.net

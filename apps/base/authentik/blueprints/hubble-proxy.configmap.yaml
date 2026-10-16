@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-hubble-blueprint
+  namespace: authentik
+  labels:
+    app.kubernetes.io/part-of: authentik
+data:
+  hubble.yaml: |
+    version: 1
+    metadata:
+      name: Homelab Hubble UI proxy
+      labels:
+        blueprints.goauthentik.io/description: Proxy provider, application and admin-only access for the Cilium Hubble UI
+    entries:
+      # Hubble UI has no login of its own. The embedded outpost serves
+      # hubble.cluster.f4mily.net (Ingress authentik/hubble -> authentik-server)
+      # and proxies to the UI after login. The ingress controller runs without
+      # snippets, so forward-auth is not an option.
+      - model: authentik_providers_proxy.proxyprovider
+        id: hubble-provider
+        identifiers:
+          name: "Provider for Hubble"
+        attrs:
+          name: "Provider for Hubble"
+          mode: proxy
+          external_host: https://hubble.cluster.f4mily.net
+          internal_host: http://hubble-ui.kube-system.svc.cluster.local
+          internal_host_ssl_validation: false
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      - model: authentik_core.application
+        id: hubble-app
+        identifiers:
+          slug: hubble
+        attrs:
+          name: Hubble
+          slug: hubble
+          provider: !KeyOf hubble-provider
+          group: Administration
+          launch_url: https://hubble.cluster.f4mily.net
+          meta_launch_url: https://hubble.cluster.f4mily.net
+          icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/cilium.svg
+      # Hubble shows every flow in the cluster: admins only.
+      - model: authentik_policies_expression.expressionpolicy
+        id: hubble-access-policy
+        identifiers:
+          name: hubble-access
+        attrs:
+          name: hubble-access
+          expression: |-
+            return ak_is_group_member(request.user, name="Admin") or ak_is_group_member(request.user, name="authentik Admins")
+      - model: authentik_policies.policybinding
+        identifiers:
+          target: !KeyOf hubble-app
+          order: 0
+        attrs:
+          policy: !KeyOf hubble-access-policy
+          enabled: true
+          negate: false
+          timeout: 30
+      # The provider list is set as a whole: keep the providers that were
+      # already on the embedded outpost (added via UI) or they get detached.
+      # Add new outpost providers HERE, not in the UI.
+      - model: authentik_outposts.outpost
+        identifiers:
+          name: authentik Embedded Outpost
+        attrs:
+          providers:
+            - !Find [authentik_providers_proxy.proxyprovider, [name, "Provider for traefik-prod"]]
+            - !Find [authentik_providers_proxy.proxyprovider, [name, "Provider for Teslamate Dashboard"]]
+            - !KeyOf hubble-provider
