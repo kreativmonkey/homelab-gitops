@@ -5,6 +5,7 @@ kind: Kustomization
 # runs in-namespace (covered by baseline same-ns allow).
 namespace: authentik
 components:
+  - ../egress-apiserver
   - ../baseline
   - ../egress-external
   - ../egress-database

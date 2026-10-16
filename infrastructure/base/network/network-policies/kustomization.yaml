@@ -1,9 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-# Re-onboarding for real enforcement (Flannel + kube-network-policies, Talos
-# KubeFlannelCNIConfig). The policies below were written for Cilium and never
-# enforced; they are pulled from the cluster first and re-added batch by batch
-# with verification — see docs/runbooks/network-policies-rollout.md.
+# Enforced by kube-network-policies (Flannel sidecar, Talos KubeFlannelCNIConfig,
+# ADR 0003). Onboard a namespace only after observing and replaying its traffic
+# — see docs/runbooks/network-policies-rollout.md.
 # Wired as its own Flux Kustomization (infra-network-policies) so a rollback is
 # a single `flux suspend` / file removal.
 resources:
@@ -40,16 +39,16 @@ resources:
   - spectrumknx
   - nextcloud-exapps
   - ai-ops
-# Batch 3 (pending): infra/operator namespaces.
-#   - cnpg-system
-#   - monitoring
-#   - cert-manager
-#   - democratic-csi
-#   - local-path-storage
-#   - velero
-#   - backup-offsite
-#   - reflector-system
-#   - external-dns
-#   - mcp-system
+  # Batch 3 (enforced 2026-10-16): infra/operator namespaces.
+  - cnpg-system
+  - monitoring
+  - cert-manager
+  - democratic-csi
+  - local-path-storage
+  - velero
+  - backup-offsite
+  - reflector-system
+  - external-dns
+  - mcp-system
 # hostNetwork NS (ingress-nginx, netbird, watchyourlan) stay out: policies
 # never apply to hostNetwork pods.

@@ -4,7 +4,7 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 
 # Ownership
 
-- Owns: CNPG operator, democratic-csi (TrueNAS iSCSI + NFS), Cilium/NGINX ingress, cert-manager, Flux sources, backup schedules, DR overlay, Omni cluster template sync (`base/omni-sync/`), metrics-server, exporters, per-app CNPG `Cluster` manifests under `overlays/main/database-clusters/`.
+- Owns: CNPG operator, democratic-csi (TrueNAS iSCSI + NFS), NGINX ingress, NetworkPolicy tree (`base/network/network-policies/`), cert-manager, Flux sources, backup schedules, DR overlay, Omni cluster template sync (`base/omni-sync/`), metrics-server, exporters, per-app CNPG `Cluster` manifests under `overlays/main/database-clusters/`.
 - App workloads owned by [[apps]].
 - Parent root AGENTS.md owns global rules + DOX rail.
 
@@ -21,7 +21,8 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 - Omni does not apply Talos bootstrap manifests (kube-proxy, flannel, CoreDNS) on a Kubernetes upgrade; `omni-sync` does it (`omnictl cluster kubernetes manifest-sync`), only when no Talos/K8s upgrade or CA rotation is in flight and the dry-run shows a diff. Manual edits to those objects are reverted — change them via the template. CoreDNS forwards to `/etc/resolv.conf` (Talos host DNS 169.254.116.108 -> 192.168.10.1).
 - Node data disk `sdb1` = Talos `ExistingVolumeConfig` `local-storage` at `/var/mnt/local-storage` (local-path + static `local` PVs). No `.machine.kubelet` / `.machine.disks` in the template: they conflict with the `KubeletConfig` document Omni writes for K8s upgrades, and kubelet only sees `/var/mnt`.
 - democratic-csi node plugin uses `ISCSIADM_HOST_STRATEGY: chroot` (host `iscsiadm` via `/host`). `nsenter` breaks under Talos workload isolation (sandboxd) because hostPID no longer shows the host `iscsid`. Verify a strategy change with a fresh iSCSI PVC on an isolated and a non-isolated node.
-- Ingress: NGINX with `nginx.org/*` annotations + Cilium CNI.
+- Ingress: NGINX with `nginx.org/*` annotations. CNI: Talos-default Flannel.
+- NetworkPolicies are enforced (kube-network-policies sidecar in `kube-flannel`, enabled in the Omni template). Onboarding = observe → replay (`scripts/netpol/`) → enforce, see `docs/runbooks/network-policies-rollout.md`. hostNetwork sources only match the baseline gateway ipBlocks; update them on node replacement.
 - `base/security/sa-no-token/`: `default` ServiceAccount with `automountServiceAccountToken: false` for every managed namespace. Kills the implicit API credential on all workloads that don't call the K8s API. Workloads that need API access use a dedicated SA with `automountServiceAccountToken: true` (remediation-api, n8n, mcp-server, ai-agents, operators). See issue #744.
 
 # Work Guidance

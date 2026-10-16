@@ -1,6 +1,6 @@
 # ADR 0002: Retain Flannel; keep NetworkPolicies declarative until enforcement is required
 
-- Status: accepted
+- Status: superseded by ADR 0003 (2026-10-16)
 - Date: 2026-09-22
 - Issue: #981
 - Related: #983 corrects the NetworkPolicy rollout runbook's stale Cilium claim

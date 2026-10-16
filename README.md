@@ -19,7 +19,7 @@ in-cluster mirror.
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 [![FluxCD](https://img.shields.io/badge/GitOps-FluxCD-5468FF?style=for-the-badge&logo=flux&logoColor=white)](https://fluxcd.io/)
 [![Helm](https://img.shields.io/badge/Helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)](https://helm.sh/)
-[![Cilium](https://img.shields.io/badge/CNI-Cilium-F8C517?style=for-the-badge&logo=cilium&logoColor=black)](https://cilium.io/)
+[![Flannel](https://img.shields.io/badge/CNI-Flannel-0083C1?style=for-the-badge)](https://github.com/flannel-io/flannel)
 [![NGINX Ingress](https://img.shields.io/badge/Ingress-NGINX-009639?style=for-the-badge&logo=nginx&logoColor=white)](https://kubernetes.github.io/ingress-nginx/)
 [![CloudNativePG](https://img.shields.io/badge/Postgres-CloudNativePG-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://cloudnative-pg.io/)
 [![cert-manager](https://img.shields.io/badge/TLS-cert--manager-2E77BC?style=for-the-badge&logo=letsencrypt&logoColor=white)](https://cert-manager.io/)
@@ -69,7 +69,7 @@ Flux reconciles it every hour (or on demand). Changes land via **PRs to
 | **Secrets** | [SOPS](https://github.com/getsops/sops) + [age](https://github.com/FiloSottile/age) | Encrypted GitOps secrets (in-repo encryption) |
 | **OS & K8s** | [Talos Linux](https://www.talos.dev/) | Immutable, RAM-based, API-managed OS |
 | **GitOps** | [FluxCD](https://fluxcd.io/) | Reconciles Git state to cluster state |
-| **CNI** | [Cilium](https://cilium.io/) | eBPF-based cluster networking |
+| **CNI** | [Flannel](https://github.com/flannel-io/flannel) + [kube-network-policies](https://kube-network-policies.sigs.k8s.io/) | Talos-default vxlan pod network; NetworkPolicies enforced by the sidecar |
 | **Storage (DB)** | node-local `local-path` | Per-node disks for CloudNativePG (off the iSCSI SPOF; CNPG replicates at the DB layer) |
 | **Storage (Fast)** | TrueNAS iSCSI (democratic-csi) | RWO block storage for app state/config |
 | **Storage (Mass)** | NFS (External NAS) | Persistent storage for media and archives |
@@ -125,7 +125,9 @@ Standard tools (Helm charts, Docker images) are managed by Renovate. GitHub is
 the primary source of truth.
 
 ### 2. Networking
-Talos nodes run Cilium CNI. Ingress is handled by the NGINX Ingress Controller.
+Talos nodes run Flannel (vxlan) with kube-network-policies enforcing standard
+NetworkPolicies (`docs/runbooks/network-policies-rollout.md`). Ingress is
+handled by the NGINX Ingress Controller.
 SSL certificates are automated via cert-manager (Let's Encrypt).
 
 ### 3. Persistence Strategy
