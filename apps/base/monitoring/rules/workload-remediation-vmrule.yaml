@@ -13,6 +13,23 @@ spec:
     - name: homelab.platform.workloads
       interval: 30s
       rules:
+        - alert: KubeDeploymentReplicasUnavailable
+          expr: |
+            (kube_deployment_status_replicas_available
+              < on (namespace, deployment)
+            kube_deployment_spec_replicas)
+            and on (namespace, deployment)
+            (kube_deployment_spec_replicas > 0)
+          for: 15m
+          labels:
+            severity: critical
+            cluster: homelab
+            homelab_owner: platform
+          annotations:
+            summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} nicht verfügbar"
+            description: "Weniger verfügbare als gewünschte Replikas seit 15 Minuten. Deployment und Pods prüfen: kubectl -n {{ $labels.namespace }} describe deployment {{ $labels.deployment }}"
+            runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/workload-availability.md"
+
         - alert: KubePodOOMKilled
           # Fire only on a *recent* OOM (a restart in the last 15m). The
           # last_terminated_reason series stays "OOMKilled" until the pod is
