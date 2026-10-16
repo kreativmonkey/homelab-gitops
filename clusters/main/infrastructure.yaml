@@ -129,3 +129,23 @@ spec:
     kind: GitRepository
     name: flux-system
   wait: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infra-cilium
+  namespace: flux-system
+spec:
+  # CNI. Depends only on infra-sources so infra-base (and omni-sync) can be
+  # suspended during node migrations. See docs/runbooks/cilium.md.
+  dependsOn:
+    - name: infra-sources
+  interval: 1h
+  retryInterval: 1m
+  timeout: 15m
+  path: ./infrastructure/base/network/cilium
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  wait: true

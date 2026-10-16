@@ -1,0 +1,83 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cilium
+  namespace: kube-system
+spec:
+  interval: 1h
+  timeout: 15m
+  chart:
+    spec:
+      chart: cilium
+      version: "1.19.9"
+      sourceRef:
+        kind: HelmRepository
+        name: cilium-repo
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  values:
+    # --- Talos (docs.siderolabs.com/kubernetes-guides/cni/deploying-cilium) ---
+    # API via KubePrism, independent of the kubernetes Service / kube-proxy.
+    k8sServiceHost: localhost
+    k8sServicePort: 7445
+    kubeProxyReplacement: false   # kube-proxy (nftables) stays
+    securityContext:
+      capabilities:
+        ciliumAgent: [CHOWN, KILL, NET_ADMIN, NET_RAW, IPC_LOCK, SYS_ADMIN, SYS_RESOURCE, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+        cleanCiliumState: [NET_ADMIN, SYS_ADMIN, SYS_RESOURCE]
+    cgroup:
+      autoMount:
+        enabled: false
+      hostRoot: /sys/fs/cgroup
+
+    # --- Networking ---
+    # Overlay on its own VXLAN port and pod CIDR, so it can run next to the
+    # Flannel overlay (8472, 10.244.0.0/16) during the per-node migration.
+    routingMode: tunnel
+    tunnelProtocol: vxlan
+    tunnelPort: 8473
+    ipam:
+      mode: cluster-pool
+      operator:
+        clusterPoolIPv4PodCIDRList: ["10.245.0.0/16"]
+        clusterPoolIPv4MaskSize: 24
+
+    # --- Migration phase (docs.cilium.io k8s-install-migration) ---
+    # Nodes switch to Cilium only once labelled
+    # io.cilium.migration/cilium-default=true (CiliumNodeConfig cilium-default).
+    cni:
+      customConf: true
+      uninstall: false
+    policyEnforcementMode: never
+    bpf:
+      hostLegacyRouting: true
+    operator:
+      replicas: 2
+      unmanagedPodWatcher:
+        restart: false
+
+    # --- Policy ---
+    # ipBlock rules also match node IPs (VIP 192.168.10.245, apiserver :6443).
+    policyCIDRMatchMode: [nodes]
+
+    # --- Observability ---
+    hubble:
+      enabled: true
+      relay:
+        enabled: true
+      ui:
+        enabled: true
+    envoy:
+      enabled: false   # no L7 policies / Cilium Ingress in use
+
+    # No CPU request: cp1 runs at 100 % requested CPU and the agent must start
+    # there without preempting workloads. Memory request keeps it Burstable.
+    resources:
+      requests:
+        memory: 256Mi

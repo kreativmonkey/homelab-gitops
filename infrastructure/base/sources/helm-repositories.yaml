@@ -165,3 +165,12 @@ spec:
   interval: 24h
   url: https://zekker6.github.io/helm-charts
 
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: cilium-repo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://helm.cilium.io/
