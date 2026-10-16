@@ -10,3 +10,5 @@ components:
   - ../egress-external
   - ../egress-database
   - ../egress-mail
+resources:
+  - allow-egress-hubble-ui.yaml
