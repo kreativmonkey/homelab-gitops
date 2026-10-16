@@ -75,6 +75,13 @@ spec:
         enabled: true
     envoy:
       enabled: false   # no L7 policies / Cilium Ingress in use
+    # TLS-interception secrets in kube-system instead of an extra
+    # cilium-secrets namespace (feature unused; the extra namespace also breaks
+    # the CI server-side dry-run).
+    tls:
+      secretsNamespace:
+        create: false
+        name: kube-system
 
     # No CPU request: cp1 runs at 100 % requested CPU and the agent must start
     # there without preempting workloads. Memory request keeps it Burstable.
