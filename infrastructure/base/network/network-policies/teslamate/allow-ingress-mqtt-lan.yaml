@@ -12,9 +12,15 @@ spec:
     # Service mosquitto-external uses externalIPs 192.168.10.245. kube-proxy
     # keeps the LAN client address when the pod runs on the VIP node, so the
     # host-network baseline does not cover it (seen: Home Assistant .25).
+    # Under Cilium (tunnel mode) traffic arriving through the externalIPs
+    # Service is SNATed to the receiving node's cilium_host address with
+    # identity `world` when the pod runs on another node — the LAN /24 does
+    # not match it. Only the externalIPs path reaches this port from outside.
     - from:
         - ipBlock:
             cidr: 192.168.10.0/24
+        - ipBlock:
+            cidr: 0.0.0.0/0
       ports:
         - protocol: TCP
           port: 1883
