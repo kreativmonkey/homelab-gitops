@@ -8,3 +8,5 @@ components:
   - ../baseline
   - ../egress-database
   - ../egress-external
+resources:
+  - allow-ingress-mqtt-lan.yaml

@@ -4,6 +4,7 @@ kind: Kustomization
 # (monitoring NS :8481) for widgets. External egress for the app host.
 namespace: kite
 components:
+  - ../egress-apiserver
   - ../baseline
   - ../egress-external
 resources:

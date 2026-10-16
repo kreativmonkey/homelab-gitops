@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-kite
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vmselect
+  policyTypes:
+    - Ingress
+  ingress:
+    # Kite dashboard queries vmselect (counterpart of kite/allow-egress-monitoring.yaml).
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kite
+      ports:
+        - protocol: TCP
+          port: 8481

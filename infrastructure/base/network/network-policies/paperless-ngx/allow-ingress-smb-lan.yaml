@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-smb-lan
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: paperless-smb
+  policyTypes:
+    - Ingress
+  ingress:
+    # Scanner drop share: Service paperless-smb uses externalIPs
+    # 192.168.10.245, so LAN client addresses can arrive unmasqueraded.
+    - from:
+        - ipBlock:
+            cidr: 192.168.10.0/24
+      ports:
+        - protocol: TCP
+          port: 445

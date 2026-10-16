@@ -6,6 +6,9 @@ kind: Kustomization
 # Baseline + database + external egress.
 namespace: paperless-ngx
 components:
+  - ../egress-mail
   - ../baseline
   - ../egress-database
   - ../egress-external
+resources:
+  - allow-ingress-smb-lan.yaml
