@@ -71,6 +71,23 @@ Pods mit API-Zugriff halten das alte CA-Bundle im Speicher und loggen danach
 dauerhaft `x509: certificate signed by unknown authority`. Nur Pods mit
 **anhaltenden** Fehlern neu starten (die erste Minute ist Übergang):
 
+Bei Reflector kann derselbe Vertrauensfehler als .NET-Ausnahme erscheinen:
+`AuthenticationException: The remote certificate was rejected by the
+provided RemoteCertificateValidationCallback`. Prüfe nach der Rotation auch
+Deployments, die dauerhaft nicht Ready werden, selbst wenn ihre Container
+weiterlaufen und nicht neu starten:
+
+```bash
+kubectl get deployments -A
+kubectl get pods -A --field-selector status.phase=Running
+kubectl get events -A --sort-by=.lastTimestamp
+kubectl -n reflector-system logs deployment/reflector-system-reflector --since=30m --timestamps
+```
+
+Wenn der Fehler anhält und das Deployment auf der aktuellen CA läuft, starte
+den zuständigen Controller neu, damit sein Kubernetes-Client das aktuelle
+CA-Bundle neu lädt. Anschließend Readiness und Watcher-Logs kontrollieren.
+
 ```bash
 kubectl get pods -A --field-selector status.phase=Running \
   -o jsonpath='{range .items[*]}{.metadata.namespace} {.metadata.name}{"\n"}{end}' \
