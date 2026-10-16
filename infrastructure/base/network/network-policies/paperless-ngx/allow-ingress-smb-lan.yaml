@@ -11,9 +11,15 @@ spec:
   ingress:
     # Scanner drop share: Service paperless-smb uses externalIPs
     # 192.168.10.245, so LAN client addresses can arrive unmasqueraded.
+    # Under Cilium (tunnel mode) traffic arriving through the externalIPs
+    # Service is SNATed to the receiving node's cilium_host address with
+    # identity `world` when the pod runs on another node — the LAN /24 does
+    # not match it. Only the externalIPs path reaches this port from outside.
     - from:
         - ipBlock:
             cidr: 192.168.10.0/24
+        - ipBlock:
+            cidr: 0.0.0.0/0
       ports:
         - protocol: TCP
           port: 445

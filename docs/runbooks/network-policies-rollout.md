@@ -37,8 +37,11 @@ never apply to hostNetwork pods) and `homelable`, `navidrome`, `omni-sync`.
 - **ipBlock never matches pod IPs.** Select pods with `namespaceSelector` /
   `podSelector` (monitoring and homepage use `namespaceSelector: {}`).
 - **Kubelet probes** are always allowed (local host).
-- **`externalIPs` Services** (`paperless-smb`, `mosquitto-external`) keep the
-  LAN client address → explicit `192.168.10.0/24` ingress rule.
+- **`externalIPs` Services** (`paperless-smb`, `mosquitto-external`): the
+  LAN client address survives only when the pod runs on the VIP node;
+  otherwise the packet arrives SNATed with identity `world`. Allow the port
+  from `192.168.10.0/24` **and** `0.0.0.0/0` (missed in audit mode: no client
+  connected during the window — MQTT broke for ~2 min after enforcing).
 - Cross-namespace flows need **both** sides: egress at the caller and ingress
   at the target.
 - Pods without any selecting policy are not isolated.
