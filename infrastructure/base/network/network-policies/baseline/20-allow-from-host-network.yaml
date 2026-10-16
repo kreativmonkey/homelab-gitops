@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-host-network
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # hostNetwork clients: ingress-nginx, kube-apiserver (admission webhooks),
+    # NetBird. kube-network-policies never resolves a hostNetwork source to a
+    # pod, so a namespaceSelector for ingress-nginx never matches. With Flannel
+    # vxlan the source IP is the sending node's cni0 (10.244.X.1, same node) or
+    # flannel.1 (10.244.X.0, other node) address — measured 2026-10-16. Node IPs
+    # stay listed for host processes binding them explicitly.
+    # Pod CIDRs per node (kubectl get nodes -o jsonpath='{..podCIDR}'):
+    # cp1 10.244.0.0/24, cp2 10.244.2.0/24, cp3 10.244.1.0/24 — update on node
+    # replacement. Kubelet probes are exempt (uid 0 on the local node).
+    - from:
+        - ipBlock: {cidr: 10.244.0.0/32}
+        - ipBlock: {cidr: 10.244.0.1/32}
+        - ipBlock: {cidr: 10.244.1.0/32}
+        - ipBlock: {cidr: 10.244.1.1/32}
+        - ipBlock: {cidr: 10.244.2.0/32}
+        - ipBlock: {cidr: 10.244.2.1/32}
+        - ipBlock: {cidr: 192.168.10.41/32}
+        - ipBlock: {cidr: 192.168.10.42/32}
+        - ipBlock: {cidr: 192.168.10.43/32}

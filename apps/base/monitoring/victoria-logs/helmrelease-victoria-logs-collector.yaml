@@ -32,6 +32,12 @@ spec:
     remoteWrite:
       - url: http://victoria-logs-single-server.monitoring.svc.cluster.local:9428
 
+    collector:
+      # kube-network-policies (sidecar in kube-flannel) logs every evaluated
+      # packet — Talos hard-codes --v=2. Skip it here; read verdicts on demand
+      # with `kubectl -n kube-system logs <kube-flannel-pod> -c kube-network-policies`.
+      excludeFilter: kubernetes.container_name:=kube-network-policies
+
     resources:
       requests:
         cpu: 25m
