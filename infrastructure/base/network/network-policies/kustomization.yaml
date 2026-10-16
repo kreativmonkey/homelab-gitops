@@ -7,51 +7,49 @@ kind: Kustomization
 # Wired as its own Flux Kustomization (infra-network-policies) so a rollback is
 # a single `flux suspend` / file removal.
 resources:
-  # Batch 1 (enforced, verified 2026-10-16): pilot.
+  # Batch 1 (enforced 2026-10-16): pilot.
   - homer
   - linkding
   - readeck
-# Pending re-onboarding (uncomment per verified batch):
-#   # Phase 2 (issue #739): Identity provider, data crown, DB tier, observability.
-#   - authentik
+  # Batch 2 (enforced 2026-10-16): app namespaces, flows replayed against
+  # 40 min of observed traffic before enabling.
+  - authentik
+  - forgejo
+  - immich
+  - nextcloud
+  - gatus
+  - ai-agents
+  - audiobookshelf
+  - dawarich
+  - goloom
+  - hister
+  - jellyfin
+  - kavita
+  - outline
+  - paperless-ngx
+  - searxng
+  - sparkyfitness
+  - sterling-pdf
+  - tandoor
+  - vikunja
+  - teslamate
+  - workshops
+  - homepage
+  - kite
+  - renovate
+  - spectrumknx
+  - nextcloud-exapps
+  - ai-ops
+# Batch 3 (pending): infra/operator namespaces.
 #   - cnpg-system
-#   - forgejo
-#   - immich
-#   - nextcloud
 #   - monitoring
-#   - gatus
-#   # Batch A (issue #739, remaining app NS): baseline + component-driven egress.
-#   - ai-agents
-#   - audiobookshelf
-#   - dawarich
-#   - goloom
-#   - hister
-#   - jellyfin
-#   - kavita
-#   - outline
-#   - paperless-ngx
-#   - searxng
-#   - sparkyfitness
-#   - sterling-pdf
-#   - tandoor
-#   - vikunja
-#   - teslamate
-#   - workshops
-#   # Phase 4 (issue #739): app NS with bespoke egress/ingress.
-#   - homepage
-#   - kite
-#   - renovate
-#   - spectrumknx
-#   - nextcloud-exapps
-#   - mcp-system
-#   - external-dns
-#   - ai-ops
-#   # Phase 5 (issue #772): infra/operator NS with bespoke egress/ingress.
 #   - cert-manager
 #   - democratic-csi
 #   - local-path-storage
 #   - velero
 #   - backup-offsite
 #   - reflector-system
-#   hostNetwork NS (ingress-nginx, netbird, watchyourlan) are
-#   NP-inert and explicitly excluded — see runbook Phase 5.
+#   - external-dns
+#   - mcp-system
+# hostNetwork NS (ingress-nginx, netbird, watchyourlan) stay out: policies
+# never apply to hostNetwork pods.

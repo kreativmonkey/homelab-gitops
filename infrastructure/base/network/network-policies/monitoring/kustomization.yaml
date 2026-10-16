@@ -9,4 +9,5 @@ components:
   - ../egress-external
   - ../egress-apiserver
 resources:
+  - allow-ingress-kite.yaml
   - allow-egress-cluster.yaml

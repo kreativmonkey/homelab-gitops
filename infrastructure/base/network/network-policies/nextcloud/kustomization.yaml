@@ -4,9 +4,12 @@ kind: Kustomization
 # S3 egress to the Garage endpoint is bespoke (LAN IP, not 80/443).
 namespace: nextcloud
 components:
+  - ../egress-apiserver
   - ../baseline
   - ../egress-external
   - ../egress-database
   - ../egress-mail
 resources:
+  - allow-egress-exapps.yaml
+  - allow-ingress-exapps.yaml
   - allow-egress-s3.yaml

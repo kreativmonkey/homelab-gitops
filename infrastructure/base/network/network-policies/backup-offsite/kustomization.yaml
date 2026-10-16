@@ -8,7 +8,9 @@ kind: Kustomization
 # silent offsite-backup loss.
 namespace: backup-offsite
 components:
+  - ../egress-apiserver
   - ../baseline
   - ../egress-database
 resources:
+  - allow-egress-s3-garage.yaml
   - allow-egress-storagebox.yaml

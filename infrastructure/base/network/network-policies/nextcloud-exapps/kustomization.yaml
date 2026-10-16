@@ -7,4 +7,5 @@ components:
   - ../baseline
   - ../egress-external
 resources:
+  - allow-ingress-nextcloud.yaml
   - allow-egress-harp.yaml

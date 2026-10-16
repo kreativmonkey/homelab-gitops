@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-exapps
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Harp proxies to the ExApp pods; their ports are per-app, so allow the
+    # whole namespace.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nextcloud-exapps

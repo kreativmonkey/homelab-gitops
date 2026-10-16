@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-s3-garage
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # nextcloud job: rclone reads the Nextcloud primary bucket on Garage
+    # (scripts.configmap.yaml, endpoint http://192.168.10.94:30188).
+    - to:
+        - ipBlock:
+            cidr: 192.168.10.94/32
+      ports:
+        - protocol: TCP
+          port: 30188

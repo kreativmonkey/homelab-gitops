@@ -6,3 +6,5 @@ components:
   - ../baseline
   - ../egress-external
   - ../egress-database
+resources:
+  - allow-ingress-renovate.yaml
