@@ -55,6 +55,15 @@ data:
               description: Radiotux und Binärgewitter
   services.yaml: |
     ---
+    # Merges with the Ingress-discovered "Cluster Management" group (kite,
+    # grafana, gatus, pgadmin, hubble, ...).
+    - Cluster Management:
+        - Omni:
+            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/talos.svg
+            href: "https://omni.f4mily.net"
+            external: true
+            description: Talos cluster management (upgrades, config)
+            siteMonitor: https://omni.f4mily.net
     - Infrastructure:
         - Opnsense Firewall:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/opnsense.png
@@ -79,12 +88,6 @@ data:
             external: true
             description: Virtualization Platform
             siteMonitor: https://192.168.10.5:8006
-        - Omni:
-            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/talos.svg
-            href: "https://omni.f4mily.net"
-            external: true
-            description: Talos cluster management (upgrades, config)
-            siteMonitor: https://omni.f4mily.net
         - NetBird:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/netbird.svg
             href: "https://netbird.f4mily.net"
