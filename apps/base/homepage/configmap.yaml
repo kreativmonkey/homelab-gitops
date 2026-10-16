@@ -79,6 +79,18 @@ data:
             external: true
             description: Virtualization Platform
             siteMonitor: https://192.168.10.5:8006
+        - Omni:
+            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/talos.svg
+            href: "https://omni.f4mily.net"
+            external: true
+            description: Talos cluster management (upgrades, config)
+            siteMonitor: https://omni.f4mily.net
+        - NetBird:
+            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/netbird.svg
+            href: "https://netbird.f4mily.net"
+            external: true
+            description: VPN mesh & reverse proxy dashboard
+            siteMonitor: https://netbird.f4mily.net
         - Truenas Scale:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/truenas.png
             href: "https://nas.f4mily.net"
