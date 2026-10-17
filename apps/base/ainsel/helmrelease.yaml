@@ -28,15 +28,6 @@ spec:
     remediation:
       retries: 3
       remediateLastFailure: true
-  valuesFrom:
-    - kind: Secret
-      name: ainsel-runtime
-      valuesKey: internal-validate-secret
-      targetPath: auth.internalValidateSecret
-    - kind: Secret
-      name: ainsel-runtime
-      valuesKey: skills-mcp-token
-      targetPath: auth.skillsMcpToken
   values:
     namespace: ainsel
     createNamespace: false
@@ -58,6 +49,17 @@ spec:
       auth:
         existingSecret: ainsel-hub-db
     hub:
+      extraEnv:
+        - name: HUB_INTERNAL_VALIDATE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ainsel-runtime
+              key: internal-validate-secret
+        - name: HUB_SKILLS_MCP_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: ainsel-runtime
+              key: skills-mcp-token
       image:
         repository: ghcr.io/kreativmonkey/ainsel-hub-backend
         tag: "f3a809e"
@@ -91,6 +93,12 @@ spec:
           memory: 128Mi
     mcp:
       enabled: true
+      extraEnv:
+        - name: INTERNAL_VALIDATE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ainsel-runtime
+              key: internal-validate-secret
       image:
         repository: ghcr.io/kreativmonkey/ainsel-mcp
         tag: "f3a809e"
@@ -98,6 +106,12 @@ spec:
       ingress:
         enabled: false
     agentOperator:
+      extraEnv:
+        - name: HUB_INTERNAL_VALIDATE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ainsel-runtime
+              key: internal-validate-secret
       image:
         repository: ghcr.io/kreativmonkey/ainsel-k8s-ai-agent-operator
         tag: "bcb69d9"

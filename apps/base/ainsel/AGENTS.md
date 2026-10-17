@@ -21,7 +21,7 @@ Ainsel agent platform: upstream Helm chart, UI, hub, MCP and namespaced operator
 # Work Guidance
 
 - Keep host/TLS replacements in the main overlay aligned with ingress.
-- Keep `auth.internalValidateSecret` and `auth.skillsMcpToken` distinct and SOPS-encrypted.
+- Keep internal validation and skill catalogue tokens distinct and SOPS-encrypted in `ainsel-runtime`. Inject with `extraEnv[].valueFrom.secretKeyRef`; leave chart `auth.internalValidateSecret` / `auth.skillsMcpToken` values empty so tokens never become literal platform Pod environment values.
 
 # Verification
 
