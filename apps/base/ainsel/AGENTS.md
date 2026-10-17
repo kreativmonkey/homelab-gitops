@@ -10,6 +10,7 @@ Ainsel agent platform: upstream Helm chart, UI, hub, MCP and namespaced operator
 
 # Local Contracts
 
+- HelmRelease depends on Authentik readiness; verify issuer discovery separately because blueprint discovery can run on an old worker during rollout (see `../../../docs/learnings/authentik-blueprint-worker-rollout.md`).
 - Authentik public client `homelab-ainsel` uses authorization code + PKCE; never put client secrets in browser configuration.
 - Authentik application access requires `Admin` or `authentik Admins`. Ainsel admin rights remain database-managed.
 - External PostgreSQL uses central CNPG; do not enable bundled PostgreSQL.
@@ -20,7 +21,7 @@ Ainsel agent platform: upstream Helm chart, UI, hub, MCP and namespaced operator
 # Work Guidance
 
 - Keep host/TLS replacements in the main overlay aligned with ingress.
-- Keep `auth.internalValidateSecret` and `auth.skillsMcpToken` distinct and SOPS-encrypted.
+- Keep internal validation and skill catalogue tokens distinct and SOPS-encrypted in `ainsel-runtime`. Inject with `extraEnv[].valueFrom.secretKeyRef`; leave chart `auth.internalValidateSecret` / `auth.skillsMcpToken` values empty so tokens never become literal platform Pod environment values.
 
 # Verification
 
