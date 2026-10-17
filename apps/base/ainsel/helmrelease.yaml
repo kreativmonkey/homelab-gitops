@@ -116,6 +116,12 @@ spec:
         repository: ghcr.io/kreativmonkey/ainsel-k8s-ai-agent-operator
         tag: "bcb69d9"
     connectorOperator:
+      extraEnv:
+        - name: HUB_INTERNAL_VALIDATE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ainsel-runtime
+              key: internal-validate-secret
       # Current source honors POD_NAMESPACE; no cluster-wide workload access.
       clusterWideRbac: false
       image:
