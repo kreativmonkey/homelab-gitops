@@ -1,0 +1,13 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: ainsel
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://github.com/kreativmonkey/ainsel.git
+  ref:
+    commit: f3a809e8bcc3cb8a0f26484c1cd174d20d5055f3
+  ignore: |
+    /*
+    !/chart

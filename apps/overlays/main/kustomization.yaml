@@ -36,6 +36,7 @@ resources:
 
   # --- Infrastructure & Tools -------------------------------------------
   - ../../base/ai-agents
+  - ../../base/ainsel
   - ../../base/netbird
   - ../../base/netbird-operator
   # - ../../base/backrest            # wip: ingress only, no workload
@@ -92,6 +93,25 @@ resources:
 #   2. Append a target block here referencing the new key.
 # ============================================================================
 replacements:
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_ainsel
+    targets:
+      - select: {kind: Ingress, name: ainsel}
+        fieldPaths: [spec.rules.0.host, spec.tls.0.hosts.0]
+      - select: {kind: HelmRelease, name: ainsel}
+        fieldPaths: [spec.values.mcp.externalUrl]
+        options:
+          delimiter: /
+          index: 2
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.url_ainsel
+    targets:
+      - select: {kind: HelmRelease, name: ainsel}
+        fieldPaths: [spec.values.hub.platformExternalUrl]
   - source:
       kind: ConfigMap
       name: homelab-cluster-config
@@ -474,6 +494,8 @@ replacements:
       name: homelab-cluster-config
       fieldPath: data.clusterTlsSecret
     targets:
+      - select: {kind: Ingress, name: ainsel}
+        fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: grafana}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: victoria-metrics}

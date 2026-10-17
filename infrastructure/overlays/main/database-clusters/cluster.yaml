@@ -99,6 +99,11 @@ spec:
   # Application roles (passwords in auto-generated or referenced Secrets)
   managed:
     roles:
+      - name: ainsel
+        ensure: present
+        login: true
+        passwordSecret:
+          name: ainsel-db-credentials
       - name: authentik
         ensure: present
         login: true

@@ -23,6 +23,7 @@ resources:
   - blueprints/nextcloud-oauth.configmap.yaml
   - blueprints/hister-oauth.configmap.yaml
   - blueprints/vikunja-oauth.configmap.yaml
+  - blueprints/ainsel-oauth.configmap.yaml
   - blueprints/homelable-oauth.configmap.yaml
   - blueprints/omni-oauth.configmap.yaml
   - blueprints/outpost-cleanup.configmap.yaml
