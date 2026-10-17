@@ -36,4 +36,5 @@ Application workloads deployed to the cluster. `base/<app>/` holds generic manif
 
 # Child DOX Index
 
-No child AGENTS.md. Per-app folders inherit this contract.
+- `base/ainsel/AGENTS.md` — Ainsel Helm chart, public PKCE client, external CNPG, API exposure and runtime verification.
+- Other per-app folders inherit this contract.

@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: homelab-postgres-ainsel
+  namespace: cnpg-system
+spec:
+  name: ainsel
+  owner: ainsel
+  cluster:
+    name: homelab-postgres

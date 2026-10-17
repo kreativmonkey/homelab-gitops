@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ainsel
+  namespace: ainsel
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Ainsel
+    gethomepage.dev/description: Kubernetes agent platform
+    gethomepage.dev/group: Development
+    gethomepage.dev/app: ainsel
+    gethomepage.dev/pod-selector: app.kubernetes.io/instance=ainsel
+    nginx.org/ssl-redirect: "false"
+    nginx.org/redirect-to-https: "true"
+    nginx.org/client-max-body-size: 20m
+    nginx.org/websocket-services: hub-backend
+    nginx.org/proxy-read-timeout: 3600s
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - ainsel.example.com
+      secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: ainsel.example.com
+      http:
+        paths:
+          - path: /api/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: hub-backend
+                port:
+                  number: 8080
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ainsel-mcp
+                port:
+                  number: 8080
+          - path: /.well-known/oauth-protected-resource
+            pathType: Prefix
+            backend:
+              service:
+                name: ainsel-mcp
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hub-frontend
+                port:
+                  number: 80

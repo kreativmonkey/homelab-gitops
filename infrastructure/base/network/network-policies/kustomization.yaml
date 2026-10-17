@@ -15,6 +15,7 @@ resources:
   - nextcloud
   - gatus
   - ai-agents
+  - ainsel
   - audiobookshelf
   - dawarich
   - goloom

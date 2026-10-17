@@ -1,0 +1,110 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ainsel
+  namespace: ainsel
+spec:
+  interval: 1h
+  timeout: 10m
+  releaseName: ainsel
+  chart:
+    spec:
+      chart: ./chart
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: ainsel
+        namespace: flux-system
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  valuesFrom:
+    - kind: Secret
+      name: ainsel-runtime
+      valuesKey: internal-validate-secret
+      targetPath: auth.internalValidateSecret
+    - kind: Secret
+      name: ainsel-runtime
+      valuesKey: skills-mcp-token
+      targetPath: auth.skillsMcpToken
+  values:
+    namespace: ainsel
+    createNamespace: false
+    # Cluster baseline owns ingress/egress; avoid overlapping broad chart allows.
+    networkPolicy:
+      enabled: false
+    auth:
+      mode: oidc
+      oidcIssuer: https://login.f4mily.net/application/o/ainsel/
+      oidcClientId: homelab-ainsel
+      oidcAudience: homelab-ainsel
+      oidcScopes: openid profile email offline_access
+      oidcRolesClaim: groups
+    postgres:
+      enabled: false
+      host: homelab-postgres-rw.cnpg-system.svc.cluster.local
+      database: ainsel
+      username: ainsel
+      auth:
+        existingSecret: ainsel-hub-db
+    hub:
+      image:
+        repository: ghcr.io/kreativmonkey/ainsel-hub-backend
+        tag: "f3a809e"
+      platformExternalUrl: https://ainsel.cluster.f4mily.net
+      ingress:
+        enabled: false
+      connectorImages:
+        webhook:
+          repository: ghcr.io/kreativmonkey/ainsel-webhook-receiver
+          tag: "bcb69d9"
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+    ui:
+      basePath: ""
+      image:
+        repository: ghcr.io/kreativmonkey/ainsel-hub-frontend
+        tag: "f3a809e"
+      ingress:
+        enabled: false
+      securityContext:
+        allowPrivilegeEscalation: false
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
+    mcp:
+      enabled: true
+      image:
+        repository: ghcr.io/kreativmonkey/ainsel-mcp
+        tag: "f3a809e"
+      externalUrl: https://ainsel.cluster.f4mily.net/mcp
+      ingress:
+        enabled: false
+    agentOperator:
+      image:
+        repository: ghcr.io/kreativmonkey/ainsel-k8s-ai-agent-operator
+        tag: "bcb69d9"
+    connectorOperator:
+      # Current source honors POD_NAMESPACE; no cluster-wide workload access.
+      clusterWideRbac: false
+      image:
+        repository: ghcr.io/kreativmonkey/ainsel-k8s-event-source-gateway-operator
+        tag: "bcb69d9"
+    chatMCP:
+      image:
+        repository: ghcr.io/kreativmonkey/ainsel-chat-mcp
+        tag: "bcb69d9"
