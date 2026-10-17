@@ -30,7 +30,12 @@ the unchanged mounted blueprint in a new worker immediately created the provider
 4. Apply that exact mounted file through Authentik's `Importer.from_string()` in
    the new worker, as described in root `AGENTS.md` under Apply / Sync. Do not
    create a different provider manually in the UI.
-5. Verify the provider, callback and discovery response, then wait for clients
+5. A direct import creates the provider/application but does not register its
+   managed `BlueprintInstance`. On a new worker, enqueue targeted discovery:
+   `blueprints_discovery.send("mounted/cm-authentik-ainsel-blueprint/ainsel.yaml")`
+   from `authentik.blueprints.v1.tasks`. Verify the matching instance has
+   `enabled=true`, `status=successful` and `last_applied` populated.
+6. Verify the provider, callback and discovery response, then wait for clients
    to recover from restart backoff.
 
 ## Prevention
