@@ -10,6 +10,7 @@ Ainsel agent platform: upstream Helm chart, UI, hub, MCP and namespaced operator
 
 # Local Contracts
 
+- HelmRelease depends on Authentik readiness; verify issuer discovery separately because blueprint discovery can run on an old worker during rollout (see `../../../docs/learnings/authentik-blueprint-worker-rollout.md`).
 - Authentik public client `homelab-ainsel` uses authorization code + PKCE; never put client secrets in browser configuration.
 - Authentik application access requires `Admin` or `authentik Admins`. Ainsel admin rights remain database-managed.
 - External PostgreSQL uses central CNPG; do not enable bundled PostgreSQL.

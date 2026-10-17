@@ -4,6 +4,9 @@ metadata:
   name: ainsel
   namespace: ainsel
 spec:
+  dependsOn:
+    - name: authentik
+      namespace: authentik
   interval: 1h
   timeout: 10m
   releaseName: ainsel
