@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v31.11.1
+        uses: cachix/install-nix-action@v31.11.2
 
       - name: Run scans (gitleaks + trivy)
         id: scan
