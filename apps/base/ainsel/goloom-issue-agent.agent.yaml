@@ -12,6 +12,7 @@ spec:
     engine: pi
     subscription:
       claimName: goloom-issue-agent-home
+      login: true
   llm:
     provider: openai-codex
     model: gpt-6.1-sol
