@@ -39,6 +39,7 @@ spec:
       oidcIssuer: https://login.f4mily.net/application/o/ainsel/
       oidcClientId: homelab-ainsel
       oidcAudience: homelab-ainsel
+      oidcSigningAlgs: RS256
       oidcScopes: openid profile email offline_access
       oidcRolesClaim: groups
     postgres:
@@ -62,7 +63,7 @@ spec:
               key: skills-mcp-token
       image:
         repository: ghcr.io/kreativmonkey/ainsel-hub-backend
-        tag: "f3a809e"
+        tag: "938fb63"
       platformExternalUrl: https://ainsel.cluster.f4mily.net
       ingress:
         enabled: false
@@ -101,7 +102,7 @@ spec:
               key: internal-validate-secret
       image:
         repository: ghcr.io/kreativmonkey/ainsel-mcp
-        tag: "f3a809e"
+        tag: "938fb63"
       externalUrl: https://ainsel.cluster.f4mily.net/mcp
       ingress:
         enabled: false
