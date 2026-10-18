@@ -39,6 +39,15 @@ spec:
     - host: ainsel.example.com
       http:
         paths:
+          # Exact connector minions win; unknown webhook paths must not reach the SPA.
+          # The hub has no /webhooks handlers and returns 404 for this prefix.
+          - path: /webhooks
+            pathType: Prefix
+            backend:
+              service:
+                name: hub-backend
+                port:
+                  number: 8080
           - path: /api/v1
             pathType: Prefix
             backend:
