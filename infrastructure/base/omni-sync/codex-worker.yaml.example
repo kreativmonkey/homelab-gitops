@@ -1,0 +1,69 @@
+# Inactive Omni template fragment: not included by kustomization.yaml.
+# Activation requires a newly registered Omni machine UUID, reviewed seccomp
+# profile, and successful disposable sandbox probe. Do not use a CP UUID.
+#
+# VM candidate (inventory checked 2026-10-18): pve, 2 vCPU, 4096 MiB fixed RAM,
+# 32 GiB disk on local_storage, virtio NIC on vmbr0, no host/data-disk mounts.
+# Allocate VMID immediately before creation; reserve DHCP/IP before boot.
+# pve had 15.78 GiB available RAM, local_storage had 1.55 TiB free (thin).
+#
+# Boot NEW Omni-generated Talos v1.14.4 amd64 ISO from omni.f4mily.net.
+# Existing talos-v1.13.2-nocloud-amd64.iso does not enroll into Omni.
+# ISO includes SideroLink registration material: keep private, unmount after
+# installation, delete temporary media/preset when no longer needed.
+# Obtain UUID from Omni after registration, verify it against VM SMBIOS UUID.
+# Add that UUID under the existing Workers.machines and append this Machine
+# document to cluster-template.yaml. Do not create a second Workers document.
+# Never apply old OpenTofu homelab-kube env: it also writes machine config.
+#
+# REQUIRED before activation: machine.seccompProfiles entry ainsel-codex.json
+# with a reviewed default-deny profile derived from containerd v2.3.7 for
+# capabilities.drop ALL; preserve clone3 ENOSYS fallback. Trace Codex/bwrap
+# on disposable worker before allowing additional namespace/mount syscalls.
+# Keep SELinux enabled; investigate AVC denials independently from seccomp.
+# Talos v1.14.4 policy currently grants user_namespace create explicitly only
+# to pod_containerd_t. A normal pod may fail in enforcing mode. Verify actual
+# SecurityState (default is permissive per Talos docs) and auditd AVC logs;
+# enforcing support needs a reviewed policy solution before activation.
+# Profile must appear at /var/lib/kubelet/seccomp/profiles/ainsel-codex.json.
+#
+# Do NOT place protected label in KubeNodeConfig.labels. After a secret-free
+# sandbox smoke test, a cluster administrator grants the admission marker:
+# kubectl label node talos-codex1 \
+#   ainsel.dev.node-restriction.kubernetes.io/codex-sandbox=true
+# AInsel sandboxProfile codex requires that marker, the toleration below,
+# and Localhost profiles/ainsel-codex.json. Missing prerequisites fail closed.
+# Remove marker first for rollback; drain Jobs before removing the worker
+# from Omni template. Destroying its VM/disk is a separate destructive step.
+#
+# References:
+# https://docs.siderolabs.com/omni/omni-cluster-setup/registering-machines/register-a-bare-metal-machine-iso
+# https://docs.siderolabs.com/kubernetes-guides/security/seccomp-profiles
+# https://docs.siderolabs.com/talos/v1.14/reference/configuration/runtime/sysctlconfig
+# https://docs.siderolabs.com/talos/v1.14/reference/configuration/kubernetes/kubenodeconfig
+# https://docs.siderolabs.com/talos/v1.14/security/selinux
+kind: Machine
+name: REPLACE_WITH_NEW_OMNI_MACHINE_UUID
+patches:
+  - idOverride: 200-codex-sandbox-worker
+    annotations:
+      name: codex-sandbox-worker
+    inline: |
+      apiVersion: v1alpha1
+      kind: HostnameConfig
+      hostname: talos-codex1
+      auto: 'off'
+      ---
+      apiVersion: v1alpha1
+      kind: SysctlConfig
+      params:
+        user.max_user_namespaces: "1024"
+      ---
+      apiVersion: v1alpha1
+      kind: KubeNodeConfig
+      taints:
+        ainsel.dev/sandbox: codex:NoSchedule
+      ---
+      apiVersion: v1alpha1
+      kind: KubeletConfig
+      defaultRuntimeSeccompProfileEnabled: true
