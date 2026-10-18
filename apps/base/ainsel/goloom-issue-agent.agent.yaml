@@ -20,6 +20,8 @@ spec:
   persona:
     id: 01m587194mpsrf3btjg7mkkejz
   env:
+    - name: TURN_TIMEOUT_MS
+      value: "1800000"
     - name: GH_TOKEN
       valueFrom:
         secretKeyRef:
