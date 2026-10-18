@@ -1,0 +1,9 @@
+apiVersion: ainsel.dev/v1alpha1
+kind: AgentImage
+metadata:
+  name: img-cfe41588
+  namespace: ainsel
+spec:
+  displayName: Goloom Go Pi runtime
+  description: Pi runtime with Go tooling for Goloom issues
+  imageURL: ghcr.io/kreativmonkey/ainsel-pi-go@sha256:4e6c8c3410fdf177adbf8d3d8855b4bfef13c734fc85abe527b04994b16853a8

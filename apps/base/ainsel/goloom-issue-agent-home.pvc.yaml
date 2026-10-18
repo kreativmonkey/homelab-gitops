@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: goloom-issue-agent-home
+  namespace: ainsel
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  labels:
+    app.kubernetes.io/name: ainsel
+    app.kubernetes.io/component: subscription-home
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  storageClassName: truenas-iscsi
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 5Gi

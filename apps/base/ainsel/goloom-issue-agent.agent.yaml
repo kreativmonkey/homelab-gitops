@@ -1,0 +1,28 @@
+apiVersion: ainsel.dev/v1alpha1
+kind: Agent
+metadata:
+  name: a-d8fcc8d3
+  namespace: ainsel
+spec:
+  displayName: Goloom Issue Worker
+  description: Implements issues assigned to goloom-worker and opens draft pull requests
+  imageRef:
+    name: img-cfe41588
+  runtime:
+    engine: pi
+    subscription:
+      claimName: goloom-issue-agent-home
+  llm:
+    provider: openai-codex
+    model: gpt-6.1-sol
+    maxTurns: 50
+  persona:
+    id: 01m587194mpsrf3btjg7mkkejz
+  env:
+    - name: GH_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: goloom-worker-github-token
+          key: token
+  scaling:
+    replicas: 1
