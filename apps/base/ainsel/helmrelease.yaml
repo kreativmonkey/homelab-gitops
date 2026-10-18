@@ -115,8 +115,10 @@ spec:
               key: internal-validate-secret
       image:
         repository: ghcr.io/kreativmonkey/ainsel-k8s-ai-agent-operator
-        tag: "440d47d"
+        tag: "2af81c2"
     connectorOperator:
+      # Connector routes join the existing F5 NGINX Master on the shared host.
+      ingressMode: nginx-inc-minion
       extraEnv:
         - name: HUB_INTERNAL_VALIDATE_SECRET
           valueFrom:
@@ -127,7 +129,7 @@ spec:
       clusterWideRbac: false
       image:
         repository: ghcr.io/kreativmonkey/ainsel-k8s-event-source-gateway-operator
-        tag: "bcb69d9"
+        tag: "62926ca"
     chatMCP:
       image:
         repository: ghcr.io/kreativmonkey/ainsel-chat-mcp

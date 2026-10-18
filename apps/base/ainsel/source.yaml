@@ -7,7 +7,7 @@ spec:
   interval: 1h
   url: https://github.com/kreativmonkey/ainsel.git
   ref:
-    commit: 440d47d905dde2ee445b903f42b2554bbe7bb358
+    commit: 62926ca04b8eda0efab5c167847cdfded2a4be7a
   ignore: |
     /*
     !/chart
