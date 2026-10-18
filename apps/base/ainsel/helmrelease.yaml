@@ -63,7 +63,7 @@ spec:
               key: skills-mcp-token
       image:
         repository: ghcr.io/kreativmonkey/ainsel-hub-backend
-        tag: "492bc6a"
+        tag: "33135fb"
       platformExternalUrl: https://ainsel.cluster.f4mily.net
       ingress:
         enabled: false
@@ -115,7 +115,7 @@ spec:
               key: internal-validate-secret
       image:
         repository: ghcr.io/kreativmonkey/ainsel-k8s-ai-agent-operator
-        tag: "492bc6a"
+        tag: "33135fb"
     connectorOperator:
       # Connector routes join the existing F5 NGINX Master on the shared host.
       ingressMode: nginx-inc-minion

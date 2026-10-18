@@ -1,0 +1,16 @@
+apiVersion: ainsel.dev/v1alpha1
+kind: WebhookConnector
+metadata:
+  name: c-e4e1c863
+  namespace: ainsel
+spec:
+  displayName: GitHub Goloom issues
+  webhookEndpoint: https://ainsel.cluster.f4mily.net/webhooks/c-e4e1c863
+  signatureHeader: X-Hub-Signature-256
+  webhookSecret:
+    secretRef:
+      name: connector-c-e4e1c863-webhook-hmac
+      key: secret
+  image:
+    repository: ghcr.io/kreativmonkey/ainsel-webhook-receiver
+    tag: bcb69d9

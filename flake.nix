@@ -15,6 +15,7 @@
         kubeconform
         kustomize
         kubectl
+        kubelogin-oidc
         kubernetes-helm
         kind
         talosctl
