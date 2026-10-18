@@ -5,7 +5,7 @@ metadata:
   namespace: ainsel
 spec:
   displayName: GitHub Goloom issues
-  webhookEndpoint: https://ainsel.cluster.f4mily.net/webhooks/c-e4e1c863
+  webhookEndpoint: https://goloom.f4mily.net/webhooks/c-e4e1c863
   signatureHeader: X-Hub-Signature-256
   webhookSecret:
     secretRef:
