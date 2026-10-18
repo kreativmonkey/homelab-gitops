@@ -129,7 +129,7 @@ spec:
       clusterWideRbac: false
       image:
         repository: ghcr.io/kreativmonkey/ainsel-k8s-event-source-gateway-operator
-        tag: "62926ca"
+        tag: "6f1ca61"
     chatMCP:
       image:
         repository: ghcr.io/kreativmonkey/ainsel-chat-mcp
