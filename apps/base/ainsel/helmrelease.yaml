@@ -63,7 +63,7 @@ spec:
               key: skills-mcp-token
       image:
         repository: ghcr.io/kreativmonkey/ainsel-hub-backend
-        tag: "938fb63"
+        tag: "440d47d"
       platformExternalUrl: https://ainsel.cluster.f4mily.net
       ingress:
         enabled: false
@@ -81,7 +81,7 @@ spec:
       basePath: ""
       image:
         repository: ghcr.io/kreativmonkey/ainsel-hub-frontend
-        tag: "f3a809e"
+        tag: "440d47d"
       ingress:
         enabled: false
       securityContext:
@@ -115,7 +115,7 @@ spec:
               key: internal-validate-secret
       image:
         repository: ghcr.io/kreativmonkey/ainsel-k8s-ai-agent-operator
-        tag: "bcb69d9"
+        tag: "440d47d"
     connectorOperator:
       extraEnv:
         - name: HUB_INTERNAL_VALIDATE_SECRET

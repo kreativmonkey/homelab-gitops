@@ -6,3 +6,4 @@ resources:
   - helmrelease.yaml
   - ingress.yaml
   - runtime.secret.yaml
+  - subscription-home.pvc.yaml
