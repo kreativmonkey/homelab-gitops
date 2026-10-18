@@ -12,12 +12,25 @@ metadata:
     # TLS: wildcard-f4mily-net-tls via reflector (cert-manager namespace)
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
+    nginx.org/mergeable-ingress-type: master
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
         - goloom.f4mily.net
       secretName: wildcard-f4mily-net-tls
+  rules:
+    - host: goloom.f4mily.net
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: goloom-routes
+  namespace: goloom
+  annotations:
+    nginx.org/mergeable-ingress-type: minion
+spec:
+  ingressClassName: nginx
   rules:
     - host: goloom.f4mily.net
       http:
