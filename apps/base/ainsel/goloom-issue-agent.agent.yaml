@@ -5,7 +5,7 @@ metadata:
   namespace: ainsel
 spec:
   displayName: Goloom Issue Worker
-  description: Implements issues assigned to goloom-worker and opens draft pull requests
+  description: Implements assigned issues and fixes review feedback or CI failures on its pull requests
   imageRef:
     name: img-cfe41588
   runtime:
