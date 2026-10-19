@@ -114,6 +114,8 @@ replacements:
     targets:
       - select: {kind: HelmRelease, name: ainsel}
         fieldPaths: [spec.values.hub.platformExternalUrl]
+      - select: {kind: Ingress, name: ainsel-routes}
+        fieldPaths: ['metadata.annotations.[gethomepage.dev/href]']
   - source:
       kind: ConfigMap
       name: homelab-cluster-config

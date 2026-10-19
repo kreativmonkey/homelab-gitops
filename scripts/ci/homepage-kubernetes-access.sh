@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Guard Homepage's cluster discovery contract: API access must accompany cluster mode.
+# Guard Homepage's cluster discovery contract: API access and valid Ingress paths.
 set -euo pipefail
 
 ROOT="${HOMEPAGE_KUSTOMIZE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
@@ -60,6 +60,14 @@ if yq ea -e '. as $item ireduce ([]; . + [$item]) | any_c(
   .type == "kubernetes.io/service-account-token"
 )' "$rendered" >/dev/null 2>&1; then
   echo "ERROR: Homepage must use projected tokens, not a static ServiceAccount token Secret" >&2
+  exit 1
+fi
+
+if yq ea -e '. as $item ireduce ([]; . + [$item]) | any_c(
+  .kind == "Ingress" and .metadata.annotations."gethomepage.dev/enabled" == "true" and
+  ((.spec.rules // []) | any_c(.http.paths == null or (.http.paths | length == 0)))
+)' "$rendered" >/dev/null 2>&1; then
+  echo "ERROR: Homepage-annotated Ingress has a rule without HTTP paths" >&2
   exit 1
 fi
 
