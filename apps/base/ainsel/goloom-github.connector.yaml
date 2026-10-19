@@ -4,7 +4,7 @@ metadata:
   name: c-e4e1c863
   namespace: ainsel
 spec:
-  displayName: GitHub Goloom issues
+  displayName: GitHub Goloom issues, pull requests, and CI
   webhookEndpoint: https://goloom.f4mily.net/webhooks/c-e4e1c863
   signatureHeader: X-Hub-Signature-256
   webhookSecret:
