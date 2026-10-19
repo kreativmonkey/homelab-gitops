@@ -10,7 +10,7 @@ spec:
   interval: 24h
   url: oci://8gears.container-registry.com/library/n8n
   ref:
-    tag: "2.1.0"
+    tag: "2.1.1"
   layerSelector:
     mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
     operation: copy
