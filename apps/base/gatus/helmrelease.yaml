@@ -534,24 +534,6 @@ spec:
              - "[STATUS] < 400"
              - "[RESPONSE_TIME] < 5000"
 
-        - name: hister
-          group: external
-          url: https://hister.f4mily.net/health
-          interval: 60s
-          client: *external-dns
-          conditions:
-             - "[STATUS] == 200"
-             - "[RESPONSE_TIME] < 5000"
-
-        - name: vikunja
-          group: external
-          url: https://aufgaben.f4mily.net/api/v1/info
-          interval: 60s
-          client: *external-dns
-          conditions:
-             - "[STATUS] == 200"
-             - "[RESPONSE_TIME] < 5000"
-
         # ──────────────────────────────────────────────
         # Externe Services
         # ──────────────────────────────────────────────
@@ -564,6 +546,14 @@ spec:
               - "[STATUS] == 200"
               - "[RESPONSE_TIME] < 5000"
               - '[BODY] == pat(*Binärgewitter*)'
+
+        - name: Goloom
+          group: Binaergewitter
+          url: https://goloom.binaergewitter.de/heathz
+          interval: 60s
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
        
         - name: Download Server 1
           group: Binaergewitter
