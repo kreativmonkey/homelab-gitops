@@ -4,12 +4,6 @@ metadata:
   name: ainsel
   namespace: ainsel
   annotations:
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: Ainsel
-    gethomepage.dev/description: Kubernetes agent platform
-    gethomepage.dev/group: Development
-    gethomepage.dev/app: ainsel
-    gethomepage.dev/pod-selector: app.kubernetes.io/instance=ainsel
     # Connector minions share this host; only the master owns TLS.
     nginx.org/mergeable-ingress-type: master
     nginx.org/ssl-redirect: "false"
@@ -29,6 +23,14 @@ metadata:
   name: ainsel-routes
   namespace: ainsel
   annotations:
+    # Homepage requires HTTP paths, which only the minion defines.
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Ainsel
+    gethomepage.dev/description: Kubernetes agent platform
+    gethomepage.dev/group: Development
+    gethomepage.dev/href: https://ainsel.example.com
+    gethomepage.dev/app: ainsel
+    gethomepage.dev/pod-selector: app.kubernetes.io/instance=ainsel
     nginx.org/mergeable-ingress-type: minion
     nginx.org/client-max-body-size: 20m
     nginx.org/websocket-services: hub-backend

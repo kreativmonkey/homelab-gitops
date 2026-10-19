@@ -22,7 +22,7 @@ Application workloads deployed to the cluster. `base/<app>/` holds generic manif
 - DB consumer: app gets dedicated CNPG `Cluster` in `infrastructure/overlays/main/database-clusters/<app>/`; credential secret in `overlays/main/db-secrets/`; wire via `valuesFrom`.
 - OIDC/Authentik onboarding: do NOT auto-enable. Ask user first. Blueprint format + checklist in root AGENTS.md `# OIDC / Authentik Blueprint Onboarding`.
 - Backup monitoring treats Velero `PartiallyFailed` as failure and alerts when Velero metrics or successful timestamps are absent. Keep node-exporter CSI `globalmount` metrics visible so read-only iSCSI filesystems remain alertable.
-- Homepage cluster mode discovers annotated Ingresses. Keep its dedicated ServiceAccount, projected token, and read-only ClusterRole/Binding aligned with `kubernetes.yaml`; never restore a static ServiceAccount token Secret.
+- Homepage cluster mode discovers annotated Ingresses. Annotate only Ingresses with HTTP paths (minions, not pathless NGINX masters); its discovery fails globally otherwise. Keep its dedicated ServiceAccount, projected token, and read-only ClusterRole/Binding aligned with `kubernetes.yaml`; never restore a static ServiceAccount token Secret.
 
 # Work Guidance
 

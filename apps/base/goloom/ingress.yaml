@@ -4,11 +4,6 @@ metadata:
   name: goloom
   namespace: goloom
   annotations:
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: Goloom
-    gethomepage.dev/description: Goloom
-    gethomepage.dev/group: Tools
-    gethomepage.dev/icon: mdi-view-dashboard
     # TLS: wildcard-f4mily-net-tls via reflector (cert-manager namespace)
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
@@ -28,6 +23,13 @@ metadata:
   name: goloom-routes
   namespace: goloom
   annotations:
+    # Homepage requires HTTP paths, which only the minion defines.
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Goloom
+    gethomepage.dev/description: Goloom
+    gethomepage.dev/group: Tools
+    gethomepage.dev/icon: mdi-view-dashboard
+    gethomepage.dev/href: https://goloom.f4mily.net
     nginx.org/mergeable-ingress-type: minion
 spec:
   ingressClassName: nginx
