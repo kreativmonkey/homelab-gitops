@@ -1,0 +1,25 @@
+apiVersion: ainsel.dev/v1alpha1
+kind: Agent
+metadata:
+  name: a-kubernetes-ops
+  namespace: ainsel
+spec:
+  displayName: Kubernetes Ops
+  description: Answers cluster health and troubleshooting questions through read-only Kubernetes MCP tools
+  imageRef:
+    name: img-kubernetes-ops
+  runtime:
+    engine: pi
+    subscription:
+      claimName: kubernetes-ops-home
+      # A dedicated subscription must be signed in before the first chat.
+      login: true
+  llm:
+    provider: openai-codex
+    model: gpt-6.1-sol
+    maxTurns: 20
+  persona:
+    id: 01m5cnt3y0mq66hy6ctv2nfwa7
+  enabledTools: []
+  scaling:
+    replicas: 1
