@@ -20,6 +20,12 @@ spec:
     maxTurns: 20
   persona:
     id: 01m5cpbpavfe023qys66fywkby
+  skills:
+    items:
+      - kubernetes-skill
+      - kubernetes-skill-patterns
+      - kubernetes-skill-tooling
+      - kubernetes-skill-platforms
   enabledTools: []
   scaling:
     replicas: 1
