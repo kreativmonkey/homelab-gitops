@@ -8,7 +8,6 @@ resources:
   - runtime.secret.yaml
   - subscription-home.pvc.yaml
   - goloom-issue-agent-home.pvc.yaml
-  - goloom-issue-agent.persona.configmap.yaml
   - goloom-issue-agent.image.yaml
   - goloom-issue-agent.agent.yaml
   - goloom-github.connector.yaml

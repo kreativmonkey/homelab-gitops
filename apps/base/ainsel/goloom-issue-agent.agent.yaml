@@ -18,7 +18,7 @@ spec:
     model: gpt-6.1-sol
     maxTurns: 50
   persona:
-    id: 01m587194mpsrf3btjg7mkkejz
+    id: 01m5cqba43dt57r9askhjjgfrt
   env:
     - name: TURN_TIMEOUT_MS
       value: "1800000"
