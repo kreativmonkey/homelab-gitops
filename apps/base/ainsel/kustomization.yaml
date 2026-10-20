@@ -14,6 +14,5 @@ resources:
   - goloom-github.secret.yaml
   - goloom-worker-github-token.secret.yaml
   - kubernetes-ops-home.pvc.yaml
-  - kubernetes-ops.persona.configmap.yaml
   - kubernetes-ops.image.yaml
   - kubernetes-ops.agent.yaml

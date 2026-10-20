@@ -8,3 +8,4 @@ components:
   - ../egress-apiserver
 resources:
   - allow-egress-kubernetes-mcp.yaml
+  - allow-egress-kubernetes-mcp-discovery.yaml
