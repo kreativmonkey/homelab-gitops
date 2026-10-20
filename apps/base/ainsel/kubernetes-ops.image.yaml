@@ -1,0 +1,12 @@
+apiVersion: ainsel.dev/v1alpha1
+kind: AgentImage
+metadata:
+  name: img-kubernetes-ops
+  namespace: ainsel
+spec:
+  displayName: Kubernetes Ops Pi runtime
+  description: Pi runtime with the read-only in-cluster Kubernetes MCP server
+  imageURL: ghcr.io/kreativmonkey/ainsel-pi@sha256:4f044ec72666ca36c181137d0d2fb5b535344d82b133beefcf7c383b5086feb1
+  mcpServers:
+    - name: kubernetes
+      url: http://kubernetes-mcp-server.mcp-system.svc.cluster.local:8080/mcp

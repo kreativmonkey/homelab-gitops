@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-kubernetes-mcp
+spec:
+  podSelector:
+    matchLabels:
+      ainsel.dev/agent: a-kubernetes-ops
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: mcp-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mcp-server
+      ports:
+        - protocol: TCP
+          port: 8080

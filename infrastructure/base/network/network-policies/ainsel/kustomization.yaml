@@ -6,3 +6,5 @@ components:
   - ../egress-database
   - ../egress-external
   - ../egress-apiserver
+resources:
+  - allow-egress-kubernetes-mcp.yaml

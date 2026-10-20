@@ -7,3 +7,5 @@ components:
   - ../baseline
   - ../egress-apiserver
   - ../egress-external
+resources:
+  - allow-ingress-ainsel-kubernetes-ops.yaml
