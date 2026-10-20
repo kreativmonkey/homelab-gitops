@@ -19,7 +19,7 @@ spec:
     model: gpt-6.1-sol
     maxTurns: 20
   persona:
-    id: 01m5cnt3y0mq66hy6ctv2nfwa7
+    id: 01m5cpbpavfe023qys66fywkby
   enabledTools: []
   scaling:
     replicas: 1
