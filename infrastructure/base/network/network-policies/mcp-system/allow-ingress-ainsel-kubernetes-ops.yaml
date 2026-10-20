@@ -16,6 +16,12 @@ spec:
           podSelector:
             matchLabels:
               ainsel.dev/agent: a-kubernetes-ops
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ainsel
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: hub-backend
       ports:
         - protocol: TCP
           port: 8080
