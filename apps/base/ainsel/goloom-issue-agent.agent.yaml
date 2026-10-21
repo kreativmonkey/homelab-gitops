@@ -3,6 +3,8 @@ kind: Agent
 metadata:
   name: a-d8fcc8d3
   namespace: ainsel
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   displayName: Goloom Issue Worker
   description: Implements assigned issues and handles assigned pull requests, review feedback, conflicts, and CI failures
