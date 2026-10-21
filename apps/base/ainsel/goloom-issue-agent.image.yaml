@@ -6,4 +6,4 @@ metadata:
 spec:
   displayName: Goloom Go Pi runtime
   description: Pi runtime with Go tooling for Goloom issues
-  imageURL: ghcr.io/kreativmonkey/ainsel-pi-go@sha256:4e6c8c3410fdf177adbf8d3d8855b4bfef13c734fc85abe527b04994b16853a8
+  imageURL: ghcr.io/kreativmonkey/ainsel-pi-go@sha256:0793782ccefb1814ba14067241479852159d814061a80d621e0f4371106d13ed

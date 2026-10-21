@@ -63,14 +63,14 @@ spec:
               key: skills-mcp-token
       image:
         repository: ghcr.io/kreativmonkey/ainsel-hub-backend
-        tag: "33135fb"
+        tag: "046a74d"
       platformExternalUrl: https://ainsel.cluster.f4mily.net
       ingress:
         enabled: false
       connectorImages:
         webhook:
           repository: ghcr.io/kreativmonkey/ainsel-webhook-receiver
-          tag: "bcb69d9"
+          tag: "046a74d"
       resources:
         requests:
           cpu: 50m
@@ -81,7 +81,7 @@ spec:
       basePath: ""
       image:
         repository: ghcr.io/kreativmonkey/ainsel-hub-frontend
-        tag: "622d1c7"
+        tag: "046a74d"
       ingress:
         enabled: false
       securityContext:
@@ -102,7 +102,7 @@ spec:
               key: internal-validate-secret
       image:
         repository: ghcr.io/kreativmonkey/ainsel-mcp
-        tag: "938fb63"
+        tag: "046a74d"
       externalUrl: https://ainsel.cluster.f4mily.net/mcp
       ingress:
         enabled: false
@@ -115,7 +115,7 @@ spec:
               key: internal-validate-secret
       image:
         repository: ghcr.io/kreativmonkey/ainsel-k8s-ai-agent-operator
-        tag: "33135fb"
+        tag: "046a74d"
     connectorOperator:
       # Connector routes join the existing F5 NGINX Master on the shared host.
       ingressMode: nginx-inc-minion
@@ -129,8 +129,8 @@ spec:
       clusterWideRbac: false
       image:
         repository: ghcr.io/kreativmonkey/ainsel-k8s-event-source-gateway-operator
-        tag: "6f1ca61"
+        tag: "046a74d"
     chatMCP:
       image:
         repository: ghcr.io/kreativmonkey/ainsel-chat-mcp
-        tag: "bcb69d9"
+        tag: "046a74d"
