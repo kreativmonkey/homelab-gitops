@@ -16,7 +16,7 @@ spec:
   interval: 24h
   url: oci://ghcr.io/nginx/charts/nginx-ingress
   ref:
-    tag: "2.6.4"
+    tag: "2.8.0"
   layerSelector:
     mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
     operation: copy
