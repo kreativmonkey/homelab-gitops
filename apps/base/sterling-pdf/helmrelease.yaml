@@ -4,7 +4,7 @@ metadata:
   name: stirling-pdf-repo
   namespace: flux-system
 spec:
-  interval: 24h
+  interval: 1h
   url: https://stirling-tools.github.io/Stirling-PDF-chart
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
