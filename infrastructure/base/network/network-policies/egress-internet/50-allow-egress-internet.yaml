@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-internet
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 100.64.0.0/10   # CGNAT / NetBird overlay
+              - 169.254.0.0/16  # link-local
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+        # Ingress VIP and node IPs (OIDC to login.f4mily.net, ingress hairpin);
+        # 0.0.0.0/0 is Cilium's `world` and excludes the local host anyway.
+        - ipBlock:
+            cidr: 192.168.10.245/32
+        - ipBlock:
+            cidr: 192.168.10.41/32
+        - ipBlock:
+            cidr: 192.168.10.42/32
+        - ipBlock:
+            cidr: 192.168.10.43/32
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
