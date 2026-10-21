@@ -84,16 +84,17 @@ spec:
               mountPath: /config
               readOnly: true
           # Orchestrator only — the actual job workloads run inside the dind
-          # sidecar and are bounded by *its* limits, not these. Idle usage is
-          # ~15Mi; headroom is for log/output buffering spikes when dind jobs
-          # stall (e.g. the 2026-06-23 storage hiccup OOM-killed it at 512Mi).
+          # sidecar and are bounded by *its* limits, not these. Recurring OOMKills
+          # on 2026-10-19 and 2026-10-21 had ~698Mi observed near the kill; node
+          # memory was healthy and dind remained unaffected.
+          # Keep headroom for runner log/output buffering during busy CI jobs.
           resources:
             requests:
               cpu: 100m
               memory: 128Mi
             limits:
               cpu: "1"
-              memory: 768Mi
+              memory: 1Gi
           livenessProbe:
             exec:
               command:
