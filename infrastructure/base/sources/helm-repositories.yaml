@@ -99,7 +99,7 @@ metadata:
   name: authentik-repo
   namespace: flux-system
 spec:
-  interval: 24h
+  interval: 1h
   url: https://charts.goauthentik.io
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -135,7 +135,7 @@ metadata:
   name: renovate-repo
   namespace: flux-system
 spec:
-  interval: 24h
+  interval: 1h
   url: https://docs.renovatebot.com/helm-charts
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -162,7 +162,7 @@ metadata:
   name: zekker6-repo
   namespace: flux-system
 spec:
-  interval: 24h
+  interval: 1h
   url: https://zekker6.github.io/helm-charts
 
 ---
