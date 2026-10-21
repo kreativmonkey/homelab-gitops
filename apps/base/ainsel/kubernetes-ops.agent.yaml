@@ -3,6 +3,8 @@ kind: Agent
 metadata:
   name: a-kubernetes-ops
   namespace: ainsel
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   displayName: Kubernetes Ops
   description: Answers cluster health and troubleshooting questions through read-only Kubernetes MCP tools
