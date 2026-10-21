@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+# Stricter alternative to egress-external: HTTP/HTTPS to the internet only.
+# Private/LAN ranges are excluded, so a compromised pod cannot reach LAN web
+# UIs (firewall, NAS, Home Assistant). Ingress VIP + node IPs stay reachable
+# for OIDC and hairpin. Bespoke LAN targets need their own policy.
+resources:
+  - 50-allow-egress-internet.yaml

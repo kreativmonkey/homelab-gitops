@@ -11,6 +11,7 @@ infrastructure/base/network/network-policies/
 ├── cluster/           # CCNP allow-from-host-network (entities host + remote-node)
 ├── baseline/          # Component: default-deny + DNS, same-NS, monitoring
 ├── egress-external/   # Component: egress 0.0.0.0/0 + ingress VIP/node /32s on 80/443
+├── egress-internet/   # Component: like egress-external, minus private/LAN ranges (public apps)
 ├── egress-database/   # Component: egress → cnpg-system:5432
 ├── egress-apiserver/  # Component: egress → VIP + CP nodes:6443
 ├── egress-mail/       # Component: egress 0.0.0.0/0 on 465/587/993
@@ -61,6 +62,7 @@ never apply to hostNetwork pods) and `homelable`, `navidrome`, `omni-sync`.
    components:
      - ../baseline
      # - ../egress-external   # outbound 80/443 (OIDC, web fetch, ingress hairpin)
+     # - ../egress-internet   # same, LAN blocked — prefer for internet-exposed apps
      # - ../egress-database   # central CNPG tier (cnpg-system:5432)
      # - ../egress-apiserver  # controller/operator talking to the API
      # - ../egress-mail       # SMTP/IMAP

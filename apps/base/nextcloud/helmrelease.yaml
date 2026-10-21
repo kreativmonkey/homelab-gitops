@@ -252,8 +252,13 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
       podSecurityContext:
         fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       # Chart >=9.x already ships its own php-confd emptyDir + init-redis-session-ini
       # container when redis.enabled=true (nextcloud/helm#187 fix landed upstream).
       # Do not re-add extraVolumes/extraVolumeMounts/extraInitContainers for this —
@@ -267,6 +272,9 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
           env:
             - name: POSTGRES_HOST
               value: homelab-postgres-rw.cnpg-system.svc.cluster.local
@@ -386,6 +394,9 @@ spec:
             runAsUser: 1000
             runAsGroup: 1000
             runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
           env:
             - name: PGHOST
               value: homelab-postgres-rw.cnpg-system.svc.cluster.local
@@ -433,6 +444,9 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
           env:
             - name: OIDC_CLIENT_ID
               valueFrom:
@@ -497,6 +511,9 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
           env:
             - name: NEXTCLOUD_PUBLIC_HOST
               value: nc.f4mily.net
@@ -643,3 +660,6 @@ spec:
           runAsUser: 1000
           runAsGroup: 1000
           runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
