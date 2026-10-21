@@ -653,9 +653,9 @@ spec:
       # 0.25.x is not published to the catalog yet → Grafana exits on plugin install failure
       plugins:
         # renovate: datasource=custom.grafana-plugins depName=victoriametrics-metrics-datasource
-        - victoriametrics-metrics-datasource@0.25.0
+        - victoriametrics-metrics-datasource@0.26.1
         # renovate: datasource=custom.grafana-plugins depName=victoriametrics-logs-datasource
-        - victoriametrics-logs-datasource@0.29.0
+        - victoriametrics-logs-datasource@0.33.1
 
       priorityClassName: homelab-infrastructure
 
