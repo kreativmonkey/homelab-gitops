@@ -13,4 +13,4 @@ spec:
       key: secret
   image:
     repository: ghcr.io/kreativmonkey/ainsel-webhook-receiver
-    tag: bcb69d9
+    tag: 046a74d

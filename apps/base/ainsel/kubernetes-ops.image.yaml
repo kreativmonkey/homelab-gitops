@@ -6,7 +6,7 @@ metadata:
 spec:
   displayName: Kubernetes Ops Pi runtime
   description: Pi runtime with the read-only in-cluster Kubernetes MCP server
-  imageURL: ghcr.io/kreativmonkey/ainsel-pi@sha256:4f044ec72666ca36c181137d0d2fb5b535344d82b133beefcf7c383b5086feb1
+  imageURL: ghcr.io/kreativmonkey/ainsel-pi@sha256:baea89cebd3b393f60253e7be609f5f4942c11cdeb4b95061dfa83f437900b16
   mcpServers:
     - name: kubernetes
       url: http://kubernetes-mcp-server.mcp-system.svc.cluster.local:8080/mcp
