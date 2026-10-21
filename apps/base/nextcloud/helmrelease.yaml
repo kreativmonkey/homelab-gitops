@@ -124,6 +124,9 @@ spec:
     # renovate: datasource=docker depName=docker.io/library/nextcloud
     image:
       tag: 35.0.2
+      # Official image tags are rebuilt in place for PHP security releases
+      # (e.g. PHP2Shell, CVE-2026-109618/-109619); Always pulls the rebuild.
+      pullPolicy: Always
     ingress:
       enabled: false
     service:
@@ -260,6 +263,7 @@ spec:
       extraInitContainers:
         - name: occ-db-sync
           image: docker.io/library/nextcloud:35.0.2-apache
+          imagePullPolicy: Always
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -425,6 +429,7 @@ spec:
 
         - name: occ-oidc-setup
           image: docker.io/library/nextcloud:35.0.2-apache
+          imagePullPolicy: Always
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -488,6 +493,7 @@ spec:
 
         - name: occ-collab-setup
           image: docker.io/library/nextcloud:35.0.2-apache
+          imagePullPolicy: Always
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
