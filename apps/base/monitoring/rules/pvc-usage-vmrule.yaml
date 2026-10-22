@@ -18,13 +18,18 @@ spec:
     - name: homelab.platform.pvc
       interval: 1m
       rules:
+        # Per-volume stats are reliable for democratic-csi iSCSI volumes.
+        # Static local PVs and NFS paths can report their shared filesystem,
+        # while local-path hostPath volumes do not expose kubelet volume stats.
         - alert: PVCDiskSpaceLow
-          # freier Anteil < 15 % gemessen über das kubelet-Volume-Stats-Paar.
+          # Keep existing thresholds, but only evaluate per-volume iSCSI stats.
           expr: |
             (
               kubelet_volume_stats_available_bytes
                 / kubelet_volume_stats_capacity_bytes
             ) * 100 < 15
+            and on(namespace, persistentvolumeclaim)
+              kube_persistentvolumeclaim_info{storageclass="truenas-iscsi"}
           for: 15m
           labels:
             severity: warning
@@ -32,7 +37,7 @@ spec:
             homelab_owner: platform
           annotations:
             summary: "PVC {{ $labels.persistentvolumeclaim }} fast voll ({{ $value | printf \"%.1f\" }} % frei)"
-            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} hat nur noch {{ $value | printf \"%.1f\" }} % frei (< 15 %). Bei node-local local-path blockiert ein volles Volume den CNPG-WAL-Write. Volume vergrößern oder Daten aufräumen, bevor critical greift."
+            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} hat nur noch {{ $value | printf \"%.1f\" }} % frei (< 15 %). Ein volles Volume kann schreibende Workloads blockieren. Volume prüfen und Daten aufräumen, bevor critical greift."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/pvc-disk-space.md"
 
         - alert: PVCDiskSpaceCritical
@@ -42,6 +47,8 @@ spec:
               kubelet_volume_stats_available_bytes
                 / kubelet_volume_stats_capacity_bytes
             ) * 100 < 5
+            and on(namespace, persistentvolumeclaim)
+              kube_persistentvolumeclaim_info{storageclass="truenas-iscsi"}
           for: 5m
           labels:
             severity: critical
@@ -49,7 +56,7 @@ spec:
             homelab_owner: platform
           annotations:
             summary: "PVC {{ $labels.persistentvolumeclaim }} kritisch voll ({{ $value | printf \"%.1f\" }} % frei)"
-            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} hat nur noch {{ $value | printf \"%.1f\" }} % frei (< 5 %). Schreibende Workloads (v.a. CNPG/WAL) können jeden Moment blockieren. Sofort vergrößern oder aufräumen."
+            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} hat nur noch {{ $value | printf \"%.1f\" }} % frei (< 5 %). Schreibende Workloads können jeden Moment blockieren. Volume prüfen und Daten sofort aufräumen."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/pvc-disk-space.md"
 
         - alert: PVCDiskSpaceGrowthForecast
@@ -65,6 +72,8 @@ spec:
               predict_linear(kubelet_volume_stats_used_bytes[1d], 7 * 24 * 3600)
                 > kubelet_volume_stats_capacity_bytes
             )
+            and on(namespace, persistentvolumeclaim)
+              kube_persistentvolumeclaim_info{storageclass="truenas-iscsi"}
           for: 1h
           labels:
             severity: warning
@@ -72,5 +81,5 @@ spec:
             homelab_owner: platform
           annotations:
             summary: "PVC {{ $labels.persistentvolumeclaim }} wächst Richtung Limit"
-            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} ({{ $value | humanize1024 }} genutzt) erreicht bei aktuellem Wachstum in ~7d sein Kapazitätslimit. Vergrößerung einplanen, bevor PVCDiskSpaceLow greift."
+            description: "PVC {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} ({{ $value | humanize1024 }} Kapazität) erreicht bei aktuellem Wachstum in ~7d sein Limit. Volume und Wachstum prüfen, bevor PVCDiskSpaceLow greift."
             runbook_url: "https://git.f4mily.net/homelab/gitops-homelab/blob/main/docs/runbooks/pvc-disk-space.md"
