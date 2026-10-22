@@ -37,6 +37,11 @@
           '';
         };
 
+        # Upstream-Health-Check (scripts/ci/upstream-health.sh): Renovate via npx braucht Node >= 24.
+        upstream = pkgs.mkShell {
+          buildInputs = with pkgs; [ just nodejs_24 python3 gh ];
+        };
+
         default = pkgs.mkShell {
           buildInputs = ciTools;
           shellHook = ''

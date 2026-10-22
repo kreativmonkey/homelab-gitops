@@ -99,3 +99,35 @@ LOG_LEVEL=debug npx -y renovate@43 --platform=local --dry-run=extract
 zeigt pro Manager die extrahierten Dependencies. Jede Dependency darf genau
 einmal auftauchen. Nach dem Merge räumt Renovate die obsoleten Gruppen-PRs
 (`flux helm releases`, `helm chart values`, `renovate markers`) selbst ab.
+
+## Upstream Health (tote, umgezogene, EOL-Upstreams)
+
+Wöchentlicher GitHub-Workflow `.github/workflows/upstream-health.yaml`
+(Mo 05:41 UTC, manuell per `workflow_dispatch`), lokal
+`nix develop .#upstream -c just upstream-health`:
+
+1. Renovate-Lookup gegen den Checkout (`--platform=local --dry-run=lookup
+   --report-type=file`) liefert jede Dependency mit `sourceUrl`.
+2. `scripts/ci/upstream-health.py` prüft die Quell-Repos (GitHub GraphQL,
+   Codeberg/Forgejo-API) und die Release-Zyklen (endoflife.date).
+3. Ergebnis landet im GitHub-Issue mit Label `upstream-health`: Body wird
+   jede Woche ersetzt, ein Kommentar (= Benachrichtigung) nur bei **neuen**
+   Befunden; ohne Befunde schließt sich das Issue.
+
+Befundarten: archiviert, Quelle verschwunden, eingefrorene Registry,
+EOL / EOL bald (90 Tage), umbenannt/übertragen, keine Commits bzw. keine
+Releases seit 365 Tagen, Renovate-Lookup scheitert (flüchtig möglich, löst
+keinen Kommentar aus).
+
+Pflege in `scripts/ci/upstream-health.json`:
+
+- `sources` — Quell-Repo für Dependencies ohne `sourceUrl` (das Issue listet
+  sie unter "Nicht prüfbar").
+- `eol` — Dependency-Regex → endoflife.date-Produkt; der Zyklus wird aus der
+  Version abgeleitet (`major.minor`, sonst `major`).
+- `frozen` — Registries ohne Updates (z. B. `bitnamilegacy`).
+- `ignore` — bewusst akzeptierte Befunde (`match`, optional `kinds`,
+  `reason`); erscheinen eingeklappt statt als Befund.
+
+Die Renovate-Version im Skript (`RENOVATE_VERSION`) hält der Regex-Manager
+für `scripts/**/*.sh` aktuell.

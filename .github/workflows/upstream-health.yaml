@@ -1,0 +1,34 @@
+name: Upstream Health
+
+# Weekly check for dead, archived, renamed and EOL upstreams of every
+# Renovate-tracked dependency. Findings are not failures: they land in one
+# tracking issue (label upstream-health) that only comments on NEW findings.
+# A failing run means the check itself broke (GitHub notifies on that).
+# See docs/renovate.md § Upstream Health.
+on:
+  schedule:
+    - cron: "41 5 * * 1" # weekly, Monday 05:41 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  upstream-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31.11.2
+
+      - name: Check upstreams and update issue
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+        run: nix develop .#upstream -c just upstream-health --publish

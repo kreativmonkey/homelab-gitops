@@ -61,6 +61,10 @@ validate-full: validate server-dry-run
 renovate-audit:
     ./scripts/ci/renovate-audit.sh
 
+# Dead/moved/EOL upstreams (Renovate lookup + GitHub + endoflife.date); needs `nix develop .#upstream`
+upstream-health *args:
+    ./scripts/ci/upstream-health.sh {{args}}
+
 lint:
     yamllint -c .yamllint.yml clusters infrastructure apps .forgejo/workflows .github/workflows
 
