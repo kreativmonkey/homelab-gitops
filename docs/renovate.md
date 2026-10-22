@@ -90,6 +90,18 @@ Ausnahmen (explizite Regeln, stehen nach der Gruppenregel und gewinnen):
   liegt beim Soak, beim CI-Check und bei den Backups (CNPG/Velero) — nicht
   mehr beim Review.
 
+## Abandonment (eingeschlafene Upstreams)
+
+Renovate meldet nur neue Versionen — ein Upstream ohne Releases sieht aus wie
+"alles aktuell". `abandonmentThreshold: 1 year` markiert jede Dependency,
+deren neuestes Release älter als ein Jahr ist; das Dependency Dashboard listet
+sie unter **Abandoned Dependencies**.
+
+- Grundlage ist der Release-Zeitstempel der Datasource. Helm-Repos und
+  GitHub-Releases/Tags liefern ihn zuverlässig, Docker-Registries nur teils —
+  ein Image ohne Zeitstempel wird nie als abandoned markiert.
+- Archivierte, umbenannte oder umgezogene Repos erkennt Renovate damit nicht.
+
 ## Verifikation nach Config-Änderungen
 
 ```sh
