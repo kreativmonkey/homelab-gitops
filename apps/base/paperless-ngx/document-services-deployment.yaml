@@ -78,7 +78,7 @@ spec:
     spec:
       containers:
         - name: tika
-          image: docker.io/apache/tika:3.3.1.0
+          image: docker.io/apache/tika:3.3.3.0
           ports:
             - name: http
               containerPort: 9998
