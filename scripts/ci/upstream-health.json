@@ -1,0 +1,44 @@
+{
+  "thresholdDays": 365,
+  "eolWarnDays": 90,
+  "skipDatasources": [],
+  "sources": {
+    "docker.io/aceberg/watchyourlan": "github.com/aceberg/WatchYourLAN",
+    "docker.io/alpine/k8s": "github.com/alpine-docker/k8s",
+    "docker.io/rancher/local-path-provisioner": "github.com/rancher/local-path-provisioner",
+    "ghcr.io/cloudnative-pg/postgresql": "github.com/cloudnative-pg/postgres-containers",
+    "ghcr.io/goloom-app/goloom": "github.com/Goloom-App/goloom",
+    "ghcr.io/immich-app/immich-machine-learning": "github.com/immich-app/immich",
+    "ghcr.io/netbirdio/helm-charts/netbird-operator": "github.com/netbirdio/kubernetes-operator",
+    "ghcr.io/nextcloud/nextcloud-appapi-harp": "github.com/nextcloud/HaRP",
+    "icereed/paperless-gpt": "github.com/icereed/paperless-gpt",
+    "lscr.io/linuxserver/unifi-network-application": "github.com/linuxserver/docker-unifi-network-application",
+    "quay.io/containers/kubernetes_mcp_server": "github.com/containers/kubernetes-mcp-server",
+    "timescale/timescaledb": "github.com/timescale/timescaledb",
+    "cert-manager-webhook-hetzner": "github.com/hetzner/cert-manager-webhook-hetzner",
+    "victoriametrics-metrics-datasource": "github.com/VictoriaMetrics/victoriametrics-datasource",
+    "victoriametrics-logs-datasource": "github.com/VictoriaMetrics/victorialogs-datasource"
+  },
+  "frozen": [
+    {
+      "match": "^(docker\\.io/)?bitnamilegacy/",
+      "reason": "Bitnami-Legacy-Archiv: seit 08/2025 eingefroren, keine Sicherheitsupdates"
+    }
+  ],
+  "eol": [
+    { "match": "(^|/)(cloudnative-pg/postgresql|cloudnative-pg/postgis|tensorchord/cloudnative-vectorchord|library/postgres)$", "product": "postgresql" },
+    { "match": "(^|/)siderolabs/kubelet$", "product": "kubernetes" },
+    { "match": "(^|/)library/nextcloud$", "product": "nextcloud" },
+    { "match": "(^|/)mongo$", "product": "mongodb" },
+    { "match": "(^|/)(library/)?python$", "product": "python" },
+    { "match": "(^|/)(library/)?redis$", "product": "redis" },
+    { "match": "(^|/)valkey/valkey$", "product": "valkey" },
+    { "match": "(^|/)goauthentik/server$", "product": "authentik" },
+    { "match": "(^|/)forgejo/forgejo$", "product": "forgejo" },
+    { "match": "(^|/)getmeili/meilisearch$", "product": "meilisearch" },
+    { "match": "^fluxcd/flux2$", "product": "flux" },
+    { "match": "^cert-manager$", "datasource": "helm", "product": "cert-manager" },
+    { "match": "(^|/)(library/)?nginx$", "product": "nginx" }
+  ],
+  "ignore": []
+}

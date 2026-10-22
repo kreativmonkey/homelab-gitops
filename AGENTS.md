@@ -87,6 +87,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 - Docker image updates (`datasource: docker`), auto‑merge patch releases for low‑risk apps (Uptime‑Kuma, Homepage, etc.) after CI passes.
 - **customManagers** to parse version strings inside ConfigMaps or custom resources (e.g., Immich chart values).
 - All Renovate PRs must pass CI before merge.
+- Dead/archived/renamed/EOL upstreams: weekly `upstream-health` workflow → GitHub issue (label `upstream-health`); config `scripts/ci/upstream-health.json`, see `docs/renovate.md`.
 
 ---
 
