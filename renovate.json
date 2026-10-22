@@ -5,6 +5,7 @@
   ],
   "rebaseWhen": "behind-base-branch",
   "minimumReleaseAge": "7 days",
+  "abandonmentThreshold": "1 year",
   "prHourlyLimit": 2,
   "prConcurrentLimit": 10,
   "nix": {
