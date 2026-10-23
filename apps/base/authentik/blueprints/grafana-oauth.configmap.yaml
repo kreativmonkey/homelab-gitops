@@ -42,9 +42,9 @@ data:
           post_logout_redirect_uris:
             - https://grafana.cluster.f4mily.net/logout
           property_mappings:
-            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
-            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
-            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+            - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-profile]]
+            - !Find [authentik_providers_oauth2.scopemapping, [name, "Mailcow Mailbox"]]
             # entitlements was listed here but the live provider never had it —
             # the blueprint had never applied. Left out so the first apply is a
             # no-op; add it back deliberately if the claim is actually wanted.
