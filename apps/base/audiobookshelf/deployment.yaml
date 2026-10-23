@@ -45,7 +45,11 @@ spec:
               cpu: 10m
               memory: 64Mi
             limits:
-              memory: 256Mi
+              # Idle ~70-150Mi, but uploads are staged in /metadata/tmp (iSCSI)
+              # and then copied to NFS; the page cache of multi-hundred-MB
+              # audiobook files counts against the cgroup and got the pod
+              # OOMKilled at 256Mi. Headroom only, the request stays small.
+              memory: 1Gi
           livenessProbe:
             httpGet:
               path: /healthcheck
