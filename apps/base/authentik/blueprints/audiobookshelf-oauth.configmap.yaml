@@ -18,23 +18,28 @@ data:
       # points at it breaks the moment someone deletes it.
       - model: authentik_providers_oauth2.scopemapping
         id: audiobookshelf-scope
+        # Match on name: scope_name is what Audiobookshelf requests and may
+        # change, the name stays.
         identifiers:
-          scope_name: "audiobookshelf-group-mapping"
+          name: "Audiobookshelf Group mapping"
         attrs:
           name: "Audiobookshelf Group mapping"
-          scope_name: "audiobookshelf-group-mapping"
-          description: "Mapps default groups to audiobookshelf group."
+          # Audiobookshelf requests its configured group claim name as scope,
+          # so scope_name, claim key and the "Group Claim" setting in
+          # Audiobookshelf (Settings > Authentication) must all be
+          # "audiobookshelf".
+          scope_name: "audiobookshelf"
+          description: "Maps Authentik groups to Audiobookshelf user types."
+          # Audiobookshelf expects a list containing admin, user or guest;
+          # no matching group means no login.
           expression: |-
-            audbshlf_claims = {}
+            groups = set(request.user.ak_groups.values_list("name", flat=True))
 
-            if request.user.ak_groups.filter(name="Familie").exists():
-                audbshlf_claims["audiobookshelf"]= "user"
-            if request.user.ak_groups.filter(name="Admin").exists():
-                audbshlf_claims["audiobookshelf"]= "admin"
-            if request.user.ak_groups.filter(name="authentik Admins").exists():
-                audbshlf_claims["audiobookshelf"]= "admin"
-
-            return audbshlf_claims
+            if groups & {"Admin", "authentik Admins"}:
+                return {"audiobookshelf": ["admin"]}
+            if groups & {"Familie", "Freunde"}:
+                return {"audiobookshelf": ["user"]}
+            return {}
       - model: authentik_providers_oauth2.oauth2provider
         id: audiobookshelf-provider
         # Match on client_id, not name: the name is an attribute the blueprint
