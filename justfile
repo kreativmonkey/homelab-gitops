@@ -65,6 +65,11 @@ renovate-audit:
 upstream-health *args:
     ./scripts/ci/upstream-health.sh {{args}}
 
+# Libation downloads -> Audiobookshelf (move to NAS, scan, author images).
+# DRY=1 for a dry run, ABS_IMPORT_NO_WIFI=1 to force the wired link.
+abs-import:
+    ./scripts/audiobookshelf/libation-import.sh
+
 lint:
     yamllint -c .yamllint.yml clusters infrastructure apps .forgejo/workflows .github/workflows
 
