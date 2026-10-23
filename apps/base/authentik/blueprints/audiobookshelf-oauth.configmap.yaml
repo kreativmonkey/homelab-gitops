@@ -33,7 +33,7 @@ data:
           # Audiobookshelf expects a list containing admin, user or guest;
           # no matching group means no login.
           expression: |-
-            groups = set(request.user.ak_groups.values_list("name", flat=True))
+            groups = set(request.user.groups.values_list("name", flat=True))
 
             if groups & {"Admin", "authentik Admins"}:
                 return {"audiobookshelf": ["admin"]}

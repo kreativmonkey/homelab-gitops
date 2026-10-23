@@ -26,7 +26,7 @@ data:
           description: Maps the Familie group to a Vikunja team
           expression: |-
             groups = []
-            for group in request.user.ak_groups.filter(name="Familie"):
+            for group in request.user.groups.filter(name="Familie"):
                 groups.append({
                     "name": group.name,
                     "oidcID": str(group.pk),
