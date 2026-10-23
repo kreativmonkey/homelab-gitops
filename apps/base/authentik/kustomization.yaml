@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - authentik-secret-key.secret.yaml
+  - blueprints/shared-scope-mappings.configmap.yaml
   - blueprints/paperless-oauth.configmap.yaml
   - blueprints/gatus-oauth.configmap.yaml
   - blueprints/linkding-oauth.configmap.yaml

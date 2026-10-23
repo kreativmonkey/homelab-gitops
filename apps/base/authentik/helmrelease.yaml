@@ -70,6 +70,7 @@ spec:
     # Production DB is authoritative for migrated apps; add new providers here only.
     blueprints:
       configMaps:
+        - authentik-shared-scope-mappings-blueprint
         - authentik-paperless-blueprint
         - authentik-gatus-blueprint
         - authentik-linkding-blueprint

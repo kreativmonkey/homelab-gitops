@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-shared-scope-mappings-blueprint
+  namespace: authentik
+  labels:
+    app.kubernetes.io/part-of: authentik
+data:
+  shared-scope-mappings.yaml: |
+    version: 1
+    metadata:
+      name: Homelab shared OAuth scope mappings
+      labels:
+        blueprints.goauthentik.io/description: Custom email scope mappings shared by several OAuth2 providers
+    # Several mappings share scope_name "email". Providers must reference them
+    # by name: a !Find on scope_name picks whichever row the DB returns first.
+    entries:
+      # Default email mapping for app providers: sends the user's Mailcow
+      # address (username@f4mily.net), not user.email. Apps have matched
+      # accounts on this address since onboarding, and user.email is neither
+      # unique nor on our domain — switching would orphan existing app accounts.
+      - model: authentik_providers_oauth2.scopemapping
+        identifiers:
+          name: "Mailcow Mailbox"
+        attrs:
+          name: "Mailcow Mailbox"
+          scope_name: email
+          description: "The mailcow mailbox that is used by this user"
+          expression: |-
+            return {
+              'email': request.user.attributes.get('mailbox', request.user.username + '@f4mily.net')
+            }
+      # For apps that reject email_verified=false (Omni, go-oidc strict apps);
+      # the managed default email mapping always sends false.
+      - model: authentik_providers_oauth2.scopemapping
+        identifiers:
+          name: "OAuth Mapping: email with email_verified true"
+        attrs:
+          name: "OAuth Mapping: email with email_verified true"
+          scope_name: email
+          description: "Set the mail verification flag to true."
+          expression: |-
+            return {
+              "email": request.user.email,
+              "email_verified": True
+            }

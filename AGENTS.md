@@ -177,6 +177,7 @@ Each learning is a standalone Markdown file in `docs/learnings/` with:
    - Store OIDC `client-id` / `client-secret` as SOPS-encrypted secret in `apps/base/<app>/` and wire via `valuesFrom` in the app's HelmRelease.
    - Authentik side (`!Env OIDC_<APP>_CLIENT_SECRET`): new Secret `authentik-oidc-client-secrets-<app>` in private repo `homelab-gitops-private` (`apps/overlays/main/authentik-private/oidc-client-secret-<app>.secret.yaml`, public age key suffices) plus an `optional: true` `envFrom` entry on the worker in `apps/base/authentik/helmrelease.yaml`. Do not edit the shared `oidc-client-secrets.secret.yaml`.
    - Apps outside the cluster (e.g. Omni on srv1): no app-side SOPS secret here — the client secret lives off-store on that host; the Authentik side stays the same.
+   - Scope mappings: reference by `name` or `managed`, never by `scope_name` — several mappings share `email`/`profile`, and a `scope_name` lookup picks an arbitrary one. Default email mapping is `Mailcow Mailbox` (sends `<username>@f4mily.net`, the address existing app accounts are matched on); shared custom mappings live in `blueprints/shared-scope-mappings.configmap.yaml`.
    - App rejects `email_verified=false` (Omni, go-oidc strict apps): the managed default `email` mapping always sends `false` — use `!Find [authentik_providers_oauth2.scopemapping, [name, "OAuth Mapping: email with email_verified true"]]` instead.
 
 4. **Icon suchen** – Search `https://dashboardicons.com/` for the app's icon. Prefer SVG. Set as `icon:` field on the application entry in the blueprint. Use the jsDelivr CDN URL from the dashboardicons collection.
@@ -211,9 +212,9 @@ entries:
         - matching_mode: strict
           url: https://<app-host>/<callback-path>
       property_mappings:
-        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
-        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
-        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-profile]]
+        - !Find [authentik_providers_oauth2.scopemapping, [name, "Mailcow Mailbox"]]
   - model: authentik_core.application
     identifiers:
       slug: <app>
