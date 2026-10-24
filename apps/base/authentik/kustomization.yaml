@@ -27,6 +27,7 @@ resources:
   - blueprints/ainsel-oauth.configmap.yaml
   - blueprints/homelable-oauth.configmap.yaml
   - blueprints/omni-oauth.configmap.yaml
+  - blueprints/crowdsec-oauth.configmap.yaml
   - blueprints/outpost-cleanup.configmap.yaml
   - blueprints/hubble-proxy.configmap.yaml
   - media-pvc.yaml
