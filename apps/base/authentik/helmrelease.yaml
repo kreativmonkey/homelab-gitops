@@ -93,6 +93,7 @@ spec:
         - authentik-vikunja-blueprint
         - authentik-ainsel-blueprint
         - authentik-omni-blueprint
+        - authentik-crowdsec-blueprint
         - authentik-outpost-cleanup-blueprint
         - authentik-hubble-blueprint
     server:
@@ -215,6 +216,9 @@ spec:
             optional: true
         - secretRef:
             name: authentik-oidc-client-secrets-omni
+            optional: true
+        - secretRef:
+            name: authentik-oidc-client-secrets-crowdsec
             optional: true
         - secretRef:
             name: authentik-oidc-client-secrets-homelable
