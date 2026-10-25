@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-oidc-ingress-vip
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 192.168.10.245/32 # login.f4mily.net ingress VIP
+      ports:
+        - protocol: TCP
+          port: 443

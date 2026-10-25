@@ -1,10 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-# tandoor = recipe manager. Ingress; CNPG postgres
-# (homelab-postgres-tandoor in cnpg-system); SMTP invites (465).
-# Baseline + database + mail egress.
+# Tandoor = recipe manager. OIDC login.f4mily.net needs ingress VIP HTTPS.
+# CNPG postgres (homelab-postgres-tandoor in cnpg-system); SMTP invites (465).
 namespace: tandoor
 components:
   - ../baseline
   - ../egress-database
   - ../egress-mail
+resources:
+  - allow-oidc-ingress-vip.yaml
