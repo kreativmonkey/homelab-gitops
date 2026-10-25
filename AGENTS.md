@@ -114,6 +114,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 # Governance
 - **Conventional Commits** (`feat:`, `fix:`, `chore:`). Use *caveman‑commit* for terse messages.
 - PR requires at least one reviewer and successful CI checks. **Always create branch from latest `main` (or rebase onto it) before opening PR** to avoid merge conflicts.
+- CodeRabbit reviews PRs automatically via `.coderabbit.yaml`; Renovate-authored PRs are excluded from its automatic reviews.
 - License in `LICENSE` (MIT/Apache‑2.0).
 
 ---
