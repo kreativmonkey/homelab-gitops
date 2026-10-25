@@ -156,8 +156,30 @@ data:
       audiobookshelf-metadata.tar.gz
     capture jellyfin jellyfin jellyfin /config jellyfin-config.tar.gz
     capture kavita kavita kavita /kavita/config kavita-config.tar.gz
-    capture tandoor tandoor tandoor /opt/recipes/mediafiles \
-      tandoor-mediafiles.tar.gz
+
+    # ext4 kann nach einem I/O-Fehler auf emergency_ro wechseln. tar kann
+    # solche Volumes weiterhin lesen; deshalb Mount vor und nach dem Capture
+    # explizit pruefen und nur den exakten PVC-Mountpoint akzeptieren.
+    tandoor_pod="$(pod_for tandoor tandoor)"
+    check_tandoor_mount() {
+      kubectl exec -n tandoor "${tandoor_pod}" -c tandoor -- sh -c \
+        "awk -v mountpoint=/opt/recipes/mediafiles '\$2 == mountpoint {
+          mounted=1
+          count=split(\$4, options, \",\")
+          for (i=1; i<=count; i++) {
+            if (options[i] == \"ro\" || options[i] == \"emergency_ro\") readonly=1
+          }
+        }
+        END {
+          if (!mounted) { print \"FEHLER: Tandoor-Mount fehlt\" > \"/dev/stderr\"; exit 1 }
+          if (readonly) { print \"FEHLER: Tandoor-Mount ist read-only\" > \"/dev/stderr\"; exit 1 }
+        }' /proc/mounts"
+    }
+    check_tandoor_mount
+    kubectl exec -n tandoor "${tandoor_pod}" -c tandoor -- \
+      tar -C /opt/recipes -czf - mediafiles \
+      > /staging/tandoor-mediafiles.tar.gz
+    check_tandoor_mount
 
   forgejo-capture.sh: |
     #!/bin/sh
