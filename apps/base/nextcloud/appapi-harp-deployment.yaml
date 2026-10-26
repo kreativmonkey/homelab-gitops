@@ -22,7 +22,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: appapi-harp
-          image: ghcr.io/nextcloud/nextcloud-appapi-harp:v0.4.6
+          image: ghcr.io/nextcloud/nextcloud-appapi-harp:v0.4.7
           ports:
             - name: exapps
               containerPort: 8780
