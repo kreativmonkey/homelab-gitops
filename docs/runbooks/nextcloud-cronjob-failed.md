@@ -30,7 +30,7 @@ CronJob name is usually `nextcloud-cron` (release name + `-cron`).
 | Cron OOM / timeout on large NFS tree | Raise `cronjob.cronjob.resources.limits.memory`; `php -d memory_limit=512M` in command |
 | Stale `.cron.lock` on NFS after killed pod | `kubectl exec -n nextcloud deploy/nextcloud -- rm -f /var/www/html/data/.cron.lock` (if present) |
 | `maintenance:mode` still on | `kubectl exec -n nextcloud deploy/nextcloud -- php occ maintenance:mode --off` |
-| Postgres/Redis unreachable from cron pod | Check CNPG + `nextcloud-redis-master`; same env as app via chart `nextcloud.env` |
+| Postgres/Valkey unreachable from cron pod | Check CNPG + `nextcloud-valkey`; same env as app via chart `nextcloud.env` |
 
 ## Clear alerts after fix
 

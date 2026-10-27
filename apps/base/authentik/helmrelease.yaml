@@ -35,23 +35,8 @@ spec:
       valuesKey: secret-key
       targetPath: authentik.secret_key
   values:
-    global:
-      security:
-        allowInsecureImages: true
     postgresql:
       enabled: false
-    redis:
-      enabled: true
-      architecture: standalone
-      auth:
-        enabled: false
-      image:
-        registry: docker.io
-        repository: bitnamilegacy/redis
-        tag: 8.2.1-debian-12-r0
-      master:
-        persistence:
-          enabled: false
     authentik:
       postgresql:
         host: homelab-postgres-rw.cnpg-system.svc.cluster.local

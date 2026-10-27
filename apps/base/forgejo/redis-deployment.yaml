@@ -5,6 +5,8 @@ metadata:
   namespace: forgejo
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: forgejo-redis
@@ -13,13 +15,18 @@ spec:
       labels:
         app: forgejo-redis
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: redis
-          # bitnami/redis moved to bitnamilegacy; tag must be full version (7.4 does not exist)
-          image: docker.io/bitnamilegacy/redis:8.2.1-debian-12-r0
-          env:
-            - name: ALLOW_EMPTY_PASSWORD
-              value: "yes"
+          image: docker.io/valkey/valkey:9.1.2-alpine
+          imagePullPolicy: IfNotPresent
+          args: [valkey-server, --save, "", --appendonly, "no"]
           ports:
             - containerPort: 6379
               name: redis
@@ -37,12 +44,27 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
           resources:
             requests:
               cpu: 10m
               memory: 64Mi
             limits:
               memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
