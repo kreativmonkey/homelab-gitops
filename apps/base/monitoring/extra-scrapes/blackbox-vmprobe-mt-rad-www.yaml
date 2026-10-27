@@ -1,0 +1,19 @@
+# Separater www-Check ohne Redirect, damit SSLCertExpiringSoon das www-Zert
+# statt des Apex-Zertifikats bewertet. Der Seiteninhalt wird im Hauptprobe geprueft.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMProbe
+metadata:
+  name: blackbox-http-mt-rad-www
+  namespace: monitoring
+  labels:
+    release: victoriametrics
+spec:
+  jobName: blackbox-http-mt-rad-www
+  vmProberSpec:
+    url: http://prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+  module: http_301_mtrad_www
+  targets:
+    static:
+      targets:
+        - https://www.mt-rad.de/
+  interval: 60s

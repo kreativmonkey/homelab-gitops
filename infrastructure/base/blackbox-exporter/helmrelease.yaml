@@ -79,8 +79,8 @@ spec:
         # MT-Rad (mt-rad.de, statisch auf dem VPS hinter traefik). Eigenes Modul,
         # weil http_2xx SNI auf home.f4mily.net festnagelt — das LE-Zert von
         # mt-rad.de passt darauf nicht. Ohne tls_config gilt der Ziel-Host als
-        # SNI, so wird auch das www-Zert eigenstaendig geprueft. Der Body-Check
-        # faengt eine leere oder halb deployte Site ab (nginx 403 statt Seite).
+        # SNI. Der Body-Check faengt eine leere oder halb deployte Site ab
+        # (nginx 403 statt Seite). Das www-Zert prueft ein zweites Modul ohne Redirect.
         http_2xx_mtrad:
           prober: http
           timeout: 15s
@@ -88,9 +88,24 @@ spec:
             valid_status_codes: [200]
             method: GET
             follow_redirects: true
+            fail_if_not_ssl: true
             preferred_ip_protocol: "ip4"
             fail_if_body_not_matches_regexp:
               - "MT-Rad"
+        # www leitet GET mit 301 auf den Apex um. Ohne Redirect prueft Blackbox
+        # das www-Zert selbst statt nur das Zertifikat der Zielseite.
+        http_301_mtrad_www:
+          prober: http
+          timeout: 15s
+          http:
+            valid_status_codes: [301]
+            method: GET
+            follow_redirects: false
+            fail_if_not_ssl: true
+            preferred_ip_protocol: "ip4"
+            fail_if_header_not_matches:
+              - header: Location
+                regexp: '^https://mt-rad\.de/$'
 
     # Blackbox-Exporter ist extrem leichtgewichtig
     resources:
