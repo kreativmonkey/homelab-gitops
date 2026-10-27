@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-it-tools
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: server
+  policyTypes:
+    - Egress
+  egress:
+    # Embedded outpost proxies authenticated requests to the static nginx UI.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: it-tools
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: it-tools
+      ports:
+        - protocol: TCP
+          port: 80

@@ -9,9 +9,9 @@ data:
   hubble.yaml: |
     version: 1
     metadata:
-      name: Homelab Hubble UI proxy
+      name: Homelab embedded proxy applications
       labels:
-        blueprints.goauthentik.io/description: Proxy provider, application and admin-only access for the Cilium Hubble UI
+        blueprints.goauthentik.io/description: Hubble UI and IT Tools proxy providers, applications and embedded outpost wiring
     entries:
       # Hubble UI has no login of its own. The embedded outpost serves
       # hubble.cluster.f4mily.net (Ingress authentik/hubble -> authentik-server)
@@ -59,6 +59,32 @@ data:
           enabled: true
           negate: false
           timeout: 30
+      # IT Tools has no native authentication. Keep its provider in this
+      # blueprint so it exists before the embedded outpost list is updated.
+      - model: authentik_providers_proxy.proxyprovider
+        id: it-tools-provider
+        identifiers:
+          name: "Provider for IT Tools"
+        attrs:
+          name: "Provider for IT Tools"
+          mode: proxy
+          external_host: https://tools.f4mily.net
+          internal_host: http://it-tools.it-tools.svc.cluster.local
+          internal_host_ssl_validation: false
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      - model: authentik_core.application
+        id: it-tools-app
+        identifiers:
+          slug: it-tools
+        attrs:
+          name: IT Tools
+          slug: it-tools
+          provider: !KeyOf it-tools-provider
+          group: Tools
+          launch_url: https://tools.f4mily.net
+          meta_launch_url: https://tools.f4mily.net
+          icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/it-tools.svg
       # The provider list is set as a whole: keep the providers that were
       # already on the embedded outpost (added via UI) or they get detached.
       # Add new outpost providers HERE, not in the UI.
@@ -70,3 +96,4 @@ data:
             - !Find [authentik_providers_proxy.proxyprovider, [name, "Provider for traefik-prod"]]
             - !Find [authentik_providers_proxy.proxyprovider, [name, "Provider for Teslamate Dashboard"]]
             - !KeyOf hubble-provider
+            - !KeyOf it-tools-provider

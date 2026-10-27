@@ -25,7 +25,7 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 - CNI: Cilium HelmRelease with its own Flux Kustomization `infra-cilium`; Flannel is deleted in the Omni template, kube-proxy stays. Cilium is excluded from Renovate automerge; config changes roll the agents. Flux cannot heal a broken CNI — emergency reinstall in `docs/runbooks/cilium.md`.
 - NetworkPolicies: standard NetworkPolicy under Cilium semantics plus one CCNP for host-network sources (`base/network/network-policies/cluster/`). Big policy changes go out under `policyAuditMode` first; see `docs/runbooks/network-policies-rollout.md`.
 - Never rely on `flux suspend` for infra Kustomizations: `flux-system` re-applies `clusters/main/infrastructure.yaml` and resets it.
-- `base/security/sa-no-token/`: `default` ServiceAccount with `automountServiceAccountToken: false` for every managed namespace. Kills the implicit API credential on all workloads that don't call the K8s API. Workloads that need API access use a dedicated SA with `automountServiceAccountToken: true` (remediation-api, n8n, mcp-server, ai-agents, operators). See issue #744.
+- `base/security/sa-no-token/`: `default` ServiceAccounts with `automountServiceAccountToken: false` for existing managed namespaces. New app-owned namespaces keep this ServiceAccount beside their Namespace manifest: `infra-base` runs before `apps`, so a central entry would block namespace creation. Workloads that need API access use a dedicated SA with `automountServiceAccountToken: true` (remediation-api, n8n, mcp-server, ai-agents, operators). See issue #744.
 
 # Work Guidance
 
