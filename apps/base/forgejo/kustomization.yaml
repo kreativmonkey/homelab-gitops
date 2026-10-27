@@ -4,7 +4,8 @@ resources:
   - namespace.yaml
   - pvc.yaml
   - deployment.yaml
-  - redis-deployment.yaml
+  - redis-service.yaml
+  - helmrelease.yaml
   - comments-tmpl.configmap.yaml
   # Forgejo Actions runner (see docs/migrations/forgejo-docker-to-kubernetes.md#phase-4).
   - runner-priorityclass.yaml

@@ -1,0 +1,95 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: forgejo-valkey
+  namespace: forgejo
+spec:
+  interval: 1h
+  timeout: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: valkey
+      version: "0.12.0"
+      sourceRef:
+        kind: HelmRepository
+        name: valkey-repo
+        namespace: flux-system
+  values:
+    fullnameOverride: forgejo-valkey
+    image:
+      registry: docker.io
+      repository: valkey/valkey
+      # renovate: datasource=docker depName=docker.io/valkey/valkey
+      tag: 9.1.2-alpine
+    podLabels:
+      app: forgejo-valkey
+    podSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    serviceAccount:
+      create: true
+      automount: false
+    service:
+      port: 6379
+    replica:
+      enabled: false
+    auth:
+      enabled: false
+    dataStorage:
+      enabled: false
+    deploymentStrategy: Recreate
+    # Ephemeral cache and sessions; leave 64Mi below the container limit for
+    # allocator overhead. Preserve the previous noeviction policy.
+    valkeyConfig: |
+      save ""
+      appendonly no
+      maxmemory 192mb
+      maxmemory-policy noeviction
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    initResources:
+      requests:
+        cpu: 5m
+        memory: 16Mi
+      limits:
+        memory: 64Mi
+    startupProbe:
+      enabled: false
+    livenessProbe:
+      enabled: true
+      customProbe:
+        tcpSocket:
+          port: 6379
+        initialDelaySeconds: 10
+        periodSeconds: 15
+        timeoutSeconds: 5
+        failureThreshold: 3
+    readinessProbe:
+      enabled: true
+      customProbe:
+        tcpSocket:
+          port: 6379
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
