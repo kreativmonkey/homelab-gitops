@@ -11,6 +11,7 @@ Application workloads deployed to the cluster. `base/<app>/` holds generic manif
 # Local Contracts
 
 - One folder per app under `base/<app>/` with its own `kustomization.yaml`.
+- New app namespaces include their `default` ServiceAccount with `automountServiceAccountToken: false` beside the Namespace manifest; `infra-base` runs before `apps`.
 - Standard software → HelmRelease (Flux-managed); raw manifests only when no chart.
 - Ingress annotations (every public app):
   - `nginx.org/ssl-redirect: "false"`

@@ -41,6 +41,7 @@ resources:
   - ../../base/netbird-operator
   # - ../../base/backrest            # wip: ingress only, no workload
   - ../../base/searxng
+  - ../../base/it-tools
   - ../../base/hister
   - ../../base/vikunja
   # - ../../base/unifi-controller    # disabled: dropped from catalog (DR test)
@@ -242,6 +243,16 @@ replacements:
       fieldPath: data.host_linkding
     targets:
       - select: {kind: Ingress, name: linkding}
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+  - source:
+      kind: ConfigMap
+      name: homelab-cluster-config
+      fieldPath: data.host_it_tools
+    targets:
+      - select: {kind: Ingress, name: it-tools}
         fieldPaths:
           - spec.rules.0.host
           - spec.tls.0.hosts.0
@@ -463,6 +474,8 @@ replacements:
       - select: {kind: Ingress, name: paperless}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: linkding}
+        fieldPaths: [spec.tls.0.secretName]
+      - select: {kind: Ingress, name: it-tools}
         fieldPaths: [spec.tls.0.secretName]
       - select: {kind: Ingress, name: readeck}
         fieldPaths: [spec.tls.0.secretName]
