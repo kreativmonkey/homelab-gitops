@@ -34,4 +34,5 @@ resources:
   - helmrelease.yaml
   - ingress.yaml
   - ingress-hubble.yaml
+  - ingress-it-tools.yaml
   - blueprint-check.cronjob.yaml

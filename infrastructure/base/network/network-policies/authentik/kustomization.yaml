@@ -12,3 +12,4 @@ components:
   - ../egress-mail
 resources:
   - allow-egress-hubble-ui.yaml
+  - allow-egress-it-tools.yaml

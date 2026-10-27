@@ -12,6 +12,7 @@ Application workloads deployed to the cluster. `base/<app>/` holds generic manif
 
 - One folder per app under `base/<app>/` with its own `kustomization.yaml`.
 - New app namespaces include their `default` ServiceAccount with `automountServiceAccountToken: false` beside the Namespace manifest; `infra-base` runs before `apps`.
+- Web UIs without native OIDC use an Authentik proxy provider on the embedded outpost. Place their public Ingress in `authentik`, route to `authentik-server`, and allow outpost-to-app traffic with matching egress and ingress NetworkPolicies.
 - Standard software → HelmRelease (Flux-managed); raw manifests only when no chart.
 - Ingress annotations (every public app):
   - `nginx.org/ssl-redirect: "false"`

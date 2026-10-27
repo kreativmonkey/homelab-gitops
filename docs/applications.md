@@ -64,7 +64,7 @@ here so it is obvious what is **planned** but not deployed:
 | netbird            | on     | DaemonSet (hostNetwork), routing to cluster |
 | backrest           | wip    | ingress only, missing HelmRelease         |
 | searxng            | on     | Deployment + ingress at search.f4mily.net |
-| it-tools           | on     | HelmRelease, static UI at tools.f4mily.net |
+| it-tools           | on     | HelmRelease, static UI via Authentik Proxy at tools.f4mily.net |
 | hister             | on     | Deployment, Postgres (CNPG) + index on PVC, hister.f4mily.net; SearXNG fallback |
 | vikunja            | on     | Deployment, Postgres (CNPG) + attachments on PVC, aufgaben.f4mily.net, Authentik OIDC only |
 | unifi-controller   | off    | removed from catalog (DR test)            |

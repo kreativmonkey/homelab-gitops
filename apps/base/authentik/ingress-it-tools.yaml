@@ -2,14 +2,15 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: it-tools
-  namespace: it-tools
+  # Embedded outpost authenticates requests before proxying to it-tools.
+  namespace: authentik
   annotations:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: IT Tools
     gethomepage.dev/description: Developer utilities
     gethomepage.dev/group: Cluster Management
     gethomepage.dev/icon: it-tools.png
-    gethomepage.dev/app: it-tools
+    gethomepage.dev/pod-selector: app.kubernetes.io/component=server
     nginx.org/ssl-redirect: "false"
     nginx.org/redirect-to-https: "true"
 spec:
@@ -26,6 +27,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: it-tools
+                name: authentik-server
                 port:
                   number: 80
