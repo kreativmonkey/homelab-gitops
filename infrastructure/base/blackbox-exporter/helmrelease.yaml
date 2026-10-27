@@ -76,6 +76,21 @@ spec:
               Host: rezepte.f4mily.net
             tls_config:
               server_name: rezepte.f4mily.net
+        # MT-Rad (mt-rad.de, statisch auf dem VPS hinter traefik). Eigenes Modul,
+        # weil http_2xx SNI auf home.f4mily.net festnagelt — das LE-Zert von
+        # mt-rad.de passt darauf nicht. Ohne tls_config gilt der Ziel-Host als
+        # SNI, so wird auch das www-Zert eigenstaendig geprueft. Der Body-Check
+        # faengt eine leere oder halb deployte Site ab (nginx 403 statt Seite).
+        http_2xx_mtrad:
+          prober: http
+          timeout: 15s
+          http:
+            valid_status_codes: [200]
+            method: GET
+            follow_redirects: true
+            preferred_ip_protocol: "ip4"
+            fail_if_body_not_matches_regexp:
+              - "MT-Rad"
 
     # Blackbox-Exporter ist extrem leichtgewichtig
     resources:

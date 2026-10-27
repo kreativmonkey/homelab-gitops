@@ -468,6 +468,17 @@ spec:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
 
+        - name: mt-rad
+          group: external
+          url: https://mt-rad.de/
+          interval: 60s
+          client: *external-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+             - "[BODY] == pat(*MT-Rad*)"
+             - "[CERTIFICATE_EXPIRATION] > 168h"
+
         - name: goloom
           group: external
           url: https://goloom.f4mily.net/healthz

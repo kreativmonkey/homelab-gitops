@@ -1,0 +1,22 @@
+# VMProbe für die MT-Rad-Site (mt-rad.de, VPS) – eigenes Modul http_2xx_mtrad
+# (SNI mt-rad.de + Body-Check). www folgt dem 301 auf den Apex.
+# Alarmierung ueber die generischen Regeln in homelab-blackbox
+# (EndpointDown, SSLCertExpiringSoon).
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMProbe
+metadata:
+  name: blackbox-http-mt-rad
+  namespace: monitoring
+  labels:
+    release: victoriametrics
+spec:
+  jobName: blackbox-http-mt-rad
+  vmProberSpec:
+    url: http://prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+  module: http_2xx_mtrad
+  targets:
+    static:
+      targets:
+        - https://mt-rad.de/
+        - https://www.mt-rad.de/
+  interval: 60s
