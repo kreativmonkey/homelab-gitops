@@ -26,7 +26,9 @@ spec:
         - name: redis
           image: docker.io/valkey/valkey:9.1.2-alpine
           imagePullPolicy: IfNotPresent
-          args: [valkey-server, --save, "", --appendonly, "no"]
+          # 192Mi leaves 64Mi below the container limit for RSS/allocator overhead.
+          # Keep the prior noeviction policy so sessions are not discarded.
+          args: [valkey-server, --save, "", --appendonly, "no", --maxmemory, 192mb, --maxmemory-policy, noeviction]
           ports:
             - containerPort: 6379
               name: redis

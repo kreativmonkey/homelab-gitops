@@ -26,7 +26,9 @@ spec:
         - name: valkey
           image: docker.io/valkey/valkey:9.1.2-alpine
           imagePullPolicy: IfNotPresent
-          args: [valkey-server, --save, "", --appendonly, "no"]
+          # 128Mi leaves 64Mi below the container limit for RSS/allocator overhead.
+          # Never evict Nextcloud file locks; reject writes if the cache fills.
+          args: [valkey-server, --save, "", --appendonly, "no", --maxmemory, 128mb, --maxmemory-policy, noeviction]
           ports:
             - name: redis
               containerPort: 6379
