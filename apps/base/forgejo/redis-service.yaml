@@ -1,0 +1,13 @@
+# Keep Forgejo's existing redis://forgejo-redis:6379/0 URL stable. The Valkey
+# chart uses separate resource names so Helm never has to adopt the old Service.
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo-redis
+  namespace: forgejo
+spec:
+  selector:
+    app: forgejo-valkey
+  ports:
+    - port: 6379
+      targetPort: 6379

@@ -9,6 +9,7 @@ resources:
   - nextcloud-s3-credentials.secret.yaml
   # Aktives App-Volume, node-lokal auf talos-cp1.
   - pvc-local.yaml
+  - valkey-deployment.yaml
   - whiteboard-deployment.yaml
   - appapi-harp-rbac.yaml
   - appapi-harp-deployment.yaml
