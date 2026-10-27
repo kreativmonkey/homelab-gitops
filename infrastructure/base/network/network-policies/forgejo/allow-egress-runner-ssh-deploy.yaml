@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-runner-ssh-deploy
+spec:
+  podSelector:
+    matchLabels:
+      app: forgejo-runner
+  policyTypes:
+    - Egress
+  egress:
+    # CI push deploys via rsync/SSH (MT-R/poc-hugo-sveltia → mt-rad.de VPS).
+    # Job containers run in the dind sidecar and leave with the pod's identity.
+    - to:
+        - ipBlock:
+            cidr: 91.99.145.19/32
+      ports:
+        - protocol: TCP
+          port: 22
