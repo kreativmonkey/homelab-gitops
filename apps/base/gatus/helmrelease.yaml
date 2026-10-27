@@ -347,6 +347,26 @@ spec:
              - "[STATUS] == 200"
              - "[RESPONSE_TIME] < 5000"
 
+        - name: kite
+          group: observability
+          url: https://kite.cluster.f4mily.net/healthz
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[STATUS] == 200"
+             - "[RESPONSE_TIME] < 5000"
+
+        # IT-Tools: public URL runs through the Authentik outpost (302 to
+        # login = outpost + ingress up), same pattern as Hubble.
+        - name: it-tools
+          group: core
+          url: https://tools.f4mily.net
+          interval: 60s
+          client: *default-dns
+          conditions:
+             - "[STATUS] < 400"
+             - "[RESPONSE_TIME] < 5000"
+
         - name: homer
           group: observability
           url: https://homer.cluster.f4mily.net
