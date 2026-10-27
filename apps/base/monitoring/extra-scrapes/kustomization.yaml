@@ -8,6 +8,8 @@ resources:
   - blackbox-vmprobe.yaml
   - blackbox-vmprobe-tandoor.yaml
   - blackbox-vmprobe-nextcloud.yaml
+  - blackbox-vmprobe-mt-rad.yaml
+  - blackbox-vmprobe-mt-rad-www.yaml
   - truenas-exporter-vmservicescrape.yaml
   - flux-vmpodscrape.yaml
   - fs-health-exporter-vmpodscrape.yaml
