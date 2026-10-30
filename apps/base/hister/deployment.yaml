@@ -30,7 +30,7 @@ spec:
       containers:
         - name: hister
           # renovate: datasource=docker depName=ghcr.io/asciimoo/hister
-          image: ghcr.io/asciimoo/hister:v0.20.0@sha256:5ffd0a702482c71010a67db8e6b567344189844ed42072d1b4cdae511b2aa7bb
+          image: ghcr.io/asciimoo/hister:v0.21.0@sha256:4dab1cbd7aabe8ade8e696e4085ecd3254e1170467c4502debec792a904abdbc
           imagePullPolicy: IfNotPresent
           env:
             - name: HISTER__SERVER__ADDRESS
