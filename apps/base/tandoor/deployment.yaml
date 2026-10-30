@@ -27,7 +27,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: tandoor
-          image: docker.io/vabene1111/recipes:2.6.15
+          image: docker.io/vabene1111/recipes:2.7.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
