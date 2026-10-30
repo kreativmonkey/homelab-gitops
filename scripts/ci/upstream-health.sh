@@ -13,7 +13,7 @@
 # Needs: node >= 24 (npx), python3, gh; GITHUB_TOKEN (or gh auth) for lookups.
 set -euo pipefail
 
-RENOVATE_VERSION="44.181.0" # renovate: datasource=npm depName=renovate
+RENOVATE_VERSION="44.198.3" # renovate: datasource=npm depName=renovate
 LABEL="upstream-health"
 TITLE="Upstream Health"
 cd "$(git rev-parse --show-toplevel)"
