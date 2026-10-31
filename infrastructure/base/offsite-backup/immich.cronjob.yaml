@@ -68,11 +68,32 @@ spec:
                 - -ec
                 - |
                   mkdir -p /staging/database
-                  primary="$(kubectl get pods -n cnpg-system \
-                    -l cnpg.io/cluster=immich-postgres,role=primary \
-                    -o jsonpath='{.items[0].metadata.name}')"
-                  kubectl exec -n cnpg-system "${primary}" -- \
-                    pg_dump -d immich -Fc > /staging/database/immich.dump
+                  attempts=32
+                  attempt=1
+                  while [ "${attempt}" -le "${attempts}" ]; do
+                    if primary="$(kubectl get pods -n cnpg-system \
+                      -l cnpg.io/cluster=immich-postgres,role=primary \
+                      -o jsonpath='{.items[0].metadata.name}')"; then
+                      if [ -z "${primary}" ]; then
+                        echo "Kein primaerer immich-postgres-Pod gefunden (Versuch ${attempt}/${attempts})"
+                      elif kubectl exec -n cnpg-system "${primary}" -- \
+                        pg_dump -d immich -Fc \
+                        > /staging/database/immich.dump.partial; then
+                        mv /staging/database/immich.dump.partial \
+                          /staging/database/immich.dump
+                        exit 0
+                      else
+                        echo "pg_dump ueber ${primary} fehlgeschlagen (Versuch ${attempt}/${attempts})"
+                      fi
+                    else
+                      echo "Primary-Abfrage fehlgeschlagen (Versuch ${attempt}/${attempts})"
+                    fi
+                    rm -f /staging/database/immich.dump.partial
+                    attempt=$((attempt + 1))
+                    [ "${attempt}" -le "${attempts}" ] && sleep 30
+                  done
+                  echo "FEHLER: Immich-Datenbankdump nach ${attempts} Versuchen fehlgeschlagen"
+                  exit 1
               volumeMounts:
                 - name: staging
                   mountPath: /staging

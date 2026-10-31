@@ -48,9 +48,10 @@ image-scan:
 security-scan:
     ./scripts/ci/security-scan.sh
 
-# Regression: Nextcloud offsite capture survives a container restart mid-tar (stubbed kubectl)
+# Regression: offsite captures retry failed pod operations (stubbed kubectl)
 offsite-capture-test:
     ./scripts/ci/offsite-capture-test.sh
+    ./scripts/ci/immich-dump-retry-test.sh
 
 # All schema-only stages (no Docker) — matches the old `just validate`.
 validate: ci-lint kustomize-validate helm-render offsite-capture-test
