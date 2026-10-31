@@ -70,13 +70,21 @@ spec:
                   mkdir -p /staging/database
                   attempts=32
                   attempt=1
+                  started_at="$(date +%s)"
+                  deadline=$((started_at + 1800))
                   while [ "${attempt}" -le "${attempts}" ]; do
-                    if primary="$(kubectl get pods -n cnpg-system \
+                    now="$(date +%s)"
+                    if [ "${now}" -ge "${deadline}" ]; then
+                      echo "Zeitbudget fuer Immich-Datenbankdump (30 Minuten) erschoepft"
+                      break
+                    fi
+                    if primary="$(kubectl --request-timeout=30s get pods -n cnpg-system \
                       -l cnpg.io/cluster=immich-postgres,role=primary \
                       -o jsonpath='{.items[0].metadata.name}')"; then
                       if [ -z "${primary}" ]; then
                         echo "Kein primaerer immich-postgres-Pod gefunden (Versuch ${attempt}/${attempts})"
-                      elif kubectl exec -n cnpg-system "${primary}" -- \
+                      elif timeout 10m kubectl exec -n cnpg-system \
+                        "${primary}" -- \
                         pg_dump -d immich -Fc \
                         > /staging/database/immich.dump.partial; then
                         mv /staging/database/immich.dump.partial \
@@ -92,7 +100,8 @@ spec:
                     attempt=$((attempt + 1))
                     [ "${attempt}" -le "${attempts}" ] && sleep 30
                   done
-                  echo "FEHLER: Immich-Datenbankdump nach ${attempts} Versuchen fehlgeschlagen"
+                  attempted=$((attempt - 1))
+                  echo "FEHLER: Immich-Datenbankdump nach ${attempted} Versuchen fehlgeschlagen"
                   exit 1
               volumeMounts:
                 - name: staging
