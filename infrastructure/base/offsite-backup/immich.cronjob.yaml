@@ -5,22 +5,24 @@ metadata:
   namespace: backup-offsite
   labels:
     # Opt-in fuer den generischen Job-Watchdog, siehe docs/runbooks/job-watchdog.md
-    # max-age = 24h Intervall + 8h activeDeadlineSeconds
+    # 5m Start-Deadline + 2h Job-Deadline: Stop bis ca. 02:36 Berlin
+    # inklusive 60s Pod-Terminierung, vor CNPG/Velero ab 02:45.
     homelab.f4mily.net/watchdog: "true"
-    homelab.f4mily.net/max-age-hours: "32"
-    homelab.f4mily.net/max-runtime-hours: "6"
+    homelab.f4mily.net/max-age-hours: "26"
+    homelab.f4mily.net/max-runtime-hours: "1.5"
 spec:
   # 00:30 Berlin: laeuft VOR dem Velero/CNPG-Backupfenster (UTC-gepinnt) und
   # muss dort nie hineinragen, siehe AGENTS.md.
   schedule: "30 0 * * *"
   timeZone: Europe/Berlin
   concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
       backoffLimit: 1
-      activeDeadlineSeconds: 28800
+      activeDeadlineSeconds: 7200
       template:
         spec:
           serviceAccountName: offsite-backup
@@ -68,11 +70,41 @@ spec:
                 - -ec
                 - |
                   mkdir -p /staging/database
-                  primary="$(kubectl get pods -n cnpg-system \
-                    -l cnpg.io/cluster=immich-postgres,role=primary \
-                    -o jsonpath='{.items[0].metadata.name}')"
-                  kubectl exec -n cnpg-system "${primary}" -- \
-                    pg_dump -d immich -Fc > /staging/database/immich.dump
+                  attempts=32
+                  attempt=1
+                  started_at="$(date +%s)"
+                  deadline=$((started_at + 1800))
+                  while [ "${attempt}" -le "${attempts}" ]; do
+                    now="$(date +%s)"
+                    if [ "${now}" -ge "${deadline}" ]; then
+                      echo "Zeitbudget fuer Immich-Datenbankdump (30 Minuten) erschoepft"
+                      break
+                    fi
+                    if primary="$(kubectl --request-timeout=30s get pods -n cnpg-system \
+                      -l cnpg.io/cluster=immich-postgres,role=primary \
+                      -o jsonpath='{.items[0].metadata.name}')"; then
+                      if [ -z "${primary}" ]; then
+                        echo "Kein primaerer immich-postgres-Pod gefunden (Versuch ${attempt}/${attempts})"
+                      elif timeout 10m kubectl exec -n cnpg-system \
+                        "${primary}" -- \
+                        pg_dump -d immich -Fc \
+                        > /staging/database/immich.dump.partial; then
+                        mv /staging/database/immich.dump.partial \
+                          /staging/database/immich.dump
+                        exit 0
+                      else
+                        echo "pg_dump ueber ${primary} fehlgeschlagen (Versuch ${attempt}/${attempts})"
+                      fi
+                    else
+                      echo "Primary-Abfrage fehlgeschlagen (Versuch ${attempt}/${attempts})"
+                    fi
+                    rm -f /staging/database/immich.dump.partial
+                    attempt=$((attempt + 1))
+                    [ "${attempt}" -le "${attempts}" ] && sleep 30
+                  done
+                  attempted=$((attempt - 1))
+                  echo "FEHLER: Immich-Datenbankdump nach ${attempted} Versuchen fehlgeschlagen"
+                  exit 1
               volumeMounts:
                 - name: staging
                   mountPath: /staging

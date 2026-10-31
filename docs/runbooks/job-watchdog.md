@@ -51,8 +51,9 @@ laeuft man genau da hinein.
 
 Grund: `kube_cronjob_status_last_successful_time` wird erst am **Ende** eines
 Laufs gesetzt, nicht beim Start. Ein täglicher Job mit `activeDeadlineSeconds:
-28800` (8h) braucht also mindestens `24h + 8h = 32h` — genau der Wert, den
-`immich-offsite-backup` und `nextcloud-offsite-backup` tragen.
+28800` (8h) braucht also mindestens `24h + 8h = 32h`. Immich hat bewusst eine
+2h-Deadline (`26h` max age), damit der Lauf vor dem CNPG/Velero-Fenster endet;
+Nextcloud behält 8h (`32h` max age).
 
 `max-runtime-hours` sollte knapp **unter** `activeDeadlineSeconds` liegen, damit
 die Warnung kommt, bevor Kubernetes den Job selbst killt.
@@ -78,7 +79,7 @@ Aktuell angemeldet:
 
 | CronJob | max-age-hours | max-runtime-hours |
 |---|---|---|
-| `backup-offsite/immich-offsite-backup` | 32 | 6 |
+| `backup-offsite/immich-offsite-backup` | 26 | 1.5 |
 | `backup-offsite/nextcloud-offsite-backup` | 32 | 6 |
 | `backup-offsite/offsite-restore-verify` | 174 | 5 |
 | `authentik/authentik-blueprint-check` | 3 | 1 |
