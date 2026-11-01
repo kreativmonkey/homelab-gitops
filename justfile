@@ -52,6 +52,7 @@ security-scan:
 offsite-capture-test:
     ./scripts/ci/offsite-capture-test.sh
     ./scripts/ci/immich-dump-retry-test.sh
+    ./scripts/ci/offsite-restic-probe-test.sh
 
 # All schema-only stages (no Docker) — matches the old `just validate`.
 validate: ci-lint kustomize-validate helm-render offsite-capture-test
