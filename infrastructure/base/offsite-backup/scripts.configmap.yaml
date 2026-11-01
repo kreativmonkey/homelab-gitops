@@ -62,12 +62,37 @@ data:
     # anzustellen.
     RETRY_LOCK="--retry-lock 30m"
 
+    repository_ready=false
     for delay in 1 2 4 8 16; do
-      restic snapshots >/dev/null 2>&1 && break
+      if restic cat config >/dev/null 2>&1; then
+        repository_ready=true
+        break
+      else
+        probe_status=$?
+      fi
+
+      case "${probe_status}" in
+        10)
+          # Only Restic's explicit "repository does not exist" status permits
+          # initialization. Another job may initialize it between probe/init.
+          if restic init >/dev/null 2>&1 \
+            || restic cat config >/dev/null 2>&1; then
+            repository_ready=true
+            break
+          else
+            probe_error="Restic-Repository fehlt, Initialisierung fehlgeschlagen"
+          fi
+          ;;
+        11) probe_error="Repository ist gesperrt (Exit 11)" ;;
+        12) probe_error="Repository-Passwort ist falsch (Exit 12)" ;;
+        *) probe_error="Repository-Pruefung fehlgeschlagen (Exit ${probe_status})" ;;
+      esac
+      echo "FEHLER: ${probe_error}; erneuter Versuch in ${delay}s"
       sleep "${delay}"
     done
-    if ! restic snapshots >/dev/null 2>&1; then
-      restic init || result=1
+    if [ "${repository_ready}" != true ]; then
+      echo "FEHLER: Restic-Repository nach begrenzten Versuchen nicht verfuegbar"
+      result=1
     fi
 
     # Verwaiste Locks abraeumen, bevor gesperrt wird. Stirbt ein Pod mitten in
