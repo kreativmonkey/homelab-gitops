@@ -12,6 +12,28 @@ kustomize build infrastructure/base/offsite-backup \
   > "$tmp/dump.sh"
 [ -s "$tmp/dump.sh" ] || { echo 'Immich dump script missing'; exit 1; }
 
+grep -Fq 'server: https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT_HTTPS}' "$tmp/dump.sh" \
+  || { echo 'Immich kubeconfig does not use the in-cluster HTTPS endpoint'; exit 1; }
+grep -Fq 'certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt' "$tmp/dump.sh" \
+  || { echo 'Immich kubeconfig does not verify the API server certificate'; exit 1; }
+grep -Fq 'tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token' "$tmp/dump.sh" \
+  || { echo 'Immich kubeconfig does not use the mounted token file'; exit 1; }
+if grep -Eq 'token:[[:space:]]|--token([=[:space:]])' "$tmp/dump.sh"; then
+  echo 'Immich kubeconfig exposes a token literal or token argument'
+  exit 1
+fi
+sed -n '/cat > "${KUBECONFIG}" <<KUBECONFIG_EOF/,/^KUBECONFIG_EOF$/p' "$tmp/dump.sh" \
+  > "$tmp/kubeconfig-setup.sh"
+[ -s "$tmp/kubeconfig-setup.sh" ] || { echo 'Immich kubeconfig setup missing'; exit 1; }
+KUBECONFIG="$tmp/kubeconfig" KUBERNETES_SERVICE_HOST=10.96.0.1 \
+  KUBERNETES_SERVICE_PORT_HTTPS=443 sh -ec "$(cat "$tmp/kubeconfig-setup.sh")"
+grep -Eq '^\s+server: https://10\.96\.0\.1:443$' "$tmp/kubeconfig" \
+  || { echo 'Immich kubeconfig does not render the concrete HTTPS endpoint'; exit 1; }
+if grep -Eq '\$\{?KUBERNETES_SERVICE_(HOST|PORT_HTTPS)' "$tmp/kubeconfig"; then
+  echo 'Immich kubeconfig retains unresolved Kubernetes service variables'
+  exit 1
+fi
+
 cat > "$tmp/bin/kubectl" <<'STUB'
 #!/bin/sh
 case "$*" in

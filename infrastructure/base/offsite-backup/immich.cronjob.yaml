@@ -69,6 +69,28 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
+                  export KUBECONFIG=/tmp/kubeconfig
+                  cat > "${KUBECONFIG}" <<KUBECONFIG_EOF
+                  apiVersion: v1
+                  kind: Config
+                  clusters:
+                    - name: in-cluster
+                      cluster:
+                        server: https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT_HTTPS}
+                        certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  users:
+                    - name: service-account
+                      user:
+                        tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+                  contexts:
+                    - name: in-cluster
+                      context:
+                        cluster: in-cluster
+                        user: service-account
+                        namespace: backup-offsite
+                  current-context: in-cluster
+                  KUBECONFIG_EOF
+                  chmod 600 "${KUBECONFIG}"
                   mkdir -p /staging/database
                   attempts=32
                   attempt=1
