@@ -266,3 +266,9 @@ patches:
       apiVersion: v1alpha1
       kind: KubeletConfig
       defaultRuntimeSeccompProfileEnabled: true
+      ---
+      # Incident canary: cap only vmstorage-1's TrueNAS LUN on cp3 at 4 MiB.
+      apiVersion: v1alpha1
+      kind: UdevRulesConfig
+      rules:
+        - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000639f212aeb3d50f604d", ATTR{queue/max_sectors_kb}="4096"
