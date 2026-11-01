@@ -73,8 +73,15 @@ spec:
       enabled: true
       spec:
         retentionPeriod: "1"
+        # Temporary incident mitigation: only vmstorage-0 remains routed.
+        # RF=1 makes vmselect surface loss of that sole store; new samples have one copy.
+        # Restore RF=2 and clear maintenance IDs after volume recovery and gap review.
+        replicationFactor: 1
         vmstorage:
           replicaCount: 2
+          # vmstorage-1 on talos-cp3 hit iSCSI EIO/fsync stalls; keep out of read/write routing.
+          maintenanceInsertNodeIDs: [1]
+          maintenanceSelectNodeIDs: [1]
           priorityClassName: homelab-infrastructure
           podDisruptionBudget:
             # 2 replicas, maxUnavailable 1 → minAvailable 1: one darf während
