@@ -24,7 +24,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: valkey
-          image: docker.io/valkey/valkey:9.1.2-alpine
+          image: docker.io/valkey/valkey:9.1.3-alpine
           imagePullPolicy: IfNotPresent
           # 128Mi leaves 64Mi below the container limit for RSS/allocator overhead.
           # Never evict Nextcloud file locks; reject writes if the cache fills.
