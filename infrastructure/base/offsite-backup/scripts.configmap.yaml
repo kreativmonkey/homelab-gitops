@@ -626,7 +626,8 @@ data:
       fi
     done
     if [ "${result}" -eq 0 ]; then
-      restic prune ${RETRY_LOCK} || fail "restic prune"
+      # Prune may queue behind another long-running job on the shared repo.
+      restic prune --retry-lock 2h || fail "restic prune"
     fi
 
     if [ "${result}" -eq 0 ]; then
