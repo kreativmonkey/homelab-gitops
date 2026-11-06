@@ -46,7 +46,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: fetch-omnictl
-          image: docker.io/alpine/k8s:1.37.1
+          image: docker.io/alpine/k8s:1.37.2
           env:
             - name: OMNICTL_VERSION
               # renovate: datasource=github-releases depName=siderolabs/omni
