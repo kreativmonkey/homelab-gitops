@@ -21,7 +21,9 @@ That makes a 4 MiB cap a plausible mitigation to test, not a verified root cause
 ## Correct approach
 
 The Omni Talos template uses separate node-local `UdevRulesConfig` rules,
-setting `queue/max_sectors_kb=4096` on block disk add/change events for exactly:
+setting `queue/max_sectors_kb=4096` on block disk add/change events for all
+TrueNAS WWIDs matching `naa.6589cfc000000*` on cp1/cp2/cp3. The five original
+exact rules remain after the prefix rule as fallbacks and canary history:
 
 | Workload | Node | LUN WWID | Evidence |
 | --- | --- | --- | --- |
@@ -39,26 +41,32 @@ and BUSY/QUEUE FULL. This motivates extending the bounded mitigation; it does
 not add another paired test or prove the root cause. The three additional
 LUNs above also had EIO at 8192 KiB in the 48-hour review, alongside SCST
 8 MiB allocation failures. Their capped runtime behavior remains unverified.
-Grafana showed latency only and is excluded. No rule covers unlisted LUNs or
-follows a volume to another node.
+After PR #1432, all five exact matches were verified live at 4096 KiB, but
+TrueNAS again logged thousands of `Allocation of sgv_pool_obj failed (size
+8388608)` errors per minute. The scope therefore expands to all connected
+TrueNAS LUNs; this remains mitigation, not a verified root-cause fix. The live
+inventory found 36 connected TrueNAS LUNs across cp1/cp2/cp3 with this prefix;
+QEMU OS disks had empty WWIDs. Recheck that inventory before rollout. The prefix
+also covers future matching LUNs and volumes moving between these nodes.
 
-Check each active value through the existing privileged democratic-CSI node
-pod on the corresponding node, using its host `/sys` mount. Set `wwid` to the
-matching table entry and find the block name first; do not assume `/dev/sdh`:
+[udev supports shell-glob matches](https://www.freedesktop.org/software/systemd/man/latest/udev.html).
+The Talos controller linked below writes rule strings unchanged to udev.
+
+Before and after reconciliation, inventory every disk through each existing
+privileged democratic-CSI node pod's host `/sys` mount:
 
 ```sh
-wwid=naa.6589cfc000000ac730d9232e23a9b285 # vmstorage-0 on cp2; select each table entry
-for f in /sys/block/*/device/wwid; do
-  if [ "$(cat "$f")" = "$wwid" ]; then
-    name=${f#/sys/block/}
-    name=${name%%/*}
-    echo "$name: $(cat "/sys/block/$name/queue/max_sectors_kb") KiB"
-  fi
+for disk in /sys/block/*; do
+  wwid=$(cat "$disk/device/wwid" 2>/dev/null || true)
+  printf '%s %s %s KiB\n' "${disk##*/}" "$wwid" "$(cat "$disk/queue/max_sectors_kb")"
 done
 ```
 
-Expect exactly one matching device per selected node and `4096`; verify
-neighbor LUNs retain their previous values. After reconciliation, monitor node
+Expect every connected TrueNAS-prefix LUN at `4096` on all three nodes;
+compare counts with the current inventory (36 at investigation time). Verify
+all other disks retain their recorded values. Resolve devices by WWID, never
+assume stable sdX names. Recheck after reconnect/re-add and cold boot.
+After reconciliation, monitor node
 write timeouts/EIO, vmstorage fsync failures/restarts and the TrueNAS SCST
 journal across representative workload. Quiet samples alone do not establish
 durable recovery. Review the rule and Omni desired config before rollout. Talos
@@ -69,24 +77,20 @@ and [Talos udev controller](https://github.com/siderolabs/talos/blob/v1.14.5/int
 
 ## Rollback
 
-For each LUN independently, removing its rule alone does **not** restore the
-existing device's sysfs queue limit. Change only the affected node/WWID
-declarative rule to `8192`, wait for Omni sync, identify the block device by its
-table WWID and verify its queue limit is `8192`. Only then
-remove the rule. If an immediate runtime rollback is needed, set the matched
-device's `/sys/block/<name>/queue/max_sectors_kb` to `8192` through the existing
-CSI node pod and follow with the declarative change to prevent drift.
-After the rule is removed, verify `8192` remains set and check again after a
-device re-add before considering rollback complete.
+Removing a rule alone does **not** restore the existing sysfs queue limit.
+First change the generic prefix rule on all three nodes to `8192`, keeping it
+before the five exact `4096` rules. Wait for Omni sync and verify all matching
+LUNs except those five are at `8192`; those five must remain at `4096` because
+the later exact assignments win. Only then remove the generic rules and check
+that state again, including after device re-add. Roll back an exact canary
+separately by changing its exact rule to `8192`, verifying, then removing it.
 
-Do not broaden these rules beyond the five listed LUN/node pairs without a
-separate measured trial. The VMCluster remains in its temporary single-copy
-maintenance routing while this is evaluated; restore its replication/routing
-only after the volume is recovered and data gaps are reviewed.
+The VMCluster remains in temporary single-copy maintenance routing; restore
+replication/routing only after volume recovery and data-gap review.
 
 ## Prevention
 
-Keep each rule restricted to its listed WWID and node; only vmstorage-1 has
-the paired write-test evidence above. Recheck the queue limit after a TrueNAS
-session reconnect, and remove the canary only after the underlying storage
-issue is resolved and the 8192 KiB behavior has been re-evaluated.
+Keep the prefix restricted to inventoried TrueNAS LUNs and retain the exact
+fallbacks until cluster-wide behavior is evaluated. Only vmstorage-1 has paired
+write-test evidence. Recheck after reconnect and remove the mitigation only
+after the underlying issue and 8192 KiB behavior have been re-evaluated.
