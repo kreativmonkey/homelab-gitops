@@ -191,6 +191,17 @@ patches:
       apiVersion: v1alpha1
       kind: KubeletConfig
       defaultRuntimeSeccompProfileEnabled: true
+      ---
+      # Bound exact cp2 LUNs with observed EIO/SCST correlation; mitigation only.
+      apiVersion: v1alpha1
+      kind: UdevRulesConfig
+      rules:
+        # vmstorage-0
+        - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000ac730d9232e23a9b285", ATTR{queue/max_sectors_kb}="4096"
+        # Forgejo
+        - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc00000051ef2a67bed1f50c37d", ATTR{queue/max_sectors_kb}="4096"
+        # Hister
+        - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000c7af97dafcebacefb8a", ATTR{queue/max_sectors_kb}="4096"
 ---
 kind: Machine
 name: faf974c8-e5cc-4962-a225-85aa137f70c1
@@ -267,8 +278,10 @@ patches:
       kind: KubeletConfig
       defaultRuntimeSeccompProfileEnabled: true
       ---
-      # Incident canary: cap only vmstorage-1's TrueNAS LUN on cp3 at 4 MiB.
+      # Exact cp3 LUN caps: original vmstorage-1 canary plus affected Jellyfin LUN.
       apiVersion: v1alpha1
       kind: UdevRulesConfig
       rules:
         - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000639f212aeb3d50f604d", ATTR{queue/max_sectors_kb}="4096"
+        # Jellyfin: correlated EIO/SCST incident; capped behavior still to verify.
+        - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000b4c73effd940a868d76", ATTR{queue/max_sectors_kb}="4096"
