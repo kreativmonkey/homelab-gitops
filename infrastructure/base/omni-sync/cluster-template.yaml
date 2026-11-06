@@ -116,6 +116,12 @@ patches:
       apiVersion: v1alpha1
       kind: KubeletConfig
       defaultRuntimeSeccompProfileEnabled: true
+      ---
+      # Cap TrueNAS iSCSI requests; local QEMU disks have no matching WWID.
+      apiVersion: v1alpha1
+      kind: UdevRulesConfig
+      rules:
+        - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000*", ATTR{queue/max_sectors_kb}="4096"
 ---
 kind: Machine
 name: 3ea7a37a-3c61-493f-8c1c-abeef304cd61
@@ -192,10 +198,12 @@ patches:
       kind: KubeletConfig
       defaultRuntimeSeccompProfileEnabled: true
       ---
-      # Bound exact cp2 LUNs with observed EIO/SCST correlation; mitigation only.
+      # Bound TrueNAS LUN requests; mitigation only.
       apiVersion: v1alpha1
       kind: UdevRulesConfig
       rules:
+        # All TrueNAS iSCSI LUNs; exact canary rules below remain as fallbacks.
+        - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000*", ATTR{queue/max_sectors_kb}="4096"
         # vmstorage-0
         - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000ac730d9232e23a9b285", ATTR{queue/max_sectors_kb}="4096"
         # Forgejo
@@ -282,6 +290,8 @@ patches:
       apiVersion: v1alpha1
       kind: UdevRulesConfig
       rules:
+        # All TrueNAS iSCSI LUNs; exact canary rules below remain as fallbacks.
+        - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000*", ATTR{queue/max_sectors_kb}="4096"
         - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000639f212aeb3d50f604d", ATTR{queue/max_sectors_kb}="4096"
         # Jellyfin: correlated EIO/SCST incident; capped behavior still to verify.
         - ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ATTRS{wwid}=="naa.6589cfc000000b4c73effd940a868d76", ATTR{queue/max_sectors_kb}="4096"
