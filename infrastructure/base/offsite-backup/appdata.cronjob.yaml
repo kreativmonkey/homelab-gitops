@@ -26,7 +26,7 @@ spec:
           terminationGracePeriodSeconds: 60
           initContainers:
             - name: prepare-rclone
-              image: docker.io/rclone/rclone:1.75.2
+              image: docker.io/rclone/rclone:1.76.0
               command: ["/bin/sh", "/scripts/prepare-rclone.sh"]
               env:
                 - name: STORAGEBOX_HOST
@@ -45,7 +45,7 @@ spec:
                   mountPath: /scripts
                   readOnly: true
             - name: restic-server
-              image: docker.io/rclone/rclone:1.75.2
+              image: docker.io/rclone/rclone:1.76.0
               restartPolicy: Always
               args:
                 - serve
@@ -59,7 +59,7 @@ spec:
                 - name: config
                   mountPath: /config
             - name: capture-appdata
-              image: docker.io/alpine/k8s:1.37.1
+              image: docker.io/alpine/k8s:1.37.2
               command: ["/bin/sh", "/scripts/appdata-capture.sh"]
               volumeMounts:
                 - name: scripts
