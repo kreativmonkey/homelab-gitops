@@ -1,4 +1,4 @@
-# Git SSH on ingress nodes (hostNetwork NGINX): ports 22 and 2222 → forgejo built-in SSH.
+# Git SSH on ingress nodes (hostNetwork NGINX): ports 22 and 2222 → OpenSSH in the rootful forgejo image.
 # Requires GlobalConfiguration listeners in infrastructure/base/network/ingress/helmrelease.yaml.
 apiVersion: k8s.nginx.org/v1
 kind: TransportServer
