@@ -19,8 +19,9 @@ spec:
         app.kubernetes.io/name: forgejo
     spec:
       enableServiceLinks: false
-      securityContext:
-        fsGroup: 1000
+      # No fsGroup: kubelet would chmod g+rw the volume on every mount and
+      # OpenSSH StrictModes then rejects /data/git/.ssh/authorized_keys.
+      # The rootful image fixes /data ownership itself before dropping to git.
       containers:
         - name: forgejo
           image: data.forgejo.org/forgejo/forgejo:17.0.1
