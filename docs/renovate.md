@@ -39,6 +39,7 @@ Aktuell legitime Marker:
 - Vollständige Image-Strings **innerhalb von HelmRelease-values / ConfigMap-Daten** (Nextcloud occ-Init-Container, Busybox-Helper)
 - Omni-Cluster-Template `kubernetes.version` / `talos.version` und die omnictl-Version (Env-`value:`) in `infrastructure/base/omni-sync/`
 - Datasource-Overrides (Readeck: Codeberg-Registry ist per Docker-Datasource nicht auflösbar → `gitea-tags`)
+- Lookup-Umleitung (Forgejo: `data.forgejo.org` liefert Mend wegen Anubis `no-result` → `overridePackageName` auf `codeberg.org/forgejo/forgejo`, gezogen wird weiter von `data.forgejo.org`)
 - Grafana-Plugins (Custom-Datasource gegen den grafana.com-Katalog)
 
 ## Gruppierung: ein PR pro App
