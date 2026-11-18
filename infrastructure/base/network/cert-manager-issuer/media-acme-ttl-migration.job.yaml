@@ -3,6 +3,9 @@ kind: Job
 metadata:
   name: media-acme-ttl-300-migration
   namespace: cert-manager
+  annotations:
+    # Renovate image updates change the immutable Job template; reruns are idempotent.
+    kustomize.toolkit.fluxcd.io/force: enabled
 spec:
   # Retain completion so Flux does not recreate this one-time migration.
   backoffLimit: 3
