@@ -151,3 +151,36 @@ run_appdata "Tandoor-Mount fehlt nach Tar" 0 0 2 1 1 yes ro 2 0
 run_appdata "kubectl exec scheitert vor Tar" 1 0 1 0 1 no ro 0 0
 run_appdata "kubectl exec scheitert nach Tar" 2 0 2 1 1 yes ro 0 0
 run_appdata "Tandoor-Tar scheitert" 0 0 1 1 1 empty ro 0 1
+
+# Quota: bounded retries for transient SSH failures; quota/parse errors stay fatal.
+awk '/^  storagebox-quota.sh: \|/ {on=1; next} on && /^  [a-z-]+\.sh: / {exit} on {sub(/^    /, ""); print}' \
+  infrastructure/base/offsite-backup/scripts.configmap.yaml > "$tmp/quota.sh"
+cat > "$tmp/bin/rclone" <<'STUB'
+#!/bin/sh
+n=$(($(cat "$T/quota-attempts" 2>/dev/null || echo 0) + 1))
+echo "$n" > "$T/quota-attempts"
+[ "$n" -gt "$QUOTA_FAILURES" ] || exit 1
+printf '%s\n' "$QUOTA_JSON"
+STUB
+cat > "$tmp/bin/sleep" <<'STUB'
+#!/bin/sh
+[ "$1" = 30 ] || exit 1
+echo retry >> "$T/quota-sleeps"
+STUB
+chmod +x "$tmp/bin/rclone" "$tmp/bin/sleep"
+quota_case() { # label, failures, JSON, expected rc, attempts, sleeps
+  rm -f "$tmp/quota-attempts"
+  : > "$tmp/quota-sleeps"
+  rc=0
+  T="$tmp" PATH="$tmp/bin:$PATH" MIN_FREE_BYTES=100 QUOTA_FAILURES="$2" QUOTA_JSON="$3" \
+    sh "$tmp/quota.sh" > "$tmp/quota-log" 2>&1 || rc=$?
+  [ "$rc" = "$4" ] && [ "$(cat "$tmp/quota-attempts")" = "$5" ] \
+    && [ "$(wc -l < "$tmp/quota-sleeps")" -eq "$6" ] \
+    || { echo "FAIL quota $1"; cat "$tmp/quota-log"; exit 1; }
+  echo "ok   quota $1"
+}
+quota_case success 0 '{"free":1000}' 0 1 0
+quota_case transient 2 '{"free":1000}' 0 3 2
+quota_case exhausted 9 '{"free":1000}' 1 3 2
+quota_case full 0 '{"free":99}' 1 1 0
+quota_case malformed 0 '{}' 1 1 0
