@@ -1,0 +1,98 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: media-acme-ttl-300-migration
+  namespace: cert-manager
+  annotations:
+    # Renovate image updates change the immutable Job template; reruns are idempotent.
+    kustomize.toolkit.fluxcd.io/force: enabled
+spec:
+  # Retain completion so Flux does not recreate this one-time migration.
+  backoffLimit: 3
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: media-acme-ttl-migration
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: python:3.15-slim
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          env:
+            - name: HETZNER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hetzner-api-token-secret
+                  key: api-token
+          command:
+            - python
+            - -c
+            - |
+              import json
+              import os
+              import sys
+              import time
+              import urllib.error
+              import urllib.request
+
+              BASE = "https://api.hetzner.cloud/v1"
+              RRSET = "/zones/f4mily.net/rrsets/_acme-challenge.media/TXT"
+
+              def request(path, payload=None):
+                  data = None if payload is None else json.dumps(payload).encode()
+                  req = urllib.request.Request(BASE + path, data=data, headers={
+                      "Authorization": "Bearer " + os.environ["HETZNER_TOKEN"].strip(),
+                      "Content-Type": "application/json",
+                  })
+                  try:
+                      with urllib.request.urlopen(req, timeout=15) as response:
+                          return json.load(response)
+                  except urllib.error.HTTPError as exc:
+                      raise RuntimeError(f"Hetzner API HTTP {exc.code}") from None
+                  except urllib.error.URLError:
+                      raise RuntimeError("Hetzner API connection failed") from None
+
+              def main():
+                  # v0.9.1 webhook adds records with TTL 300; migrated RRSet has
+                  # TTL 120. change_ttl preserves all existing TXT values.
+                  ttl = request(RRSET)["rrset"]["ttl"]
+                  if ttl == 300:
+                      print("Media ACME TXT TTL already 300; no change")
+                      return
+                  if ttl != 120:
+                      raise RuntimeError("Unexpected media ACME TXT TTL; refusing migration")
+                  request(RRSET + "/actions/change_ttl", {"ttl": 300})
+                  for _ in range(24):
+                      time.sleep(5)
+                      if request(RRSET)["rrset"]["ttl"] == 300:
+                          print("Media ACME TXT TTL normalized to 300")
+                          return
+                  raise RuntimeError("Media ACME TXT TTL update timed out")
+
+              if __name__ == "__main__":
+                  try:
+                      main()
+                  except Exception as exc:
+                      # Never print provider responses, credentials or tracebacks.
+                      detail = str(exc) if isinstance(exc, RuntimeError) else type(exc).__name__
+                      print("Media ACME TTL migration failed: " + detail, file=sys.stderr)
+                      sys.exit(1)
