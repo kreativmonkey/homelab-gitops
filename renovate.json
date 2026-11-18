@@ -176,6 +176,16 @@
       "enabled": false
     },
     {
+      "description": "Forgejo-Image: Lookup gegen data.forgejo.org scheitert auf den Mend-IPs dauerhaft mit no-result (Anubis), Drosselung per hostRules reicht nicht. Codeberg-Registry führt dasselbe Image mit denselben Tags; nur der Lookup wird umgeleitet, das gezogene Image bleibt data.forgejo.org.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "data.forgejo.org/forgejo/forgejo"
+      ],
+      "overridePackageName": "codeberg.org/forgejo/forgejo"
+    },
+    {
       "description": "Authentik: CalVer, gepinnt auf 2026.8.x — für ein Upgrade den Pin anheben. Chart und Server-Image gemeinsam, weil der Blueprint-Check-CronJob mit dem Image gegen dieselbe DB spricht wie der Worker — ein Versatz bedeutet ein anderes Django-Schema.",
       "matchDepNames": [
         "authentik",
