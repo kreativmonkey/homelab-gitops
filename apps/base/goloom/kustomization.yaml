@@ -6,4 +6,5 @@ resources:
   - gitrepository.yaml
   - helmrelease.yaml
   - ingress.yaml
-  - vmservicescrape.yaml
+# Goloom v0.3.3 has no Prometheus endpoint; /metrics serves SPA HTML.
+# Availability is monitored by the blackbox /healthz probe.
