@@ -172,4 +172,4 @@ spec:
         ensure: present
         login: true
         passwordSecret:
-          name: vikunja-db-credentials
+          name: vikunja-db-credentials-eso
