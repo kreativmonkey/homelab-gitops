@@ -26,6 +26,7 @@ KUSTOMIZE_PATHS=(
   infrastructure/overlays/disaster-recovery
   apps/overlays/main
   apps/overlays/main/hister-db-secret
+  apps/overlays/main/eso-db-secrets
   apps/overlays/main/monitoring-rules
   apps/base/netbird-operator/clusterproxy
 )
