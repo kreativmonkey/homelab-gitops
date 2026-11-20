@@ -64,12 +64,12 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-hister
+                  name: homelab-postgres-hister-eso
                   key: username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-hister
+                  name: homelab-postgres-hister-eso
                   key: password
             - name: HISTER__SERVER__DATABASE
               value: "host=homelab-postgres-rw.cnpg-system.svc.cluster.local user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) dbname=hister port=5432 sslmode=disable TimeZone=Europe/Berlin"
