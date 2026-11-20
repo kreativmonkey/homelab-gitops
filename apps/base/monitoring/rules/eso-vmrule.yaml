@@ -1,0 +1,32 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: external-secrets
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-monitoring
+    homelab/owner: platform
+spec:
+  groups:
+    - name: homelab.platform.eso
+      rules:
+        - alert: ExternalSecretsOperatorUnavailable
+          expr: |
+            absent(up{service="external-secrets-metrics",namespace="external-secrets"} == 1)
+          for: 15m
+          labels:
+            severity: warning
+            homelab_owner: platform
+          annotations:
+            summary: "External Secrets Operator liefert keine Metriken"
+            description: "Prüfe HelmRelease, Controller-Pod und Scrape-Ziel im Namespace external-secrets."
+        - alert: ExternalSecretSyncFailed
+          expr: |
+            externalsecret_status_condition{condition="Ready",status="False"} == 1
+          for: 15m
+          labels:
+            severity: warning
+            homelab_owner: platform
+          annotations:
+            summary: "ExternalSecret kann nicht synchronisieren"
+            description: "Prüfe Ready-Condition, SecretStore und Quell-Secret. Bestehende Kopien können veraltet sein."

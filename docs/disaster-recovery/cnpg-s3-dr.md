@@ -102,7 +102,6 @@ kubectl get database -A
 |--------|------|
 | SOPS (default) | `infrastructure/overlays/main/database-clusters/barman-s3-credentials.secret.yaml` |
 | Template | `barman-s3-credentials.secret.yaml.template` |
-| External Secrets | `external-secret.barman-s3.example.yaml` |
 
 ```bash
 cd infrastructure/overlays/main/database-clusters

@@ -2,6 +2,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - eso-vmservicescrape.yaml
   - velero-vmservicescrape.yaml
   - nginx-ingress-vmservicescrape.yaml
   - cnpg-vmpodscrape.yaml

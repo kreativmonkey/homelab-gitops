@@ -26,9 +26,7 @@ Credentials setzen, deployen.
 - OIDC-Client-Secrets ebenfalls doppelt: App-Seite hier (SOPS), Authentik-Seite
   (`!Env OIDC_<APP>_CLIENT_SECRET`) im privaten Repo `homelab-gitops-private`.
 - `apps/base/outline/valkey.yaml` enthält ein Passwort im Klartext.
-- ESO ist **nicht** installiert (nur `external-secret.barman-s3.example.yaml`
-  mit veralteter `v1beta1`-API). Reflector ist installiert, wird aber nur für
-  TLS-Secrets genutzt.
+- Vor Phase 1 war ESO nicht installiert. Reflector verteilt TLS-Secrets.
 - Velero sichert täglich/wöchentlich alle Namespaces inkl. Secrets.
 
 ## Klassifizierung
@@ -154,8 +152,9 @@ Cluster-Admins bleiben privilegierte Vertrauensinstanzen.
 Später bekommt jeder Store eine eigene Vault-Rolle mit denselben freigegebenen
 Pfaden. Ein gemeinsamer Vault-Token mit Vollzugriff würde die Trennung aufheben.
 
-**Bestands-RBAC vor dem Pilot prüfen.** RBAC ist additiv; neue Allowlist-Roles
-entziehen keine vorhandenen Rechte. Repo-Befunde, noch nicht live verifiziert:
+**Bestands-RBAC vor dem Pilot bewerten.** RBAC ist additiv. 292 Live-SARs
+bestätigten die folgenden Rechte. Hister läuft mit `hister/default` ohne
+automatisch gemounteten Token und hatte keine der 49 abgefragten Berechtigungen.
 
 - [`nextcloud/appapi-harp`](../../apps/base/nextcloud/appapi-harp-rbac.yaml)
   ist an `cluster-admin` gebunden. Damit besteht direkte Umgehung der
@@ -169,8 +168,11 @@ entziehen keine vorhandenen Rechte. Repo-Befunde, noch nicht live verifiziert:
   Workload-Templates patchen. Das ermöglicht indirekten Zugriff auf eingebundene
   Secrets oder auf die Identität eines Pods; ebenfalls privilegierter Zugang.
 
-Diese Rechte nicht im ESO-Spike verändern. Vor Phase 2 effektive Berechtigungen
-und explizite Ausnahmen dokumentieren; neue Stores allein lösen sie nicht.
+Weitere Plattformidentitäten mit direktem Zugriff sind unter anderem Velero,
+Flux, CNPG und Reflector. Auch `list/watch` kann vollständige Secret-Objekte
+liefern. Vor Phase 2 muss die Vertrauensgrenze für diese Identitäten akzeptiert
+oder ihr Zugriff eingeschränkt sein. Phase 1 enthält nur Plattformressourcen
+und einen Generator ohne konsumierendes ExternalSecret.
 
 Referenzen: [ESO Multi Tenancy](https://external-secrets.io/latest/guides/multi-tenancy/),
 [ESO Security](https://external-secrets.io/latest/guides/security-best-practices/),
@@ -216,43 +218,45 @@ Klären und Ergebnis samt Versionsstand festhalten:
       `Periodic`-Verbrauchern?
 - [x] Eigener Outline-Generator liefert genau 64 Hexzeichen entsprechend der
       Validierung der gepinnten App-Version; Test verwendet synthetischen Wert.
-- [ ] Flux-Prune mit echten Flux-Controllern testen; Annotation allein ist
-      noch kein Runtime-Nachweis.
-- [ ] Velero-Restore der Quellen bei deaktivierten Generatoren durchführen,
-      anschließend unveränderte Werte und Leser prüfen.
-- [ ] A2-Erstnutzung sperren, solange externe Sicherung des neuen Schlüssels
-      samt geprüftem Restore fehlt; Ablauf vor erster A2-Neuinstallation testen.
-- [ ] Cilium (separat im Cluster vor Phase 2): ESO-Controller braucht Egress zum API-Server; prüfen, ob die
-      NetworkPolicies in `secret-source`/ESO-Namespace etwas blocken.
-- [ ] Effektive Bestands-RBAC prüfen; insbesondere AppAPI-HaRP, NetBird-Proxy
-      und MCP-Workload-Patchrechte einschränken oder explizit als privilegierte
-      Vertrauensinstanzen freigeben.
+- [x] Flux-Prune mit source-controller und kustomize-controller v1.10.1 in
+      Kind 1.37.0: Zweite Revision entfernte das Kontrollobjekt. Annotiertes
+      immutable Secret behielt UID und Wert.
+- [x] Velero 1.18.2 im Homelab: genau ein synthetisches Secret gesichert und
+      ohne Generator in isolierten Zielnamespace restauriert. Identische
+      Bytes, `immutable` und Prune-Schutz bestätigt. Testobjekte entfernt.
+- [x] A2-Freigabereihenfolge mit synthetischem Schlüssel: age-Sicherung
+      außerhalb des Testclusters, Restore der Quelle bei deaktiviertem
+      Generator, Wertvergleich, dann Generator und Leser freigegeben. Die
+      erste ESO-Kopie enthielt exakt den ursprünglichen Wert.
+- [x] Cilium im Homelab: Pod unter Baseline und API-Egress löste den Service
+      auf und erreichte die Kubernetes-API per verifiziertem TLS (HTTP 401
+      ohne Token). Webhook und Scrape nach Phase-1-Sync live prüfen.
+- [x] Effektive Bestands-RBAC mit Live-SubjectAccessReviews erfasst.
 
 Ergebnisse und Grenzen: [ESO-Lifecycle-Learning](../learnings/eso-generated-secrets-lifecycle.md).
 Insbesondere kann ein Orphan-ExternalSecret trotz fehlender Quelle Ready melden.
-Phase 0 bleibt wegen Flux-Prune, Velero und Cilium offen; keine Pilot-Freigabe.
+Vor dem Pilot sind die Freigabe der privilegierten Identitäten und die
+Phase-1-Live-Prüfungen fällig. Vor erster A2-Neuinstallation muss der konkrete
+Offsite-Backup- und Restore-Ablauf samt Freigabe des Verbrauchers geprüft sein.
+Der Velero-Test belegt den Kubernetes-Objekt-Restore über den vorhandenen
+Backup-Speicher.
 
 ### Phase 1 – ESO-Plattform
 
-- `infrastructure/base/external-secrets/`: HelmRelease
-  (`charts.external-secrets.io`, Chart `external-secrets` 2.15.x, Renovate
-  trackt), CRDs über Chart (`installCRDs: true`), interner cert-controller.
-  `rbac.serviceAccountTokenCreate: false`; nur explizite Token-Delegation.
-- Flux-Reihenfolge: `infra-base` (Operator, `wait: true`) →
-  neue Kustomization `infra-secrets` (`secret-source`-Namespace,
-  `ClusterGenerator password-32`, Quell-RBAC, Quell-ExternalSecrets) →
-  Verbraucher-Namespaces + lokale Stores/Token-Delegation →
-  `infra-main` (CNPG-Cluster) / `apps`. Namespace/Store-Erzeugung darf nicht
-  vom erfolgreichen Start ihrer DB-abhängigen Apps abhängen.
-- PSA `restricted`, NetworkPolicy für ESO-Namespace.
-- Monitoring: ESO-Metriken scrapen; Alert auf
-  `externalsecret_status_condition{condition="Ready",status="False"}`.
-  Ein nicht synchrones Verbraucher-Secret würde sonst erst beim nächsten
-  Pod-Neustart auffallen. Zusätzlich Controller-Verfügbarkeit und fehlende
-  Quell-Secrets gegen die deklarierte Quellenliste überwachen; Ready allein
-  reicht bei `CreatedOnce` nicht als Existenznachweis.
-- `external-secret.barman-s3.example.yaml` löschen (veraltet, irreführend).
-- Doku: `infrastructure/AGENTS.md`, ADR `0005-external-secrets-operator.md`.
+- `infra-eso` installiert HelmRelease 2.15.0, CRDs, Webhook und cert-controller
+  mit PSA `restricted`, Netzwerk-Baseline und API-Egress. Die bestehende
+  Host-Netzwerk-Policy lässt API-Server zum Webhook durch.
+- `infra-secrets` wartet auf `infra-eso` und legt `secret-source` und den
+  `ClusterGenerator password-32` an. Eigenständige Kustomizations halten
+  eine fehlgeschlagene ESO-Installation vom bestehenden App-Rollout getrennt.
+- Das erste Quell-ExternalSecret und seine Reader-Roles, Stores und
+  Token-Delegation kommen mit dem Pilot. Die Überwachung fehlender Quell-Secrets
+  ergänzt dann den Controller- und Ready-Alert. Ready allein reicht bei
+  `CreatedOnce` nicht als Existenznachweis.
+- Nach Merge prüfen: Flux-Kustomizations und HelmRelease Ready, Deployment-
+  Verfügbarkeit, serverseitiges Dry-Run eines synthetischen ExternalSecret
+  durch den Webhook, aktiver Metrics-Scrape.
+- [ADR 0005](../adr/0005-external-secrets-operator.md) hält die Plattformgrenze fest.
 
 ### Übergabe bestehender SOPS-Secrets an ESO
 

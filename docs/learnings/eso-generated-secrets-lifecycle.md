@@ -78,9 +78,12 @@ Lebenszyklus-Absicherung, einschließlich der Übernahme von Template-Metadaten.
   klassifizieren: Outline `SECRET_KEY` ist A2 und verlangt 64 Hexzeichen;
   `UTILS_SECRET` ist ein nichtleeres Cron-Token. Der Spike prüft den eigenen
   `outline-key-64-hex`-Generator; Bestandswerte bleiben unverändert.
-- Noch offen: echter Flux-Prune, Velero-Restore, Cilium im Homelab,
-  Reloader-Rollouts und Authentik-Blueprint-Anwendung. Lokale OIDC-Kopien prüfen
-  die Verteilung des Werts, keinen vollständigen OIDC-Login.
+- Ergänzende Phase-0-Läufe bestätigten Flux-Prune an zwei Revisionen im
+  Wegwerf-Cluster, Velero-Restore eines einzelnen synthetischen Secrets und
+  Cilium-API-Egress im Homelab. Nachweise im Proposal. Für echte A2-Daten gilt
+  der separate Offsite-Restore vor Erstnutzung.
+- Reloader-Rollouts und der vollständige Authentik-Login bleiben Schritte der
+  späteren App-Migration.
 
 Referenzen: [Proposal](../proposals/eso-generated-secrets.md),
 [ESO Lifecycle](https://external-secrets.io/latest/guides/ownership-deletion-policy/),
