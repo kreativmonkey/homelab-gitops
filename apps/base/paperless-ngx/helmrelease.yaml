@@ -52,7 +52,7 @@ spec:
       PAPERLESS_DBPASS:
         valueFrom:
           secretKeyRef:
-            name: homelab-postgres-paperless
+            name: homelab-postgres-paperless-eso
             key: password
       # --- Redis (jetzt eigenständiges Deployment im selben Namespace) ---
       PAPERLESS_REDIS: redis://redis:6379
