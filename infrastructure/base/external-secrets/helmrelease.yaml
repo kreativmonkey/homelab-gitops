@@ -1,0 +1,62 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: external-secrets-repo
+  namespace: external-secrets
+spec:
+  interval: 24h
+  url: https://charts.external-secrets.io
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-secrets
+  namespace: external-secrets
+spec:
+  interval: 1h
+  releaseName: external-secrets
+  chart:
+    spec:
+      chart: external-secrets
+      version: "2.15.0"
+      sourceRef:
+        kind: HelmRepository
+        name: external-secrets-repo
+  values:
+    installCRDs: true
+    # Keep the reconciliation surface limited to namespaced pulls and generators.
+    crds:
+      createClusterExternalSecret: false
+      createClusterSecretStore: false
+      createPushSecret: false
+      createClusterPushSecret: false
+    processClusterExternalSecret: false
+    processClusterStore: false
+    processPushSecret: false
+    processClusterPushSecret: false
+    rbac:
+      # Future stores must delegate TokenRequest per named store SA.
+      serviceAccountTokenCreate: false
+    metrics:
+      service:
+        enabled: true
+    resources:
+      requests:
+        cpu: 25m
+        memory: 96Mi
+      limits:
+        memory: 256Mi
+    webhook:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 48Mi
+        limits:
+          memory: 128Mi
+    certController:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 48Mi
+        limits:
+          memory: 128Mi

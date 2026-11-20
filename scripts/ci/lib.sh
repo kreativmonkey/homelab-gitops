@@ -15,6 +15,8 @@ KUBECONFORM_ARGS=(
 # Ausnahme: clusters/main selbst hat keine kustomization.yaml (Flux liest die
 # Manifeste dort direkt) und ist deshalb kein Kustomize-Root.
 KUSTOMIZE_PATHS=(
+  infrastructure/base/external-secrets
+  infrastructure/base/secret-source
   infrastructure/base
   infrastructure/base/backup-schedules
   infrastructure/base/network/network-policies
