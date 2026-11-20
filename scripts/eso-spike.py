@@ -3,7 +3,7 @@
 
 Usage: nix develop -c just eso-spike
 Requires working Docker or Podman. Rootless Podman needs a delegated systemd scope:
-  systemd-run --user --scope -p Delegate=yes nix develop -c just eso-spike
+  KIND_EXPERIMENTAL_PROVIDER=podman systemd-run --user --scope -p Delegate=yes nix develop -c just eso-spike
 Never uses the caller's kubeconfig; never imports production data or manifests.
 """
 
@@ -11,6 +11,7 @@ import base64
 import json
 import os
 from pathlib import Path
+import re
 import secrets
 import shutil
 import signal
@@ -20,10 +21,9 @@ import tempfile
 import time
 
 
-# Official kind v0.33.0 release image; within CNPG 1.30's supported K8s range.
+# Official kind v0.33.0 release image.
 NODE_IMAGE = "docker.io/kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed"
-ESO_VERSION = "2.15.0"
-CNPG_CHART_VERSION = "0.29.1"
+ESO_VERSION = "2.15.0"  # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io
 SOURCE = "secret-source"
 READERS = {
     "spike-app-a": ["db-a", "oidc-a", "rotation"],
@@ -100,7 +100,7 @@ def resource(kind, name, namespace=None, **fields):
     return {"apiVersion": api, "kind": kind, "metadata": metadata, **fields}
 
 
-def source(name, policy="Orphan"):
+def source(name, policy="Orphan", generator="password-32"):
     obj = resource("ExternalSecret", name, SOURCE, spec={
         "refreshPolicy": "CreatedOnce",
         "target": {
@@ -111,7 +111,7 @@ def source(name, policy="Orphan"):
         },
         "dataFrom": [{"sourceRef": {"generatorRef": {
             "apiVersion": "generators.external-secrets.io/v1alpha1",
-            "kind": "ClusterGenerator", "name": "password-32",
+            "kind": "ClusterGenerator", "name": generator,
         }}}],
     })
     obj["metadata"]["annotations"] = {"kustomize.toolkit.fluxcd.io/prune": "disabled"}
@@ -183,6 +183,17 @@ def exercise(kubectl):
             "length": 32, "digits": 8, "symbols": 0, "allowRepeat": True,
         }},
     }))
+    apply(resource("ClusterGenerator", "outline-key-64-hex", spec={
+        "kind": "Password", "generator": {"passwordSpec": {
+            "length": 64, "digits": 0, "symbols": 64,
+            "symbolCharacters": "0123456789abcdef", "allowRepeat": True,
+            "encoding": "raw",
+        }},
+    }))
+    apply(source("outline-key", generator="outline-key-64-hex"))
+    eventually("Outline key generated", lambda: ready("externalsecret", "outline-key", SOURCE))
+    passed("Outline key matches pinned application's 64-hex format",
+           re.fullmatch(r"[0-9a-f]{64}", value(SOURCE, "outline-key") or "") is not None)
     for namespace, allowed in READERS.items():
         for account in ["store-reader", "application"]:
             apply(resource("ServiceAccount", account, namespace, automountServiceAccountToken=False))
@@ -370,9 +381,16 @@ def main():
             del os.environ[name]
     os.environ["HELM_DRIVER"] = "secret"
     os.environ.pop("HELM_DRIVER_SQL_CONNECTION_STRING", None)
-    for command in ["kind", "kubectl", "helm"]:
+    for command in ["kind", "kubectl", "helm", "yq"]:
         if not shutil.which(command):
             raise RuntimeError(f"Missing {command}; run inside nix develop")
+    # Use the same CNPG versions as the repo, with spike-only Helm values.
+    cnpg_release = Path(__file__).resolve().parents[1] / "infrastructure/base/database/cnpg/helmrelease.yaml"
+    chart_version, image_tag = json.loads(run([
+        "yq", "-o=json", "[.spec.chart.spec.version, .spec.values.image.tag]", str(cnpg_release),
+    ]).stdout)
+    if not all(isinstance(version, str) and version for version in (chart_version, image_tag)):
+        raise RuntimeError("CNPG HelmRelease must specify both chart version and image tag")
     # Never reuse a caller-supplied cluster, name or kubeconfig.
     select_local_runtime()
     cluster = "eso-spike-" + secrets.token_hex(16)
@@ -385,7 +403,7 @@ def main():
         os.environ["KUBECONFIG"] = config
         kubectl = ["kubectl", "--kubeconfig", config, "--context", context]
         helm = ["helm", "--kubeconfig", config, "--kube-context", context]
-        print(f"Create disposable {cluster}: K8s 1.36.4, ESO {ESO_VERSION}, CNPG chart {CNPG_CHART_VERSION}", flush=True)
+        print(f"Create disposable {cluster}: K8s 1.36.4, ESO {ESO_VERSION}, CNPG {image_tag} (chart {chart_version})", flush=True)
         try:
             run(["kind", "create", "cluster", "--name", cluster, "--image", NODE_IMAGE,
                  "--kubeconfig", config, "--wait", "180s"], timeout=600)
@@ -394,7 +412,8 @@ def main():
             for release, chart, repo, namespace, version, extra in [
                 ("external-secrets", "external-secrets", "https://charts.external-secrets.io", "external-secrets", ESO_VERSION,
                  ["--set", "rbac.serviceAccountTokenCreate=false", "--set", "processClusterStore=false"]),
-                ("cnpg", "cloudnative-pg", "https://cloudnative-pg.github.io/charts", "cnpg-system", CNPG_CHART_VERSION, []),
+                ("cnpg", "cloudnative-pg", "https://cloudnative-pg.github.io/charts", "cnpg-system", chart_version,
+                 ["--set-string", f"image.tag={image_tag}"]),
             ]:
                 print(f"Install {chart} {version}", flush=True)
                 run([*helm, "install", release, chart, "--repo", repo, "--version", version,

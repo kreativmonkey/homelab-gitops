@@ -3,7 +3,7 @@
 Stand: 2026-11-20. Runtime-Spike mit ESO 2.15.0, CNPG 1.30.1 (Chart 0.29.1)
 und Kubernetes 1.36.4 in einem lokalen Kind-Cluster. Ausschließlich synthetische
 Credentials; Produktions-Manifeste und Produktionscluster unverändert.
-Abschlusslauf: 40 Prüfungen erfolgreich, Passwortwechsel nach 2,5 Sekunden
+Abschlusslauf: 41 Prüfungen erfolgreich, Passwortwechsel nach 2,5 Sekunden
 beobachtet; Wegwerf-Cluster anschließend entfernt. Zeitwert ist Messung dieses
 Laufs, keine garantierte Reconciliation-Frist.
 
@@ -71,6 +71,13 @@ Lebenszyklus-Absicherung, einschließlich der Übernahme von Template-Metadaten.
 - Restore-Reihenfolge: Generatoren deaktiviert lassen, Quellwerte aus Backup
   wiederherstellen und prüfen, danach Generatoren und Verbraucher aktivieren.
   Zusätzlich zu Ready-Metriken fehlende Quell-Secrets überwachen.
+- Neue A2-Schlüssel vor erster Datennutzung unabhängig verschlüsselt sichern
+  und Restore prüfen. Der tägliche Velero-Zeitplan schützt das Zeitfenster vor
+  dem ersten Backup nicht; Quellen und Verbraucher deshalb getrennt freigeben.
+- Schlüssel nach tatsächlicher Nutzung und gepinnter App-Validierung
+  klassifizieren: Outline `SECRET_KEY` ist A2 und verlangt 64 Hexzeichen;
+  `UTILS_SECRET` ist ein nichtleeres Cron-Token. Der Spike prüft den eigenen
+  `outline-key-64-hex`-Generator; Bestandswerte bleiben unverändert.
 - Noch offen: echter Flux-Prune, Velero-Restore, Cilium im Homelab,
   Reloader-Rollouts und Authentik-Blueprint-Anwendung. Lokale OIDC-Kopien prüfen
   die Verteilung des Werts, keinen vollständigen OIDC-Login.

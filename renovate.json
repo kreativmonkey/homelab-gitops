@@ -28,12 +28,12 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Versions-Variablen in Shell-Skripten: `FOO_VERSION=\"1.2.3\" # renovate: datasource=X depName=Y`",
+      "description": "Versions-Variablen in Shell- und Python-Skripten: `FOO_VERSION=\"1.2.3\" # renovate: datasource=X depName=Y [registryUrl=Z]`",
       "managerFilePatterns": [
-        "/^scripts/.+\\.sh$/"
+        "/^scripts/.+\\.(sh|py)$/"
       ],
       "matchStrings": [
-        "[A-Z_]+_VERSION=\"(?<currentValue>[^\"]+)\"\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)"
+        "[A-Z_]+_VERSION[ \\t]*=[ \\t]*\"(?<currentValue>[^\"\\r\\n]+)\"[ \\t]*#[ \\t]*renovate:[ \\t]*datasource=(?<datasource>\\S+)[ \\t]+depName=(?<depName>\\S+)(?:[ \\t]+registryUrl=(?<registryUrl>\\S+))?"
       ]
     },
     {

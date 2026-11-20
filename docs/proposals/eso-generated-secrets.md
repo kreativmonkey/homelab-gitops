@@ -35,8 +35,8 @@ Credentials setzen, deployen.
 
 | Klasse | Inhalt | Ziel |
 |---|---|---|
-| **A1 – generierbar, Wechsel harmlos** | DB-Rollenpasswörter (App liest aus Env), JWT-/Session-Secrets, HMAC zwischen zwei Cluster-Komponenten, Valkey/Redis/Mongo-Passwörter, interne Tokens | ESO-Generator |
-| **A2 – generierbar, an Daten gebunden** | Schlüssel, mit denen persistente Daten verschlüsselt sind: `n8n-encryption-key`, `teslamate ENCRYPTION_KEY`, `goloom ENCRYPTION_KEY`, `SPARKY_FITNESS_API_ENCRYPTION_KEY`, `authentik secret-key`; Nextcloud-DB-Passwort (steht in `config.php` auf dem PVC) | ESO-Generator **nur bei Neuinstallation**; Bestand übernimmt den heutigen Wert; nie automatisch neu erzeugen |
+| **A1 – generierbar, Wechsel harmlos** | DB-Rollenpasswörter (App liest aus Env), JWT-/Session-Secrets, HMAC zwischen zwei Cluster-Komponenten, Valkey/Redis/Mongo-Passwörter, interne Tokens wie Outline `UTILS_SECRET` | ESO-Generator |
+| **A2 – generierbar, an Daten gebunden** | Schlüssel, mit denen persistente Daten verschlüsselt sind: `n8n-encryption-key`, `teslamate ENCRYPTION_KEY`, `goloom ENCRYPTION_KEY`, `SPARKY_FITNESS_API_ENCRYPTION_KEY`, `authentik secret-key`, Outline `SECRET_KEY`; Nextcloud-DB-Passwort (steht in `config.php` auf dem PVC) | ESO-Generator **nur bei Neuinstallation**; Bestand übernimmt den heutigen Wert; nie automatisch neu erzeugen |
 | **B – OIDC-Paar App ↔ Authentik** | `client-secret` von nextcloud, grafana, gatus, linkding, dawarich, vikunja, hister, outline, goloom, teslamate-grafana, linkwarden, sparkyfitness, tandoor/paperless (`SOCIALACCOUNT_PROVIDERS`) | ESO-Generator, beide Seiten lesen denselben Quellwert; `client-id` wird statischer Nicht-Secret-Wert |
 | **C – extern** | GitHub-/Renovate-Tokens, OpenAI-Keys, Hetzner-API, Storagebox + `restic-password`, Barman-/Velero-S3, TrueNAS-API/democratic-csi, NetBird, Omni, ntfy, Webhook-URLs, AdGuard, SMB, App-erzeugte API-Tokens (Immich, Paperless) | bleibt SOPS → später Vault |
 | **D – Bootstrap** | `sops-age`, Flux-Git-Credentials | bleibt außerhalb (Henne-Ei) |
@@ -91,6 +91,12 @@ Kernentscheidungen:
    getrennt geprüft; `Orphan` und `CreateOrMerge` sind nicht austauschbar.
    DR-Pfad bis Vault ist Velero: Quellen wiederherstellen und Werte prüfen,
    **bevor** Generator-ExternalSecrets und Verbraucher aktiviert werden.
+   Für jeden neuen A2-Schlüssel gilt zusätzlich: unabhängig vom Cluster
+   verschlüsselt sichern und Wiederherstellbarkeit samt identischem Wert
+   verifizieren, **bevor die App erstmals Daten damit schreibt**. Ein täglicher
+   Velero-Zeitplan deckt die Lücke zwischen Erzeugung und erstem Backup nicht.
+   GitOps-Gate: Quellen zunächst ohne Verbraucher/App aktivieren; erst nach
+   bestätigter externer Sicherung Verbraucher und App separat freigeben.
 4. **Getrennte Leser, gemeinsame Quellen.** Pro Verbraucher-Namespace ein
    `SecretStore homelab` mit eigener Store-ServiceAccount. Eine Role in
    `secret-source` erlaubt nur `get` mit expliziten `resourceNames`;
@@ -178,12 +184,14 @@ Referenzen: [ESO Multi Tenancy](https://external-secrets.io/latest/guides/multi-
 
 Reproduzierbar mit `nix develop -c just eso-spike`: eigener Kind-Cluster,
 isoliertes Kubeconfig, synthetische Werte, automatisches Aufräumen. Keine
-Produktions-Credentials, keine Tests auf `homelab-postgres`. ESO 2.15.0 und
-CNPG 1.30.1 (Chart 0.29.1, wie im Repo) gezielt pinnen.
+Produktions-Credentials, keine Tests auf `homelab-postgres`. ESO-Version mit
+Renovate-Pin im Skript; CNPG-Chartversion und Image-Tag werden aus der
+Repository-HelmRelease gelesen. Der dokumentierte Erstlauf verwendete ESO
+2.15.0 und CNPG 1.30.1 (Chart 0.29.1).
 
-Runtime-Ergebnis 2026-11-20: **40 Prüfungen erfolgreich** auf Kubernetes
+Runtime-Ergebnis 2026-11-20: **41 Prüfungen erfolgreich** auf Kubernetes
 1.36.4. Gemeinsame DB-/OIDC-Quellen, konkrete RBAC-Denials, Bestandsübernahme,
-Löschverhalten und Template-Refresh bestätigt. CNPG akzeptierte das neue
+Löschverhalten, Template-Refresh und Outline-Format bestätigt. CNPG akzeptierte das neue
 Passwort im letzten Lauf nach 2,5 Sekunden; das alte scheiterte an frischer
 TCP-Verbindung. Wegwerf-Cluster nach dem Lauf entfernt.
 
@@ -206,10 +214,14 @@ Klären und Ergebnis samt Versionsstand festhalten:
       Quellrechte; ESO kann kein Token einer unberechtigten SA erstellen.
 - [x] Rendert `target.template` neu, wenn sich die Quelle ändert, bei
       `Periodic`-Verbrauchern?
+- [x] Eigener Outline-Generator liefert genau 64 Hexzeichen entsprechend der
+      Validierung der gepinnten App-Version; Test verwendet synthetischen Wert.
 - [ ] Flux-Prune mit echten Flux-Controllern testen; Annotation allein ist
       noch kein Runtime-Nachweis.
 - [ ] Velero-Restore der Quellen bei deaktivierten Generatoren durchführen,
       anschließend unveränderte Werte und Leser prüfen.
+- [ ] A2-Erstnutzung sperren, solange externe Sicherung des neuen Schlüssels
+      samt geprüftem Restore fehlt; Ablauf vor erster A2-Neuinstallation testen.
 - [ ] Cilium (separat im Cluster vor Phase 2): ESO-Controller braucht Egress zum API-Server; prüfen, ob die
       NetworkPolicies in `secret-source`/ESO-Namespace etwas blocken.
 - [ ] Effektive Bestands-RBAC prüfen; insbesondere AppAPI-HaRP, NetBird-Proxy
@@ -267,10 +279,15 @@ Kustomizations hinweg.
    reload-Label). SOPS-Datei in `database-clusters/credentials/` entfernen.
 3. `hister`: ExternalSecret → `homelab-postgres-hister`. SOPS-Datei + Patch in
    `apps/overlays/main/db-secrets/` entfernen.
-4. CNPG setzt neues Passwort, App-Rollout über Reloader-Opt-in. Beide
-   Verbraucher synchronisieren unabhängig: Reloader garantiert keine Reihenfolge
-   zwischen Passwortänderung in PostgreSQL und App-Neustart. Kurzen
-   Verbindungsabbruch einplanen und frische Logins prüfen.
+4. Beim Pilot Reloader für die App zunächst deaktiviert lassen. Warten, bis
+   beide ExternalSecrets `Ready` sind und beide Ziel-Secrets den aktuellen
+   Quellwert enthalten; Werte geschützt vergleichen, nicht ausgeben.
+5. Frischen TCP-Login mit dem neuen Passwort prüfen: CNPG muss es bereits
+   angewendet haben. Erst danach App gezielt neu starten und ihre Verbindung
+   prüfen. Nach erfolgreicher Abnahme Reloader-Opt-in aktivieren.
+   Beide Verbraucher synchronisieren unabhängig; Reloader garantiert keine
+   Reihenfolge zwischen PostgreSQL-Passwortwechsel und App-Neustart. Weitere
+   Rotationen brauchen dieselben Freigabeschritte und ein Wartungsfenster.
 
 Runbook-Schritt festhalten → Vorlage für alle weiteren.
 
@@ -292,7 +309,12 @@ Jeweils einzeln nach der Übergabesequenz migrieren; App nach Passwortwechsel ne
 
 ### Phase 4 – Nextcloud + Klasse A2
 
+- Länge, Zeichensatz und Verwendungszweck jedes Schlüssels gegen die gepinnte
+  App-Version prüfen; `password-32` ist kein Universalformat für A2.
 - Bestandswerte übernehmen statt neu generieren (Verfahren aus Phase 0).
+  Bei Neuinstallationen gilt das A2-Backup-Gate vor erster Datennutzung:
+  Quellwert extern sichern, Restore und Wertgleichheit prüfen, dann erst
+  Verbraucher und App freigeben. Tägliches Velero allein reicht nicht.
   Prune-Schutz direkt am vorhandenen Quell-Secret setzen, bevor ESO es als
   immutable übernimmt; Template-Metadaten werden bei dieser Übernahme nicht
   nachgetragen.
@@ -300,13 +322,26 @@ Jeweils einzeln nach der Übergabesequenz migrieren; App nach Passwortwechsel ne
   Vault-Phase als SOPS-Secret *in `secret-source`* (eine Datei statt mehrerer),
   Verbraucher lesen trotzdem schon über den Store → Vault-Umzug später ohne
   Verbraucheränderung.
+- Outline `secret-key` (`SECRET_KEY`) verschlüsselt Daten. Bei Bestand oder Restore den
+  bisherigen Wert unverändert übernehmen. Nur bei leerer Neuinstallation
+  automatisch einmalig mit dem ESO-`ClusterGenerator outline-key-64-hex`
+  erzeugen und als gesichertes, unveränderliches Quell-Secret bereitstellen.
+  `passwordSpec` setzt `length: 64`, `digits: 0`, `symbols: 64`,
+  `symbolCharacters: "0123456789abcdef"`, `allowRepeat: true` und
+  `encoding: raw`. Die 64 gleichverteilten Hexzeichen entsprechen 256 Bit
+  Entropie und dem von Outline 1.10.1 (Chart 0.9.5) erwarteten Format
+  (`openssl rand -hex 32`).
+  [Chart-Pin](https://github.com/community-charts/helm-charts/blob/outline-0.9.5/charts/outline/Chart.yaml) ·
+  [Outline-Validierung](https://github.com/outline/outline/blob/v1.10.1/server/env.ts#L66-L81) ·
+  [ESO-Generator](https://github.com/external-secrets/external-secrets/blob/v2.15.0/generators/v1/password/password.go#L108-L139) ·
+  [Zufallsauswahl der Bibliothek](https://github.com/sethvargo/go-password/blob/v0.4.0/password/generate.go#L199-L217)
 - Nextcloud-DB-Passwort: nur mit Wartungsfenster, `config.php`
   (`dbpassword`) synchron anpassen.
 
 ### Phase 5 – Weitere A1-Secrets
 
 searxng, dawarich `SECRET_KEY_BASE`, tandoor/paperless `SECRET_KEY`,
-outline `secret-key`/`utils-secret` + `outline-valkey` (Klartext!),
+Outline `UTILS_SECRET` (nichtleeres Cron-Token) und `outline-valkey` (Klartext!),
 vikunja `jwt-secret`, linkwarden `NEXTAUTH_SECRET`/`MEILI_MASTER_KEY`,
 nextcloud-collab, remediation-api `hmac-secret`, ainsel
 `internal-validate-secret`, spectrumknx, unifi Mongo, sparkyfitness
@@ -318,9 +353,21 @@ nextcloud-collab, remediation-api `hmac-secret`, ainsel
 - Quelle `oidc-<app>` in `secret-source`.
 - Authentik: pro App ein ExternalSecret → `authentik-oidc-client-secrets-<app>`
   (gleicher Name wie heute, `envFrom` am Worker bleibt). Entsprechende Dateien
-  im privaten Repo entfernen.
+  im privaten Repo nach der gemeinsamen SOPS→ESO-Übergabesequenz entfernen.
+  Warten, bis ExternalSecret `Ready` ist und das Ziel den Quellwert enthält.
+- Authentik-Worker nach Secret-Übernahme neu starten; `envFrom` aktualisiert
+  laufende Container nicht. Rollout vollständig abwarten, alte Worker müssen
+  beendet sein. Danach Anwendung des zugehörigen Blueprints und richtigen
+  Providerwert geschützt verifizieren. Worker-Ready oder erfolgreiche
+  OIDC-Discovery allein beweisen keine Übernahme des Client-Secrets; siehe
+  [Worker-Rollout-Learning](../learnings/authentik-blueprint-worker-rollout.md).
 - App-Seite: ExternalSecret → `<app>-authentik-oauth`; für
   `SOCIALACCOUNT_PROVIDERS` (JSON) per `target.template`.
+  App-Reloader während Cutover deaktivieren. Erst nach bestätigter
+  Authentik-Übernahme und `Ready` samt gleichem Wert auf App-Seite die App
+  neu starten und vollständigen OIDC-Login prüfen. Danach Reloader wieder
+  freigeben. Bei neuem Secret ist bis zum App-Cutover ein Login-Ausfall möglich;
+  deshalb pro App ein Wartungsfenster vorsehen.
 - Blueprint-Abschnitt in `AGENTS.md` (§ OIDC / Authentik Blueprint Onboarding)
   auf den neuen Ablauf umschreiben: kein manuelles Secret mehr.
 
@@ -331,12 +378,18 @@ nextcloud-collab, remediation-api `hmac-secret`, ainsel
   funktioniert auch bei ausgefallenem Authentik. Unseal, Erreichbarkeit und
   unabhängige Backups im eigenen Proposal festlegen; ein einzelner srv1 bleibt
   ein Ausfallpunkt.
-- `PushSecret` aller Quellen aus `secret-source` nach Vault, dann
+- Bestehende Werte per `PushSecret` aus `secret-source` mit
+  `selector.secret` bytegenau nach Vault übertragen. `updatePolicy: IfNotExists`
+  und `deletionPolicy: None` erhalten bereits vorhandene Zielwerte und lassen
+  sie beim Entfernen des PushSecrets bestehen. Vor der Umstellung Werte
+  abgleichen, da `IfNotExists` auch abweichende Zielwerte stehen lässt. Dann
   lokale `SecretStore homelab` auf `provider: vault` mit jeweils eingeschränkter
-  Vault-Rolle (Kubernetes-Auth, `audiences: [vault]`) umstellen. Erst nach
-  verifiziertem Transfer alle Leser umstellen und alte Writer deaktivieren.
-  Generatoren erzeugen danach nur noch für
-  neue Einträge (`PushSecret` mit `selector.generatorRef`).
+  Vault-Rolle (Kubernetes-Auth, `audiences: [vault]`) umstellen und alte Writer
+  deaktivieren.
+- `selector.generatorRef` nur für neue Vault-Einträge mit
+  `updatePolicy: IfNotExists` und `deletionPolicy: None` verwenden. Der Default
+  `Replace` kann bei jedem Refresh einen neu generierten Wert schreiben.
+  [PushSecret-API in ESO 2.15](https://github.com/external-secrets/external-secrets/blob/v2.15.0/apis/externalsecrets/v1alpha1/pushsecret_types.go#L57-L111)
 - Klasse C von SOPS nach Vault; SOPS bleibt nur für Bootstrap (D).
 
 ---
@@ -365,6 +418,7 @@ benötigte. Danach fehlen für „clone & deploy" noch:
 | Risiko | Gegenmaßnahme |
 |---|---|
 | Quelle und Generator-Status verloren → neuer Wert, A2-Daten unlesbar | immutable + prune disabled + kein ownerReference; geprüfter Restore vor Generator-Aktivierung; A2 zuerst nach Vault |
+| Neuer A2-Schlüssel geht vor erstem Backup verloren | Unabhängige verschlüsselte Sicherung und Restore-Prüfung vor erster Datennutzung; Verbraucher bis dahin gesperrt |
 | ESO down | Bestehende Secrets bleiben; nur neue/geänderte hängen. Alert auf Ready=False |
 | Klartext-Werte jetzt in Velero-Backups | War bei den entschlüsselten Secrets schon so; Velero-Bucket-Zugriff prüfen |
 | Store kann fremde Quellwerte lesen | Eigene Identität je Store; `get` + `resourceNames`; positive und negative Integrationstests |
