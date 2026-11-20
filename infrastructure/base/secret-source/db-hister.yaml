@@ -1,0 +1,50 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: db-hister
+  namespace: secret-source
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    creationPolicy: Orphan
+    immutable: true
+    template:
+      metadata:
+        annotations:
+          kustomize.toolkit.fluxcd.io/prune: disabled
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: ClusterGenerator
+          name: password-32
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: read-db-hister
+  namespace: secret-source
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get]
+    resourceNames: [db-hister]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-db-hister
+  namespace: secret-source
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: read-db-hister
+subjects:
+  - kind: ServiceAccount
+    name: eso-store-reader
+    namespace: hister
+  - kind: ServiceAccount
+    name: eso-store-reader
+    namespace: cnpg-system
