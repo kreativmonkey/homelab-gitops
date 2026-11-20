@@ -6,8 +6,8 @@ Clusterinterne Credentials (DB-Passwörter, Session-/JWT-Keys, OIDC-Client-Secre
 zwischen App und Authentik) werden nicht mehr als SOPS-Dateien gepflegt, sondern
 einmalig im Cluster von ESO erzeugt und an die Verbraucher verteilt. SOPS bleibt
 nur für echte Fremd-Credentials. Der Secret-Store ist hinter einem
-`ClusterSecretStore`-Namen abstrahiert, damit später Vault/OpenBao ohne Umbau der
-Verbraucher dahinter treten kann.
+namespace-lokalen `SecretStore`-Namen abstrahiert, damit später Vault/OpenBao
+ohne Umbau der Verbraucher dahinter treten kann.
 
 Langfristziel: Repo forken, Domain + eine überschaubare Liste externer
 Credentials setzen, deployen.
@@ -57,8 +57,9 @@ er darf nie nur im Cluster existieren.
    (password-32) │  refreshPolicy: CreatedOnce                    <name>  │
                  └──────────────────────────────────────────────┬────────┘
                                                                 │ liest
-                                    ClusterSecretStore "homelab" (provider: kubernetes,
-                                    remoteNamespace: secret-source)   ← später provider: vault
+                                    Je Verbraucher-Namespace: SecretStore "homelab"
+                                    eigene Store-SA + erlaubte Quellnamen
+                                    provider: kubernetes → später provider: vault
                                                                 │
           ┌───────────────────────────┬─────────────────────────┼──────────────────┐
           ▼                           ▼                         ▼                  ▼
@@ -74,22 +75,28 @@ Kernentscheidungen:
    ExternalSecrets mit demselben Generator erzeugen zwei *verschiedene* Werte
    (auch `ClusterExternalSecret`). Deshalb erzeugt genau ein ExternalSecret den
    Wert im Namespace `secret-source`; alle Verbraucher (inkl. `cnpg-system`)
-   lesen ihn über den `ClusterSecretStore` `homelab` (kubernetes-Provider).
+   lesen ihn über ihren lokalen `SecretStore homelab` (kubernetes-Provider).
 2. **Store-Name als Abstraktion.** Verbraucher kennen nur
-   `secretStoreRef: {kind: ClusterSecretStore, name: homelab}` und einen Key.
-   Vault-Migration = Werte per `PushSecret` nach Vault schieben, Store-Provider
-   umstellen. Verbraucher-Manifeste bleiben unverändert.
+   `secretStoreRef: {kind: SecretStore, name: homelab}` und einen Key.
+   Vault-Migration = Werte per `PushSecret` nach Vault schieben und
+   jeden Store-Provider umstellen. Vault-Pfade und Properties müssen dieselben
+   Keys abbilden; Verbraucher-Manifeste bleiben unverändert.
 3. **Generate-once-Absicherung** für Quell-Secrets:
-   `refreshPolicy: CreatedOnce`, `target.creationPolicy: Orphan` bzw.
-   `CreateOrMerge` (kein ownerReference → Löschen des ExternalSecrets löscht
+   `refreshPolicy: CreatedOnce`, `target.creationPolicy: Orphan`
+   (kein ownerReference → Löschen des ExternalSecrets löscht
    das Secret nicht), `target.immutable: true`, Flux-Annotation
-   `kustomize.toolkit.fluxcd.io/prune: disabled`. Restrisiko: wird das
-   *Secret* gelöscht, entsteht ein neuer Wert → DR-Pfad bis Vault ist Velero
-   (sichert `secret-source` täglich mit).
-4. **Zugriffsbegrenzung.** `ClusterSecretStore.spec.conditions` begrenzt auf
-   Namespaces mit Label `homelab.f4mily.net/secrets: "true"`. Der
-   ServiceAccount des Stores darf nur in `secret-source` Secrets lesen (Role,
-   nicht ClusterRole).
+   `kustomize.toolkit.fluxcd.io/prune: disabled` am ExternalSecret und
+   Quell-Secret. `immutable` verhindert Änderungen, keine Löschung.
+   Verhalten nach Secret-Löschung und ExternalSecret-Neuanlage wird in Phase 0
+   getrennt geprüft; `Orphan` und `CreateOrMerge` sind nicht austauschbar.
+   DR-Pfad bis Vault ist Velero: Quellen wiederherstellen und Werte prüfen,
+   **bevor** Generator-ExternalSecrets und Verbraucher aktiviert werden.
+4. **Getrennte Leser, gemeinsame Quellen.** Pro Verbraucher-Namespace ein
+   `SecretStore homelab` mit eigener Store-ServiceAccount. Eine Role in
+   `secret-source` erlaubt nur `get` mit expliziten `resourceNames`;
+   kein pauschales `list/watch`, kein `dataFrom.find`. RoleBinding verbindet
+   diese Role mit der Store-SA des Verbrauchers. App-Pods nutzen eine andere
+   ServiceAccount ohne Quellrechte und erhalten lokale Secret-Kopien.
 5. **Verbraucher-Secrets dürfen sich ändern** (`refreshPolicy: Periodic`,
    z. B. `1h`, `creationPolicy: Owner`) – sie sind reine Kopien. So greift eine
    bewusste Rotation in der Quelle automatisch überall.
@@ -102,47 +109,156 @@ Kernentscheidungen:
    ExternalSecret mit `target.template`, das beide Quellen zusammenführt –
    erst wenn C-Secrets ebenfalls über den Store kommen (Vault-Phase).
 
+### Zugriffsvertrag
+
+Ein Quell-Secret darf mehreren Lesern gehören. Zugriff wird pro vollständigem
+Secret-Objekt vergeben, nicht pro Datenfeld; deshalb getrennte Quellen für
+DB-Passwort, OIDC-Paar und weitere App-Schlüssel.
+
+| Store im Namespace | Erlaubte Quellen (Beispiel) |
+|---|---|
+| `hister` | `db-hister`, `oidc-hister`, eigene App-Schlüssel |
+| `outline` | `db-outline`, `oidc-outline`, eigene App-Schlüssel |
+| `cnpg-system` | DB-Credentials der dort verwalteten Cluster |
+| `authentik` | benötigte OIDC-Paare sowie eigene DB-/App-Credentials |
+
+`db-hister` wird einmal erzeugt und von Hister sowie CNPG gelesen;
+`oidc-hister` einmal erzeugt und von Hister sowie Authentik gelesen.
+Outline darf beide nicht lesen. Separate CNPG-Namespaces erhalten eigene Stores
+mit den Credentials ihrer Cluster.
+
+Ein gemeinsamer breit berechtigter `ClusterSecretStore` entfällt: dessen
+`conditions` beschränkt nur Namespaces, keine Quellnamen pro Namespace.
+Getrennte Store-Namen ohne getrennte Identitäten wären ebenfalls unzureichend.
+
+ESO: `rbac.serviceAccountTokenCreate: false`; pro Store-SA eine Role im
+Verbraucher-Namespace mit `create` auf `serviceaccounts/token` und genau deren
+Namen in `resourceNames`, gebunden an die ESO-Controller-SA. Store-SA setzt
+`automountServiceAccountToken: false`. Store-SA benötigt außerdem die
+clusterweite Berechtigung für `SelfSubjectRulesReview`; vorhandene
+`system:basic-user`-Berechtigung prüfen, nicht pauschal zusätzliche Rechte vergeben.
+
+Stores, Quell-RBAC und Token-Delegation verwaltet ausschließlich die Plattform
+via Flux. App-ServiceAccounts dürfen keine ESO-Ressourcen, RBAC oder fremden
+Workloads verändern. Ein Namespace bildet die Vertrauensgrenze: wer dort Pods
+erstellen darf, kann dortige Secrets und ServiceAccounts verwenden. Getrennte
+Apps mit getrenntem Vertrauensniveau benötigen getrennte Namespaces. ESO und
+Cluster-Admins bleiben privilegierte Vertrauensinstanzen.
+
+Später bekommt jeder Store eine eigene Vault-Rolle mit denselben freigegebenen
+Pfaden. Ein gemeinsamer Vault-Token mit Vollzugriff würde die Trennung aufheben.
+
+**Bestands-RBAC vor dem Pilot prüfen.** RBAC ist additiv; neue Allowlist-Roles
+entziehen keine vorhandenen Rechte. Repo-Befunde, noch nicht live verifiziert:
+
+- [`nextcloud/appapi-harp`](../../apps/base/nextcloud/appapi-harp-rbac.yaml)
+  ist an `cluster-admin` gebunden. Damit besteht direkte Umgehung der
+  Quell-Isolation. Vor Pilot einschränken oder ausdrücklich als privilegierte
+  Plattformkomponente freigeben; kein Versprechen vollständiger App-Isolation
+  bei unverändertem Binding.
+- [`netbird/clusterproxy-homelab`](../../apps/base/netbird-operator/clusterproxy-rbac.yaml)
+  darf Benutzer/Gruppen impersonieren, einschließlich administrativer
+  Identitäten. Dieser Proxy gehört zum privilegierten Vertrauensbereich.
+- [`ai-agents/mcp-laptop`](../../apps/base/ai-agents/rbac.yaml) darf clusterweit
+  Workload-Templates patchen. Das ermöglicht indirekten Zugriff auf eingebundene
+  Secrets oder auf die Identität eines Pods; ebenfalls privilegierter Zugang.
+
+Diese Rechte nicht im ESO-Spike verändern. Vor Phase 2 effektive Berechtigungen
+und explizite Ausnahmen dokumentieren; neue Stores allein lösen sie nicht.
+
+Referenzen: [ESO Multi Tenancy](https://external-secrets.io/latest/guides/multi-tenancy/),
+[ESO Security](https://external-secrets.io/latest/guides/security-best-practices/),
+[Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
+
 ---
 
 ## Phasen
 
-### Phase 0 – Spike (Test-Namespace, kein Prod-Einfluss)
+### Phase 0 – Spike (lokaler Wegwerf-Cluster, kein Prod-Einfluss)
 
-Klären, was die Doku offen lässt (ESO 2.15):
+Reproduzierbar mit `nix develop -c just eso-spike`: eigener Kind-Cluster,
+isoliertes Kubeconfig, synthetische Werte, automatisches Aufräumen. Keine
+Produktions-Credentials, keine Tests auf `homelab-postgres`. ESO 2.15.0 und
+CNPG 1.30.1 (Chart 0.29.1, wie im Repo) gezielt pinnen.
 
-- [ ] `CreatedOnce` + `creationPolicy` + `immutable`: Verhalten bei
-      (a) ExternalSecret löschen/neu anlegen, (b) Flux-Prune, (c) Secret
-      existiert bereits mit anderem Wert. Ergebnis entscheidet das
-      Übernahmeverfahren für Klasse A2.
-- [ ] CNPG: ändert sich das Rollenpasswort bei inline `managed.roles` wirklich
-      sofort (mit `cnpg.io/reload`)? Test mit Wegwerf-Rolle auf
-      `homelab-postgres`.
-- [ ] `ClusterSecretStore` kubernetes-Provider mit `serviceAccount`-Auth und
-      `conditions` funktioniert (Doku zeigt nur `SecretStore` + Token).
-- [ ] Rendert `target.template` neu, wenn sich die Quelle ändert, bei
+Runtime-Ergebnis 2026-11-20: **40 Prüfungen erfolgreich** auf Kubernetes
+1.36.4. Gemeinsame DB-/OIDC-Quellen, konkrete RBAC-Denials, Bestandsübernahme,
+Löschverhalten und Template-Refresh bestätigt. CNPG akzeptierte das neue
+Passwort im letzten Lauf nach 2,5 Sekunden; das alte scheiterte an frischer
+TCP-Verbindung. Wegwerf-Cluster nach dem Lauf entfernt.
+
+Klären und Ergebnis samt Versionsstand festhalten:
+
+- [x] `CreatedOnce` + `creationPolicy` + `immutable`: ExternalSecret löschen/
+      neu anlegen, vorhandenen Wert übernehmen, nur Quelle löschen,
+      Quelle + ExternalSecret-Status verlieren. Orphan und CreateOrMerge
+      zeigten unterschiedliches Löschverhalten; vorhandener A2-Wert bleibt
+      bei Übernahme erhalten, Prune-Annotation muss direkt gesetzt sein.
+- [x] CNPG: ändert sich das Rollenpasswort bei inline `managed.roles` wirklich
+      (mit `cnpg.io/reload`)? Eigener Wegwerf-CNPG-Cluster, frische TCP-Logins:
+      neues Passwort funktioniert, altes wird abgewiesen. Verzögerung messen.
+- [x] Lokale `SecretStore homelab` mit SA-Auth, `get` + `resourceNames`
+      und eingeschränkter Token-Erstellung werden Ready.
+- [x] Positive Tests: App + CNPG lesen dasselbe DB-Passwort;
+      App + Authentik lesen dasselbe OIDC-Secret.
+- [x] Negative Tests repräsentativ für App A nach erfolgreichem Positivtest: fremdes `remoteRef.key`
+      und `dataFrom.find` scheitern, kein Ziel-Secret entsteht. App-SA hat keine
+      Quellrechte; ESO kann kein Token einer unberechtigten SA erstellen.
+- [x] Rendert `target.template` neu, wenn sich die Quelle ändert, bei
       `Periodic`-Verbrauchern?
-- [ ] Cilium: ESO-Controller braucht Egress zum API-Server; prüfen, ob die
+- [ ] Flux-Prune mit echten Flux-Controllern testen; Annotation allein ist
+      noch kein Runtime-Nachweis.
+- [ ] Velero-Restore der Quellen bei deaktivierten Generatoren durchführen,
+      anschließend unveränderte Werte und Leser prüfen.
+- [ ] Cilium (separat im Cluster vor Phase 2): ESO-Controller braucht Egress zum API-Server; prüfen, ob die
       NetworkPolicies in `secret-source`/ESO-Namespace etwas blocken.
+- [ ] Effektive Bestands-RBAC prüfen; insbesondere AppAPI-HaRP, NetBird-Proxy
+      und MCP-Workload-Patchrechte einschränken oder explizit als privilegierte
+      Vertrauensinstanzen freigeben.
 
-Ergebnis als Learning in `docs/learnings/`, falls etwas der Intuition
-widerspricht.
+Ergebnisse und Grenzen: [ESO-Lifecycle-Learning](../learnings/eso-generated-secrets-lifecycle.md).
+Insbesondere kann ein Orphan-ExternalSecret trotz fehlender Quelle Ready melden.
+Phase 0 bleibt wegen Flux-Prune, Velero und Cilium offen; keine Pilot-Freigabe.
 
 ### Phase 1 – ESO-Plattform
 
 - `infrastructure/base/external-secrets/`: HelmRelease
   (`charts.external-secrets.io`, Chart `external-secrets` 2.15.x, Renovate
   trackt), CRDs über Chart (`installCRDs: true`), interner cert-controller.
+  `rbac.serviceAccountTokenCreate: false`; nur explizite Token-Delegation.
 - Flux-Reihenfolge: `infra-base` (Operator, `wait: true`) →
   neue Kustomization `infra-secrets` (`secret-source`-Namespace,
-  `ClusterGenerator password-32`, `ClusterSecretStore homelab`, RBAC,
-  Quell-ExternalSecrets) → `infra-main` (CNPG-Cluster) / `apps`.
+  `ClusterGenerator password-32`, Quell-RBAC, Quell-ExternalSecrets) →
+  Verbraucher-Namespaces + lokale Stores/Token-Delegation →
+  `infra-main` (CNPG-Cluster) / `apps`. Namespace/Store-Erzeugung darf nicht
+  vom erfolgreichen Start ihrer DB-abhängigen Apps abhängen.
 - PSA `restricted`, NetworkPolicy für ESO-Namespace.
 - Monitoring: ESO-Metriken scrapen; Alert auf
   `externalsecret_status_condition{condition="Ready",status="False"}`.
   Ein nicht synchrones Verbraucher-Secret würde sonst erst beim nächsten
-  Pod-Neustart auffallen.
+  Pod-Neustart auffallen. Zusätzlich Controller-Verfügbarkeit und fehlende
+  Quell-Secrets gegen die deklarierte Quellenliste überwachen; Ready allein
+  reicht bei `CreatedOnce` nicht als Existenznachweis.
 - `external-secret.barman-s3.example.yaml` löschen (veraltet, irreführend).
 - Doku: `infrastructure/AGENTS.md`, ADR `0005-external-secrets-operator.md`.
+
+### Übergabe bestehender SOPS-Secrets an ESO
+
+Gilt für alle folgenden Migrationen, auch über öffentliche und private
+Kustomizations hinweg.
+
+1. **Schutz-Commit.** Bestehende Werte unabhängig und verschlüsselt sichern
+   und prüfen. Bei A2 den unveränderten Wert in `secret-source` übernehmen
+   und prüfen, bevor der Generator aktiviert wird. Die bisherigen GitOps-Writer
+   setzen `kustomize.toolkit.fluxcd.io/prune: disabled` auf die Live-Ziel-Secrets.
+   Flux-Reconciliation und die Annotationen am Live-Objekt bestätigen.
+2. **Übergabe-Commit.** SOPS-Ressourcen und zugehörige Patches aus den bisherigen
+   Kustomizations ausbinden. Deren Reconciliation zuerst bestätigen, dann die
+   ExternalSecrets für dieselben Ziele aktivieren. Beide Schritte dürfen nur im
+   selben Commit liegen, wenn Flux diese Reihenfolge garantiert. Sonst die
+   ESO-Aktivierung separat committen. ESO-Sync und Nutzung der Kopien prüfen
+   (bei Datenbanken per frischem Login), dann verbliebene unreferenzierte
+   SOPS-Dateien entfernen.
 
 ### Phase 2 – Pilot: eine DB (`hister` oder `vikunja`)
 
@@ -151,8 +267,10 @@ widerspricht.
    reload-Label). SOPS-Datei in `database-clusters/credentials/` entfernen.
 3. `hister`: ExternalSecret → `homelab-postgres-hister`. SOPS-Datei + Patch in
    `apps/overlays/main/db-secrets/` entfernen.
-4. CNPG setzt neues Passwort, App-Rollout (Reloader oder `kubectl rollout
-   restart`). Prüfen: App verbindet, `psql` mit neuem Passwort.
+4. CNPG setzt neues Passwort, App-Rollout über Reloader-Opt-in. Beide
+   Verbraucher synchronisieren unabhängig: Reloader garantiert keine Reihenfolge
+   zwischen Passwortänderung in PostgreSQL und App-Neustart. Kurzen
+   Verbindungsabbruch einplanen und frische Logins prüfen.
 
 Runbook-Schritt festhalten → Vorlage für alle weiteren.
 
@@ -160,10 +278,13 @@ Runbook-Schritt festhalten → Vorlage für alle weiteren.
 
 authentik, paperless, tandoor, linkwarden, teslamate, goloom, forgejo,
 sparkyfitness(+`_app`), outline, vikunja, dawarich, immich, ainsel.
-Jeweils einzeln, je ein Commit; Restart der App nach Passwortwechsel.
+Jeweils einzeln nach der Übergabesequenz migrieren; App nach Passwortwechsel neu starten.
 
 - Prüfen pro App: liest sie das Passwort bei jedem Start aus Env? Wenn nein →
   Klasse A2 behandeln.
+- CNPG 1.30 empfiehlt separate `DatabaseRole`-Ressourcen. Dieser Umbau testet
+  bewusst die bestehenden inline `managed.roles`; die Rollenmodell-Migration
+  bleibt getrennt, damit ESO- und DB-Verhaltensänderung nicht zusammenfallen.
 - `ainsel-hub-db` enthält `dsn` → per `target.template` erzeugen.
 - `immich`/`dawarich` haben eigene Cluster, gleicher Ablauf.
 - Am Ende: `apps/overlays/main/db-secrets/` und
@@ -172,6 +293,9 @@ Jeweils einzeln, je ein Commit; Restart der App nach Passwortwechsel.
 ### Phase 4 – Nextcloud + Klasse A2
 
 - Bestandswerte übernehmen statt neu generieren (Verfahren aus Phase 0).
+  Prune-Schutz direkt am vorhandenen Quell-Secret setzen, bevor ESO es als
+  immutable übernimmt; Template-Metadaten werden bei dieser Übernahme nicht
+  nachgetragen.
   Fallback, falls ESO kein sauberes „adopt" kann: A2-Quellen bleiben bis zur
   Vault-Phase als SOPS-Secret *in `secret-source`* (eine Datei statt mehrerer),
   Verbraucher lesen trotzdem schon über den Store → Vault-Umzug später ohne
@@ -202,12 +326,16 @@ nextcloud-collab, remediation-api `hmac-secret`, ainsel
 
 ### Phase 7 – Vault/OpenBao (eigener Proposal)
 
-- OpenBao (Vault-Provider von ESO, getestet) im Cluster oder extern.
-  Offen: wo läuft er, wie wird er entsiegelt (Auto-Unseal) – sonst neue
-  Henne-Ei-Abhängigkeit für jeden Cluster-Start.
+- Bevorzugt OpenBao extern auf srv1, unabhängig vom wiederherzustellenden
+  Kubernetes-Cluster. Authentik-Anmeldung für Menschen; separater Notfallzugang
+  funktioniert auch bei ausgefallenem Authentik. Unseal, Erreichbarkeit und
+  unabhängige Backups im eigenen Proposal festlegen; ein einzelner srv1 bleibt
+  ein Ausfallpunkt.
 - `PushSecret` aller Quellen aus `secret-source` nach Vault, dann
-  `ClusterSecretStore homelab` auf `provider: vault` (Kubernetes-Auth,
-  `audiences: [vault]`) umstellen. Generatoren erzeugen danach nur noch für
+  lokale `SecretStore homelab` auf `provider: vault` mit jeweils eingeschränkter
+  Vault-Rolle (Kubernetes-Auth, `audiences: [vault]`) umstellen. Erst nach
+  verifiziertem Transfer alle Leser umstellen und alte Writer deaktivieren.
+  Generatoren erzeugen danach nur noch für
   neue Einträge (`PushSecret` mit `selector.generatorRef`).
 - Klasse C von SOPS nach Vault; SOPS bleibt nur für Bootstrap (D).
 
@@ -236,16 +364,19 @@ benötigte. Danach fehlen für „clone & deploy" noch:
 
 | Risiko | Gegenmaßnahme |
 |---|---|
-| Quell-Secret gelöscht → neuer Wert, A2-Daten unlesbar | immutable + prune disabled + kein ownerReference; Velero-Backup; A2 zuerst nach Vault |
+| Quelle und Generator-Status verloren → neuer Wert, A2-Daten unlesbar | immutable + prune disabled + kein ownerReference; geprüfter Restore vor Generator-Aktivierung; A2 zuerst nach Vault |
 | ESO down | Bestehende Secrets bleiben; nur neue/geänderte hängen. Alert auf Ready=False |
 | Klartext-Werte jetzt in Velero-Backups | War bei den entschlüsselten Secrets schon so; Velero-Bucket-Zugriff prüfen |
-| Store-SA liest alle Quell-Secrets | Role nur in `secret-source`, `conditions` am Store |
+| Store kann fremde Quellwerte lesen | Eigene Identität je Store; `get` + `resourceNames`; positive und negative Integrationstests |
 | DR des ganzen Clusters ohne Velero | DB-Passwörter egal (CNPG setzt neu); A2 nur über Vault/Velero wiederherstellbar → Vault-Phase priorisieren |
 
-## Offene Fragen
+## Festgelegte Richtung / verbleibende Prüfungen
 
-1. Namespace-Name `secret-source` ok, oder lieber `secrets`?
-2. Reloader (stakater) einführen, damit Apps bei Secret-Änderung automatisch
-   neu starten, oder Restarts bewusst manuell?
-3. Vault/OpenBao im Cluster (Henne-Ei bei Cluster-Neuaufbau) oder auf srv1
-   außerhalb?
+1. Namespace `secret-source`; Leser über getrennte lokale Stores.
+2. Reloader (stakater) mit explizitem Opt-in je App, bevorzugt
+   `secret.reloader.stakater.com/auto: "true"`, ohne globales Auto-Reload.
+   GitOps-kompatible Annotation-Strategie prüfen. Helm-`valuesFrom` benötigt
+   außerdem Flux-Reconciliation; Reloader allein rendert keine Helm-Values neu.
+3. OpenBao bevorzugt extern auf srv1; Betrieb und Bootstrap bleiben Phase 7.
+4. Phase 0 muss vor Pilot abgeschlossen sein; lokale Kind-Tests ersetzen keine
+   Cilium-, Flux-Prune- oder Velero-Restore-Prüfung.

@@ -32,6 +32,11 @@ helm-render:
 server-dry-run:
     ./scripts/ci/server-dry-run.sh
 
+# ESO credential lifecycle + reader isolation + CNPG login tests; local disposable kind only
+[group('test')]
+eso-spike:
+    python3 scripts/eso-spike.py
+
 # --- Scheduled security scans (issue #747) ---
 
 # Scan full git history for secrets (gitleaks, baseline-suppressed)

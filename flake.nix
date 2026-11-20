@@ -18,6 +18,7 @@
         kubelogin-oidc
         kubernetes-helm
         kind
+        python3
         talosctl
         yq-go
         fluxcd
