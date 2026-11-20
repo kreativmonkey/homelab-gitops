@@ -54,12 +54,12 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-tandoor
+                  name: homelab-postgres-tandoor-eso
                   key: username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-tandoor
+                  name: homelab-postgres-tandoor-eso
                   key: password
             - name: ALLOWED_HOSTS
               value: rezepte.f4mily.net,recipes.f4mily.net,localhost,127.0.0.1
