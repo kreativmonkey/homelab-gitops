@@ -108,7 +108,7 @@ spec:
         ensure: present
         login: true
         passwordSecret:
-          name: authentik-db-credentials
+          name: authentik-db-credentials-eso
       - name: paperless
         ensure: present
         login: true
