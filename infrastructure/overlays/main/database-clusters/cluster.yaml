@@ -113,7 +113,7 @@ spec:
         ensure: present
         login: true
         passwordSecret:
-          name: paperless-db-credentials
+          name: paperless-db-credentials-eso
       - name: tandoor
         ensure: present
         login: true
