@@ -23,6 +23,7 @@ Application workloads deployed to the cluster. `base/<app>/` holds generic manif
 - Secrets SOPS-encrypted; `*.secret.yaml.template` is the unencrypted shape reference. Never commit plaintext secret values.
 - DB consumer: app gets dedicated CNPG `Cluster` in `infrastructure/overlays/main/database-clusters/<app>/`; credential secret in `overlays/main/db-secrets/`; wire via `valuesFrom`.
 - Hister uses the shared CNPG cluster. Its ESO credential copy is defined in `overlays/main/hister-db-secret/`. The app receives the copy through Env and needs a pod rollout after a DB password change. Follow the ordered DB-login and app-switch steps in `docs/proposals/eso-generated-secrets.md`.
+- Phase 3 DB credential copies use `overlays/main/eso-db-secrets/`. Each app namespace has its own Store identity. Confirm DB login with the new value before switching each app's Secret references.
 - Nextcloud HaRP manages ClusterIP ExApps through a Role in `nextcloud-exapps`. Treat that namespace as writable by HaRP. Keep unrelated Secrets and privileged ServiceAccounts outside it.
 - OIDC/Authentik onboarding: do NOT auto-enable. Ask user first. Blueprint format + checklist in root AGENTS.md `# OIDC / Authentik Blueprint Onboarding`.
 - Backup monitoring treats Velero `PartiallyFailed` as failure and alerts when Velero metrics or successful timestamps are absent. Keep node-exporter CSI `globalmount` metrics visible so read-only iSCSI filesystems remain alertable.

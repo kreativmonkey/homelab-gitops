@@ -12,6 +12,7 @@ Flux Kustomization entry points. `main/` wires the cluster: `infrastructure.yaml
 - Entry-point Kustomizations point at `infrastructure/` and `apps/` overlays.
 - Respect dependency chain: infrastructure reconciles before dependent apps (`dependsOn`).
 - `infra-eso` waits for Cilium and host-network policy. `infra-secrets` waits for the ESO HelmRelease and its CRDs, then applies the Hister source and CNPG copy. `hister-db-secret` waits for `infra-secrets` and the Hister namespace created by `apps`. The shared `infra-main` and `apps` reconciliations have no dependency on the pilot's SecretStore readiness.
+- `apps-eso-db-secrets` reconciles the Phase 3 app copies after `infra-secrets` and the namespaces from `apps`. The shared `apps` Kustomization stays independent of ESO.
 - New top-level overlay → add a Kustomization here.
 - `private-gitops.yaml` is a temporary migration seed: it wires the private repo
   as an additional source with `prune: false`; remove it after private root
