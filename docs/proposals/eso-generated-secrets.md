@@ -276,24 +276,33 @@ Kustomizations hinweg.
    (bei Datenbanken per frischem Login), dann verbliebene unreferenzierte
    SOPS-Dateien entfernen.
 
-### Phase 2 – Pilot: eine DB (`hister` oder `vikunja`)
+### Phase 2 – Pilot mit Hister
 
-1. Quell-ExternalSecret `db-hister` in `secret-source` (Generator).
-2. `cnpg-system`: ExternalSecret → `hister-db-credentials` (basic-auth,
-   reload-Label). SOPS-Datei in `database-clusters/credentials/` entfernen.
-3. `hister`: ExternalSecret → `homelab-postgres-hister`. SOPS-Datei + Patch in
-   `apps/overlays/main/db-secrets/` entfernen.
-4. Beim Pilot Reloader für die App zunächst deaktiviert lassen. Warten, bis
-   beide ExternalSecrets `Ready` sind und beide Ziel-Secrets den aktuellen
-   Quellwert enthalten; Werte geschützt vergleichen, nicht ausgeben.
-5. Frischen TCP-Login mit dem neuen Passwort prüfen: CNPG muss es bereits
-   angewendet haben. Erst danach App gezielt neu starten und ihre Verbindung
-   prüfen. Nach erfolgreicher Abnahme Reloader-Opt-in aktivieren.
-   Beide Verbraucher synchronisieren unabhängig; Reloader garantiert keine
-   Reihenfolge zwischen PostgreSQL-Passwortwechsel und App-Neustart. Weitere
-   Rotationen brauchen dieselben Freigabeschritte und ein Wartungsfenster.
+Die bestehenden privilegierten Zugriffe sind für diesen Pilot vorläufig
+akzeptiert. [Issue #1557](https://github.com/kreativmonkey/homelab-gitops/issues/1557)
+verfolgt die Einschränkung von HaRP.
 
-Runbook-Schritt festhalten → Vorlage für alle weiteren.
+1. `db-hister` generieren und die beiden lokalen Stores mit namensgebundenem
+   Lesezugriff anlegen. ESO erstellt `cnpg-system/hister-db-credentials-eso`
+   und `hister/homelab-postgres-hister-eso` parallel zu den bisherigen
+   SOPS-Secrets. Beide Kopien und die Quelle geschützt auf Gleichheit prüfen.
+   `infra-secrets` verwaltet die CNPG-Kopie. Die Kustomization
+   `hister-db-secret` wartet auf `infra-secrets` und den von `apps` erzeugten
+   Namespace. Shared Flux-Reconciliations bleiben unabhängig von ESO-Status.
+2. Nur den `passwordSecret`-Verweis der CNPG-Rolle `hister` auf
+   `hister-db-credentials-eso` umstellen. Auf CNPG-Reconciliation und einen
+   frischen TCP-Login mit dem neuen Passwort warten. Frische Verbindungen
+   des alten Hister-Pods können in diesem Zeitfenster fehlschlagen.
+3. Hister per GitOps auf `homelab-postgres-hister-eso` umstellen. Das
+   Deployment startet seinen Pod mit neuen Env-Werten. App- und DB-Funktion
+   prüfen und danach die alten SOPS-Dateien und den Namenspatch entfernen.
+4. Für einen Rückweg zuerst den alten CNPG-Verweis und TCP-Login
+   wiederherstellen, dann Hister auf das alte App-Secret zurückstellen. Nach
+   Entfernen der Altdateien diese aus der letzten SOPS-Revision zurückholen,
+   bevor die Verweise umgestellt werden.
+
+Stakater Reloader ist im Cluster nicht installiert. Die Pilot-Umstellung
+ordnet DB-Wechsel, Login-Test und App-Rollout über getrennte Revisionen.
 
 ### Phase 3 – Restliche DB-Rollen (A1)
 
