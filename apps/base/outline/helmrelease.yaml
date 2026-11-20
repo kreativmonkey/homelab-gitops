@@ -147,7 +147,7 @@ spec:
       port: 5432
       database: outline
       username: outline
-      existingSecret: homelab-postgres-outline
+      existingSecret: homelab-postgres-outline-eso
       passwordSecretKey: password
 
     # Redis — Valkey via externalRedis (replaces the deprecated bitnamilegacy
