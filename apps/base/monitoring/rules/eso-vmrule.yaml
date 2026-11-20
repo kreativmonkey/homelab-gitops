@@ -30,3 +30,14 @@ spec:
           annotations:
             summary: "ExternalSecret kann nicht synchronisieren"
             description: "Prüfe Ready-Condition, SecretStore und Quell-Secret. Bestehende Kopien können veraltet sein."
+        - alert: HisterDatabaseSourceSecretMissing
+          # CreatedOnce with Orphan can remain Ready after its target disappears.
+          expr: |
+            absent(kube_secret_info{namespace="secret-source",secret="db-hister"})
+          for: 15m
+          labels:
+            severity: warning
+            homelab_owner: platform
+          annotations:
+            summary: "Hister-DB-Quell-Secret fehlt"
+            description: "Stelle secret-source/db-hister mit dem ursprünglichen Wert aus Velero wieder her, bevor du das ExternalSecret db-hister neu anlegst."

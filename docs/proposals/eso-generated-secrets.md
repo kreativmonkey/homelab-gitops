@@ -304,6 +304,21 @@ verfolgt die Einschränkung von HaRP.
 Stakater Reloader ist im Cluster nicht installiert. Die Pilot-Umstellung
 ordnet DB-Wechsel, Login-Test und App-Rollout über getrennte Revisionen.
 
+**Live-Abnahme.** Beide Stores synchronisierten denselben Wert. Live-RBAC
+erlaubte den zwei Store-Identitäten `get` auf `db-hister`, verweigerte `get`
+auf andere Namen und `list` auf Quell-Secrets. Velero sicherte das eine
+Quell-Secret vor dem Wechsel. CNPG akzeptierte beim frischen TCP-Login das
+neue Passwort und lehnte das alte ab. Die drei CNPG-Pods behielten ihre UIDs.
+Der neue Hister-Pod hatte eine aktive PostgreSQL-Verbindung und `/health`
+lieferte HTTP 200. Die Schritte sind in [#1558](https://github.com/kreativmonkey/homelab-gitops/pull/1558),
+[#1560](https://github.com/kreativmonkey/homelab-gitops/pull/1560) und
+[#1559](https://github.com/kreativmonkey/homelab-gitops/pull/1559) nachvollziehbar.
+
+Die verschlüsselten Rückweg-Dateien liegen in Git-Revision `9b29f672`.
+Der Alert `HisterDatabaseSourceSecretMissing` prüft die Quelle direkt über
+`kube_secret_info`, weil der Ready-Status des Generator-ExternalSecrets
+nach Verlust der Quelle bestehen bleiben kann.
+
 ### Phase 3 – Restliche DB-Rollen (A1)
 
 authentik, paperless, tandoor, linkwarden, teslamate, goloom, forgejo,
