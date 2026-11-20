@@ -6,3 +6,15 @@ resources:
   - db-hister.yaml
   - hister-cnpg.yaml
   - db-vikunja.yaml
+  - db-ainsel.yaml
+  - db-authentik.yaml
+  - db-dawarich.yaml
+  - db-forgejo.yaml
+  - db-goloom.yaml
+  - db-immich.yaml
+  - db-outline.yaml
+  - db-paperless.yaml
+  - db-sparkyfitness.yaml
+  - db-sparkyfitness-app.yaml
+  - db-tandoor.yaml
+  - db-teslamate.yaml

@@ -1,0 +1,76 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: db-paperless
+  namespace: secret-source
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    creationPolicy: Orphan
+    immutable: true
+    template:
+      metadata:
+        annotations:
+          kustomize.toolkit.fluxcd.io/prune: disabled
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: ClusterGenerator
+          name: password-32
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: read-db-paperless
+  namespace: secret-source
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get]
+    resourceNames: [db-paperless]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-db-paperless
+  namespace: secret-source
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: read-db-paperless
+subjects:
+  - kind: ServiceAccount
+    name: eso-store-reader
+    namespace: paperless-ngx
+  - kind: ServiceAccount
+    name: eso-store-reader
+    namespace: cnpg-system
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: paperless-db-credentials-eso
+  namespace: cnpg-system
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: homelab
+  target:
+    creationPolicy: Owner
+    template:
+      type: kubernetes.io/basic-auth
+      metadata:
+        labels:
+          cnpg.io/reload: "true"
+      data:
+        username: paperless
+        password: "{{ .password }}"
+  data:
+    - secretKey: password
+      remoteRef:
+        key: db-paperless
+        property: password
