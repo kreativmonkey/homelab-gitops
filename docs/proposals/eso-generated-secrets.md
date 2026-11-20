@@ -314,7 +314,7 @@ lieferte HTTP 200. Die Schritte sind in [#1558](https://github.com/kreativmonkey
 [#1559](https://github.com/kreativmonkey/homelab-gitops/pull/1559) nachvollziehbar.
 
 Die verschlüsselten Rückweg-Dateien liegen in Git-Revision `9b29f672`.
-Der Alert `HisterDatabaseSourceSecretMissing` prüft die Quelle direkt über
+Der Alert `DatabaseSourceSecretMissing` prüft die Quelle direkt über
 `kube_secret_info`, weil der Ready-Status des Generator-ExternalSecrets
 nach Verlust der Quelle bestehen bleiben kann.
 
@@ -329,6 +329,13 @@ und die CNPG-Kopie, `apps-eso-db-secrets` die App-Kopie. Die Trennung hält den
 gemeinsamen App-Rollout unabhängig von der ESO-Readiness. Neue Kopien zunächst
 parallel zu SOPS prüfen und sichern, dann DB-Rolle und Deployment nacheinander
 umschalten.
+
+**Vikunja live.** Velero sicherte die beiden zu diesem Zeitpunkt vorhandenen
+DB-Quellen. CNPG bestätigte die neue Secret-Revision, ein frischer TCP-Login
+nahm das neue Passwort an und wies das alte ab. Der neue Vikunja-Pod hatte
+eine aktive PostgreSQL-Verbindung. Die öffentliche Info-API lieferte nach
+dem Rollout HTTP 200 und meldete den OIDC-Provider als aktiv. Die
+verschlüsselten Rückweg-Dateien liegen in Git-Revision `7e1ede1a`.
 
 - Prüfen pro App: liest sie das Passwort bei jedem Start aus Env? Wenn nein →
   Klasse A2 behandeln.
