@@ -96,7 +96,22 @@ With HaRP + K8s daemon working, install Collabora from the App Store as an **ExA
 
 ## 6. RBAC note
 
-HaRP uses a `cluster-admin` binding for `appapi-harp` (same as upstream AppAPI K8s CI). This is broad but required for dynamic ExApp lifecycle. Scope can be tightened later with a custom ClusterRole if you catalog exact verbs AppAPI needs.
+HaRP uses `nextcloud/appapi-harp` with a Role and RoleBinding in `nextcloud-exapps`.
+The Role grants the [HaRP v0.4.8 operations](https://github.com/nextcloud/HaRP/blob/v0.4.8/README.md#rbac-permissions)
+for Deployments, Services, PVCs and Pod listing. The `k8s_homelab` daemon uses
+`ClusterIP`, which needs only namespaced permissions. Keep ExApp Services on
+`ClusterIP` when changing the daemon configuration.
+
+HaRP can create workloads in `nextcloud-exapps`, so keep unrelated Secrets
+and privileged ServiceAccounts outside that namespace. The default ExApp
+ServiceAccount disables token automount. The wildcard Certificate templates
+exclude `nextcloud-exapps` from Reflector mirroring. TLS for `/exapps/` terminates
+at the Nextcloud Ingress in `nextcloud`.
+
+Verify effective permissions with `SubjectAccessReview` for
+`system:serviceaccount:nextcloud:appapi-harp`. Check allowed workload operations
+in `nextcloud-exapps` and denied Secret reads, including `secret-source`.
+Use a disposable ExApp to verify deploy, update and uninstall via AppAPI.
 
 ## References
 

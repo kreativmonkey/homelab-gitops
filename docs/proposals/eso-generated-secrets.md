@@ -157,10 +157,9 @@ bestätigten die folgenden Rechte. Hister läuft mit `hister/default` ohne
 automatisch gemounteten Token und hatte keine der 49 abgefragten Berechtigungen.
 
 - [`nextcloud/appapi-harp`](../../apps/base/nextcloud/appapi-harp-rbac.yaml)
-  ist an `cluster-admin` gebunden. Damit besteht direkte Umgehung der
-  Quell-Isolation. Vor Pilot einschränken oder ausdrücklich als privilegierte
-  Plattformkomponente freigeben; kein Versprechen vollständiger App-Isolation
-  bei unverändertem Binding.
+  war beim Pilot an `cluster-admin` gebunden. Die Folgearbeit beschränkt HaRP
+  auf die ExApp-Ressourcen in `nextcloud-exapps` und schließt diesen Namespace
+  von der Wildcard-TLS-Spiegelung aus.
 - [`netbird/clusterproxy-homelab`](../../apps/base/netbird-operator/clusterproxy-rbac.yaml)
   darf Benutzer/Gruppen impersonieren, einschließlich administrativer
   Identitäten. Dieser Proxy gehört zum privilegierten Vertrauensbereich.
@@ -278,9 +277,9 @@ Kustomizations hinweg.
 
 ### Phase 2 – Pilot mit Hister
 
-Die bestehenden privilegierten Zugriffe sind für diesen Pilot vorläufig
-akzeptiert. [Issue #1557](https://github.com/kreativmonkey/homelab-gitops/issues/1557)
-verfolgt die Einschränkung von HaRP.
+Die bestehenden privilegierten Zugriffe wurden für den Pilot akzeptiert.
+Die Einschränkung von HaRP ist in [Issue #1557](https://github.com/kreativmonkey/homelab-gitops/issues/1557)
+festgehalten.
 
 1. `db-hister` generieren und die beiden lokalen Stores mit namensgebundenem
    Lesezugriff anlegen. ESO erstellt `cnpg-system/hister-db-credentials-eso`
