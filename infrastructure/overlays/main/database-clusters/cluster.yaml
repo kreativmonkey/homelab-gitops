@@ -145,7 +145,7 @@ spec:
         ensure: present
         login: true
         passwordSecret:
-          name: forgejo-db-credentials
+          name: forgejo-db-credentials-eso
       - name: sparkyfitness
         ensure: present
         login: true
