@@ -314,7 +314,7 @@ lieferte HTTP 200. Die Schritte sind in [#1558](https://github.com/kreativmonkey
 [#1559](https://github.com/kreativmonkey/homelab-gitops/pull/1559) nachvollziehbar.
 
 Die verschlüsselten Rückweg-Dateien liegen in Git-Revision `9b29f672`.
-Der Alert `HisterDatabaseSourceSecretMissing` prüft die Quelle direkt über
+Der Alert `DatabaseSourceSecretMissing` prüft die Quelle direkt über
 `kube_secret_info`, weil der Ready-Status des Generator-ExternalSecrets
 nach Verlust der Quelle bestehen bleiben kann.
 
