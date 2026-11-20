@@ -61,7 +61,7 @@ spec:
       secrets:
         generate: false
       appDatabase:
-        existingSecret: homelab-postgres-sparkyfitness-app
+        existingSecret: homelab-postgres-sparkyfitness-app-eso
       persistence:
         uploads:
           storageClass: truenas-iscsi
