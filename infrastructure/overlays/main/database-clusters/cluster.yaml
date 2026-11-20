@@ -118,7 +118,7 @@ spec:
         ensure: present
         login: true
         passwordSecret:
-          name: tandoor-db-credentials
+          name: tandoor-db-credentials-eso
       - name: nextcloud
         ensure: present
         login: true
