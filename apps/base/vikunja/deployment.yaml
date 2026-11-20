@@ -75,12 +75,12 @@ spec:
             - name: VIKUNJA_DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-vikunja
+                  name: homelab-postgres-vikunja-eso
                   key: username
             - name: VIKUNJA_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-vikunja
+                  name: homelab-postgres-vikunja-eso
                   key: password
             # OIDC provider id "authentik" -> redirect URI /auth/openid/authentik
             # (https://vikunja.io/docs/openid). vikunja_scope delivers the
