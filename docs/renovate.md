@@ -143,4 +143,8 @@ Pflege in `scripts/ci/upstream-health.json`:
   `reason`); erscheinen eingeklappt statt als Befund.
 
 Die Renovate-Version im Skript (`RENOVATE_VERSION`) hält der Regex-Manager
-für `scripts/**/*.sh` aktuell.
+für `scripts/**/*.sh` und `scripts/**/*.py` aktuell. Der Regex-Manager erkennt
+Version-Zuweisungen mit optionalen Leerzeichen um `=` und Markern auf derselben
+Zeile: `# renovate: datasource=… depName=…`, optional mit `registryUrl=…`.
+`eso-spike.py` besitzt nur den ESO-Helm-Pin; CNPG-Chartversion und Image-Tag
+liest der Spike aus der bestehenden HelmRelease.
