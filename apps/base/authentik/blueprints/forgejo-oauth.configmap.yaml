@@ -60,7 +60,9 @@ data:
           property_mappings:
             - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
             - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-profile]]
-            - !Find [authentik_providers_oauth2.scopemapping, [name, "Mailcow Mailbox"]]
+            # Use the email stored on the Authentik user for registration.
+            # Mailcow Mailbox falls back to username@f4mily.net instead.
+            - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
             - !KeyOf forgejo-scope
       - model: authentik_core.application
         identifiers:
