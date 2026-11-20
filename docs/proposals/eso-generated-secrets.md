@@ -330,6 +330,13 @@ gemeinsamen App-Rollout unabhängig von der ESO-Readiness. Neue Kopien zunächst
 parallel zu SOPS prüfen und sichern, dann DB-Rolle und Deployment nacheinander
 umschalten.
 
+**Vikunja live.** Velero sicherte die beiden zu diesem Zeitpunkt vorhandenen
+DB-Quellen. CNPG bestätigte die neue Secret-Revision, ein frischer TCP-Login
+nahm das neue Passwort an und wies das alte ab. Der neue Vikunja-Pod hatte
+eine aktive PostgreSQL-Verbindung. Die öffentliche Info-API lieferte nach
+dem Rollout HTTP 200 und meldete den OIDC-Provider als aktiv. Die
+verschlüsselten Rückweg-Dateien liegen in Git-Revision `7e1ede1a`.
+
 - Prüfen pro App: liest sie das Passwort bei jedem Start aus Env? Wenn nein →
   Klasse A2 behandeln.
 - CNPG 1.30 empfiehlt separate `DatabaseRole`-Ressourcen. Dieser Umbau testet
