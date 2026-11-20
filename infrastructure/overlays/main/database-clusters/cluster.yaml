@@ -103,7 +103,7 @@ spec:
         ensure: present
         login: true
         passwordSecret:
-          name: ainsel-db-credentials
+          name: ainsel-db-credentials-eso
       - name: authentik
         ensure: present
         login: true
