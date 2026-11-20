@@ -56,12 +56,12 @@ spec:
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-immich
+                  name: homelab-postgres-immich-eso
                   key: username
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-immich
+                  name: homelab-postgres-immich-eso
                   key: password
             # TLS terminates at ingress → secure cookies.
             - name: SECURE_COOKIE
