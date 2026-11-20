@@ -4,3 +4,4 @@ resources:
   - namespace.yaml
   - password-generator.yaml
   - db-hister.yaml
+  - hister-cnpg.yaml

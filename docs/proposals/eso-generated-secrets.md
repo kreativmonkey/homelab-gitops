@@ -286,6 +286,9 @@ verfolgt die Einschränkung von HaRP.
    Lesezugriff anlegen. ESO erstellt `cnpg-system/hister-db-credentials-eso`
    und `hister/homelab-postgres-hister-eso` parallel zu den bisherigen
    SOPS-Secrets. Beide Kopien und die Quelle geschützt auf Gleichheit prüfen.
+   `infra-secrets` verwaltet die CNPG-Kopie. Die Kustomization
+   `hister-db-secret` wartet auf `infra-secrets` und den von `apps` erzeugten
+   Namespace. Shared Flux-Reconciliations bleiben unabhängig von ESO-Status.
 2. Nur den `passwordSecret`-Verweis der CNPG-Rolle `hister` auf
    `hister-db-credentials-eso` umstellen. Auf CNPG-Reconciliation und einen
    frischen TCP-Login mit dem neuen Passwort warten. Frische Verbindungen
