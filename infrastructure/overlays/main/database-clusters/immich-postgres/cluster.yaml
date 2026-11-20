@@ -90,4 +90,4 @@ spec:
         ensure: present
         login: true
         passwordSecret:
-          name: immich-db-credentials
+          name: immich-db-credentials-eso
