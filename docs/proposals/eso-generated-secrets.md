@@ -343,9 +343,14 @@ verschlüsselten Rückweg-Dateien liegen in Git-Revision `7e1ede1a`.
   bewusst die bestehenden inline `managed.roles`; die Rollenmodell-Migration
   bleibt getrennt, damit ESO- und DB-Verhaltensänderung nicht zusammenfallen.
 - `ainsel-hub-db` enthält `dsn` → per `target.template` erzeugen.
+- Goloom liest `DATABASE_URL` aus einem gemischten SOPS-Secret. Die ESO-Kopie
+  liefert nur die DB-URL. Alle anderen Werte, insbesondere `ENCRYPTION_KEY`,
+  bleiben am bisherigen Secret.
 - `immich`/`dawarich` haben eigene Cluster, gleicher Ablauf.
-- Am Ende: `apps/overlays/main/db-secrets/` und
-  `database-clusters/credentials/` leer → Verzeichnisse + Patches entfernen.
+- Linkwarden ist im App-Katalog deaktiviert. Den Rollenwechsel mit
+  App-Abnahme bei einer späteren Reaktivierung durchführen.
+- Nach der Abnahme je Rolle die alten SOPS-Kopien und zugehörigen Patches
+  entfernen. Nextclouds DB-Credentials bleiben bis Phase 4 erhalten.
 
 ### Phase 4 – Nextcloud + Klasse A2
 
