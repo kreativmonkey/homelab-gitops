@@ -324,6 +324,12 @@ authentik, paperless, tandoor, linkwarden, teslamate, goloom, forgejo,
 sparkyfitness(+`_app`), outline, vikunja, dawarich, immich, ainsel.
 Jeweils einzeln nach der Übergabesequenz migrieren; App nach Passwortwechsel neu starten.
 
+Vikunja ist der erste Phase-3-Verbraucher. `infra-secrets` verwaltet `db-vikunja`
+und die CNPG-Kopie, `apps-eso-db-secrets` die App-Kopie. Die Trennung hält den
+gemeinsamen App-Rollout unabhängig von der ESO-Readiness. Neue Kopien zunächst
+parallel zu SOPS prüfen und sichern, dann DB-Rolle und Deployment nacheinander
+umschalten.
+
 - Prüfen pro App: liest sie das Passwort bei jedem Start aus Env? Wenn nein →
   Klasse A2 behandeln.
 - CNPG 1.30 empfiehlt separate `DatabaseRole`-Ressourcen. Dieser Umbau testet

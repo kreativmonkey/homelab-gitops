@@ -5,3 +5,4 @@ resources:
   - password-generator.yaml
   - db-hister.yaml
   - hister-cnpg.yaml
+  - db-vikunja.yaml
