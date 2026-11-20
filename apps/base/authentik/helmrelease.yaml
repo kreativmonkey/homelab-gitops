@@ -27,7 +27,7 @@ spec:
         namespace: flux-system
   valuesFrom:
     - kind: Secret
-      name: homelab-postgres-authentik
+      name: homelab-postgres-authentik-eso
       valuesKey: password
       targetPath: authentik.postgresql.password
     - kind: Secret
