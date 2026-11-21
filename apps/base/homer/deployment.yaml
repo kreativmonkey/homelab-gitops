@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: homer
-        image: b4bz/homer:v26.11.2
+        image: b4bz/homer:v26.11.3
         ports:
         - containerPort: 8080
           name: http
