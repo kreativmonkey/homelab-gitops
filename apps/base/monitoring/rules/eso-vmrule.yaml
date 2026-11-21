@@ -35,6 +35,18 @@ spec:
           expr: |
             absent(kube_secret_info{namespace="secret-source",secret="db-hister"})
             or absent(kube_secret_info{namespace="secret-source",secret="db-vikunja"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-ainsel"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-authentik"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-dawarich"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-forgejo"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-goloom"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-immich"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-outline"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-paperless"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-sparkyfitness"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-sparkyfitness-app"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-tandoor"})
+            or absent(kube_secret_info{namespace="secret-source",secret="db-teslamate"})
           for: 15m
           labels:
             severity: warning
