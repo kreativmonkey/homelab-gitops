@@ -44,12 +44,12 @@ spec:
             - name: DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-teslamate
+                  name: homelab-postgres-teslamate-eso
                   key: username
             - name: DATABASE_PASS
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-teslamate
+                  name: homelab-postgres-teslamate-eso
                   key: password
             - name: DATABASE_NAME
               value: teslamate
