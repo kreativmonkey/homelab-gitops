@@ -28,11 +28,11 @@ spec:
         namespace: flux-system
   valuesFrom:
     - kind: Secret
-      name: homelab-postgres-immich
+      name: homelab-postgres-immich-eso
       valuesKey: username
       targetPath: controllers.main.containers.main.env.DB_USERNAME
     - kind: Secret
-      name: homelab-postgres-immich
+      name: homelab-postgres-immich-eso
       valuesKey: password
       targetPath: controllers.main.containers.main.env.DB_PASSWORD
   values:
