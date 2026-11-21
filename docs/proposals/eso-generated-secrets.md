@@ -352,6 +352,20 @@ verschlüsselten Rückweg-Dateien liegen in Git-Revision `7e1ede1a`.
 - Nach der Abnahme je Rolle die alten SOPS-Kopien und zugehörigen Patches
   entfernen. Nextclouds DB-Credentials bleiben bis Phase 4 erhalten.
 
+**Live-Abnahme der aktiven Rollen.** Alle 13 Phase-3-Rollen verwenden ESO.
+Velero sicherte alle 14 DB-Quellen einschließlich Hister. Für jede Umstellung
+bestätigten CNPG-Status und frischer TCP-Login das neue Passwort, das alte
+wurde abgewiesen. Nach jedem App-Rollout folgten HTTP- und DB-Prüfungen.
+Server und Worker von Authentik hatten neue DB-Verbindungen, der
+OIDC-Discovery-Endpunkt war erreichbar. Bei TeslaMate Grafana wurden
+Health, Datasource-Konfiguration und die effektiven ESO-Zugangsdaten
+geprüft. Eine Dashboard-Abfrage mit angemeldeter Sitzung steht noch aus.
+
+Die verschlüsselten Rückweg-Dateien liegen in Git-Revision
+`323ef548`. Für Goloom gehört dazu auch `DATABASE_URL` im
+gemischten SOPS-Secret. Der Alert `DatabaseSourceSecretMissing` prüft
+alle 14 Quell-Secrets einzeln.
+
 ### Phase 4 – Nextcloud + Klasse A2
 
 - Länge, Zeichensatz und Verwendungszweck jedes Schlüssels gegen die gepinnte
