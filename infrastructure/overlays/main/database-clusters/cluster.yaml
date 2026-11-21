@@ -103,22 +103,22 @@ spec:
         ensure: present
         login: true
         passwordSecret:
-          name: ainsel-db-credentials
+          name: ainsel-db-credentials-eso
       - name: authentik
         ensure: present
         login: true
         passwordSecret:
-          name: authentik-db-credentials
+          name: authentik-db-credentials-eso
       - name: paperless
         ensure: present
         login: true
         passwordSecret:
-          name: paperless-db-credentials
+          name: paperless-db-credentials-eso
       - name: tandoor
         ensure: present
         login: true
         passwordSecret:
-          name: tandoor-db-credentials
+          name: tandoor-db-credentials-eso
       - name: nextcloud
         ensure: present
         login: true
@@ -135,34 +135,34 @@ spec:
         # TeslaMate migrations require superuser for earthdistance/cube extensions.
         superuser: true
         passwordSecret:
-          name: teslamate-db-credentials
+          name: teslamate-db-credentials-eso
       - name: goloom
         ensure: present
         login: true
         passwordSecret:
-          name: goloom-db-credentials
+          name: goloom-db-credentials-eso
       - name: forgejo
         ensure: present
         login: true
         passwordSecret:
-          name: forgejo-db-credentials
+          name: forgejo-db-credentials-eso
       - name: sparkyfitness
         ensure: present
         login: true
         # Migrations grant pg_stat_statements_reset and manage roles/extensions on first start.
         superuser: true
         passwordSecret:
-          name: sparkyfitness-db-credentials
+          name: sparkyfitness-db-credentials-eso
       - name: sparkyfitness_app
         ensure: present
         login: true
         passwordSecret:
-          name: sparkyfitness-app-db-credentials
+          name: sparkyfitness-app-db-credentials-eso
       - name: outline
         ensure: present
         login: true
         passwordSecret:
-          name: outline-db-credentials
+          name: outline-db-credentials-eso
       - name: hister
         ensure: present
         login: true

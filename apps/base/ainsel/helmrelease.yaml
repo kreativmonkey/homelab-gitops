@@ -48,7 +48,7 @@ spec:
       database: ainsel
       username: ainsel
       auth:
-        existingSecret: ainsel-hub-db
+        existingSecret: ainsel-hub-db-eso
     hub:
       extraEnv:
         - name: HUB_INTERNAL_VALIDATE_SECRET

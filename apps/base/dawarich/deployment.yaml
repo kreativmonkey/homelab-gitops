@@ -40,12 +40,12 @@ spec:
             - name: DATABASE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-dawarich
+                  name: homelab-postgres-dawarich-eso
                   key: username
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-dawarich
+                  name: homelab-postgres-dawarich-eso
                   key: password
             - name: SECRET_KEY_BASE
               valueFrom:
@@ -127,12 +127,12 @@ spec:
             - name: DATABASE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-dawarich
+                  name: homelab-postgres-dawarich-eso
                   key: username
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: homelab-postgres-dawarich
+                  name: homelab-postgres-dawarich-eso
                   key: password
             - name: SECRET_KEY_BASE
               valueFrom:

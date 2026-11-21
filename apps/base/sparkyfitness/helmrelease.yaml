@@ -51,7 +51,7 @@ spec:
       port: 5432
       database: sparkyfitness
       auth:
-        existingSecret: homelab-postgres-sparkyfitness
+        existingSecret: homelab-postgres-sparkyfitness-eso
     server:
       replicas: 1
       image:
@@ -61,7 +61,7 @@ spec:
       secrets:
         generate: false
       appDatabase:
-        existingSecret: homelab-postgres-sparkyfitness-app
+        existingSecret: homelab-postgres-sparkyfitness-app-eso
       persistence:
         uploads:
           storageClass: truenas-iscsi

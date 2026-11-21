@@ -101,4 +101,4 @@ spec:
         ensure: present
         login: true
         passwordSecret:
-          name: dawarich-db-credentials
+          name: dawarich-db-credentials-eso
