@@ -157,7 +157,7 @@ spec:
         ensure: present
         login: true
         passwordSecret:
-          name: sparkyfitness-app-db-credentials
+          name: sparkyfitness-app-db-credentials-eso
       - name: outline
         ensure: present
         login: true
