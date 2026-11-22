@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: meilisearch
-          image: docker.io/getmeili/meilisearch:v1.56.2
+          image: docker.io/getmeili/meilisearch:v1.57.0
           ports:
             - containerPort: 7700
               name: http
@@ -123,7 +123,7 @@ spec:
               drop: ["ALL"]
       containers:
         - name: linkwarden
-          image: ghcr.io/linkwarden/linkwarden:v2.16.3
+          image: ghcr.io/linkwarden/linkwarden:v2.17.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
