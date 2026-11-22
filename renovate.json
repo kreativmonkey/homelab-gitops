@@ -43,7 +43,7 @@
         "/(^|/)(apps|infrastructure|clusters)/.+\\.ya?ml$/"
       ],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n(?:[^\\n]*\\n)*?\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?",
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n(?:[^\\n]*\\n)*?\\s*tag:\\s*[\"']?(?<currentValue>[^\\s\"'#@]+)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?[\"']?",
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*(?:-\\s+)?(?:image|imageName):\\s*[\"']?[^:\\s\"']+:(?<currentValue>[^\"'\\s]+)[\"']?",
         "\\sversion:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?",
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*value:\\s*[\"']?(?<currentValue>[^\\s\"'#]+)[\"']?"
