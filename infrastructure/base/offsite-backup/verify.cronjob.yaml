@@ -61,6 +61,9 @@ spec:
             - name: restore
               image: docker.io/restic/restic:0.19.1
               command: ["/bin/sh", "/scripts/verify.sh"]
+              resources:
+                requests:
+                  ephemeral-storage: 12Gi
               env:
                 - name: RESTIC_REPOSITORY
                   value: rest:http://127.0.0.1:8080/
@@ -80,6 +83,9 @@ spec:
           containers:
             - name: validate
               image: docker.io/library/postgres:18-alpine
+              resources:
+                requests:
+                  ephemeral-storage: 12Gi
               command:
                 - /bin/sh
                 - -ec
@@ -153,7 +159,7 @@ spec:
               emptyDir: {}
             - name: restore
               emptyDir:
-                sizeLimit: 10Gi
+                sizeLimit: 12Gi
             - name: scripts
               configMap:
                 name: offsite-backup-scripts

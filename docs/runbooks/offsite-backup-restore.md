@@ -21,7 +21,8 @@ Daily Restic snapshots are stored encrypted on the Hetzner Storage Box under
   per-app tags keep their own dump as well, so app data and its database can be
   restored as a matching pair.
 - `forgejo`: a tar archive captured from `/data` in the running pod
-  (repositories, LFS, attachments, avatars, `app.ini`) plus a dump of the
+  (repositories, LFS, attachments, avatars, `app.ini`), excluding the regenerable
+  `/data/gitea/repo-archive` cache, plus a dump of the
   `forgejo` database from `homelab-postgres`. Forgejo keeps running during the
   backup; git writes objects before it moves refs, so a push in flight leaves
   at most an unreferenced object behind.
@@ -37,10 +38,12 @@ and `NextcloudMaintenanceModeStuck` covers it. The staging PVC is an on-site
 working copy, not a backup.
 
 Retention is 14 daily, 8 weekly, 12 monthly, and 3 yearly snapshots per app.
-Weekly verification reads 5% of repository data, restores both database dumps
-and Nextcloud app state, validates them with `pg_restore --list` and `tar`, then
-restores one Immich media file and one Nextcloud object and checks both against
-their backup-time SHA-256 hashes. Only then does it compact unreferenced data.
+Weekly verification reads 5% of repository data, restores database dumps and
+application archives, and checks one sample per application backup tag against
+its backup-time SHA-256 hash. It reuses samples already restored with the
+application archives and removes separately downloaded samples after hashing.
+After successful sample checks it prunes unreferenced data, then checks the
+restored dumps with `pg_restore --list` and the archives with `tar`.
 
 ## Check status
 

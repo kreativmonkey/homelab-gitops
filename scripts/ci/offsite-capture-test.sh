@@ -184,3 +184,102 @@ quota_case transient 2 '{"free":1000}' 0 3 2
 quota_case exhausted 9 '{"free":1000}' 1 3 2
 quota_case full 0 '{"free":99}' 1 1 0
 quota_case malformed 0 '{}' 1 1 0
+
+# Forgejo: generated archives are omitted and durable files keep their tar paths.
+awk '/^  forgejo-capture\.sh: \|/ {on=1; next} on && /^  [a-z-]+\.sh: / {exit} on {sub(/^    /, ""); print}' \
+  infrastructure/base/offsite-backup/scripts.configmap.yaml | sed "s#/staging#$tmp/staging#g" > "$tmp/forgejo.sh"
+cat > "$tmp/bin/kubectl" <<'STUB'
+#!/bin/sh
+case "$1" in
+  get) echo forgejo-1 ;;
+  exec)
+    shift 7
+    test "$1" = tar && test "$2" = -C && test "$3" = / || exit 1
+    shift 3
+    exec tar -C "$T/forgejo-source" "$@"
+    ;;
+esac
+STUB
+mkdir -p "$tmp/forgejo-source/data/gitea/"{repo-archive,packages}
+touch "$tmp/forgejo-source/data/gitea/"{repo-archive/generated,packages/durable}
+T="$tmp" PATH="$tmp/bin:$PATH" sh "$tmp/forgejo.sh"
+tar -tzf "$tmp/staging/forgejo-data.tar.gz" > "$tmp/forgejo-contents"
+grep -qx 'data/gitea/packages/durable' "$tmp/forgejo-contents"
+if grep -q 'data/gitea/repo-archive' "$tmp/forgejo-contents"; then
+  echo "FAIL Forgejo: erzeugtes Repository-Archiv im Backup"
+  exit 1
+fi
+echo "ok   Forgejo-Archivcache ausgelassen, Packages gesichert"
+
+# Verification: hash samples from the initial restore, download missing ones,
+# and keep verification failed if the hash of a reused sample is wrong.
+awk '/^  verify\.sh: \|/ {on=1; next} on && /^  [a-z-]+\.sh: / {exit} on {sub(/^    /, ""); print}' \
+  infrastructure/base/offsite-backup/scripts.configmap.yaml \
+  | sed "s#\"/restore#\"$tmp/restore#g; s# /restore# $tmp/restore#g; s#\"/work#\"$tmp/work#g; s# /work# $tmp/work#g" > "$tmp/verify.sh"
+cat > "$tmp/bin/restic" <<'STUB'
+#!/bin/sh
+case "$1" in
+  snapshots|unlock|check) exit 0 ;;
+  prune) touch "$T/pruned"; exit ;;
+  restore)
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --target) target="$2"; shift ;;
+        --tag) tag="$2"; shift ;;
+      esac
+      shift
+    done
+    mkdir -p "$target/staging/verify"
+    sample="/staging/$tag sample.bin"
+    if [ "$target" = "$T/restore/$tag-sample" ]; then
+      echo "$tag" >> "$T/sample-downloads"
+      if [ "$tag:$BAD_SAMPLE" = immich:fallback-symlink ]; then
+        ln -s "$T/outside.bin" "$target$sample"
+      else
+        printf 'restored sample' > "$target$sample"
+      fi
+    else
+      if [ "$tag:$BAD_SAMPLE" = forgejo:traversal ]; then
+        sample="/staging/../../outside.bin"
+      fi
+      printf '%s\n' "$sample" > "$target/staging/verify/$tag-sample.path"
+      printf 'restored sample' | sha256sum | cut -d ' ' -f 1 > "$target/staging/verify/$tag-sample.sha256"
+      case "$tag" in
+        forgejo|appdata) printf 'restored sample' > "$target$sample" ;;
+      esac
+      case "$tag:$BAD_SAMPLE" in
+        forgejo:hash) printf 'incorrect sample' > "$target$sample" ;;
+        forgejo:symlink)
+          rm "$target$sample"
+          ln -s "$T/outside.bin" "$target$sample"
+          ;;
+      esac
+    fi
+    ;;
+  *) exit 1 ;;
+esac
+STUB
+chmod +x "$tmp/bin/restic"
+for bad_sample in no hash traversal symlink fallback-symlink; do
+  rm -rf "$tmp/restore" "$tmp/work" "$tmp/sample-downloads" "$tmp/pruned"
+  mkdir -p "$tmp/work" "$tmp/restore"
+  printf 'restored sample' > "$tmp/outside.bin"
+  cp "$tmp/outside.bin" "$tmp/restore/outside.bin"
+  BAD_SAMPLE="$bad_sample" T="$tmp" PATH="$tmp/bin:$PATH" sh "$tmp/verify.sh" > "$tmp/verify.log" 2>&1
+  diff -u <(printf 'immich\nnextcloud\npaperless\n') "$tmp/sample-downloads"
+  [ ! -e "$tmp/restore/immich-sample" ]
+  if [ "$bad_sample" = no ]; then
+    [ -f "$tmp/restore/forgejo/staging/forgejo sample.bin" ]
+    [ -f "$tmp/work/restore.ok" ] && [ -f "$tmp/pruned" ] || { cat "$tmp/verify.log"; exit 1; }
+  else
+    case "$bad_sample" in
+      hash) failure='Hash-Vergleich forgejo' ;;
+      traversal) failure='Sample-Pfad forgejo ungueltig' ;;
+      symlink) failure='Sample-Pfad forgejo ausserhalb' ;;
+      fallback-symlink) failure='Sample-Pfad immich ausserhalb' ;;
+    esac
+    [ -f "$tmp/work/restore.failed" ] && [ ! -e "$tmp/pruned" ] \
+      && grep -q "$failure" "$tmp/verify.log" || { cat "$tmp/verify.log"; exit 1; }
+  fi
+done
+echo "ok   Restore-Proben wiederverwendet, Hash- und Pfadfehler erkannt"
