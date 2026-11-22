@@ -114,9 +114,9 @@ spec:
       targetPath: nextcloud.password
   values:
     # PVC has data from 33.0.4.1 — must match to avoid downgrade error.
+    # Pin the rebuilt image to roll out PHP 8.5.13 under the same Nextcloud tag.
     # renovate: datasource=docker depName=docker.io/library/nextcloud
     image:
-      # The 35.0.3 tag was rebuilt with the PHP 8.5.13 security update.
       tag: 35.0.3@sha256:f22d1dd63844bd15bbf6c2019149653c3d1c775ba48b173b56c3c6ad5f386196
       pullPolicy: IfNotPresent
     ingress:
