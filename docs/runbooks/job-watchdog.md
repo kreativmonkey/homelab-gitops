@@ -166,9 +166,14 @@ bzw. [nextcloud-cronjob-failed.md](nextcloud-cronjob-failed.md) für die
 App-spezifischen Ursachen (NFS/Storage-Box-Timeout, Postgres nicht erreichbar,
 Restic-Lock, Maintenance-Mode hängt).
 
-**Behebung:** App-spezifisch nach Log-Analyse. Danach den fehlgeschlagenen Job
-löschen oder auf den nächsten erfolgreichen Lauf warten, damit `kube_job_failed`
-zurückgeht.
+**Behebung:** Ursache anhand der Logs beheben und den nächsten erfolgreichen
+Lauf prüfen. Der Alert blendet Fehlversuche aus, die spätestens mit Abschluss
+des letzten erfolgreichen Laufs gestartet sind. Die fehlgeschlagenen Jobs
+bleiben gemäß `failedJobsHistoryLimit` zur Diagnose verfügbar. Ohne
+erfolgreichen Lauf bleiben frische Fehlversuche alertbar. Alle derzeit
+überwachten CronJobs planen mit `concurrencyPolicy: Forbid`. Bei Überlappung
+kann diese Regel einen Fehlversuch ausblenden, der vor dem letzten Erfolg
+startete und danach scheiterte.
 
 **Wichtig — Alters-Gate:** Der Alert vergleicht das Job-Alter gegen
 `max-age-hours` und feuert nur, solange der fehlgeschlagene Job **jünger** als
