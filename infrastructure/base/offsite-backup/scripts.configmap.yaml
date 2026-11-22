@@ -218,8 +218,9 @@ data:
       echo "FEHLER: erwartet genau einen Running forgejo-Pod, gefunden: ${count}"
       exit 1
     fi
+    # Forgejo erzeugt herunterladbare Repository-Archive bei Bedarf erneut.
     kubectl exec -n forgejo "${pods}" -c forgejo -- \
-      tar -C / -czf - data > /staging/forgejo-data.tar.gz
+      tar -C / --exclude=data/gitea/repo-archive -czf - data > /staging/forgejo-data.tar.gz
 
   databases-dump.sh: |
     #!/bin/sh
@@ -619,18 +620,48 @@ data:
         || fail "Sample-Pfad ${tag} nicht lesbar"
       expected="$(cat "${manifest_root}/${tag}-sample.sha256" 2>/dev/null)" \
         || fail "Sample-Hash ${tag} nicht lesbar"
-      if [ -n "${sample_path:-}" ] && [ -n "${expected:-}" ]; then
-        restic restore latest ${RETRY_LOCK} --host homelab --tag "${tag}" --exclude-xattr 'security.*' \
-          --include "${sample_path}" --target "/restore/${tag}-sample" \
-          || fail "Restore Sample-Datei ${tag}"
-        restored_path="/restore/${tag}-sample${sample_path}"
-        actual="$(sha256sum "${restored_path}" 2>/dev/null | cut -d ' ' -f 1)" \
-          || fail "Hash der restaurierten ${tag}-Sample-Datei"
-        [ "${actual:-}" = "${expected}" ] \
-          || fail "Hash-Vergleich ${tag}: erwartet ${expected}, gelesen ${actual:-leer}"
-      else
+      case "${sample_path}/" in
+        *//*|*/./*|*/../*)
+          fail "Sample-Pfad ${tag} ungueltig"
+          continue
+          ;;
+      esac
+      case "${sample_path}" in
+        /data/?*|/fotos/?*|/media/?*|/staging/?*) ;;
+        *)
+          fail "Sample-Pfad ${tag} ungueltig"
+          continue
+          ;;
+      esac
+      if [ -z "${expected}" ]; then
         fail "Sample-Manifest ${tag} unvollstaendig"
+        continue
       fi
+
+      # Forgejo und Appdata koennen ein bereits restauriertes Archiv als Probe nutzen.
+      sample_root="/restore/${tag}"
+      sample_target="/restore/${tag}-sample"
+      restored_path="${sample_root}${sample_path}"
+      if [ ! -e "${restored_path}" ] && [ ! -L "${restored_path}" ]; then
+        restic restore latest ${RETRY_LOCK} --host homelab --tag "${tag}" --exclude-xattr 'security.*' \
+          --include "${sample_path}" --target "${sample_target}" \
+          || fail "Restore Sample-Datei ${tag}"
+        sample_root="${sample_target}"
+        restored_path="${sample_root}${sample_path}"
+      fi
+      resolved_path="$(readlink -f "${restored_path}" 2>/dev/null)"
+      case "${resolved_path}" in
+        "${sample_root}/"*)
+          if [ -f "${resolved_path}" ]; then
+            actual="$(sha256sum "${resolved_path}" 2>/dev/null | cut -d ' ' -f 1)"
+            [ "${actual}" = "${expected}" ] || fail "Hash-Vergleich ${tag} fehlgeschlagen"
+          else
+            fail "Sample-Datei ${tag} fehlt oder ist keine regulaere Datei"
+          fi
+          ;;
+        *) fail "Sample-Pfad ${tag} ausserhalb des Restore-Verzeichnisses" ;;
+      esac
+      rm -rf -- "${sample_target}" || fail "Sample-Verzeichnis ${tag} aufraeumen"
     done
     if [ "${result}" -eq 0 ]; then
       # Prune may queue behind another long-running job on the shared repo.
