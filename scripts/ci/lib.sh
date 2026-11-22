@@ -71,15 +71,16 @@ dry_run_server() {
 # unvalidated by CI before this was fixed.
 #
 # stdout contract: one line per successfully rendered release,
-# "<rendered-file-path> <release-name> <release-namespace>". Callers MUST
-# consume this via `< <(render_all_helmreleases "$dir")` and nothing else
-# in this function may write to stdout — all narration goes to stderr via
-# log()/WARN echoes above so the data stream stays parseable.
+# "<rendered-file-path> <release-name> <release-namespace>". Write the list
+# to a file before consuming it so a nonzero render status fails the stage.
+# Diagnostics go to stderr. Attempt all supported renders before returning
+# failure so the log identifies every chart that failed.
 render_all_helmreleases() {
   local out_dir="$1"
   local file release_names release_name sel
   local chart version repo_kind repo_name release_ns repo_url
   local VALUES_FILE RENDERED
+  local failed=0
 
   while IFS= read -r -d '' file; do
     release_names="$(yq -r 'select(.kind == "HelmRelease") | .metadata.name' "$file")"
@@ -137,12 +138,14 @@ render_all_helmreleases() {
         --namespace "$release_ns" \
         -f "$VALUES_FILE" \
         >"$RENDERED"; then
-        echo "WARN: helm template failed for $release_name" >&2
-        rm -f "$VALUES_FILE"
+        echo "ERROR: helm template failed for $release_name" >&2
+        rm -f "$VALUES_FILE" "$RENDERED"
+        failed=1
         continue
       fi
       rm -f "$VALUES_FILE"
       echo "$RENDERED $release_name $release_ns"
     done <<< "$release_names"
   done < <(find infrastructure apps -name helmrelease.yaml -print0 2>/dev/null)
+  return "$failed"
 }

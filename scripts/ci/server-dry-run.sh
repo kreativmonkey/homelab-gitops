@@ -82,10 +82,11 @@ for path in "${KUSTOMIZE_PATHS[@]}"; do
 done
 
 log "HelmRelease chart render: server-side dry-run"
+render_all_helmreleases "$BUILD_DIR" >"$BUILD_DIR/helm-renders.txt"
 while IFS=' ' read -r rendered _release_name release_ns; do
   kubectl create namespace "$release_ns" --dry-run=client -o yaml \
     | kubectl apply -f - >/dev/null
   dry_run_server "$rendered"
-done < <(render_all_helmreleases "$BUILD_DIR")
+done <"$BUILD_DIR/helm-renders.txt"
 
 log "Server dry-run stage passed."
