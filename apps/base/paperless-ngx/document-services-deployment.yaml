@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: gotenberg
-          image: docker.io/gotenberg/gotenberg:9.5
+          image: docker.io/gotenberg/gotenberg:9.9
           args:
             - gotenberg
             - --chromium-disable-javascript=true
@@ -78,7 +78,7 @@ spec:
     spec:
       containers:
         - name: tika
-          image: docker.io/apache/tika:3.3.3.0
+          image: docker.io/apache/tika:3.3.3.1
           ports:
             - name: http
               containerPort: 9998
