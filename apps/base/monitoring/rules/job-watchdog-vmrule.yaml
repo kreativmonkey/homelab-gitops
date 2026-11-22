@@ -93,17 +93,31 @@ spec:
           # min statt max: der Wert ist Job-Alter / max-age, ein frischer
           # Fehlschlag hat also den KLEINSTEN Wert. max wuerde von einer alten
           # Karteileiche ueber die Schwelle gezogen und den frischen Fehlschlag
-          # verdecken.
+          # verdecken. Ein spaeterer erfolgreicher Lauf ueberholt den juengsten
+          # Fehlschlag, sobald dessen Alter >= Alter des letzten Erfolgs ist.
+          # Ohne Erfolgsmetrik (noch nie erfolgreich) gilt Unix-Zeitstempel 0.
           expr: |
             (
-              min by (namespace, cronjob) (
-                label_replace(
-                    (kube_job_failed{condition="true"} == 1)
-                  * on (namespace, job_name) group_left (owner_name)
-                    kube_job_owner{owner_kind="CronJob"}
-                  * on (namespace, job_name) group_left ()
-                    (time() - kube_job_status_start_time),
-                  "cronjob", "$1", "owner_name", "(.+)"
+              (
+                min by (namespace, cronjob) (
+                  label_replace(
+                      (kube_job_failed{condition="true"} == 1)
+                    * on (namespace, job_name) group_left (owner_name)
+                      kube_job_owner{owner_kind="CronJob"}
+                    * on (namespace, job_name) group_left ()
+                      (time() - kube_job_status_start_time),
+                    "cronjob", "$1", "owner_name", "(.+)"
+                  )
+                )
+                < on (namespace, cronjob)
+                (
+                  time() - (
+                    max by (namespace, cronjob) (kube_cronjob_status_last_successful_time)
+                    or on (namespace, cronjob)
+                    (0 * group by (namespace, cronjob) (
+                      kube_cronjob_labels{label_homelab_f4mily_net_watchdog="true"}
+                    ))
+                  )
                 )
               )
               / on (namespace, cronjob) group_left ()
