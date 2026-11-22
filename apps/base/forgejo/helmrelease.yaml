@@ -51,12 +51,12 @@ spec:
       enabled: false
     auth:
       enabled: false
-    dataStorage:
+    persistence:
       enabled: false
     deploymentStrategy: Recreate
     # Ephemeral cache and sessions; leave 64Mi below the container limit for
     # allocator overhead. Preserve the previous noeviction policy.
-    valkeyConfig: |
+    extraConfig: |
       save ""
       appendonly no
       maxmemory 192mb
