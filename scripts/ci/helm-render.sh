@@ -11,9 +11,10 @@ source scripts/ci/lib.sh
 BUILD_DIR="$(mktemp -d)"
 trap 'rm -rf "$BUILD_DIR"' EXIT
 
+render_all_helmreleases "$BUILD_DIR" >"$BUILD_DIR/helm-renders.txt"
 while IFS=' ' read -r rendered release_name _release_ns; do
   kubeconform "${KUBECONFORM_ARGS[@]}" -summary -output text "$rendered" \
     || echo "WARN: kubeconform failed for $release_name"
-done < <(render_all_helmreleases "$BUILD_DIR")
+done <"$BUILD_DIR/helm-renders.txt"
 
 log "Helm render stage passed."
