@@ -15,8 +15,4 @@ spec:
     - "media.f4mily.net"
   secretTemplate:
     annotations:
-      reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
-      # HaRP can create Deployments in nextcloud-exapps. Keep wildcard keys out.
-      reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces-selector: "kubernetes.io/metadata.name!=nextcloud-exapps"
-      reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"
-      reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: ""
+      reflector.v1.k8s.emberstack.com/reflection-allowed: "false"
