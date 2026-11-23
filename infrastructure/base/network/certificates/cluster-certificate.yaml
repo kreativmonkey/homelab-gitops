@@ -16,7 +16,8 @@ spec:
   secretTemplate:
     annotations:
       reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
-      # HaRP can create Deployments in nextcloud-exapps. Keep wildcard keys out.
-      reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces-selector: "kubernetes.io/metadata.name!=nextcloud-exapps"
+      # Include public and private ingress consumers. The namespace name label is immutable.
+      reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces-selector: >-
+        kubernetes.io/metadata.name in (ai-ops,ainsel,authentik,cnpg-system,gatus,homer,kite,mcp-system,monitoring,navidrome,paperless-ngx,spectrumknx,watchyourlan)
       reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"
       reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: ""
