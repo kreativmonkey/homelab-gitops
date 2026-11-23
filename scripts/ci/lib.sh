@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Shared helpers for scripts/ci/*.sh — sourced, never executed directly.
 
-K8S_VERSION="${K8S_VERSION:-1.32.0}"
+# Match the Omni cluster template minor using an available kindest/node tag.
+K8S_VERSION="${K8S_VERSION:-1.37.0}"
 KUBECONFORM_ARGS=(
   -kubernetes-version "$K8S_VERSION"
   -ignore-missing-schemas
