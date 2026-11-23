@@ -106,6 +106,10 @@ Kustomize **replacements** in `kustomization.yaml` push the `host_<app>`
 values into each Ingress' `spec.rules[0].host`, `spec.tls[0].hosts[0]`
 and (where applicable) into HelmRelease values.
 
+For a new cluster-domain ingress, add its namespace to the selector in
+`infrastructure/base/network/certificates/cluster-certificate.yaml`. Wait for
+Reflector to create the TLS Secret in that namespace before switching traffic.
+
 ### Change an app's hostname
 
 1. Edit `host_<app>` in `cluster-config.yaml`.
