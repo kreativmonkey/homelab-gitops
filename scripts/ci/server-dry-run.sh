@@ -116,6 +116,7 @@ yq -r -N 'select(.apiVersion == "v1" and .kind == "ServiceAccount") |
   [(.metadata.namespace // "default"), .metadata.name] | @tsv' \
   "${kustomize_builds[@]}" "${helm_builds[@]}" |
   sort -u | while IFS=$'\t' read -r namespace account; do
+    [[ -n "$namespace" ]] || continue
     kubectl create serviceaccount "$account" --namespace "$namespace" --dry-run=client -o yaml
     printf '%s\n' '---'
   done >"$BUILD_DIR/serviceaccounts.yaml"

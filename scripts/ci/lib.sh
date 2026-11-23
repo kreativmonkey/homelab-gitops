@@ -70,7 +70,7 @@ velero.io/v1 Schedule'
 admission_documents() {
   local file="$1" unavailable="$2"
   UNAVAILABLE_CRDS="$UNAVAILABLE_CRDS" UNAVAILABLE="$unavailable" yq '
-    (.apiVersion + " " + .kind) as $type |
+    select(. != null) | (.apiVersion + " " + .kind) as $type |
     select((strenv(UNAVAILABLE_CRDS) | split("\n") | any_c(. == $type)) == env(UNAVAILABLE))
   ' "$file"
 }
