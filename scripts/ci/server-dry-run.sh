@@ -80,8 +80,8 @@ kustomize_builds=()
 while IFS= read -r path; do
   log "kustomize build: $path"
   out="$BUILD_DIR/kustomize-${path//\//-}.yaml"
-  # CI cannot admit SOPS ciphertext as Kubernetes Secret data.
-  kustomize build "$path" | yq 'select(.kind != "Secret")' >"$out"
+  # SOPS can encrypt fields in custom resources as well as Secrets.
+  kustomize build "$path" | yq 'select(.kind != "Secret" and .sops == null)' >"$out"
   kustomize_builds+=("$out")
 done <<< "$paths"
 

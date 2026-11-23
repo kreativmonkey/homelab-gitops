@@ -73,7 +73,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 ## CI Pipeline (GitHub Actions)
 
 - `.github/workflows/pr-validation.yaml` runs Nix-backed lint, Kustomize and Helm schema validation, offsite regression tests, and server-side admission in a disposable Kind cluster.
-- Kustomize validation follows the public Flux build roots and includes the inactive disaster recovery overlay. Admission uses the committed Flux CRDs and omits encrypted Secrets.
+- Kustomize validation follows the public Flux build roots and includes the inactive disaster recovery overlay. Admission uses the committed Flux CRDs and omits Secrets and SOPS-encrypted documents.
 - Forgejo mirrors the repository with Actions disabled.
 
 ## Renovate
