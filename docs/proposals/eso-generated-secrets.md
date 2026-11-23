@@ -25,7 +25,7 @@ Credentials setzen, deployen.
   16 Rollen → 32 Dateien, plus `ainsel-hub-db`.
 - OIDC-Client-Secrets ebenfalls doppelt: App-Seite hier (SOPS), Authentik-Seite
   (`!Env OIDC_<APP>_CLIENT_SECRET`) im privaten Repo `homelab-gitops-private`.
-- Outline-Valkey verwendet leere Felder für Benutzername und Passwort und startet ohne Redis-Authentifizierung.
+- Outline-Valkey startete zum Zeitpunkt der Inventur ohne Authentifizierung.
 - Vor Phase 1 war ESO nicht installiert. Reflector verteilt TLS-Secrets.
 - Velero sichert täglich/wöchentlich alle Namespaces inkl. Secrets.
 
@@ -417,6 +417,13 @@ Quelle und Kopie sowie das Backup der Quelle prüfen. Nur Vergleichsergebnisse
 ausgeben. Bei Wiederherstellung einer bestehenden Installation die gesicherte
 Quelle vor Freigabe ihrer Generator-Reconciliation einspielen.
 `AppSourceSecretMissing` überwacht die Quelle auch bei altem ESO-Status.
+Der Chart lädt Benutzername und Passwort beim Pod-Start. Valkey lädt die
+projizierte ACL-Datei beim Start und akzeptiert anschließend nur
+authentifizierte Verbindungen. Beim geplanten Backend-Wechsel neue Schreibzugriffe
+am alten Valkey kurz anhalten. Wartende, aktive und verzögerte Bull-Jobs prüfen.
+Bei belegten Queues Schreibzugriffe wieder zulassen und die Jobs abarbeiten
+lassen. Valkey verwendet flüchtigen Speicher und
+`Recreate` verhindert zwei unabhängige Backends hinter demselben Service.
 
 **SearXNG-Quelle und App-Kopie.** Die Flux-Kustomization `searxng-secret`
 verwaltet die aktive Quelle `secret-source/searxng-key-v2` und die App-Kopie
