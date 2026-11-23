@@ -407,31 +407,33 @@ nextcloud-collab, remediation-api `hmac-secret`, ainsel
 `BETTER_AUTH_SECRET`, Grafana-/pgadmin-/Nextcloud-Admin (Passwort per
 `kubectl get secret` abrufbar). Folge: Nutzer werden einmal ausgeloggt.
 
-**SearXNG-Quelle übernehmen.** Die getrennte Flux-Kustomization
-`searxng-secret` erstellt aus dem SOPS-Original `searxng/searxng-secret`
-die unveränderliche Quelle `secret-source/searxng-key`. Die temporäre
-Store-Identität hat nur Leserecht für das Original. Das Deployment liest
-weiter daraus. Flux stellt das Original bei Neuinstallation und Restore
-bereit. Bei Rücknahme dieses PRs bleibt die bereits übernommene Quelle
-wegen `creationPolicy: Orphan` erhalten.
+**SearXNG-Quelle und App-Kopie.** Die Flux-Kustomization `searxng-secret`
+verwaltet `secret-source/searxng-key`. Ihr ExternalSecret behält beim Wechsel
+vom SOPS-Seed zum Generator Namespace, Namen und Ziel bei. `CreatedOnce`,
+`Orphan`, `immutable: true` und Prune-Schutz erhalten die vorhandene Quelle.
+Dieselbe Flux-Kustomization baut den namespaced Store in `searxng` ein.
+Er darf nur diese Quelle lesen und liefert die App-Kopie
+`searxng-secret-eso`.
+`AppSourceSecretMissing` überwacht die Existenz der Quelle unabhängig vom
+ESO-Status.
 
-1. `SecretStore` und `ExternalSecret` auf `Ready` prüfen. Originalschlüssel
-   `SEARXNG_SECRET` und Quellschlüssel `password` müssen denselben nichtleeren
-   Wert enthalten. Quelle auf `immutable: true` und direkte Prune-Annotation
-   prüfen. Nur das Ergebnis des Vergleichs ausgeben. Ein Read auf andere
-   Secret-Namen sowie `list` und `watch` müssen für die Store-Identität
-   fehlschlagen. Quelle sichern und Wiederherstellung prüfen.
-2. Per Folge-PR den bestehenden ExternalSecret auf den Generator
-   umstellen und den temporären Store samt RBAC entfernen. `CreatedOnce`,
-   `Orphan` und `immutable` behalten. Im Bestand muss die gesicherte,
-   bytegleiche Quelle vor der Generator-Freigabe vorhanden sein. Bei
-   einer leeren Installation darf der Generator den Wert erstellen.
-   Bei Restore mit erhaltenem App-Zustand zuerst die Quelle einspielen.
-3. Mit der Generator-Umstellung den namespaced Store und die App-Kopie
-   `searxng-secret-eso` anlegen. Erst nach `Ready` und Wertvergleich das
-   Deployment in einer weiteren Revision darauf umstellen. Rollout und
-   Suchanfrage prüfen. SOPS-Original erst nach dieser Abnahme entfernen.
-   Bis dahin bleibt die vorige Deployment-Referenz der Rückweg.
+Am 23.11.2026 waren SOPS-Original, geschützte Quelle und der testweise
+restaurierte Wert bytegleich. Velero-Backup und isolierter Restore
+`searxng-seed-20261123-104003-0737` waren vollständig (je 1/1 Objekt).
+
+1. Vor der Generator-Umstellung Quellwert und SOPS-Original auf Gleichheit
+   prüfen. Quelle sichern und aus dem Backup testweise wiederherstellen.
+   Bei Restore mit vorhandenem App-Zustand zuerst den ursprünglichen
+   Quellwert einspielen und danach den Generator freigeben. Bei einer
+   leeren Installation kann der Generator einen neuen Wert erzeugen.
+2. Nach der Umstellung Store und ExternalSecrets auf `Ready` prüfen.
+   Im Bestand müssen alle drei Secret-Werte übereinstimmen. Bei leerer
+   Neuinstallation stimmen Quelle und App-Kopie überein. Nur das Ergebnis
+   ausgeben. Die Store-Identität darf nur `searxng-key` lesen.
+3. Das Deployment erst in einer weiteren Revision auf `searxng-secret-eso`
+   umstellen. Rollout und Suchanfrage prüfen. SOPS-Original erst nach
+   Abnahme entfernen. Bis dahin bleibt die vorige Deployment-Referenz
+   der Rückweg.
 
 ### Phase 6 – OIDC-Paare (B)
 
