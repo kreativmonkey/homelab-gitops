@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Shared helpers for scripts/ci/*.sh — sourced, never executed directly.
 
-K8S_VERSION="${K8S_VERSION:-1.32.0}"
+# Match the Omni cluster template minor using an available kindest/node tag.
+K8S_VERSION="${K8S_VERSION:-1.37.0}"
 KUBECONFORM_ARGS=(
   -kubernetes-version "$K8S_VERSION"
   -ignore-missing-schemas
@@ -10,26 +11,19 @@ KUBECONFORM_ARGS=(
   "HelmRelease,HelmRepository,OCIRepository,GitRepository,Kustomization,HelmChart,Provider,Alert,Bucket,Receiver,ImageRepository,ImagePolicy,ImageUpdateAutomation,Secret"
 )
 
-# Muss jeden spec.path der Flux-Kustomizations in clusters/ abdecken -- sonst
-# erreicht ein Kustomize-Build-Fehler den Cluster, ohne dass CI ihn sieht.
-# Ausnahme: clusters/main selbst hat keine kustomization.yaml (Flux liest die
-# Manifeste dort direkt) und ist deshalb kein Kustomize-Root.
-KUSTOMIZE_PATHS=(
-  infrastructure/base/external-secrets
-  infrastructure/base/secret-source
-  infrastructure/base
-  infrastructure/base/backup-schedules
-  infrastructure/base/network/network-policies
-  infrastructure/base/sources
-  infrastructure/base/storage
-  infrastructure/overlays/main
-  infrastructure/overlays/disaster-recovery
-  apps/overlays/main
-  apps/overlays/main/hister-db-secret
-  apps/overlays/main/eso-db-secrets
-  apps/overlays/main/monitoring-rules
-  apps/base/netbird-operator/clusterproxy
-)
+# The public Flux entry points own their build paths. The bootstrap path
+# has no kustomization.yaml, and DR is validated even when inactive.
+kustomize_paths() {
+  {
+    yq -r -N '
+      select(.kind == "Kustomization" and
+        (.apiVersion | split("/") | .[0]) == "kustomize.toolkit.fluxcd.io" and
+        .spec.sourceRef.kind == "GitRepository" and .spec.sourceRef.name == "flux-system") |
+      .spec.path | sub("^[.]/", "")
+    ' clusters/main/*.yaml || return
+    echo infrastructure/overlays/disaster-recovery
+  } | sort -u
+}
 
 # stderr, not stdout: render_all_helmreleases' stdout is a data channel the
 # caller parses (see below) — narration must never land on that stream.
@@ -44,20 +38,55 @@ log() { printf '\n==> %s\n' "$*" >&2; }
 # 262144-byte annotation size limit with — a real Kubernetes limitation, not
 # a bug in our manifests.
 #
-# Server-side dry-run against objects whose CRDs aren't installed in the
-# bare-bones dry-run cluster (only Flux's are) fails with "no matches for
-# kind" rather than a real semantic error — treat that as a skip, not a
-# failure.
+# The admission sandbox installs only Flux CRDs. Keep each unavailable
+# operator kind explicit so unknown APIs still fail CI.
+UNAVAILABLE_CRDS='ainsel.dev/v1alpha1 Agent
+ainsel.dev/v1alpha1 AgentImage
+ainsel.dev/v1alpha1 WebhookConnector
+cert-manager.io/v1 Certificate
+cert-manager.io/v1 ClusterIssuer
+cert-manager.io/v1 Issuer
+cilium.io/v2 CiliumClusterwideNetworkPolicy
+external-secrets.io/v1 ExternalSecret
+external-secrets.io/v1 SecretStore
+generators.external-secrets.io/v1alpha1 ClusterGenerator
+k8s.nginx.org/v1 TransportServer
+netbird.io/v1alpha1 ClusterProxy
+operator.victoriametrics.com/v1beta1 VMAgent
+operator.victoriametrics.com/v1beta1 VMAlert
+operator.victoriametrics.com/v1beta1 VMAlertmanager
+operator.victoriametrics.com/v1beta1 VMCluster
+operator.victoriametrics.com/v1beta1 VMNodeScrape
+operator.victoriametrics.com/v1beta1 VMPodScrape
+operator.victoriametrics.com/v1beta1 VMProbe
+operator.victoriametrics.com/v1beta1 VMRule
+operator.victoriametrics.com/v1beta1 VMServiceScrape
+postgresql.cnpg.io/v1 Cluster
+postgresql.cnpg.io/v1 Database
+postgresql.cnpg.io/v1 ScheduledBackup
+velero.io/v1 BackupStorageLocation
+velero.io/v1 Schedule'
+
+admission_documents() {
+  local file="$1" unavailable="$2"
+  UNAVAILABLE_CRDS="$UNAVAILABLE_CRDS" UNAVAILABLE="$unavailable" yq '
+    select(. != null) | (.apiVersion + " " + .kind) as $type |
+    select((strenv(UNAVAILABLE_CRDS) | split("\n") | any_c(. == $type)) == env(UNAVAILABLE))
+  ' "$file"
+}
+
 dry_run_server() {
-  local file="$1" out
-  if ! out="$(kubectl apply --server-side --force-conflicts --dry-run=server -f "$file" 2>&1)"; then
-    if grep -qE 'no matches for kind|the server doesn.t have a resource type' <<<"$out"; then
-      echo "WARN: dry-run skipped for $(basename "$file") (CRD not installed in CI dry-run cluster): $(head -1 <<<"$out")"
-      return 0
-    fi
-    echo "$out" >&2
-    return 1
+  local file="$1" filtered="$1.admission" status=0
+  admission_documents "$file" true | yq -r -N '
+    "WARN: missing CI CRD for " + .apiVersion + " " + .kind + " " +
+      (.metadata.namespace // "") + "/" + .metadata.name
+  ' >&2 || return
+  admission_documents "$file" false >"$filtered" || return
+  if [[ -s "$filtered" ]]; then
+    kubectl apply --server-side --force-conflicts --dry-run=server -f "$filtered" > /dev/null \
+      || status=$?
   fi
+  return "$status"
 }
 
 # Renders every apps/infrastructure HelmRelease via `helm template` into

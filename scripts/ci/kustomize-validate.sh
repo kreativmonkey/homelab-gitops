@@ -6,11 +6,13 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 source scripts/ci/lib.sh
 
-for path in "${KUSTOMIZE_PATHS[@]}"; do
+paths="$(kustomize_paths)"
+while IFS= read -r path; do
   log "kustomize build: $path"
   kustomize build "$path" | kubeconform "${KUBECONFORM_ARGS[@]}" -summary -output text
-done
+done <<< "$paths"
 
+bash scripts/ci/validation-test.sh
 scripts/ci/homepage-kubernetes-access.sh
 
 log "Kustomize validate stage passed."

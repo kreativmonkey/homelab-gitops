@@ -5,10 +5,10 @@ metadata:
   namespace: searxng
 spec:
   replicas: 1
-  # Recreate + RWO PVC; $patch: replace drops stale rollingUpdate after SSA merge.
+  # Recreate protects the RWO PVC and clears the previous rolling update strategy.
   strategy:
-    $patch: replace
     type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app: searxng

@@ -29,7 +29,7 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 ├── scripts/                 # CI helpers, migration tools
 ├── justfile                 # Task runner for common workflows
 ├── renovate.json            # Renovate config (incl. customManagers)
-└── .forgejo/workflows/     # CI pipelines
+└── .github/workflows/      # CI pipelines
 ```
 
 **Manifest generation**
@@ -70,17 +70,11 @@ You are **Senior Kubernetes System Architect** and **GitOps Automation Engineer*
 ---
 
 # CI / Testing / Dependency Management
-## CI Pipeline (Forgejo) – `.forgejo/workflows/pr-validation.yaml`
-1. Install `just`, `tofu`, `helm`, `kustomize`, `kubeconform`, `yamllint`.
-2. **Stage 1 – Lint**: `yamllint -c .yamllint.yml .`
-3. **Stage 2 – Validation**:
-   - `kubeconform -strict -ignore-missing-schemas -summary ./...`
-   - `helm template` each HelmRelease → pipe to `kubeconform`.
-   - `kustomize build` all overlays → validate.
-4. **Stage 3 – Test Deploy**:
-   - Spin up temporary Kind cluster (`scripts/ci/kind-setup.sh`).
-   - `kubectl apply --dry-run=server -f <rendered>` for every manifest.
-5. Archive rendered manifests and logs as artifacts.
+## CI Pipeline (GitHub Actions)
+
+- `.github/workflows/pr-validation.yaml` runs Nix-backed lint, Kustomize and Helm schema validation, offsite regression tests, and server-side admission in a disposable Kind cluster.
+- Kustomize validation follows the public Flux build roots and includes the inactive disaster recovery overlay. Admission uses the committed Flux CRDs and omits Secrets and SOPS-encrypted documents.
+- Forgejo mirrors the repository with Actions disabled.
 
 ## Renovate
 - Helm chart updates (`datasource: helm`), weekly schedule.
