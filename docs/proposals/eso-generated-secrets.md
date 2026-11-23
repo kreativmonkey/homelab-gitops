@@ -444,10 +444,11 @@ restaurierte Wert bytegleich. Velero-Backup und isolierter Restore
    Im Bestand müssen alle drei Secret-Werte übereinstimmen. Bei leerer
    Neuinstallation stimmen Quelle und App-Kopie überein. Nur das Ergebnis
    ausgeben. Die Store-Identität darf nur `searxng-key` lesen.
-3. Das Deployment erst in einer weiteren Revision auf `searxng-secret-eso`
-   umstellen. Rollout und Suchanfrage prüfen. SOPS-Original erst nach
-   Abnahme entfernen. Bis dahin bleibt die vorige Deployment-Referenz
-   der Rückweg.
+3. Vor dem Deployment-Wechsel waren Original, Quelle und App-Kopie im
+   Zielcluster nichtleer und bytegleich. Die Store-Identität konnte ausschließlich
+   die freigegebene Quelle lesen. Das Deployment verwendet nun `searxng-secret-eso`.
+   Nach dem Merge den neu erstellten Pod und eine Suche über den Ingress prüfen.
+   Bis zu dieser Abnahme bleibt das SOPS-Original für einen Git-Revert verfügbar.
 
 ### Phase 6 – OIDC-Paare (B)
 
