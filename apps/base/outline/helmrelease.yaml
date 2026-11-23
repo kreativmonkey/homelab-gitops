@@ -157,7 +157,7 @@ spec:
     externalRedis:
       host: outline-valkey
       port: 6379
-      existingSecret: outline-valkey
+      existingSecret: outline-valkey-eso
 
     resources:
       requests:
