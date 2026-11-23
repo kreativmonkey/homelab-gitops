@@ -40,6 +40,32 @@ Break-glass (Omni down): `omnictl kubeconfig --break-glass` /
 `omnictl talosconfig --break-glass` — only if enabled for the account; fetch
 them **before** you need them and store them offline.
 
+### External MCP agents
+
+Laptop, OpenClaw and Hermes use separate ServiceAccounts in `ai-agents`.
+All three can inspect workloads. Hermes additionally has permission to request
+a CNPG backup in `cnpg-system`. Grant any further operations with a reviewed
+RoleBinding in the target namespace.
+
+For the laptop client, an operator with TokenRequest access can issue a
+short-lived token on a trusted workstation. Direct the output to a mode-0600
+file and configure the dedicated agent kubeconfig to use that file via
+`users[].user.tokenFile`. Use the matching Kubernetes API endpoint and CA.
+Check the agent identity and access before retiring the existing static token.
+Renew the file before expiry; the agent has no TokenRequest rights.
+
+```bash
+(
+  set -e
+  umask 077
+  token_file="${XDG_RUNTIME_DIR:?}/mcp-laptop.token"
+  tmp=$(mktemp "$token_file.XXXXXX")
+  trap 'rm -f "$tmp"' EXIT
+  kubectl --context "${ISSUER_CONTEXT:?}" -n ai-agents create token mcp-laptop --duration=1h > "$tmp"
+  mv "$tmp" "$token_file"
+)
+```
+
 ## 3. Cluster topology snapshot
 
 | Node         | Role          | IP              | OS                 |

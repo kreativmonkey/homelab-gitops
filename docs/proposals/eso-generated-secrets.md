@@ -163,9 +163,9 @@ automatisch gemounteten Token und hatte keine der 49 abgefragten Berechtigungen.
 - [`netbird/clusterproxy-homelab`](../../apps/base/netbird-operator/clusterproxy-rbac.yaml)
   darf Benutzer/Gruppen impersonieren, einschließlich administrativer
   Identitäten. Dieser Proxy gehört zum privilegierten Vertrauensbereich.
-- [`ai-agents/mcp-laptop`](../../apps/base/ai-agents/rbac.yaml) darf clusterweit
-  Workload-Templates patchen. Das ermöglicht indirekten Zugriff auf eingebundene
-  Secrets oder auf die Identität eines Pods; ebenfalls privilegierter Zugang.
+- [`ai-agents/mcp-laptop`](../../apps/base/ai-agents/rbac.yaml) durfte beim Pilot clusterweit
+  Workload-Templates patchen. Der heutige GitOps-Vertrag begrenzt Laptop, OpenClaw
+  und Hermes auf clusterweites Lesen. Hermes hat eine eigene Backup-Rolle in `cnpg-system`.
 
 Weitere Plattformidentitäten mit direktem Zugriff sind unter anderem Velero,
 Flux, CNPG und Reflector. Auch `list/watch` kann vollständige Secret-Objekte

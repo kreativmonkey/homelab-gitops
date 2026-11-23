@@ -1,13 +1,5 @@
-# Cluster-Zugriff für die KI-Agents (openclaw + hermes auf clawd,
-# mcp-laptop auf dem Admin-Laptop) — ein eigener ServiceAccount + Token
-# pro Agent (getrennt widerrufbar, im Audit-Log unterscheidbar).
-# Rechte openclaw/hermes: lesen (view + cluster-read) plus Pods löschen
-# (ai-agents-pod-ops, z. B. CrashLoop-Pods abräumen — der Controller
-# erstellt sie neu). mcp-laptop zusätzlich: Workloads patchen/skalieren
-# (ai-agents-workload-ops, Rollout-Restarts). Bewusst NICHT: exec, Secrets.
-# Die Token-Secrets werden vom Controller befüllt und landen als
-# kubeconfig beim jeweiligen Nutzer (clawd bzw. Laptop).
-# Ersetzt den früher ad-hoc angelegten, geteilten SA "k8s-mcp".
+# External MCP clients authenticate as separate ServiceAccounts.
+# Namespace-specific permissions are declared beside the workload they serve.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -41,41 +33,6 @@ rules:
       - get
       - list
       - watch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: ai-agents-pod-ops
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-    verbs:
-      - delete
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: ai-agents-workload-ops
-rules:
-  # Rollout-Restart (= patch) und Skalieren von Workloads.
-  - apiGroups:
-      - apps
-    resources:
-      - deployments
-      - statefulsets
-      - daemonsets
-    verbs:
-      - patch
-  - apiGroups:
-      - apps
-    resources:
-      - deployments/scale
-      - statefulsets/scale
-    verbs:
-      - patch
-      - update
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -113,32 +70,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: ai-agents-cluster-read
-subjects:
-  - kind: ServiceAccount
-    name: mcp-laptop
-    namespace: ai-agents
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: ai-agents-pod-ops-laptop
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: ai-agents-pod-ops
-subjects:
-  - kind: ServiceAccount
-    name: mcp-laptop
-    namespace: ai-agents
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: ai-agents-workload-ops-laptop
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: ai-agents-workload-ops
 subjects:
   - kind: ServiceAccount
     name: mcp-laptop
@@ -203,19 +134,6 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: ai-agents-pod-ops-openclaw
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: ai-agents-pod-ops
-subjects:
-  - kind: ServiceAccount
-    name: mcp-openclaw
-    namespace: ai-agents
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
   name: ai-agents-view-hermes
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -234,19 +152,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: ai-agents-cluster-read
-subjects:
-  - kind: ServiceAccount
-    name: mcp-hermes
-    namespace: ai-agents
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: ai-agents-pod-ops-hermes
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: ai-agents-pod-ops
 subjects:
   - kind: ServiceAccount
     name: mcp-hermes
