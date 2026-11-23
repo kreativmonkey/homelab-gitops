@@ -47,11 +47,32 @@ dry_run_server() {
     cat "$errors" >&2
   elif ! awk '
     BEGIN {
+      known["Agent|ainsel.dev/v1alpha1"] = 1
+      known["AgentImage|ainsel.dev/v1alpha1"] = 1
+      known["WebhookConnector|ainsel.dev/v1alpha1"] = 1
       known["Certificate|cert-manager.io/v1"] = 1
-      known["ClusterProxy|netbird.io/v1alpha1"] = 1
+      known["ClusterIssuer|cert-manager.io/v1"] = 1
+      known["Issuer|cert-manager.io/v1"] = 1
+      known["CiliumClusterwideNetworkPolicy|cilium.io/v2"] = 1
       known["ExternalSecret|external-secrets.io/v1"] = 1
-      known["Schedule|velero.io/v1"] = 1
+      known["SecretStore|external-secrets.io/v1"] = 1
+      known["ClusterGenerator|generators.external-secrets.io/v1alpha1"] = 1
+      known["TransportServer|k8s.nginx.org/v1"] = 1
+      known["ClusterProxy|netbird.io/v1alpha1"] = 1
+      known["VMAgent|operator.victoriametrics.com/v1beta1"] = 1
+      known["VMAlert|operator.victoriametrics.com/v1beta1"] = 1
+      known["VMAlertmanager|operator.victoriametrics.com/v1beta1"] = 1
+      known["VMCluster|operator.victoriametrics.com/v1beta1"] = 1
+      known["VMNodeScrape|operator.victoriametrics.com/v1beta1"] = 1
       known["VMPodScrape|operator.victoriametrics.com/v1beta1"] = 1
+      known["VMProbe|operator.victoriametrics.com/v1beta1"] = 1
+      known["VMRule|operator.victoriametrics.com/v1beta1"] = 1
+      known["VMServiceScrape|operator.victoriametrics.com/v1beta1"] = 1
+      known["Cluster|postgresql.cnpg.io/v1"] = 1
+      known["Database|postgresql.cnpg.io/v1"] = 1
+      known["ScheduledBackup|postgresql.cnpg.io/v1"] = 1
+      known["BackupStorageLocation|velero.io/v1"] = 1
+      known["Schedule|velero.io/v1"] = 1
     }
     /^resource mapping not found / && /no matches for kind "/ {
       gvk = substr($0, index($0, "no matches for kind "))
