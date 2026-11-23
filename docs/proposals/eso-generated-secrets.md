@@ -423,9 +423,23 @@ restaurierte Wert bytegleich. Velero-Backup und isolierter Restore
 
 1. Vor der Generator-Umstellung Quellwert und SOPS-Original auf Gleichheit
    prüfen. Quelle sichern und aus dem Backup testweise wiederherstellen.
-   Bei Restore mit vorhandenem App-Zustand zuerst den ursprünglichen
-   Quellwert einspielen und danach den Generator freigeben. Bei einer
-   leeren Installation kann der Generator einen neuen Wert erzeugen.
+   Bei einer leeren Installation kann der Generator einen neuen Wert erzeugen.
+   Für einen Restore mit bestehendem App-Zustand:
+   - Vor dem Flux-Bootstrap die Wiederherstellungsrevision mit
+     `spec.target.creationPolicy: None` am ExternalSecret `secret-source/searxng-key`
+     ausrollen. In einem laufenden Cluster zuerst auf diese Revision umstellen.
+     Am Live-ExternalSecret die Policy prüfen. Damit schreibt ESO das Ziel auch
+     bei fehlendem Secret nicht. Ein Suspend der Flux-Kustomization allein
+     stoppt einen bereits aktiven ESO-Controller nicht.
+   - Das gesicherte Secret zunächst isoliert wiederherstellen. Existiert das
+     Ziel bereits, seinen Wert geschützt mit dem Restore vergleichen. Bei
+     Gleichheit das Ziel behalten. Bei Abweichung Verbraucher anhalten, beide
+     Werte sichern und vor dem Ersetzen des unveränderlichen Ziels klären,
+     welcher Wert zum wiederhergestellten App-Zustand gehört.
+   - Das fehlende Ziel in `secret-source` wiederherstellen. Erst wenn sein
+     Wert bytegleich zum geprüften Backup ist und `immutable` sowie die
+     Prune-Annotation stimmen, die normale Git-Revision mit
+     `creationPolicy: Orphan` freigeben und die App-Kopie prüfen.
 2. Nach der Umstellung Store und ExternalSecrets auf `Ready` prüfen.
    Im Bestand müssen alle drei Secret-Werte übereinstimmen. Bei leerer
    Neuinstallation stimmen Quelle und App-Kopie überein. Nur das Ergebnis
