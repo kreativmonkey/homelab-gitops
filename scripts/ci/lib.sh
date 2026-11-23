@@ -23,6 +23,7 @@ KUSTOMIZE_PATHS=(
   infrastructure/base/sources
   infrastructure/base/storage
   infrastructure/overlays/main
+  infrastructure/overlays/main/searxng-secret
   infrastructure/overlays/disaster-recovery
   apps/overlays/main
   apps/overlays/main/hister-db-secret
