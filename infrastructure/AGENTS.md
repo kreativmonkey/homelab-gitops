@@ -36,6 +36,8 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 
 # Work Guidance
 
+- Keep the media wildcard in cert-manager. Review the consuming namespace before enabling a mirror.
+
 - Prefer HelmReleases (Flux-managed) over static manifests for standard software.
 - Comment complex patches inline in YAML.
 
