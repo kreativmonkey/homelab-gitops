@@ -408,50 +408,61 @@ nextcloud-collab, remediation-api `hmac-secret`, ainsel
 `kubectl get secret` abrufbar). Folge: Nutzer werden einmal ausgeloggt.
 
 **SearXNG-Quelle und App-Kopie.** Die Flux-Kustomization `searxng-secret`
-verwaltet `secret-source/searxng-key`. Ihr ExternalSecret behält beim Wechsel
-vom SOPS-Seed zum Generator Namespace, Namen und Ziel bei. `CreatedOnce`,
-`Orphan`, `immutable: true` und Prune-Schutz erhalten die vorhandene Quelle.
-Dieselbe Flux-Kustomization baut den namespaced Store in `searxng` ein.
-Er darf nur diese Quelle lesen und liefert die App-Kopie
-`searxng-secret-eso`.
-`AppSourceSecretMissing` überwacht die Existenz der Quelle unabhängig vom
-ESO-Status.
+verwaltet die aktive Quelle `secret-source/searxng-key-v2` und die App-Kopie
+`searxng/searxng-secret-eso`. ESO erzeugt die Quelle mit `CreatedOnce`,
+`Orphan` und `immutable: true`. Das Quell-Secret trägt das SearXNG-Label
+und eine direkte Prune-Schutzannotation. Die Store-Identität darf nur die
+aktive Quelle lesen. `AppSourceSecretMissing` prüft ihre Existenz unabhängig
+vom ESO-Status.
 
-Am 23.11.2026 waren SOPS-Original, geschützte Quelle und der testweise
-restaurierte Wert bytegleich. Velero-Backup und isolierter Restore
-`searxng-seed-20261123-104003-0737` waren vollständig (je 1/1 Objekt).
+**Rotation**
 
-1. Vor der Generator-Umstellung Quellwert und SOPS-Original auf Gleichheit
-   prüfen. Quelle sichern und aus dem Backup testweise wiederherstellen.
-   Bei einer leeren Installation kann der Generator einen neuen Wert erzeugen.
-   Für einen Restore mit bestehendem App-Zustand:
-   - Vor dem Flux-Bootstrap die Wiederherstellungsrevision mit
-     `spec.target.creationPolicy: None` am ExternalSecret `secret-source/searxng-key`
-     ausrollen. In einem laufenden Cluster zuerst auf diese Revision umstellen.
-     Am Live-ExternalSecret die Policy prüfen. Damit schreibt ESO das Ziel auch
-     bei fehlendem Secret nicht. Ein Suspend der Flux-Kustomization allein
-     stoppt einen bereits aktiven ESO-Controller nicht.
-   - Das gesicherte Secret zunächst isoliert wiederherstellen. Existiert das
-     Ziel bereits, seinen Wert geschützt mit dem Restore vergleichen. Bei
-     Gleichheit das Ziel behalten. Bei Abweichung Verbraucher anhalten, beide
-     Werte sichern und vor dem Ersetzen des unveränderlichen Ziels klären,
-     welcher Wert zum wiederhergestellten App-Zustand gehört.
-   - Das fehlende Ziel in `secret-source` wiederherstellen. Erst wenn sein
-     Wert bytegleich zum geprüften Backup ist und `immutable` sowie die
-     Prune-Annotation stimmen, die normale Git-Revision mit
-     `creationPolicy: Orphan` freigeben und die App-Kopie prüfen.
-2. Nach der Umstellung Store und ExternalSecrets auf `Ready` prüfen.
-   Quelle und App-Kopie müssen denselben nichtleeren Wert enthalten. Beim
-   Restore zusätzlich mit dem gesicherten Original vergleichen. Nur das
-   Ergebnis ausgeben. Die Store-Identität darf nur `searxng-key` lesen.
-3. Vor dem Deployment-Wechsel waren Original, Quelle und App-Kopie im
-   Zielcluster nichtleer und bytegleich. Die Store-Identität konnte ausschließlich
-   die freigegebene Quelle lesen. Das Deployment verwendet nun `searxng-secret-eso`.
-   Der neue Pod war bereit und lieferte Suchergebnisse über den Ingress.
-   Die frühere SOPS-Datei und ihre Vorlage wurden aus dem App-Katalog entfernt.
-   Für einen Rückbau auf die frühere Deployment-Referenz zuerst das verschlüsselte
-   Secret aus Revision `c60d0a23` wieder in die Kustomization aufnehmen. Vor
-   dem Deployment-Revert die Secret-Werte vergleichen.
+1. Eine neue versionierte Quelle anlegen, Leserecht und App-Kopie auf diese
+   Version umstellen. Quell-ExternalSecret und App-ExternalSecret auf
+   `Ready` prüfen. Prüfen, dass Quelle und App-Kopie bytegleich, nichtleer und
+   vom bisherigen Wert verschieden sind. Nur das Ergebnis ausgeben. Die
+   aktive Quelle sichern und den Restore prüfen.
+2. Jeder neu startende Pod liest bereits die aktualisierte App-Kopie, auch
+   ein Ersatzpod vor dem geplanten Rollout. Nach geprüftem Backup und
+   Wertvergleich den Pod-Rollout deklarativ auslösen. Die alte Quell-Definition
+   kann im selben Git-Schritt entfernt werden, sobald Flux den entfernten
+   Prune-Schutz des alten ExternalSecrets übernommen hat.
+3. Pod-Bereitschaft und eine Suchanfrage über den Ingress prüfen. Bestätigen,
+   dass Flux nach Entfernen der Altdefinition das alte ExternalSecret
+   gepruned hat. Das verwaiste, weiterhin geschützte Quell-Secret bleibt bis
+   zur erfolgreichen Laufzeitabnahme erhalten. Vor der separaten Löschung
+   prüfen, dass kein Verbraucher oder Leser die alte Quelle benötigt.
+4. Bei einem Rollback die aktive Schlüsselversion beibehalten. Historische
+   SOPS-Secrets und Backups vor der letzten Rotation dürfen den aktiven
+   Schlüssel nicht wiederherstellen.
+
+**Wiederherstellung**
+
+1. Bei einer leeren Neuinstallation erzeugt ESO einen neuen Schlüssel. Bei
+   Übernahme eines bestehenden App-Zustands vor dem Flux-Bootstrap die
+   Wiederherstellungsrevision mit `spec.target.creationPolicy: None` am
+   ExternalSecret der aktiven Quellversion ausrollen. Im laufenden Cluster
+   zuerst auf diese Revision umstellen und die Live-Policy prüfen. So kann der
+   ESO-Controller bei fehlendem Secret keinen Ersatzschlüssel schreiben.
+   `Ready` allein weist unter `creationPolicy: None` kein Quell-Secret nach.
+2. Ausschließlich ein Backup der aktiven Schlüsselversion verwenden und das
+   Secret zunächst isoliert wiederherstellen. Existiert das Ziel bereits,
+   den Wert geschützt mit dem Restore vergleichen. Bei Gleichheit das Ziel
+   behalten. Bei Abweichung Verbraucher anhalten und vor dem Ersetzen des
+   unveränderlichen Ziels die gültige aktive Quelle bestimmen.
+3. Das fehlende Ziel in `secret-source` wiederherstellen. Bytegleichheit,
+   `immutable`, SearXNG-Label und Prune-Annotation prüfen.
+4. Vor der Freigabe unter `None` prüfen, dass das ExternalSecret mit derselben
+   UID bereits erfolgreich reconciliert wurde. `Ready=True`, eine gesetzte
+   `status.refreshTime` und `status.syncedResourceVersion` müssen zur
+   aktuellen `None`-Revision passen. ESO 2.15 bildet die synchronisierte
+   Version aus Generation und Hash der Labels und Annotationen. Sie ist
+   unabhängig von `metadata.resourceVersion`. `CreatedOnce` kann nach einem
+   Policy-Wechsel den alten Status behalten. Ist dadurch kein erfolgreicher
+   Abgleich unter `None` belegt, das ExternalSecret kontrolliert unter der
+   aktiven `None`-Revision neu anlegen und die neue UID und den Abgleich prüfen.
+   Erst danach bei derselben UID die Git-Revision mit `creationPolicy: Orphan`
+   freigeben und die App-Kopie prüfen.
 
 ### Phase 6 – OIDC-Paare (B)
 

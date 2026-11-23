@@ -57,7 +57,7 @@ spec:
         - alert: AppSourceSecretMissing
           # ESO can remain Ready after a CreatedOnce/Orphan target disappears.
           expr: |
-            absent(kube_secret_info{namespace="secret-source",secret="searxng-key"})
+            absent(kube_secret_info{namespace="secret-source",secret="searxng-key-v2"})
           for: 15m
           labels:
             severity: warning

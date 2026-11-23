@@ -3,8 +3,6 @@ kind: ExternalSecret
 metadata:
   name: searxng-key
   namespace: secret-source
-  annotations:
-    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   # The generator adopts the existing immutable seed. Restore that seed before
   # reconciling this resource against an existing application after a loss.
@@ -24,6 +22,32 @@ spec:
           kind: ClusterGenerator
           name: password-32
 ---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: searxng-key-v2
+  namespace: secret-source
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: searxng-key-v2
+    creationPolicy: Orphan
+    immutable: true
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: searxng
+        annotations:
+          kustomize.toolkit.fluxcd.io/prune: disabled
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: ClusterGenerator
+          name: password-32
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -33,7 +57,7 @@ rules:
   - apiGroups: [""]
     resources: [secrets]
     verbs: [get]
-    resourceNames: [searxng-key]
+    resourceNames: [searxng-key-v2]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
