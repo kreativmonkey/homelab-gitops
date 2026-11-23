@@ -24,6 +24,30 @@ spec:
         kind: HelmRepository
         name: community-charts
         namespace: flux-system
+  # The chart makes Redis credentials optional. On a fresh cluster, wait for
+  # the ESO copy before starting Outline with a fixed process environment.
+  postRenderers:
+    - kustomize:
+        patches:
+          - patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: outline-app
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: outline
+                        env:
+                          - name: REDIS_USERNAME
+                            valueFrom:
+                              secretKeyRef:
+                                optional: false
+                          - name: REDIS_PASSWORD
+                            valueFrom:
+                              secretKeyRef:
+                                optional: false
   valuesFrom:
     - kind: Secret
       name: outline-config
