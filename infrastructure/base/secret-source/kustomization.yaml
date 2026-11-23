@@ -13,6 +13,7 @@ resources:
   - db-goloom.yaml
   - db-immich.yaml
   - db-outline.yaml
+  - outline-valkey.yaml
   - db-paperless.yaml
   - db-sparkyfitness.yaml
   - db-sparkyfitness-app.yaml

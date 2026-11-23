@@ -15,6 +15,8 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 - `overlays/main/searxng-secret/` owns the active immutable `secret-source/searxng-key-v2` source and grants the SearXNG Store reader access only to it. Restore the active source before enabling its generator on a recovered installation.
 - Phase 3 DB sources, named reader grants and CNPG copies live in `base/secret-source/db-<app>.yaml`. Reuse the CNPG Store in each cluster namespace. Keep app source grants limited to their own DB roles.
 
+- `base/secret-source/outline-valkey.yaml` owns the protected Valkey source. Grant that key only to the Outline Store identity.
+
 - OCI Helm charts: `OCIRepository` (tag = chart version) + HelmRelease `chartRef`, not `HelmRepository type: oci` (no status/Ready, maintenance mode). Set `layerSelector` helm chart content + `operation: copy`. Judge health via OCIRepository/HelmRelease Ready.
 - Single CNPG cluster operator in `base/database/cnpg/`. Per-app DB clusters live in `overlays/main/database-clusters/<app>/`.
 - CNPG `barmanObjectStore` (S3-compatible) for base-backup + WAL archiving. S3 creds never plaintext — SealedSecrets/ExternalSecrets placeholders.
