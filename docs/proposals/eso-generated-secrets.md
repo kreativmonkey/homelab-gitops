@@ -407,6 +407,32 @@ nextcloud-collab, remediation-api `hmac-secret`, ainsel
 `BETTER_AUTH_SECRET`, Grafana-/pgadmin-/Nextcloud-Admin (Passwort per
 `kubectl get secret` abrufbar). Folge: Nutzer werden einmal ausgeloggt.
 
+**SearXNG-Quelle übernehmen.** Die getrennte Flux-Kustomization
+`searxng-secret` erstellt aus dem SOPS-Original `searxng/searxng-secret`
+die unveränderliche Quelle `secret-source/searxng-key`. Die temporäre
+Store-Identität hat nur Leserecht für das Original. Das Deployment liest
+weiter daraus. Flux stellt das Original bei Neuinstallation und Restore
+bereit. Bei Rücknahme dieses PRs bleibt die bereits übernommene Quelle
+wegen `creationPolicy: Orphan` erhalten.
+
+1. `SecretStore` und `ExternalSecret` auf `Ready` prüfen. Originalschlüssel
+   `SEARXNG_SECRET` und Quellschlüssel `password` müssen denselben nichtleeren
+   Wert enthalten. Quelle auf `immutable: true` und direkte Prune-Annotation
+   prüfen. Nur das Ergebnis des Vergleichs ausgeben. Ein Read auf andere
+   Secret-Namen sowie `list` und `watch` müssen für die Store-Identität
+   fehlschlagen. Quelle sichern und Wiederherstellung prüfen.
+2. Per Folge-PR den bestehenden ExternalSecret auf den Generator
+   umstellen und den temporären Store samt RBAC entfernen. `CreatedOnce`,
+   `Orphan` und `immutable` behalten. Im Bestand muss die gesicherte,
+   bytegleiche Quelle vor der Generator-Freigabe vorhanden sein. Bei
+   einer leeren Installation darf der Generator den Wert erstellen.
+   Bei Restore mit erhaltenem App-Zustand zuerst die Quelle einspielen.
+3. Mit der Generator-Umstellung den namespaced Store und die App-Kopie
+   `searxng-secret-eso` anlegen. Erst nach `Ready` und Wertvergleich das
+   Deployment in einer weiteren Revision darauf umstellen. Rollout und
+   Suchanfrage prüfen. SOPS-Original erst nach dieser Abnahme entfernen.
+   Bis dahin bleibt die vorige Deployment-Referenz der Rückweg.
+
 ### Phase 6 – OIDC-Paare (B)
 
 - Quelle `oidc-<app>` in `secret-source`.

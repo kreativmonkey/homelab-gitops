@@ -12,6 +12,7 @@ Cluster-wide services: database operator, storage, networking/ingress, backup + 
 
 - ESO platform lives in `base/external-secrets/` (restricted PSA, baseline and API egress policies); `base/secret-source/` owns the prune-protected source namespace and reusable generator. Use local SecretStores with named source reads and per-account TokenRequest grants. Creating a generator alone creates no credentials. Backup, rollout and privileged identities are documented in `docs/adr/0005-external-secrets-operator.md`.
 - Hister's generated source and exact-name reader grants live in `base/secret-source/db-hister.yaml`. The CNPG copy in `base/secret-source/hister-cnpg.yaml` uses basic-auth type and the CNPG reload label. Check a fresh TCP login after switching the role and before switching the app.
+- `overlays/main/searxng-secret/` seeds `secret-source/searxng-key` from the existing app Secret. Keep the seed identity limited to that one read. Verify byte equality and backup before removing the seed Store.
 - Phase 3 DB sources, named reader grants and CNPG copies live in `base/secret-source/db-<app>.yaml`. Reuse the CNPG Store in each cluster namespace. Keep app source grants limited to their own DB roles.
 
 - OCI Helm charts: `OCIRepository` (tag = chart version) + HelmRelease `chartRef`, not `HelmRepository type: oci` (no status/Ready, maintenance mode). Set `layerSelector` helm chart content + `operation: copy`. Judge health via OCIRepository/HelmRelease Ready.
