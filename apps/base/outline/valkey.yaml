@@ -1,21 +1,4 @@
-# Valkey replaces the deprecated bitnamilegacy/redis subchart (issue #736).
-# Bitnami-Legacy images are no longer maintained; Valkey is the maintained Redis
-# fork. Cache-only, no persistence (matches the prior redis config). Wired into
-# Outline via HelmRelease spec.values.externalRedis.
-apiVersion: v1
-kind: Secret
-metadata:
-  name: outline-valkey
-  namespace: outline
-  labels:
-    app.kubernetes.io/name: outline-valkey
-    app.kubernetes.io/part-of: outline
-type: Opaque
-stringData:
-  # No auth (matches prior redis config); REDIS_PASSWORD stays empty.
-  redis-password: ""
-  redis-username: ""
----
+# Valkey provides queues, pub/sub and caching for Outline.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -26,6 +9,10 @@ metadata:
     app.kubernetes.io/part-of: outline
 spec:
   replicas: 1
+  # Independent Valkey instances must never share this Service during a rollout.
+  strategy:
+    type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app.kubernetes.io/name: outline-valkey
@@ -45,6 +32,8 @@ spec:
           imagePullPolicy: IfNotPresent
           args:
             - valkey-server
+            - --aclfile
+            - /etc/valkey/acl/users.acl
             - --save
             - ""
             - --appendonly
@@ -52,6 +41,9 @@ spec:
           ports:
             - name: redis
               containerPort: 6379
+          readinessProbe:
+            tcpSocket:
+              port: redis
           resources:
             requests:
               cpu: 25m
@@ -65,10 +57,19 @@ spec:
               drop:
                 - ALL
           volumeMounts:
+            - name: acl
+              mountPath: /etc/valkey/acl
+              readOnly: true
             # Valkey needs a writable tmp dir under readOnlyRootFilesystem.
             - name: tmp
               mountPath: /tmp
       volumes:
+        - name: acl
+          secret:
+            secretName: outline-valkey-eso
+            items:
+              - key: users.acl
+                path: users.acl
         - name: tmp
           emptyDir: {}
 ---
