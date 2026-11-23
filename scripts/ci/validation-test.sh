@@ -12,25 +12,38 @@ if grep -Eq '^(clusters/main|---|null)$' <<< "$paths"; then
   exit 1
 fi
 
+test_dir="$(mktemp -d)"
+trap 'rm -rf "$test_dir"' EXIT
+cat > "$test_dir/fixtures.yaml" <<'YAML'
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ignored
+---
+apiVersion: other.example/v1
+kind: Unexpected
+metadata:
+  name: still-validated
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: still-validated
+YAML
+
 kubectl() {
-  printf '%s\n' "$diagnostics" >&2
-  return 1
+  local file="${!#}"
+  local kinds
+  kinds="$(yq -r -N '.kind' "$file")"
+  [[ "$kinds" == $'Unexpected\nPod' ]] || return 99
+  return "$apply_status"
 }
 
-diagnostics='resource mapping not found for name: "test" namespace: "example" from "render.yaml": no matches for kind "Certificate" in version "cert-manager.io/v1"
-ensure CRDs are installed first'
-dry_run_server render.yaml >/dev/null 2>&1
-diagnostics+=$'\nError from server (Invalid): test Pod is invalid'
-if dry_run_server render.yaml >/dev/null 2>&1; then
-  echo "A missing CRD must not hide another admission error" >&2
-  exit 1
-fi
-
-diagnostics='resource mapping not found for name: "test" namespace: "" from "render.yaml": no matches for kind "Unexpected" in version "other.example/v1"
-ensure CRDs are installed first'
-if dry_run_server render.yaml >/dev/null 2>&1; then
-  echo "An unexpected missing CRD must fail validation" >&2
-  exit 1
-fi
+apply_status=0
+dry_run_server "$test_dir/fixtures.yaml"
+apply_status=42
+status=0
+dry_run_server "$test_dir/fixtures.yaml" || status=$?
+[[ "$status" -eq 42 ]]
 
 log "CI validation regression checks passed."

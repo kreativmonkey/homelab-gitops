@@ -38,60 +38,55 @@ log() { printf '\n==> %s\n' "$*" >&2; }
 # 262144-byte annotation size limit with — a real Kubernetes limitation, not
 # a bug in our manifests.
 #
-# The sandbox has Flux's CRDs. Allow individual mapping errors for these
-# known operator CRDs only. Preserve any other errors from the same apply.
+# The admission sandbox installs only Flux CRDs. Keep each unavailable
+# operator kind explicit so unknown APIs still fail CI.
+UNAVAILABLE_CRDS='ainsel.dev/v1alpha1 Agent
+ainsel.dev/v1alpha1 AgentImage
+ainsel.dev/v1alpha1 WebhookConnector
+cert-manager.io/v1 Certificate
+cert-manager.io/v1 ClusterIssuer
+cert-manager.io/v1 Issuer
+cilium.io/v2 CiliumClusterwideNetworkPolicy
+external-secrets.io/v1 ExternalSecret
+external-secrets.io/v1 SecretStore
+generators.external-secrets.io/v1alpha1 ClusterGenerator
+k8s.nginx.org/v1 TransportServer
+netbird.io/v1alpha1 ClusterProxy
+operator.victoriametrics.com/v1beta1 VMAgent
+operator.victoriametrics.com/v1beta1 VMAlert
+operator.victoriametrics.com/v1beta1 VMAlertmanager
+operator.victoriametrics.com/v1beta1 VMCluster
+operator.victoriametrics.com/v1beta1 VMNodeScrape
+operator.victoriametrics.com/v1beta1 VMPodScrape
+operator.victoriametrics.com/v1beta1 VMProbe
+operator.victoriametrics.com/v1beta1 VMRule
+operator.victoriametrics.com/v1beta1 VMServiceScrape
+postgresql.cnpg.io/v1 Cluster
+postgresql.cnpg.io/v1 Database
+postgresql.cnpg.io/v1 ScheduledBackup
+velero.io/v1 BackupStorageLocation
+velero.io/v1 Schedule'
+
+admission_documents() {
+  local file="$1" unavailable="$2"
+  UNAVAILABLE_CRDS="$UNAVAILABLE_CRDS" UNAVAILABLE="$unavailable" yq '
+    (.apiVersion + " " + .kind) as $type |
+    select((strenv(UNAVAILABLE_CRDS) | split("\n") | any_c(. == $type)) == env(UNAVAILABLE))
+  ' "$file"
+}
+
 dry_run_server() {
-  local file="$1" errors
-  errors="$(mktemp)"
-  if kubectl apply --server-side --force-conflicts --dry-run=server -f "$file" > /dev/null 2>"$errors"; then
-    cat "$errors" >&2
-  elif ! awk '
-    BEGIN {
-      known["Agent|ainsel.dev/v1alpha1"] = 1
-      known["AgentImage|ainsel.dev/v1alpha1"] = 1
-      known["WebhookConnector|ainsel.dev/v1alpha1"] = 1
-      known["Certificate|cert-manager.io/v1"] = 1
-      known["ClusterIssuer|cert-manager.io/v1"] = 1
-      known["Issuer|cert-manager.io/v1"] = 1
-      known["CiliumClusterwideNetworkPolicy|cilium.io/v2"] = 1
-      known["ExternalSecret|external-secrets.io/v1"] = 1
-      known["SecretStore|external-secrets.io/v1"] = 1
-      known["ClusterGenerator|generators.external-secrets.io/v1alpha1"] = 1
-      known["TransportServer|k8s.nginx.org/v1"] = 1
-      known["ClusterProxy|netbird.io/v1alpha1"] = 1
-      known["VMAgent|operator.victoriametrics.com/v1beta1"] = 1
-      known["VMAlert|operator.victoriametrics.com/v1beta1"] = 1
-      known["VMAlertmanager|operator.victoriametrics.com/v1beta1"] = 1
-      known["VMCluster|operator.victoriametrics.com/v1beta1"] = 1
-      known["VMNodeScrape|operator.victoriametrics.com/v1beta1"] = 1
-      known["VMPodScrape|operator.victoriametrics.com/v1beta1"] = 1
-      known["VMProbe|operator.victoriametrics.com/v1beta1"] = 1
-      known["VMRule|operator.victoriametrics.com/v1beta1"] = 1
-      known["VMServiceScrape|operator.victoriametrics.com/v1beta1"] = 1
-      known["Cluster|postgresql.cnpg.io/v1"] = 1
-      known["Database|postgresql.cnpg.io/v1"] = 1
-      known["ScheduledBackup|postgresql.cnpg.io/v1"] = 1
-      known["BackupStorageLocation|velero.io/v1"] = 1
-      known["Schedule|velero.io/v1"] = 1
-    }
-    /^resource mapping not found / && /no matches for kind "/ {
-      gvk = substr($0, index($0, "no matches for kind "))
-      split(gvk, fields, "\"")
-      if ((fields[2] "|" fields[4]) in known && fields[5] == "") {
-        print "WARN: " $0
-        allowed++
-        hint = 1
-        next
-      }
-    }
-    hint && /^ensure CRDs are installed first$/ { hint = 0; next }
-    { print; hint = 0; unexpected++ }
-    END { exit (unexpected || !allowed) }
-  ' "$errors" >&2; then
-    rm -f "$errors"
-    return 1
+  local file="$1" filtered="$1.admission" status=0
+  admission_documents "$file" true | yq -r -N '
+    "WARN: missing CI CRD for " + .apiVersion + " " + .kind + " " +
+      (.metadata.namespace // "") + "/" + .metadata.name
+  ' >&2 || return
+  admission_documents "$file" false >"$filtered" || return
+  if [[ -s "$filtered" ]]; then
+    kubectl apply --server-side --force-conflicts --dry-run=server -f "$filtered" > /dev/null \
+      || status=$?
   fi
-  rm -f "$errors"
+  return "$status"
 }
 
 # Renders every apps/infrastructure HelmRelease via `helm template` into

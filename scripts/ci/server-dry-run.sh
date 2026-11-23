@@ -65,8 +65,11 @@ if [[ "$CLUSTER_PROVISIONER" == "talos" ]]; then
     --kubernetes-version "$K8S_VERSION"
 else
   KIND_IMAGE="kindest/node:v${K8S_VERSION}"
-  kind create cluster --name "$CLUSTER_NAME" --image "$KIND_IMAGE" --wait 120s
+  kind create cluster --name "$CLUSTER_NAME" --image "$KIND_IMAGE" --wait 120s \
+    --kubeconfig "$KUBECONFIG"
 fi
+
+test -s "$KUBECONFIG"
 
 log "Install the committed Flux CRDs"
 yq 'select(.kind == "CustomResourceDefinition")' clusters/main/flux-system/gotk-components.yaml \
@@ -107,6 +110,18 @@ log "Create namespaces needed by the dry-runs"
   printf '%s\n' '---'
 done >"$BUILD_DIR/namespaces.yaml"
 kubectl apply --server-side -f "$BUILD_DIR/namespaces.yaml"
+
+log "Create declared ServiceAccounts required by Pod admission"
+yq -r -N 'select(.apiVersion == "v1" and .kind == "ServiceAccount") |
+  [(.metadata.namespace // "default"), .metadata.name] | @tsv' \
+  "${kustomize_builds[@]}" "${helm_builds[@]}" |
+  sort -u | while IFS=$'\t' read -r namespace account; do
+    kubectl create serviceaccount "$account" --namespace "$namespace" --dry-run=client -o yaml
+    printf '%s\n' '---'
+  done >"$BUILD_DIR/serviceaccounts.yaml"
+if [[ -s "$BUILD_DIR/serviceaccounts.yaml" ]]; then
+  kubectl apply --server-side -f "$BUILD_DIR/serviceaccounts.yaml"
+fi
 
 failed=0
 for rendered in "${kustomize_builds[@]}" "${helm_builds[@]}"; do

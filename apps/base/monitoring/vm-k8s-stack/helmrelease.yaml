@@ -639,18 +639,14 @@ spec:
           drop:
             - ALL
 
-      # emptyDir volumes needed for readOnlyRootFilesystem + plugin installer
+      # Grafana creates its /tmp mount for readOnlyRootFilesystem.
       extraVolumes:
-        - name: tmp
-          emptyDir: {}
         - name: plugins-dir
           emptyDir: {}
         - name: logs
           emptyDir: {}
 
       extraVolumeMounts:
-        - name: tmp
-          mountPath: /tmp
         - name: plugins-dir
           mountPath: /var/lib/grafana/plugins
         - name: logs
