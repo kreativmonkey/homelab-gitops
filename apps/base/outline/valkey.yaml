@@ -9,10 +9,12 @@ metadata:
     app.kubernetes.io/part-of: outline
 spec:
   replicas: 1
-  # Independent Valkey instances must never share this Service during a rollout.
+  # Remove the old replica from service before adding the new queue backend.
   strategy:
-    type: Recreate
-    rollingUpdate: null
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: outline-valkey
@@ -25,6 +27,8 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: valkey
           # Pinned by digest to a released ghcr.io/valkey-io/valkey image (7.2.9).
