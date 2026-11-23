@@ -82,7 +82,7 @@ spec:
                   mountPath: /restore
           containers:
             - name: validate
-              image: docker.io/library/postgres:18-alpine
+              image: docker.io/library/postgres:19-alpine
               resources:
                 requests:
                   ephemeral-storage: 12Gi
