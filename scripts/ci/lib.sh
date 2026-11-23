@@ -10,26 +10,19 @@ KUBECONFORM_ARGS=(
   "HelmRelease,HelmRepository,OCIRepository,GitRepository,Kustomization,HelmChart,Provider,Alert,Bucket,Receiver,ImageRepository,ImagePolicy,ImageUpdateAutomation,Secret"
 )
 
-# Muss jeden spec.path der Flux-Kustomizations in clusters/ abdecken -- sonst
-# erreicht ein Kustomize-Build-Fehler den Cluster, ohne dass CI ihn sieht.
-# Ausnahme: clusters/main selbst hat keine kustomization.yaml (Flux liest die
-# Manifeste dort direkt) und ist deshalb kein Kustomize-Root.
-KUSTOMIZE_PATHS=(
-  infrastructure/base/external-secrets
-  infrastructure/base/secret-source
-  infrastructure/base
-  infrastructure/base/backup-schedules
-  infrastructure/base/network/network-policies
-  infrastructure/base/sources
-  infrastructure/base/storage
-  infrastructure/overlays/main
-  infrastructure/overlays/disaster-recovery
-  apps/overlays/main
-  apps/overlays/main/hister-db-secret
-  apps/overlays/main/eso-db-secrets
-  apps/overlays/main/monitoring-rules
-  apps/base/netbird-operator/clusterproxy
-)
+# The public Flux entry points own their build paths. The bootstrap path
+# has no kustomization.yaml, and DR is validated even when inactive.
+kustomize_paths() {
+  {
+    yq -r -N '
+      select(.kind == "Kustomization" and
+        (.apiVersion | split("/") | .[0]) == "kustomize.toolkit.fluxcd.io" and
+        .spec.sourceRef.kind == "GitRepository" and .spec.sourceRef.name == "flux-system") |
+      .spec.path | sub("^[.]/", "")
+    ' clusters/main/*.yaml || return
+    echo infrastructure/overlays/disaster-recovery
+  } | sort -u
+}
 
 # stderr, not stdout: render_all_helmreleases' stdout is a data channel the
 # caller parses (see below) — narration must never land on that stream.
@@ -44,20 +37,39 @@ log() { printf '\n==> %s\n' "$*" >&2; }
 # 262144-byte annotation size limit with — a real Kubernetes limitation, not
 # a bug in our manifests.
 #
-# Server-side dry-run against objects whose CRDs aren't installed in the
-# bare-bones dry-run cluster (only Flux's are) fails with "no matches for
-# kind" rather than a real semantic error — treat that as a skip, not a
-# failure.
+# The sandbox has Flux's CRDs. Allow individual mapping errors for these
+# known operator CRDs only. Preserve any other errors from the same apply.
 dry_run_server() {
-  local file="$1" out
-  if ! out="$(kubectl apply --server-side --force-conflicts --dry-run=server -f "$file" 2>&1)"; then
-    if grep -qE 'no matches for kind|the server doesn.t have a resource type' <<<"$out"; then
-      echo "WARN: dry-run skipped for $(basename "$file") (CRD not installed in CI dry-run cluster): $(head -1 <<<"$out")"
-      return 0
-    fi
-    echo "$out" >&2
+  local file="$1" errors
+  errors="$(mktemp)"
+  if kubectl apply --server-side --force-conflicts --dry-run=server -f "$file" > /dev/null 2>"$errors"; then
+    cat "$errors" >&2
+  elif ! awk '
+    BEGIN {
+      known["Certificate|cert-manager.io/v1"] = 1
+      known["ClusterProxy|netbird.io/v1alpha1"] = 1
+      known["ExternalSecret|external-secrets.io/v1"] = 1
+      known["Schedule|velero.io/v1"] = 1
+      known["VMPodScrape|operator.victoriametrics.com/v1beta1"] = 1
+    }
+    /^resource mapping not found / && /no matches for kind "/ {
+      gvk = substr($0, index($0, "no matches for kind "))
+      split(gvk, fields, "\"")
+      if ((fields[2] "|" fields[4]) in known && fields[5] == "") {
+        print "WARN: " $0
+        allowed++
+        hint = 1
+        next
+      }
+    }
+    hint && /^ensure CRDs are installed first$/ { hint = 0; next }
+    { print; hint = 0; unexpected++ }
+    END { exit (unexpected || !allowed) }
+  ' "$errors" >&2; then
+    rm -f "$errors"
     return 1
   fi
+  rm -f "$errors"
 }
 
 # Renders every apps/infrastructure HelmRelease via `helm template` into

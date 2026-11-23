@@ -73,7 +73,7 @@ upstream-health *args:
     ./scripts/ci/upstream-health.sh {{args}}
 
 lint:
-    yamllint -c .yamllint.yml clusters infrastructure apps .forgejo/workflows .github/workflows
+    yamllint -c .yamllint.yml clusters infrastructure apps .github/workflows
 
 build-infra:
     kustomize build infrastructure/overlays/main

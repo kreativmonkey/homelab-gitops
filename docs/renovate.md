@@ -11,7 +11,7 @@ Doppelte Erkennung durch mehrere Manager erzeugt doppelte PRs für dieselbe
 | `flux`-Manager (nativ) | HelmRelease-Chart-Versionen, GitRepository/OCIRepository `ref.tag`, `repository:`+`tag:`-Paare in HelmRelease-values | `apps/base/immich/helmrelease.yaml` |
 | `kubernetes`-Manager (nativ) | `image:`-Zeilen in Dateien, deren Name auf `…deployment/daemonset/statefulset/job/cronjob.yaml` endet | `apps/base/teslamate/mosquitto-deployment.yaml` |
 | `kustomize`-Manager (nativ) | Remote-Bases (`?ref=`), `images:`-Overrides (`newTag:`) | derzeit ungenutzt |
-| `github-actions`-Manager (nativ) | `uses:` in `.github/workflows/` **und** `.forgejo/workflows/` | `pr-validation.yaml` |
+| `github-actions`-Manager (nativ) | `uses:` in `.github/workflows/` | `pr-validation.yaml` |
 | `nix`-Manager + lockFileMaintenance | `flake.nix` / `flake.lock` | |
 | Regex-Marker (`# renovate: datasource=… depName=…`) | **Nur** Felder, die kein nativer Manager versteht | CNPG `imageName:`, tag-only values, Image-Strings in values/ConfigMaps, Omni-Cluster-Template `version:` (Talos/Kubernetes), Env-`value:` direkt unter dem Marker |
 

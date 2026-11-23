@@ -48,7 +48,7 @@
           shellHook = ''
             echo "GitOps CI-Umgebung: just, yamllint, kubeconform, kustomize, helm, kind, talosctl, sops"
             echo "  just --list          # alle Befehle"
-            echo "  just validate        # schema-only stages (Forgejo / GitHub PR workflow)"
+            echo "  just validate        # schema-only stages (GitHub PR workflow)"
             echo "  just validate-full   # + server-dry-run (kind, or talos via CLUSTER_PROVISIONER=talos)"
           '';
         };
