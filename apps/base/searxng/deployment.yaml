@@ -14,6 +14,8 @@ spec:
       app: searxng
   template:
     metadata:
+      annotations:
+        homelab.f4mily.net/secret-source: searxng-key-v2
       labels:
         app: searxng
         app.kubernetes.io/name: searxng
