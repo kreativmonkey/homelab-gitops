@@ -54,3 +54,14 @@ spec:
           annotations:
             summary: "DB-Quell-Secret {{ $labels.secret }} fehlt"
             description: "Stelle secret-source/{{ $labels.secret }} mit dem ursprünglichen Wert aus Velero wieder her, bevor du das ExternalSecret neu anlegst."
+        - alert: AppSourceSecretMissing
+          # ESO can remain Ready after a CreatedOnce/Orphan target disappears.
+          expr: |
+            absent(kube_secret_info{namespace="secret-source",secret="searxng-key"})
+          for: 15m
+          labels:
+            severity: warning
+            homelab_owner: platform
+          annotations:
+            summary: "App-Quell-Secret {{ $labels.secret }} fehlt"
+            description: "Stelle secret-source/{{ $labels.secret }} mit dem ursprünglichen Wert aus dem Backup wieder her, bevor du das ExternalSecret neu anlegst."
