@@ -399,7 +399,7 @@ alle 14 Quell-Secrets einzeln.
 
 ### Phase 5 – Weitere A1-Secrets
 
-searxng, dawarich `SECRET_KEY_BASE`, tandoor/paperless `SECRET_KEY`,
+dawarich `SECRET_KEY_BASE`, tandoor/paperless `SECRET_KEY`,
 Outline `UTILS_SECRET` (nichtleeres Cron-Token) und `outline-valkey` (Klartext!),
 vikunja `jwt-secret`, linkwarden `NEXTAUTH_SECRET`/`MEILI_MASTER_KEY`,
 nextcloud-collab, remediation-api `hmac-secret`, ainsel
@@ -441,14 +441,17 @@ restaurierte Wert bytegleich. Velero-Backup und isolierter Restore
      Prune-Annotation stimmen, die normale Git-Revision mit
      `creationPolicy: Orphan` freigeben und die App-Kopie prüfen.
 2. Nach der Umstellung Store und ExternalSecrets auf `Ready` prüfen.
-   Im Bestand müssen alle drei Secret-Werte übereinstimmen. Bei leerer
-   Neuinstallation stimmen Quelle und App-Kopie überein. Nur das Ergebnis
-   ausgeben. Die Store-Identität darf nur `searxng-key` lesen.
+   Quelle und App-Kopie müssen denselben nichtleeren Wert enthalten. Beim
+   Restore zusätzlich mit dem gesicherten Original vergleichen. Nur das
+   Ergebnis ausgeben. Die Store-Identität darf nur `searxng-key` lesen.
 3. Vor dem Deployment-Wechsel waren Original, Quelle und App-Kopie im
    Zielcluster nichtleer und bytegleich. Die Store-Identität konnte ausschließlich
    die freigegebene Quelle lesen. Das Deployment verwendet nun `searxng-secret-eso`.
-   Nach dem Merge den neu erstellten Pod und eine Suche über den Ingress prüfen.
-   Bis zu dieser Abnahme bleibt das SOPS-Original für einen Git-Revert verfügbar.
+   Der neue Pod war bereit und lieferte Suchergebnisse über den Ingress.
+   Die frühere SOPS-Datei und ihre Vorlage wurden aus dem App-Katalog entfernt.
+   Für einen Rückbau auf die frühere Deployment-Referenz zuerst das verschlüsselte
+   Secret aus Revision `c60d0a23` wieder in die Kustomization aufnehmen. Vor
+   dem Deployment-Revert die Secret-Werte vergleichen.
 
 ### Phase 6 – OIDC-Paare (B)
 
