@@ -31,6 +31,52 @@ spec:
       # Allow in-flight jobs a short window to finish on rollout/restart
       # (must be >= runner.shutdown_timeout in config.yaml).
       terminationGracePeriodSeconds: 130
+      initContainers:
+        - name: dind
+          image: docker.io/library/docker:29-dind
+          restartPolicy: Always
+          # An explicit dockerd command bypasses the image's default TCP listener.
+          # The runner runs with GID 1000 and connects through the shared socket.
+          args:
+            - dockerd
+            - --host=unix:///run/dind/docker.sock
+            - --group=1000
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: dind-storage
+              mountPath: /var/lib/docker
+            - name: dind-socket
+              mountPath: /run/dind
+          # This is the real cap on all CI jobs combined: every job container the
+          # runner starts is nested in this container's cgroup. Sized to use spare
+          # node capacity (nodes are 3-6 vCPU / 16Gi) without starving the cluster.
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          # A native sidecar starts the runner only after Docker can answer.
+          startupProbe:
+            exec:
+              command: [docker, --host=unix:///run/dind/docker.sock, info]
+            periodSeconds: 2
+            timeoutSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            exec:
+              command: [docker, --host=unix:///run/dind/docker.sock, info]
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: [docker, --host=unix:///run/dind/docker.sock, info]
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
       containers:
         - name: runner
           # >= 12.10.2 required for node24 JS actions (e.g. actions/checkout@v7).
@@ -50,21 +96,10 @@ spec:
                   --name "$RUNNER_NAME" \
                   --labels "$RUNNER_LABELS"
               fi
-              # Wait for the dind sidecar's Docker API before starting the daemon
-              # (it pings docker on startup and exits if unreachable). dind needs
-              # more than a few seconds to init storage on first boot.
-              echo "Waiting for dind Docker API..."
-              i=0
-              until wget -q -O /dev/null http://127.0.0.1:2375/_ping 2>/dev/null; do
-                i=$((i+1))
-                [ "$i" -ge 120 ] && echo "dind not ready after 120s, giving up" && exit 1
-                sleep 1
-              done
-              echo "dind is up."
               exec forgejo-runner daemon --config /config/config.yaml
           env:
             - name: DOCKER_HOST
-              value: tcp://127.0.0.1:2375
+              value: unix:///run/dind/docker.sock
             - name: GITEA_INSTANCE_URL
               value: http://forgejo-app.forgejo.svc.cluster.local:3000
             - name: GITEA_RUNNER_REGISTRATION_TOKEN
@@ -82,6 +117,9 @@ spec:
               mountPath: /data
             - name: runner-config
               mountPath: /config
+              readOnly: true
+            - name: dind-socket
+              mountPath: /run/dind
               readOnly: true
           # Orchestrator only — the actual job workloads run inside the dind
           # sidecar and are bounded by *its* limits, not these. Recurring OOMKills
@@ -109,41 +147,9 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 3
-        - name: dind
-          image: docker.io/library/docker:29-dind
-          securityContext:
-            privileged: true
-          env:
-            - name: DOCKER_TLS_CERTDIR
-              value: ""
-          volumeMounts:
-            - name: dind-storage
-              mountPath: /var/lib/docker
-          # This is the real cap on all CI jobs combined: every job container the
-          # runner starts is nested in this container's cgroup. Sized to use spare
-          # node capacity (nodes are 3-6 vCPU / 16Gi) without starving the cluster.
-          resources:
-            requests:
-              cpu: 250m
-              memory: 512Mi
-            limits:
-              cpu: "2"
-              memory: 4Gi
-          livenessProbe:
-            tcpSocket:
-              port: 2375
-            initialDelaySeconds: 15
-            periodSeconds: 15
-            timeoutSeconds: 5
-            failureThreshold: 3
-          readinessProbe:
-            tcpSocket:
-              port: 2375
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
       volumes:
+        - name: dind-socket
+          emptyDir: {}
         - name: runner-data
           persistentVolumeClaim:
             claimName: forgejo-runner-data
