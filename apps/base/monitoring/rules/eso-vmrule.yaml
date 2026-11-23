@@ -58,6 +58,7 @@ spec:
           # ESO can remain Ready after a CreatedOnce/Orphan target disappears.
           expr: |
             absent(kube_secret_info{namespace="secret-source",secret="searxng-key-v2"})
+            or absent(kube_secret_info{namespace="secret-source",secret="outline-valkey-key"})
           for: 15m
           labels:
             severity: warning

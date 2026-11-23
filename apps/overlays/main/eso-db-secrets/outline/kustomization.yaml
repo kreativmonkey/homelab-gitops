@@ -4,3 +4,4 @@ namespace: outline
 resources:
   - ../store
   - credentials.yaml
+  - valkey-credentials.yaml

@@ -25,7 +25,7 @@ Credentials setzen, deployen.
   16 Rollen → 32 Dateien, plus `ainsel-hub-db`.
 - OIDC-Client-Secrets ebenfalls doppelt: App-Seite hier (SOPS), Authentik-Seite
   (`!Env OIDC_<APP>_CLIENT_SECRET`) im privaten Repo `homelab-gitops-private`.
-- `apps/base/outline/valkey.yaml` enthält ein Passwort im Klartext.
+- Outline-Valkey verwendet leere Felder für Benutzername und Passwort und startet ohne Redis-Authentifizierung.
 - Vor Phase 1 war ESO nicht installiert. Reflector verteilt TLS-Secrets.
 - Velero sichert täglich/wöchentlich alle Namespaces inkl. Secrets.
 
@@ -400,12 +400,23 @@ alle 14 Quell-Secrets einzeln.
 ### Phase 5 – Weitere A1-Secrets
 
 dawarich `SECRET_KEY_BASE`, tandoor/paperless `SECRET_KEY`,
-Outline `UTILS_SECRET` (nichtleeres Cron-Token) und `outline-valkey` (Klartext!),
+Outline `UTILS_SECRET` (nichtleeres Cron-Token),
 vikunja `jwt-secret`, linkwarden `NEXTAUTH_SECRET`/`MEILI_MASTER_KEY`,
 nextcloud-collab, remediation-api `hmac-secret`, ainsel
 `internal-validate-secret`, spectrumknx, unifi Mongo, sparkyfitness
 `BETTER_AUTH_SECRET`, Grafana-/pgadmin-/Nextcloud-Admin (Passwort per
 `kubectl get secret` abrufbar). Folge: Nutzer werden einmal ausgeloggt.
+
+**Outline-Valkey.** ESO erzeugt `secret-source/outline-valkey-key` einmalig.
+Der bestehende Outline-Store liest diese Quelle und erstellt
+`outline/outline-valkey-eso` mit `redis-username` (`default`),
+`redis-password` und der gehashten `users.acl` für Valkey.
+Die getrennte Rolle gewährt Zugriff nur für Outline. Vor Umstellung von
+Valkey und Outline `Ready`, einen nichtleeren, bytegleichen Passwortwert in
+Quelle und Kopie sowie das Backup der Quelle prüfen. Nur Vergleichsergebnisse
+ausgeben. Bei Wiederherstellung einer bestehenden Installation die gesicherte
+Quelle vor Freigabe ihrer Generator-Reconciliation einspielen.
+`AppSourceSecretMissing` überwacht die Quelle auch bei altem ESO-Status.
 
 **SearXNG-Quelle und App-Kopie.** Die Flux-Kustomization `searxng-secret`
 verwaltet die aktive Quelle `secret-source/searxng-key-v2` und die App-Kopie
