@@ -423,9 +423,9 @@ authentifizierte Verbindungen. Beim geplanten Backend-Wechsel neue Schreibzugrif
 am alten Valkey kurz anhalten. Wartende, aktive und verzögerte Bull-Jobs prüfen.
 Bei belegten Queues Schreibzugriffe wieder zulassen und die Jobs abarbeiten
 lassen. Valkey verwendet flüchtigen Speicher. Bei einer Replik sorgen
-`maxSurge: 0` und `maxUnavailable: 1` dafür, dass der alte Pod vor dem
-neuen heruntergefahren wird. Bestehende Verbindungen können während der
-Terminierung noch offen sein.
+`maxSurge: 0` und `maxUnavailable: 1` dafür, dass der alte Pod aus den bereiten
+Service-Endpunkten entfernt wird, bevor der neue bereit ist. Bestehende
+Verbindungen können während der Terminierung noch offen sein.
 
 **SearXNG-Quelle und App-Kopie.** Die Flux-Kustomization `searxng-secret`
 verwaltet die aktive Quelle `secret-source/searxng-key-v2` und die App-Kopie
