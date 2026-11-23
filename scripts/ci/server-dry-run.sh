@@ -45,7 +45,8 @@ if [[ "$CLUSTER_AVAILABLE" != "1" ]]; then
 fi
 
 BUILD_DIR="$(mktemp -d)"
-CLUSTER_NAME="gitops-ci-${BUILD_DIR##*.}"
+cluster_suffix="${BUILD_DIR##*.}"
+CLUSTER_NAME="gitops-ci-${cluster_suffix,,}"
 export KUBECONFIG="$BUILD_DIR/kubeconfig"
 export TALOSCONFIG="$BUILD_DIR/talosconfig"
 cleanup() {
