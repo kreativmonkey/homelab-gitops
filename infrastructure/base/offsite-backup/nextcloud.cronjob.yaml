@@ -183,7 +183,7 @@ spec:
             # Nextcloud ist ab hier wieder online, der Upload laeuft aus dem
             # Staging und braucht die Anwendung nicht mehr.
             - name: backup
-              image: docker.io/restic/restic:0.19.1
+              image: docker.io/restic/restic:0.20.0
               command:
                 - /bin/sh
                 - -ec
